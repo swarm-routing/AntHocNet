@@ -63,16 +63,21 @@ stored in GitHub's attestation store. With the [GitHub CLI](https://cli.github.c
 one from another workflow of this repository, such as `images.yml`):
 
 ```bash
-gh attestation verify anthocnet-X.Y.Z.zip --repo danieljoppi/AntHocNet \
-  --signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml
-gh attestation verify anthocnet-ns3-modules-X.Y.Z.tar.gz --repo danieljoppi/AntHocNet \
-  --signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml
+gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
+  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
+gh attestation verify anthocnet-ns3-modules-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
+  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 # from v2.7.0, the standalone packages (#770):
-gh attestation verify routing-bench-X.Y.Z.tar.gz --repo danieljoppi/AntHocNet \
-  --signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml
-gh attestation verify adaptive-X.Y.Z.tar.gz --repo danieljoppi/AntHocNet \
-  --signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml
+gh attestation verify routing-bench-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
+  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
+gh attestation verify adaptive-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
+  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 ```
+
+Releases published before the repository moved to the `swarm-routing`
+organisation (2026-11-03) were signed as
+`danieljoppi/AntHocNet`: verify those with `--repo danieljoppi/AntHocNet`
+and `--signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml`.
 
 The same Sigstore bundle is attached to the release as
 `anthocnet-X.Y.Z.provenance.sigstore.json`, for offline checking or for
@@ -86,8 +91,8 @@ bill of materials of the unpacked bundle. It is attested against the zip, so
 you can check that the SBOM belongs to the file you downloaded:
 
 ```bash
-gh attestation verify anthocnet-X.Y.Z.zip --repo danieljoppi/AntHocNet \
-  --signer-workflow danieljoppi/AntHocNet/.github/workflows/release.yml \
+gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
+  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml \
   --predicate-type https://spdx.dev/Document/v2.3
 ```
 
@@ -98,9 +103,15 @@ provenance in the registry.
 
 ```bash
 cosign verify ghcr.io/danieljoppi/anthocnet-ns3:3.48 \
-  --certificate-identity-regexp '^https://github.com/danieljoppi/AntHocNet/\.github/workflows/(images|release)\.yml@' \
+  --certificate-identity-regexp '^https://github.com/(danieljoppi|swarm-routing)/AntHocNet/\.github/workflows/(images|release)\.yml@' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 gh attestation verify oci://ghcr.io/danieljoppi/anthocnet-ns3:3.48 --repo danieljoppi/AntHocNet
 ```
+
+These images were built and signed before the repository moved to
+`swarm-routing` (2026-11-03), so their signatures and provenance name
+`danieljoppi/AntHocNet`; the identity pattern also accepts `swarm-routing`
+for images signed after the move (verify those with
+`--repo swarm-routing/AntHocNet`).
 
 Releases before v2.3.0 have only the checksum.

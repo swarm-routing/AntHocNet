@@ -83,7 +83,7 @@ import tempfile
 import time
 import zipfile
 
-REPO = os.environ.get("AHN_REPO", "danieljoppi/AntHocNet")
+REPO = os.environ.get("AHN_REPO", "swarm-routing/AntHocNet")
 # Every job runs on benchmark-cell.yml (#612, #746). A cell written for the
 # retired paper-benchmark / satellite-benchmark workflows is translated into
 # the harness command line that workflow built (legacy_command), so the

@@ -18,8 +18,8 @@ date-released: "2026-10-29"
 license:
   - GPL-2.0-only
   - MIT
-repository-code: "https://github.com/danieljoppi/AntHocNet"
-url: "https://github.com/danieljoppi/AntHocNet"
+repository-code: "https://github.com/swarm-routing/AntHocNet"
+url: "https://github.com/swarm-routing/AntHocNet"
 doi: "10.5281/zenodo.20981979"
 identifiers:
   - type: doi

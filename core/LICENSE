@@ -5,7 +5,7 @@ The AntHocNet algorithm core (this directory, core/) is dual-licensed:
 You may use, copy, modify and distribute it under the terms of EITHER the MIT
 License below OR the GNU General Public License version 2 only, at your choice.
 The GPL-2.0 text is the LICENSE file at the root of the AntHocNet repository and
-release bundle (https://github.com/danieljoppi/AntHocNet/blob/main/LICENSE).
+release bundle (https://github.com/swarm-routing/AntHocNet/blob/main/LICENSE).
 
 The dual licence applies from the first release after v2.6.0. Releases up to
 and including v2.6.0 are GPL-2.0-only. Outside core/, only the standalone

@@ -80,7 +80,7 @@ _TABLE_HEAD = [
 # the numbers are older than they are.
 _CAVEAT = (
     "> **Caveat — `large-scale` and `heavy-load` currently reflect an open\n"
-    "> defect.** [#173](https://github.com/danieljoppi/AntHocNet/issues/173)\n"
+    "> defect.** [#173](https://github.com/swarm-routing/AntHocNet/issues/173)\n"
     "> (P1, open): with `enableMultipath` on, reactive forward ants are bounded\n"
     "> neither by a broadcast budget nor by `(src,seq)` duplicate suppression, so\n"
     "> route discovery floods combinatorially in dense graphs. Read those two rows\n"
@@ -133,7 +133,7 @@ def _set_provenance(commit, run_url):
         _PROVENANCE = ""
         return
     short = commit[:7]
-    where = f"[`{short}`](https://github.com/danieljoppi/AntHocNet/commit/{commit})"
+    where = f"[`{short}`](https://github.com/swarm-routing/AntHocNet/commit/{commit})"
     run = f", [run]({run_url})" if run_url else ""
     _PROVENANCE = f"_Measured at {where}{run}._"
 

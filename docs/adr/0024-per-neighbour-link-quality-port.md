@@ -2,8 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-15
-- **Decides:** [#181](https://github.com/danieljoppi/AntHocNet/issues/181)
-  (the SINR link metric) and [#144](https://github.com/danieljoppi/AntHocNet/issues/144)
+- **Decides:** [#181](https://github.com/swarm-routing/AntHocNet/issues/181)
+  (the SINR link metric) and [#144](https://github.com/swarm-routing/AntHocNet/issues/144)
   (selecting a metric from ns-3).
 
 ## Context

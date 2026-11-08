@@ -145,7 +145,7 @@ sequenceDiagram
 ```
 
 Two asymmetries in that band do the work, and both are thesis values
-([#177](https://github.com/danieljoppi/AntHocNet/issues/177)):
+([#177](https://github.com/swarm-routing/AntHocNet/issues/177)):
 
 - **a1 = 0.9 is *below* 1.0**, so for an already-seen first hop the band
   *suppresses* rather than admits — only ants better than the best so far get
@@ -188,7 +188,7 @@ flowchart LR
 
 `ProactiveVirtualMargin` defaults to **0** (send every tick) — the thesis's 10 %
 gate was measured harmful in
-[#180](https://github.com/danieljoppi/AntHocNet/issues/180): it compares a
+[#180](https://github.com/swarm-routing/AntHocNet/issues/180): it compares a
 bootstrapped estimate against a measured one, which suppressed nearly all
 maintenance and tripled reactive rediscovery.
 
@@ -220,7 +220,7 @@ A LinkFail note carries the reporter's *new best* pheromone per destination, not
 just "dead": a non-zero value lets receivers re-bootstrap a discounted entry
 instead of dropping the destination entirely. `LinkfailNotifyInterval` (5 s)
 rate-limits notes about the same destination so one flapping link cannot storm
-the network ([#20](https://github.com/danieljoppi/AntHocNet/issues/20)).
+the network ([#20](https://github.com/swarm-routing/AntHocNet/issues/20)).
 
 ## 6. How to see them at runtime
 
@@ -229,10 +229,10 @@ The types are not just a design abstraction — they are counted and traceable:
 - **`--diag`** on `anthocnet-compare` / `isl-grid` prints per-type Tx/Rx tallies
   (`hello`, `reactive`, `proactive`, `repair`, `linkfail`, each split
   forward/backward), plus first-delivery time, per-flow route-setup latency
-  ([#23](https://github.com/danieljoppi/AntHocNet/issues/23)), link-failure
+  ([#23](https://github.com/swarm-routing/AntHocNet/issues/23)), link-failure
   origin/propagation/suppression counters
-  ([#20](https://github.com/danieljoppi/AntHocNet/issues/20)) and pheromone-table
-  gauges ([#133](https://github.com/danieljoppi/AntHocNet/issues/133)).
+  ([#20](https://github.com/swarm-routing/AntHocNet/issues/20)) and pheromone-table
+  gauges ([#133](https://github.com/swarm-routing/AntHocNet/issues/133)).
 - **ns-3 trace sources** `Tx` and `Rx` on
   `ns3::anthocnet::RoutingProtocol` carry `(type, direction, broadcast)` per ant,
   so an experiment can histogram the control plane without patching the core.
@@ -240,7 +240,7 @@ The types are not just a design abstraction — they are counted and traceable:
   tables report — control packets (and bytes) per delivered data packet.
 
 The planned ant-type **ablation matrix**
-([#244](https://github.com/danieljoppi/AntHocNet/issues/244)) turns the gate
+([#244](https://github.com/swarm-routing/AntHocNet/issues/244)) turns the gate
 column of §2 into an experiment: disable one type at a time and measure what
 each actually buys.
 

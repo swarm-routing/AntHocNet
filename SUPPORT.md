@@ -14,9 +14,9 @@ Support happens in the open, on GitHub issues. Before opening one:
 Then pick the right form:
 
 - **Question** ("how do I…", "why does it…"): use the
-  [question form](https://github.com/danieljoppi/AntHocNet/issues/new?template=question.yml).
+  [question form](https://github.com/swarm-routing/AntHocNet/issues/new?template=question.yml).
 - **Bug** (wrong result, crash, build failure): use the
-  [bug report form](https://github.com/danieljoppi/AntHocNet/issues/new?template=bug-report.yml)
+  [bug report form](https://github.com/swarm-routing/AntHocNet/issues/new?template=bug-report.yml)
   with the scenario and evidence — enough to act on without a back-and-forth.
 - **Security** (parser memory-safety / resource exhaustion): see
   [`SECURITY.md`](SECURITY.md).

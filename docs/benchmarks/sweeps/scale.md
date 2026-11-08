@@ -6,25 +6,25 @@
 
 > **Provenance — measured at `v1.3.0`.** Every number on this page was
 > produced by the campaign runs named below, all of which predate the
-> [`v1.3.0`](https://github.com/danieljoppi/AntHocNet/releases/tag/v1.3.0) tag
+> [`v1.3.0`](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.3.0) tag
 > (`19009be`). No commit between `v1.2.0` and that tag changes routing
 > behaviour, so **checking out `v1.3.0` reproduces these cells.** The default
 > branch will not: it has since changed the pheromone weighting
-> ([#327](https://github.com/danieljoppi/AntHocNet/issues/327), `betaAnts`/
+> ([#327](https://github.com/swarm-routing/AntHocNet/issues/327), `betaAnts`/
 > `betaData` 2.0 → 20) and the per-seed RNG stream assignment
-> ([#352](https://github.com/danieljoppi/AntHocNet/issues/352)), either of
+> ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)), either of
 > which moves measured values. See
 > [Provenance](../methodology.md#provenance-which-version-a-number-was-measured-at)
-> and [#365](https://github.com/danieljoppi/AntHocNet/issues/365).
+> and [#365](https://github.com/swarm-routing/AntHocNet/issues/365).
 
-> **Restated on CBR sources ([#521](https://github.com/danieljoppi/AntHocNet/issues/521)).** The pinned table below was
+> **Restated on CBR sources ([#521](https://github.com/swarm-routing/AntHocNet/issues/521)).** The pinned table below was
 > measured at half the documented offered load. A 20-seed re-measure on
 > `main` is under [Restated on CBR sources](#restated-on-cbr-sources-521)
 > at the end of this page.
 
-> **OLSR's PDR column is inflated ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)).** These cells
+> **OLSR's PDR column is inflated ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)).** These cells
 > predate the fix that counts a send stock OLSR *refuses* at the source as an
-> offered packet ([PR #511](https://github.com/danieljoppi/AntHocNet/pull/511), `f480d0ae`). Before it, OLSR's PDR
+> offered packet ([PR #511](https://github.com/swarm-routing/AntHocNet/pull/511), `f480d0ae`). Before it, OLSR's PDR
 > was computed over the ticks it had a route for. This page stays pinned to
 > `v1.3.0` and is not re-measured. The offered-based value below is estimated
 > from this table's own columns, as
@@ -73,17 +73,17 @@ to run at all — see the provenance note below.
 ## Results
 
 > **Post-#88/#169, 20 seeds, 95% CIs.** These numbers include the `T_hop`
-> = 3 ms fix ([#88](https://github.com/danieljoppi/AntHocNet/issues/88), PR
+> = 3 ms fix ([#88](https://github.com/swarm-routing/AntHocNet/issues/88), PR
 > #167) and the reactive-hop-cap removal
-> ([#169](https://github.com/danieljoppi/AntHocNet/issues/169), PR #170), and
+> ([#169](https://github.com/swarm-routing/AntHocNet/issues/169), PR #170), and
 > meet the [methodology](../methodology.md#statistical-policy-293) runs floor.
 > AntHocNet leads delivery at **every** point (+11.0 to +17.8 pp, intervals
 > disjoint except at f = 2.0) while carrying **16–29 % lower** normalized
 > routing load. The `delay99` column is worse throughout — the confirmed #21
 > tail, whose remediation is tracked in
-> [#308](https://github.com/danieljoppi/AntHocNet/issues/308) against a
+> [#308](https://github.com/swarm-routing/AntHocNet/issues/308) against a
 > like-for-like `p99Common` target. Do not quote `path_div_*`/`entropy` from
-> these cells ([#230](https://github.com/danieljoppi/AntHocNet/issues/230)).
+> these cells ([#230](https://github.com/swarm-routing/AntHocNet/issues/230)).
 
 ### Provenance — and why this sweep needed seed-splitting
 
@@ -91,11 +91,11 @@ Dispatched 2026-08-03/04 on `main`, `scenario-matrix.yml`, `3.42-opt` image,
 900 s, range/disk PHY, 20 seeds per point. The f = 1.0 point ran as a single
 20-seed job; the other three **exceed the 340-minute step ceiling at 20 seeds**
 and were run as multiple dispatches over disjoint seed ranges using the
-`runFirst` input ([#126](https://github.com/danieljoppi/AntHocNet/issues/126),
+`runFirst` input ([#126](https://github.com/swarm-routing/AntHocNet/issues/126),
 PR #322), then recombined with
 [`pool_runs.py`](../../../tools/bench/pool_runs.py), which
 recomputes each mean and standard deviation from the pooled per-run rows
-([#319](https://github.com/danieljoppi/AntHocNet/issues/319)) rather than
+([#319](https://github.com/swarm-routing/AntHocNet/issues/319)) rather than
 combining split aggregates. Seed coverage was verified as exactly 1–20 per
 protocol per point, with no gaps and no duplicates.
 
@@ -158,7 +158,7 @@ _Sweep `scale` — mean of 20 run(s) per point, every baseline on identical real
 ## Restated on CBR sources (#521)
 
 > **Re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off, so the
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off, so the
 > pinned table above was taken at half the documented offered load. That
 > table stays as the dated `v1.3.0` record.
 >
@@ -178,7 +178,7 @@ _Sweep `scale` — mean of 20 run(s) per point, every baseline on identical real
 > plus their `-runs.csv` per-seed siblings; f = 1.0 is
 > `results/campaign/37233299992-run.csv` unchanged.
 > `scenario_check.py results`: 0 FAIL; the 4 WARNs are the #230
-> path-diversity window caveat. OLSR's PDR is offered-based ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)), so the
+> path-diversity window caveat. OLSR's PDR is offered-based ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)), so the
 > estimate table at the top of this page does not apply to this block.
 >
 > **Attribution.** This is not a CBR-only A/B. `3edbab6a` also carries
@@ -193,7 +193,7 @@ _Sweep `scale` — mean of 20 run(s) per point, every baseline on identical real
 >
 > ![sweep: scale on CBR sources (#521)](../sweep-scale.png)
 >
-> _Reproduce: `make reproduce FIG=sweep-scale` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=sweep-scale` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
 > | scale factor | protocol | PDR % ±95 | mean delay (ms) ±95 | 99th delay (ms) ±95 | throughput (kbps) | NRL ±95 | jitter (ms) | dOff90 (ms) |
 > |---:|----------|----------:|--------------------:|--------------------:|------------------:|--------:|------------:|------------:|
@@ -245,11 +245,11 @@ _Sweep `scale` — mean of 20 run(s) per point, every baseline on identical real
 
 ## Scale to 500 nodes (v2.4.0, pre-registered)
 
-[#62](https://github.com/danieljoppi/AntHocNet/issues/62) asks for the
+[#62](https://github.com/swarm-routing/AntHocNet/issues/62) asks for the
 overhead-versus-nodes curve beyond 200 nodes, where the ACO-routing claim of
 graceful scaling is tested. This is the plan, merged before its first
 dispatch:
-[`tools/bench/campaigns/v2.4.0-scale.yaml`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-scale.yaml).
+[`tools/bench/campaigns/v2.4.0-scale.yaml`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-scale.yaml).
 
 **What is held from the sweep above:**
 
@@ -275,7 +275,7 @@ dispatch:
 | f = 2.0 | 200 | 3000 × 1000 | 10 × 2 seeds |
 | f = 3.16 | 500 | 4743 × 1581 | AntHocNet + AODV 10 × 2 seeds; OLSR 20 × 1; oracle 20 × 1 |
 
-**Sizing.** Run [`39527509217`](https://github.com/danieljoppi/AntHocNet/actions/runs/39527509217)
+**Sizing.** Run [`39527509217`](https://github.com/swarm-routing/AntHocNet/actions/runs/39527509217)
 ran 500 nodes, 1 seed, all four protocols, on `ns3:3.42-opt`:
 
 | protocol | PDR % | NRL |
@@ -327,7 +327,7 @@ readings against it use those 19 seeds.
 
 _Routing packets per node are NRL × packets delivered ÷ nodes, the same
 yardstick for every protocol. Drawn by
-[`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py)
+[`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py)
 from the committed cells._
 
 Mean, with the PDR's 95 % t-interval:
@@ -354,7 +354,7 @@ Mean, with the PDR's 95 % t-interval:
 ‡ **The oracle's PDR is restated over offered traffic.** The oracle drops a
 send it has no route for before the books open, so the harness's own PDR
 leaves those packets out of the denominator
-([#464](https://github.com/danieljoppi/AntHocNet/issues/464);
+([#464](https://github.com/swarm-routing/AntHocNet/issues/464);
 `scenario_check.py` FAILs the 200- and 500-node oracle cells on it). There
 were 83 to 342 such refusals over 20 seeds. Counting them lowers the oracle
 by 0.09 to 0.27 pp: 95.05 → 94.96, 90.72 → 90.52, 83.90 → 83.64 and
@@ -385,7 +385,7 @@ What they say:
   node grows 8.3× from 50 to 500 nodes; AODV's grows 2.4× and OLSR's 2.3×.
   Between 200 and 500 nodes AntHocNet passes AODV. Reactive ants are 27 % of
   its control traffic at 50 nodes and 90 % at 500. Filed as
-  [#740](https://github.com/danieljoppi/AntHocNet/issues/740) for v2.5.0.
+  [#740](https://github.com/swarm-routing/AntHocNet/issues/740) for v2.5.0.
 - **The ACO claim of graceful scaling holds here to about 200 nodes and
   fails at 500.** It fails on the protocol's control traffic, not on the
   field: the oracle still delivers 73 % at 500 nodes.
@@ -401,14 +401,14 @@ What they say:
   column after it shifts by one, and "Jain" is the jitter column. The
   readings here come from the per-seed `##RUN##` rows, which are
   space-separated and unaffected. Filed as
-  [#741](https://github.com/danieljoppi/AntHocNet/issues/741).
+  [#741](https://github.com/swarm-routing/AntHocNet/issues/741).
 - Every WARN is a known caveat: churn-dominated path diversity, the oracle's
   no-path lookups, and ICMP re-injections.
 
 
 ## Why AntHocNet collapses at 500 nodes: the v2.5.0 screen (pre-registered, exploratory)
 
-The diagnosis ([#740](https://github.com/danieljoppi/AntHocNet/issues/740)), read from the committed v2.4.0 cells:
+The diagnosis ([#740](https://github.com/swarm-routing/AntHocNet/issues/740)), read from the committed v2.4.0 cells:
 
 - **The loss is not at the MAC.** At 500 nodes AntHocNet loses 11–18 % of
   offered packets on the channel and under 0.5 % at the MAC, against AODV's
@@ -438,7 +438,7 @@ arms at 500 nodes on seeds 1–4, AntHocNet only, paired with the committed
 A `recheck` job re-runs the control's seeds 1–2 (AntHocNet + AODV) on
 `benchmark-cell.yml`. Its `##RUN##` rows must equal the committed cell's,
 so each arm's delta is attributable to the arm; it is also the old-path
-vs new-path control for [#746](https://github.com/danieljoppi/AntHocNet/issues/746).
+vs new-path control for [#746](https://github.com/swarm-routing/AntHocNet/issues/746).
 
 **Rule, fixed before dispatch.** An arm goes to stage 2 if its paired dPDR at
 500 nodes is at least +5 pp with the 95 % CI excluding zero. If none does,
@@ -499,7 +499,7 @@ The pre-registered branch applies: **helps at scale, costs small fields.**
 `ReactiveRetryInterval=0s` is not a default candidate. The follow-up is a
 gated, size-aware mechanism: the retry routed through the core's
 rate-limited emission, default off, A/B'd in every family
-([#760](https://github.com/danieljoppi/AntHocNet/issues/760)).
+([#760](https://github.com/swarm-routing/AntHocNet/issues/760)).
 
 Two campaign-path checks rode along with stage 2:
 
@@ -508,7 +508,7 @@ Two campaign-path checks rode along with stage 2:
 - `campaign.py collect` had keyed its artifact cache by label, so it first
   read the screen's artifacts for those seeds. The `##RUN##` rows were
   identical, and the cells committed here carry the stage-2 runs
-  ([#759](https://github.com/danieljoppi/AntHocNet/pull/759)).
+  ([#759](https://github.com/swarm-routing/AntHocNet/pull/759)).
 
 Earlier evidence that no constant here is a default candidate: v2.2.0's
 `reconv1s` arm (the same override as `hold1s`) gained +4 to +6 pp on VANET and

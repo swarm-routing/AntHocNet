@@ -1,6 +1,6 @@
 # Classroom pack
 
-Five lab sheets for a networking course, built on the [learn site](https://danieljoppi.github.io/AntHocNet/).
+Five lab sheets for a networking course, built on the [learn site](https://swarm-routing.github.io/AntHocNet/).
 The site is a game, but every device in it runs the real AntHocNet routing
 core compiled to WebAssembly, so what students observe is what the protocol
 does. Each sheet follows one format:
@@ -32,7 +32,7 @@ v3.0.0.
   class sees the same thing and the answer keys hold.
 - **Campaign levels.** Labs 3 and 4 use the campaign. Normally a chapter
   opens only after the previous one is cleared. The classroom link
-  [`#campaign?open=all`](https://danieljoppi.github.io/AntHocNet/#campaign?open=all)
+  [`#campaign?open=all`](https://swarm-routing.github.io/AntHocNet/#campaign?open=all)
   opens every level for that visit and records no progress.
 - **The tuning bench.** Labs 1, 2 and 5 change one protocol parameter with
   the **Tuning bench** panel (*Change a protocol parameter*). The bench
@@ -46,7 +46,7 @@ v3.0.0.
 ## How the answer keys are checked
 
 Every number in [answer-keys.md](answer-keys.md) is measured by
-[`web/test/labs.mjs`](https://github.com/danieljoppi/AntHocNet/blob/main/web/test/labs.mjs)
+[`web/test/labs.mjs`](https://github.com/swarm-routing/AntHocNet/blob/main/web/test/labs.mjs)
 on the same WebAssembly core the site runs, at the seed the sheet names.
 The script also checks the claim each key makes, such as "quiet mode (the default)
 spends fewer ants per delivered packet than with it off". If a change to the core moves a number,

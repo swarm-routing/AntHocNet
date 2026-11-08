@@ -3,7 +3,7 @@
 `routing-bench` is the ns-3 module that will hold the comparison harness, so
 the harness builds without AntHocNet
 ([ADR-0027](../../docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md),
-epic [#764](https://github.com/danieljoppi/AntHocNet/issues/764)). It links
+epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764)). It links
 only stock ns-3 and names no protocol of its own. Arm modules depend on it;
 it depends on none of them.
 

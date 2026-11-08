@@ -10,11 +10,11 @@ flows replaced by 20 TCP flows (saturating `BulkSend` sources over
 > [mobility × channel grid](grid.md), this page does **not** follow the
 > [`v1.3.0` pin](methodology.md#provenance-which-version-a-number-was-measured-at):
 > it was measured after
-> [#327](https://github.com/danieljoppi/AntHocNet/issues/327) and
-> [#352](https://github.com/danieljoppi/AntHocNet/issues/352), so its numbers
+> [#327](https://github.com/swarm-routing/AntHocNet/issues/327) and
+> [#352](https://github.com/swarm-routing/AntHocNet/issues/352), so its numbers
 > are not comparable with the sweep or headline pages. The campaign also
-> predates [#383](https://github.com/danieljoppi/AntHocNet/issues/383)/
-> [#384](https://github.com/danieljoppi/AntHocNet/issues/384), so the commit is
+> predates [#383](https://github.com/swarm-routing/AntHocNet/issues/383)/
+> [#384](https://github.com/swarm-routing/AntHocNet/issues/384), so the commit is
 > recorded **by hand** here rather than by the workflow — the last campaign
 > that needs to be. Reproduce at commit
 > `0b42c896b8969081a7b0ba160a9a7f4082461803`; run IDs in
@@ -48,8 +48,8 @@ realisations inside each cell:
 - **Four TCP cells** of 5 seeds each (`firstRun` 1 / 6 / 11 / 16), pooled to
   **n = 20**. A single 20-seed TCP job would have run ~10 h against the 6 h
   ceiling, so this arm used
-  [#126](https://github.com/danieljoppi/AntHocNet/issues/126) seed-splitting;
-  [#352](https://github.com/danieljoppi/AntHocNet/issues/352) per-seed RNG
+  [#126](https://github.com/swarm-routing/AntHocNet/issues/126) seed-splitting;
+  [#352](https://github.com/swarm-routing/AntHocNet/issues/352) per-seed RNG
   stream assignment is what makes the four cells poolable as one 20-seed
   sample.
 - **One UDP control** at 20 seeds, identical in every knob except
@@ -92,10 +92,10 @@ are for orientation.
 
 Under UDP/CBR the delivery ordering is `anthocnet > olsr > aodv > dsdv`. It
 holds in five of the six [grid](grid.md) cells, including the `rwp × tworay`
-cell this arm re-ran as its control. Since [#510](https://github.com/danieljoppi/AntHocNet/issues/510) made OLSR's
+cell this arm re-ran as its control. Since [#510](https://github.com/swarm-routing/AntHocNet/issues/510) made OLSR's
 PDR offered-based, `gaussmarkov × tworay` reads `anthocnet > aodv > olsr >
 dsdv`. The control cell keeps OLSR over AODV (88.41 vs 85.48), so the
-inversion below stands. On CBR sources ([#521](https://github.com/danieljoppi/AntHocNet/issues/521)) the control
+inversion below stands. On CBR sources ([#521](https://github.com/swarm-routing/AntHocNet/issues/521)) the control
 cell reads OLSR 88.31 vs AODV 87.71, still OLSR first (+0.59 pp
 [+0.22, +0.97], p = 0.0062) but narrowly. The TCP cells themselves use
 `BulkSend`, not OnOff, and are unaffected by #521. TCP goodput counts delivered bytes, which #510 does
@@ -124,7 +124,7 @@ channel, here it reorders with the transport.
 A transport contrast is only attributable to the transport if nothing else
 moved. The 20-seed UDP control ran at `0b42c89` — a **different commit** from
 the v1.4.0 grid's `4cdfb96`, both at the then-shipped `ReconvHoldCap = 1 s`
-(this whole page predates the [#411](https://github.com/danieljoppi/AntHocNet/pull/411)
+(this whole page predates the [#411](https://github.com/swarm-routing/AntHocNet/pull/411)
 flip and the [grid re-baseline](grid.md); its numbers are 1 s-vintage) — with
 the grid's `rwp × tworay` knobs, and reproduced that cell exactly:
 
@@ -141,7 +141,7 @@ the grid's `rwp × tworay` knobs, and reproduced that cell exactly:
   packet-pooled `# drops` aggregate reads 97.43 / 85.93 / 90.59 / 84.99; the
   0.01 on AODV is mean-of-seeds vs pooled-packets, not a reproduction gap.)
 
-So [#352](https://github.com/danieljoppi/AntHocNet/issues/352) stream pinning
+So [#352](https://github.com/swarm-routing/AntHocNet/issues/352) stream pinning
 holds across the two commits: identical seeds produce bit-identical
 realisations, and the TCP−UDP contrast on this page is a transport effect,
 not code drift between `4cdfb96` and `0b42c89`.
@@ -149,20 +149,20 @@ not code drift between `4cdfb96` and `0b42c89`.
 ## Caveats
 
 - **`drop_mac`/`drop_chan` and the
-  [#217](https://github.com/danieljoppi/AntHocNet/issues/217) route-quality
+  [#217](https://github.com/swarm-routing/AntHocNet/issues/217) route-quality
   family are structurally zero in these cells.** They predate
-  [#389](https://github.com/danieljoppi/AntHocNet/issues/389), which widened
+  [#389](https://github.com/swarm-routing/AntHocNet/issues/389), which widened
   the data-packet predicate to accept TCP on the data port; before it, the
   counters behind both families never incremented on a TCP cell. In every cell
   here the `# paths` lines read all-zero and the `# drops` lines carry 3–6 pp
   unaccounted with `mac`/`chan` pinned at 0.00, so `scenario_check.py results`
-  FAILs the [#215](https://github.com/danieljoppi/AntHocNet/issues/215)
+  FAILs the [#215](https://github.com/swarm-routing/AntHocNet/issues/215)
   drop-cause identity on the AODV rows. Neither family is published here, for
   the same reason the grid page withheld its fading-cell drop columns:
   present-and-wrong is worse than absent.
 
   **#389 has since merged**, and its
-  [pre-registered A/B probe](https://github.com/danieljoppi/AntHocNet/issues/389#issuecomment-5232649715)
+  [pre-registered A/B probe](https://github.com/swarm-routing/AntHocNet/issues/389#issuecomment-5232649715)
   confirmed on identical seeds that the UDP arm is byte-identical across the
   change while a TCP cell's `mac`/`chan` and `# paths` go live (drop-cause
   `sum` 93.3–96.0 → 97.2–100.0). **Re-running this arm at a post-#389 commit
@@ -183,11 +183,11 @@ not code drift between `4cdfb96` and `0b42c89`.
   metric of record for this arm; the UDP pages' PDR/delay numbers are not
   comparable with anything in these cells.
 - **Reorder columns are absent by design**
-  ([#382](https://github.com/danieljoppi/AntHocNet/issues/382)): TCP consumes
+  ([#382](https://github.com/swarm-routing/AntHocNet/issues/382)): TCP consumes
   reordering internally, so the harness does not emit the family for TCP
   cells.
 - **n = 5 per cell, n = 20 only pooled.** Each individual TCP cell is below
-  the [#293](https://github.com/danieljoppi/AntHocNet/issues/293)
+  the [#293](https://github.com/swarm-routing/AntHocNet/issues/293)
   published-point floor on its own; only the pooled 20-seed sample is quoted
   here, and every interval above is computed on the pooled rows.
 
@@ -201,16 +201,16 @@ not code drift between `4cdfb96` and `0b42c89`.
 
 | cell | seeds | run ID | wall clock |
 |---|---|---|---|
-| TCP a | 1–5 | [`31284265709`](https://github.com/danieljoppi/AntHocNet/actions/runs/31284265709) | 1 h 51 m |
-| TCP b | 6–10 | [`31284270170`](https://github.com/danieljoppi/AntHocNet/actions/runs/31284270170) | 2 h 27 m |
-| TCP c | 11–15 | [`31284274799`](https://github.com/danieljoppi/AntHocNet/actions/runs/31284274799) | 2 h 29 m |
-| TCP d | 16–20 | [`31284280268`](https://github.com/danieljoppi/AntHocNet/actions/runs/31284280268) | 2 h 34 m |
-| UDP control | 1–20 | [`31284366759`](https://github.com/danieljoppi/AntHocNet/actions/runs/31284366759) | 4 h 00 m |
+| TCP a | 1–5 | [`31284265709`](https://github.com/swarm-routing/AntHocNet/actions/runs/31284265709) | 1 h 51 m |
+| TCP b | 6–10 | [`31284270170`](https://github.com/swarm-routing/AntHocNet/actions/runs/31284270170) | 2 h 27 m |
+| TCP c | 11–15 | [`31284274799`](https://github.com/swarm-routing/AntHocNet/actions/runs/31284274799) | 2 h 29 m |
+| TCP d | 16–20 | [`31284280268`](https://github.com/swarm-routing/AntHocNet/actions/runs/31284280268) | 2 h 34 m |
+| UDP control | 1–20 | [`31284366759`](https://github.com/swarm-routing/AntHocNet/actions/runs/31284366759) | 4 h 00 m |
 
 Every cell self-identifies through its `##CONFIG##` rows (`firstRun`,
 `transport`, `SocketType`), so the seed mapping is read from the data rather
 than from dispatch order. The result was measured and read against its
 pre-registration in
-[#63](https://github.com/danieljoppi/AntHocNet/issues/63#issuecomment-5229655110);
+[#63](https://github.com/swarm-routing/AntHocNet/issues/63#issuecomment-5229655110);
 per-seed extraction and every statistic on this page were re-derived from the
 job logs and reproduce the #63 numbers to printed precision.

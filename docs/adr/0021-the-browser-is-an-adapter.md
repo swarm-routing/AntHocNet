@@ -1,7 +1,7 @@
 # ADR-0021: The browser is an adapter — the teaching site runs `core/` as WebAssembly
 
-- **Status:** Accepted — governs the learn site ([#542](https://github.com/danieljoppi/AntHocNet/issues/542));
-  implemented by [#544](https://github.com/danieljoppi/AntHocNet/issues/544)
+- **Status:** Accepted — governs the learn site ([#542](https://github.com/swarm-routing/AntHocNet/issues/542));
+  implemented by [#544](https://github.com/swarm-routing/AntHocNet/issues/544)
 - **Date:** 2026-10-08
 
 ## Context

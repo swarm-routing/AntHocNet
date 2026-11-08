@@ -1,6 +1,6 @@
 # Adaptive-routing comparator module — provenance and fidelity sheets
 
-The v2.5.0 comparators ([#563](https://github.com/danieljoppi/AntHocNet/issues/563)):
+The v2.5.0 comparators ([#563](https://github.com/swarm-routing/AntHocNet/issues/563)):
 one ns-3 module, `contrib/adaptive`, holding three arms of the
 `anthocnet-compare` harness. Each is **written from its paper**. None is a
 port: no maintained ns-3 implementation of any of them exists.
@@ -12,10 +12,10 @@ three gates before an arm's numbers count.
 
 | arm | protocol | family | issue |
 |---|---|---|---|
-| `ara` | ARA, Güneş, Sorges, Bouazizi, IWAHN 2002 | swarm (reactive ACO) | [#586](https://github.com/danieljoppi/AntHocNet/issues/586) |
-| `termite` | Termite, Roth & Wicker, GLOBECOM 2003 / Roth 2005 | stigmergic | [#587](https://github.com/danieljoppi/AntHocNet/issues/587) |
-| `qrouting` | Q-routing, Boyan & Littman, NIPS 6 (1994) | learned (tabular) | [#588](https://github.com/danieljoppi/AntHocNet/issues/588) |
-| `beeadhoc` | BeeAdHoc, Wedde, Farooq et al., GECCO 2005; written from the authors' PG 460 report (2006) | swarm (bee-inspired, source routing) | [#589](https://github.com/danieljoppi/AntHocNet/issues/589) (v2.7.0) |
+| `ara` | ARA, Güneş, Sorges, Bouazizi, IWAHN 2002 | swarm (reactive ACO) | [#586](https://github.com/swarm-routing/AntHocNet/issues/586) |
+| `termite` | Termite, Roth & Wicker, GLOBECOM 2003 / Roth 2005 | stigmergic | [#587](https://github.com/swarm-routing/AntHocNet/issues/587) |
+| `qrouting` | Q-routing, Boyan & Littman, NIPS 6 (1994) | learned (tabular) | [#588](https://github.com/swarm-routing/AntHocNet/issues/588) |
+| `beeadhoc` | BeeAdHoc, Wedde, Farooq et al., GECCO 2005; written from the authors' PG 460 report (2006) | swarm (bee-inspired, source routing) | [#589](https://github.com/swarm-routing/AntHocNet/issues/589) (v2.7.0) |
 
 The four are one module because they share all of their ns-3 plumbing
 (`model/adaptive-routing-base.{h,cc}`), and none of it is routing policy. Each

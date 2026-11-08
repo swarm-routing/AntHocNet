@@ -2,16 +2,16 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-17
-- **Decides:** [#573](https://github.com/danieljoppi/AntHocNet/issues/573)
+- **Decides:** [#573](https://github.com/swarm-routing/AntHocNet/issues/573)
   (the position port). It is the prerequisite of link-lifetime prediction
-  ([#574](https://github.com/danieljoppi/AntHocNet/issues/574)) and of any later
+  ([#574](https://github.com/swarm-routing/AntHocNet/issues/574)) and of any later
   geographic hint.
 
 ## Context
 
 **What #574 needs.** VANET is the family where AntHocNet trails the oracle
 most: 42.1 % against 81.7 % on VANET main. The v2.2.0 campaign measured every
-timer knob there ([#537](https://github.com/danieljoppi/AntHocNet/issues/537)).
+timer knob there ([#537](https://github.com/swarm-routing/AntHocNet/issues/537)).
 The best one, `ReconvHoldCap=1s`, recovers 5.3 of the 39.6 pp, and every knob
 that helps VANET hurts another family. Each knob either waits out a break or
 detects it sooner. None stops the protocol choosing a link that is about to

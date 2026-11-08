@@ -1,7 +1,7 @@
 # Answer keys
 
 For teachers. Every number here was measured by
-[`web/test/labs.mjs`](https://github.com/danieljoppi/AntHocNet/blob/main/web/test/labs.mjs)
+[`web/test/labs.mjs`](https://github.com/swarm-routing/AntHocNet/blob/main/web/test/labs.mjs)
 on the site's WebAssembly core, at the seed each sheet names. A student who
 pauses a second early or late sees the last digit move, not the answer.
 

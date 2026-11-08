@@ -2,14 +2,14 @@
 
 > **Status:** accepted 2026-10-09 as part of the
 > [post-v2.0.0 replan](roadmap.md#replan-after-v200-accepted-2026-10-09).
-> It is tracked by the campaign epic [#562](https://github.com/danieljoppi/AntHocNet/issues/562).
+> It is tracked by the campaign epic [#562](https://github.com/swarm-routing/AntHocNet/issues/562).
 > It builds on the learn site that ships today: the game at the site root, the
 > core compiled to WebAssembly, and 8 Academy missions plus 4 world challenges
 > ([ADR-0021](adr/0021-the-browser-is-an-adapter.md)).
 >
 > Two later sections widen it from the campaign to the whole site:
-> - [§10](#10-the-whole-site-is-the-game-v210): from v2.1.0 the docs and the API are places inside the game (epic [#626](https://github.com/danieljoppi/AntHocNet/issues/626));
-> - [§11](#11-the-workshop-the-api-and-ns-3-inside-the-game): the Workshop, where the API and the ns-3 integration become things you do in the game (epic [#634](https://github.com/danieljoppi/AntHocNet/issues/634)).
+> - [§10](#10-the-whole-site-is-the-game-v210): from v2.1.0 the docs and the API are places inside the game (epic [#626](https://github.com/swarm-routing/AntHocNet/issues/626));
+> - [§11](#11-the-workshop-the-api-and-ns-3-inside-the-game): the Workshop, where the API and the ns-3 integration become things you do in the game (epic [#634](https://github.com/swarm-routing/AntHocNet/issues/634)).
 
 ## 1. The idea in one paragraph
 
@@ -62,8 +62,8 @@ flowchart LR
 ## 3. The campaign — one chapter per network type
 
 > **Shipped in v2.2.0:** chapters 1 and 2 (the ten levels below), the game
-> screens and the level engine ([#566](https://github.com/danieljoppi/AntHocNet/issues/566),
-> [#567](https://github.com/danieljoppi/AntHocNet/issues/567)). Open them from the
+> screens and the level engine ([#566](https://github.com/swarm-routing/AntHocNet/issues/566),
+> [#567](https://github.com/swarm-routing/AntHocNet/issues/567)). Open them from the
 > hub's **Campaign** button or at `#campaign`. The eight Academy missions stay in
 > the Missions panel as drills, so no link to them breaks.
 
@@ -228,7 +228,7 @@ choice.
 ## 5. What the browser adapter must add
 
 These are scenario and radio features only: **no routing logic in `web/`**
-([web/README.md](https://github.com/danieljoppi/AntHocNet/blob/main/web/README.md)
+([web/README.md](https://github.com/swarm-routing/AntHocNet/blob/main/web/README.md)
 rules). Each one extends the native-vs-WASM parity gate.
 
 | feature | for | sketch |
@@ -260,10 +260,10 @@ rules). Each one extends the native-vs-WASM parity gate.
   as today. Terrain needs canopy, a fire front, jam fields and ridges.
 - **Accessibility:** the existing axe gate (day and night). Every level must be
   playable by keyboard; placement accepts the selected-node arrow keys.
-- **Translations** ([#622](https://github.com/danieljoppi/AntHocNet/issues/622)): all text goes through a string layer from the
+- **Translations** ([#622](https://github.com/swarm-routing/AntHocNet/issues/622)): all text goes through a string layer from the
   first campaign level, so briefings and debriefs are never hard-coded in
   English. Portuguese (pt-BR) is the first second language.
-- **Offline and size budget** ([#624](https://github.com/danieljoppi/AntHocNet/issues/624)): the game is cached for offline use
+- **Offline and size budget** ([#624](https://github.com/swarm-routing/AntHocNet/issues/624)): the game is cached for offline use
   (classrooms with poor Wi-Fi), and CI fails if the game download grows past
   its budget (starting at 512 KB raw / 160 KB gzipped; 378 KB raw today).
 
@@ -441,20 +441,20 @@ HTML file in the repository's style.
 
 | work | issue |
 |---|---|
-| game UI | [#566](https://github.com/danieljoppi/AntHocNet/issues/566) |
-| campaign engine | [#567](https://github.com/danieljoppi/AntHocNet/issues/567) |
-| device classes (per-node range) | [#568](https://github.com/danieljoppi/AntHocNet/issues/568) |
-| scenario features, chapters 3–5 | [#575](https://github.com/danieljoppi/AntHocNet/issues/575) |
-| scenario features, chapters 6–8 | [#582](https://github.com/danieljoppi/AntHocNet/issues/582) |
-| upgrades screen | [#579](https://github.com/danieljoppi/AntHocNet/issues/579) |
-| Ch 1 Ad hoc town · Ch 2 Mesh | [#569](https://github.com/danieljoppi/AntHocNet/issues/569) · [#570](https://github.com/danieljoppi/AntHocNet/issues/570) |
-| Ch 3 City streets · Ch 4 Forest · Ch 5 Orbit | [#576](https://github.com/danieljoppi/AntHocNet/issues/576) · [#577](https://github.com/danieljoppi/AntHocNet/issues/577) · [#578](https://github.com/danieljoppi/AntHocNet/issues/578) |
-| Ch 6 Disaster · Ch 7 Contested · Ch 8 Sky to space | [#583](https://github.com/danieljoppi/AntHocNet/issues/583) · [#584](https://github.com/danieljoppi/AntHocNet/issues/584) · [#585](https://github.com/danieljoppi/AntHocNet/issues/585) |
-| level 7.4 + Shield | [#590](https://github.com/danieljoppi/AntHocNet/issues/590) |
-| Ch 9 Red team | [#602](https://github.com/danieljoppi/AntHocNet/issues/602) |
-| translations (pt-BR first) | [#622](https://github.com/danieljoppi/AntHocNet/issues/622) |
-| offline play + download-size budget | [#624](https://github.com/danieljoppi/AntHocNet/issues/624) |
-| classroom pack (lab worksheets) | [#623](https://github.com/danieljoppi/AntHocNet/issues/623) |
+| game UI | [#566](https://github.com/swarm-routing/AntHocNet/issues/566) |
+| campaign engine | [#567](https://github.com/swarm-routing/AntHocNet/issues/567) |
+| device classes (per-node range) | [#568](https://github.com/swarm-routing/AntHocNet/issues/568) |
+| scenario features, chapters 3–5 | [#575](https://github.com/swarm-routing/AntHocNet/issues/575) |
+| scenario features, chapters 6–8 | [#582](https://github.com/swarm-routing/AntHocNet/issues/582) |
+| upgrades screen | [#579](https://github.com/swarm-routing/AntHocNet/issues/579) |
+| Ch 1 Ad hoc town · Ch 2 Mesh | [#569](https://github.com/swarm-routing/AntHocNet/issues/569) · [#570](https://github.com/swarm-routing/AntHocNet/issues/570) |
+| Ch 3 City streets · Ch 4 Forest · Ch 5 Orbit | [#576](https://github.com/swarm-routing/AntHocNet/issues/576) · [#577](https://github.com/swarm-routing/AntHocNet/issues/577) · [#578](https://github.com/swarm-routing/AntHocNet/issues/578) |
+| Ch 6 Disaster · Ch 7 Contested · Ch 8 Sky to space | [#583](https://github.com/swarm-routing/AntHocNet/issues/583) · [#584](https://github.com/swarm-routing/AntHocNet/issues/584) · [#585](https://github.com/swarm-routing/AntHocNet/issues/585) |
+| level 7.4 + Shield | [#590](https://github.com/swarm-routing/AntHocNet/issues/590) |
+| Ch 9 Red team | [#602](https://github.com/swarm-routing/AntHocNet/issues/602) |
+| translations (pt-BR first) | [#622](https://github.com/swarm-routing/AntHocNet/issues/622) |
+| offline play + download-size budget | [#624](https://github.com/swarm-routing/AntHocNet/issues/624) |
+| classroom pack (lab worksheets) | [#623](https://github.com/swarm-routing/AntHocNet/issues/623) |
 
 Each chapter lands with the release that measures its network type. That
 way every debrief links to a measured page, not a promise.
@@ -463,7 +463,7 @@ way every debrief links to a measured page, not a promise.
 ## 10. The whole site is the game (v2.1.0)
 
 **Maintainer decision 2026-10-09:** everything is part of the game.
-Epic [#626](https://github.com/danieljoppi/AntHocNet/issues/626).
+Epic [#626](https://github.com/swarm-routing/AntHocNet/issues/626).
 
 **Built in v2.1.0:** the shell, hub, docs windows with the Try-it rail and the API chrome
 (#627, #628, #629, #632) live in `web/shell/` and `docs/places/`; the in-game reader (#630)
@@ -483,7 +483,7 @@ over a running world.
 
 One top bar sits on every page of the site: game, docs and API alike. It holds
 the brand, the five places, search, day/night and the language switch
-([#622](https://github.com/danieljoppi/AntHocNet/issues/622)).
+([#622](https://github.com/swarm-routing/AntHocNet/issues/622)).
 
 | place | what is there | today's docs group |
 |---|---|---|
@@ -555,14 +555,14 @@ is unaffected (golden rule 9).
 
 | work | issue |
 |---|---|
-| site shell: places, one top bar, docs nav regrouped | [#627](https://github.com/danieljoppi/AntHocNet/issues/627) |
-| hub screen (the game's home) | [#628](https://github.com/danieljoppi/AntHocNet/issues/628) |
-| docs pages as game windows + Try it rail | [#629](https://github.com/danieljoppi/AntHocNet/issues/629) |
-| in-game reader + search from the game | [#630](https://github.com/danieljoppi/AntHocNet/issues/630) |
-| two-way links, checked in CI | [#631](https://github.com/danieljoppi/AntHocNet/issues/631) |
-| API reference in the game's chrome | [#632](https://github.com/danieljoppi/AntHocNet/issues/632) |
+| site shell: places, one top bar, docs nav regrouped | [#627](https://github.com/swarm-routing/AntHocNet/issues/627) |
+| hub screen (the game's home) | [#628](https://github.com/swarm-routing/AntHocNet/issues/628) |
+| docs pages as game windows + Try it rail | [#629](https://github.com/swarm-routing/AntHocNet/issues/629) |
+| in-game reader + search from the game | [#630](https://github.com/swarm-routing/AntHocNet/issues/630) |
+| two-way links, checked in CI | [#631](https://github.com/swarm-routing/AntHocNet/issues/631) |
+| API reference in the game's chrome | [#632](https://github.com/swarm-routing/AntHocNet/issues/632) |
 
-The campaign's title screen ([#566](https://github.com/danieljoppi/AntHocNet/issues/566), v2.2.0) builds on the hub. Its "Learn
+The campaign's title screen ([#566](https://github.com/swarm-routing/AntHocNet/issues/566), v2.2.0) builds on the hub. Its "Learn
 more" button becomes the places in the top bar.
 
 The mockups are static HTML ([`site-in-game-mockup.html`](images/site-in-game-mockup.html),
@@ -574,14 +574,14 @@ the published VANET main cell.
 ## 11. The Workshop: the API and ns-3 inside the game
 
 **Built in v2.1.0:** the Nest (#635) and the install quest (#636), on
-[the Workshop page](https://danieljoppi.github.io/AntHocNet/workshop.html). X-ray, the tuning
+[the Workshop page](https://swarm-routing.github.io/AntHocNet/workshop.html). X-ray, the tuning
 bench, the ns-3 export and replay follow in v2.2.0–v2.3.0.
 
 §10 puts the API reference and the install guide *inside* the game's frame,
 but you still only read them there. The Workshop goes further, using
 something almost no API reference has: the game **is** the core, running
 live (ADR-0021). So the API can be explored on running objects, and anything
-built in the game can be carried into ns-3. Epic [#634](https://github.com/danieljoppi/AntHocNet/issues/634).
+built in the game can be carried into ns-3. Epic [#634](https://github.com/swarm-routing/AntHocNet/issues/634).
 
 ### The Nest — the API as an ant nest (v2.1.0)
 
@@ -607,13 +607,13 @@ it shows activity, it is not a profiler). Clicking one opens its API page in
 the reader. For the selected node, members with a binding show their live
 values. The page index comes from Doxygen's XML output. A CI check fails if
 a public class in `core/include` has no chamber, so the map cannot fall
-behind the code. [#635](https://github.com/danieljoppi/AntHocNet/issues/635).
+behind the code. [#635](https://github.com/swarm-routing/AntHocNet/issues/635).
 
 ![The Nest mockup: the core drawn as an ant nest — adapters on the surface, ports as tunnels, components as chambers — with the PheromoneTable API page open beside it showing live values for node 7](images/workshop-nest.png)
 
 ### X-ray and the tuning bench (v2.2.0)
 
-- **X-ray** ([#637](https://github.com/danieljoppi/AntHocNet/issues/637)):
+- **X-ray** ([#637](https://github.com/swarm-routing/AntHocNet/issues/637)):
   - **Node X-ray.** The Inspect tool's pheromone table names its columns by
     API member.
   - **Ant X-ray.** Click an ant in flight to see the bytes the core's codec
@@ -621,7 +621,7 @@ behind the code. [#635](https://github.com/danieljoppi/AntHocNet/issues/635).
     `codec::serialize` the ns-3 module puts on the air. Each field is
     coloured and linked to [wire-format.md](wire-format.md).
   - It is read-only, so parity is untouched.
-- **Tuning bench** ([#638](https://github.com/danieljoppi/AntHocNet/issues/638)). Every `Config` field the browser exposes
+- **Tuning bench** ([#638](https://github.com/swarm-routing/AntHocNet/issues/638)). Every `Config` field the browser exposes
   (`alpha`, `betaAnts`, `betaData`, `enableMultipath`, `enableProactive`,
   `enableRepair`, `helloInterval`, `proactiveInterval`) gets a slider with:
   - its doc comment;
@@ -631,29 +631,29 @@ behind the code. [#635](https://github.com/danieljoppi/AntHocNet/issues/635).
 
   A ghost run with the defaults, on the same seed, shows what the change
   did. The bench ends with the exact `--ns3::anthocnet::RoutingProtocol::<Attr>=`
-  line. The campaign's upgrades ([#579](https://github.com/danieljoppi/AntHocNet/issues/579)) are switches on this bench.
+  line. The campaign's upgrades ([#579](https://github.com/swarm-routing/AntHocNet/issues/579)) are switches on this bench.
 
 ![X-ray mockup: a running world with node 7's pheromone table (columns named by API member), a forward ant's codec bytes decoded field by field, and the tuning bench with the matching ns-3 attribute line](images/workshop-xray.png)
 
 ### The game meets ns-3 (v2.1.0–v2.3.0)
 
-- **Install quest** ([#636](https://github.com/danieljoppi/AntHocNet/issues/636), v2.1.0). The install guide becomes a quest.
-  `make doctor` ([#605](https://github.com/danieljoppi/AntHocNet/issues/605)) prints a machine-readable `##DOCTOR##` line; the
+- **Install quest** ([#636](https://github.com/swarm-routing/AntHocNet/issues/636), v2.1.0). The install guide becomes a quest.
+  `make doctor` ([#605](https://github.com/swarm-routing/AntHocNet/issues/605)) prints a machine-readable `##DOCTOR##` line; the
   user pastes it, and the game ticks or explains each step **locally**,
   pointing at the fix. The install page and the quest are generated from one
   step list.
-- **Take it to ns-3** ([#640](https://github.com/danieljoppi/AntHocNet/issues/640), v2.2.0). Any world or campaign level exports
+- **Take it to ns-3** ([#640](https://github.com/swarm-routing/AntHocNet/issues/640), v2.2.0). Any world or campaign level exports
   as an ns-3 kit, built in the browser:
   - the devices' movements as an ns-2 trace;
   - the calls as a flow list;
   - the bench's Config as attributes;
   - a `run.sh` for `routing-compare` (`anthocnet-compare` before v2.6.0).
 
-  This needs the harness to replay a trace and a flow list ([#639](https://github.com/danieljoppi/AntHocNet/issues/639), which
-  also finishes [#61](https://github.com/danieljoppi/AntHocNet/issues/61)).
-- **ns-3 replay** ([#641](https://github.com/danieljoppi/AntHocNet/issues/641), v2.3.0). The harness writes a compact trace
+  This needs the harness to replay a trace and a flow list ([#639](https://github.com/swarm-routing/AntHocNet/issues/639), which
+  also finishes [#61](https://github.com/swarm-routing/AntHocNet/issues/61)).
+- **ns-3 replay** ([#641](https://github.com/swarm-routing/AntHocNet/issues/641), v2.3.0). The harness writes a compact trace
   (positions, `RouteChanged` events, drops) for one seed of every published
-  cell, committed under `results/` ([#615](https://github.com/danieljoppi/AntHocNet/issues/615)). The game replays it with its
+  cell, committed under `results/` ([#615](https://github.com/swarm-routing/AntHocNet/issues/615)). The game replays it with its
   own renderer, side by side with the browser run of the same scene, and
   marks where the strongest routes diverge. That divergence is the
   simplified radio, made visible.

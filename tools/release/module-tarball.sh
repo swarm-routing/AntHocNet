@@ -45,7 +45,7 @@ Contents: contrib/anthocnet (the module + harnesses) and the comparison
 modules contrib/aomdv, contrib/gpsr, contrib/oracle, contrib/adaptive and the harness
 module contrib/routing-bench. Delete those five to
 build AntHocNet alone; ns-3 then skips the comparison harnesses.
-Tested on ns-3.36 to ns-3.48. Docs: https://danieljoppi.github.io/AntHocNet/docs/
+Tested on ns-3.36 to ns-3.48. Docs: https://swarm-routing.github.io/AntHocNet/docs/
 TXT
 
 epoch=$(git -C "$repo" log -1 --format=%ct 2>/dev/null || echo 0)
@@ -82,7 +82,7 @@ $pkg $ver (from AntHocNet $ver): $what.
 Needs only stock ns-3 (3.36 to 3.48). routing-bench and adaptive install side
 by side: with both present, routing-compare also offers the adaptive arms.
 The version follows AntHocNet's release line. Licence: GPL-2.0-only (LICENSE).
-Docs: https://danieljoppi.github.io/AntHocNet/docs/comparison-harness/
+Docs: https://swarm-routing.github.io/AntHocNet/docs/comparison-harness/
 TXT
     pack "$p" "$pkg-${ver}.tar.gz"
 done

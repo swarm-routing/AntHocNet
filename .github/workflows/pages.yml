@@ -181,7 +181,7 @@ jobs:
           cd "$RUNNER_TEMP/pw"
           npm ci --no-audit --no-fund
           npx --no-install playwright-core install --with-deps chromium
-          base="${URL:-https://danieljoppi.github.io/AntHocNet/}"
+          base="${URL:-https://swarm-routing.github.io/AntHocNet/}"
           case "$base" in */) ;; *) base="$base/";; esac
           node "$GITHUB_WORKSPACE/web/test/live-smoke.mjs" "$base" "$CORE"
       - name: Open or update the tracking issue

@@ -162,9 +162,9 @@ Three relationships carry the architecture:
   timer except through an interface someone else implements.
 - **`ILinkMetric` is the one open seam.** `ClassicMetric` (the paper's Eq. 2) is
   the default; energy-aware and fuzzy-composite metrics
-  ([#145](https://github.com/danieljoppi/AntHocNet/issues/145),
-  [#146](https://github.com/danieljoppi/AntHocNet/issues/146)) and the planned
-  trust factor ([#302](https://github.com/danieljoppi/AntHocNet/issues/302))
+  ([#145](https://github.com/swarm-routing/AntHocNet/issues/145),
+  [#146](https://github.com/swarm-routing/AntHocNet/issues/146)) and the planned
+  trust factor ([#302](https://github.com/swarm-routing/AntHocNet/issues/302))
   plug in here without the core learning about any of them. Metrics are
   stateless and const, so one process-lifetime instance is shared by every node.
 

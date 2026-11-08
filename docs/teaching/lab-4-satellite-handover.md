@@ -3,7 +3,7 @@
 **Goal.** See how a constellation's links change on a schedule, and how ant
 routing repairs a failure on a regular grid.
 **Time.** 60 min. **Site.** Campaign levels 5.1 and 5.3
-([`#campaign?open=all`](https://danieljoppi.github.io/AntHocNet/#campaign?open=all)).
+([`#campaign?open=all`](https://swarm-routing.github.io/AntHocNet/#campaign?open=all)).
 
 [← Classroom pack](README.md) · [Answer key](answer-keys.md#lab-4)
 

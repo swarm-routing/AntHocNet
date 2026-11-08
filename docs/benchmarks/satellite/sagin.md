@@ -2,7 +2,7 @@
 
 **Regime:** three link layers with very different delays and lifetimes. The
 ground stations reach a moving LEO shell only through a layer of
-high-altitude platforms (HAPS) ([#581](https://github.com/danieljoppi/AntHocNet/issues/581), family axis III).
+high-altitude platforms (HAPS) ([#581](https://github.com/swarm-routing/AntHocNet/issues/581), family axis III).
 
 [← Benchmark index](../../benchmarks.md) · [The moving constellation](leo-walker.md) ·
 [Metrics](../metrics.md) · [Methodology](../methodology.md)
@@ -50,9 +50,9 @@ and HAPS, the neighbour that leads up (`g_uplink`).
 Declared on #581 before the first campaign (maintainer decision 2026-10-20).
 AODV and OLSR are not arms in this family.
 
-- **OPSPF** ([#707](https://github.com/danieljoppi/AntHocNet/issues/707))
+- **OPSPF** ([#707](https://github.com/swarm-routing/AntHocNet/issues/707))
   and **geo-greedy**, for the space layer.
-- **gpsr3d** ([#710](https://github.com/danieljoppi/AntHocNet/issues/710)),
+- **gpsr3d** ([#710](https://github.com/swarm-routing/AntHocNet/issues/710)),
   for the air layer. This is the vendored GPSR's ThreeD mode, with two
   disclosed changes so it runs here (`ns3/baselines/gpsr/README.md`):
   - it forwards on every interface, not only interface 1;
@@ -61,7 +61,7 @@ AODV and OLSR are not arms in this family.
     the chord between two cities runs through the Earth.
 - **The hop and delay oracles**, as the bounds. The hop oracle is not a
   delivery bound on cells with unpredicted failures
-  ([#720](https://github.com/danieljoppi/AntHocNet/issues/720)).
+  ([#720](https://github.com/swarm-routing/AntHocNet/issues/720)).
 
 ## The gate
 
@@ -100,7 +100,7 @@ structural greedy dead ends of a +grid shell.
 ## Pre-registered campaign
 
 The plan is
-[`tools/bench/campaigns/v2.4.0-sagin.yaml`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-sagin.yaml),
+[`tools/bench/campaigns/v2.4.0-sagin.yaml`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-sagin.yaml),
 merged before its first dispatch:
 
 - **cells:** the three LEO shells with `--sagin` (walker16, Starlink S1,
@@ -120,7 +120,7 @@ The pre-registered campaign, as planned: the three shells with `--sagin`, 20
 seeds each, six arms, on `ns3:3.48`. The two Starlink gpsr3d cells ran in
 2-seed blocks. Their first 20-seed job needed about 55 min a seed and hit
 the 6 h runner limit
-([#738](https://github.com/danieljoppi/AntHocNet/pull/738)); only the job
+([#738](https://github.com/swarm-routing/AntHocNet/pull/738)); only the job
 split changed. The cells are `results/cells/sagin-*-v240.txt`.
 `scenario_check.py results`: OK, 0 FAIL, 0 WARN, per file and per cell.
 
@@ -149,7 +149,7 @@ What they say:
   more than AntHocNet, at 4.5× (walker16) to 16× (Starlink) its control.
   OPSPF also sits above both 1 s oracles on the Starlink shells. Neither is
   a delivery bound with unpredicted failures
-  ([#720](https://github.com/danieljoppi/AntHocNet/issues/720)), which
+  ([#720](https://github.com/swarm-routing/AntHocNet/issues/720)), which
   holds for the delay oracle here as for the hop oracle on the LEO page.
 - **AntHocNet is far ahead of the geographic arms.** It leads gpsr3d by
   +52.9 pp on walker16 and +77.0 / +75.6 pp on Starlink. On the 1584-satellite

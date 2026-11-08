@@ -3,8 +3,8 @@
 > **Status:** web/abstract-level survey, 2026-07-26, **with §2 since checked
 > against a full-text source** (see [§2](#2-what-the-mainstream-actually-does)).
 > Answers the gating question on
-> [#202](https://github.com/danieljoppi/AntHocNet/issues/202) for the satellite
-> track ([#192](https://github.com/danieljoppi/AntHocNet/issues/192)).
+> [#202](https://github.com/swarm-routing/AntHocNet/issues/202) for the satellite
+> track ([#192](https://github.com/swarm-routing/AntHocNet/issues/192)).
 > Everything outside §2 remains abstract-level — see
 > [§8 Limits](#8-limits-of-this-survey) for what still needs a human pass.
 
@@ -15,8 +15,8 @@
 
 ## 1. The question this answers
 
-Before spending anything on a satellite substrate ([#193](https://github.com/danieljoppi/AntHocNet/issues/193))
-or a satellite module ([#195](https://github.com/danieljoppi/AntHocNet/issues/195)),
+Before spending anything on a satellite substrate ([#193](https://github.com/swarm-routing/AntHocNet/issues/193))
+or a satellite module ([#195](https://github.com/swarm-routing/AntHocNet/issues/195)),
 the track needs an answer to the objection a reviewer raises in one sentence:
 
 > **LEO topology is deterministic.** The inter-satellite-link graph for any
@@ -56,8 +56,8 @@ accordingly.
 
 This is the bar. Any claim we make is measured against a precomputed
 shortest-path control, not against AODV — which is exactly the framing already
-written into [#196](https://github.com/danieljoppi/AntHocNet/issues/196) /
-[#216](https://github.com/danieljoppi/AntHocNet/issues/216), and this survey
+written into [#196](https://github.com/swarm-routing/AntHocNet/issues/196) /
+[#216](https://github.com/swarm-routing/AntHocNet/issues/216), and this survey
 confirms it is not a self-imposed handicap but the field's actual convention.
 
 ### 2.1 What protocols actually run on satellites
@@ -106,7 +106,7 @@ Two things follow, and both change #216:
    claim. Since [ADR-0026](adr/0026-baselines-are-family-native.md) they leave
    the satellite cells from the next campaign: geo-greedy and the oracles
    cover the naive and the ideal case, and OPSPF
-   ([#707](https://github.com/danieljoppi/AntHocNet/issues/707)) takes the
+   ([#707](https://github.com/swarm-routing/AntHocNet/issues/707)) takes the
    link-state slot.
 2. **The realistic incumbent is predictability-aware link state, not just
    "precomputed shortest path".** OPSPF is the sharper control: it is what the
@@ -115,13 +115,13 @@ Two things follow, and both change #216:
    control remains the right first implementation (it is simpler and bounds the
    best case), but the ceiling it represents should be named honestly.
    **Status (2026-10-19):** the `opspf` arm exists on leo-walker
-   ([#707](https://github.com/danieljoppi/AntHocNet/issues/707); see
+   ([#707](https://github.com/swarm-routing/AntHocNet/issues/707); see
    [leo-walker.md](benchmarks/satellite/leo-walker.md#opspf-the-link-state-incumbent-707)).
    With no unpredicted failure it routes exactly as the hop oracle does. Under
    the failure overlay it floods each ISL change network-wide, the
    reconvergence cost OPSPF is known for, and it exposed that the 1 s-cadence
    oracle is not a delivery bound on failure cells
-   ([#720](https://github.com/danieljoppi/AntHocNet/issues/720)).
+   ([#720](https://github.com/swarm-routing/AntHocNet/issues/720)).
    **Result (v2.4.0 control campaign, 20 seeds, paired):** AntHocNet − OPSPF
    is −6.17 pp [−7.42, −4.91] on walker16, −17.48 pp [−19.08, −15.88] on
    Starlink S1 and −16.94 pp [−19.27, −14.61] on the S1 storm. The
@@ -161,7 +161,7 @@ satellite links means traffic-intensive regions congest while other links sit
 idle.* Orbital mechanics predict the **topology**; they do not predict **where
 the traffic goes**. That is the gap an adaptive protocol occupies, and it is
 precisely the mechanism AntHocNet already has (multipath + delay-weighted
-pheromone + the A2 congestion metric, [#55](https://github.com/danieljoppi/AntHocNet/issues/55)/[#67](https://github.com/danieljoppi/AntHocNet/issues/67)).
+pheromone + the A2 congestion metric, [#55](https://github.com/swarm-routing/AntHocNet/issues/55)/[#67](https://github.com/swarm-routing/AntHocNet/issues/67)).
 
 **(b) Shortest-path controls are already standard here.** ACORA-WR is compared
 against **SPR** among others. So a submission without that control would be
@@ -184,9 +184,9 @@ The gap is **not algorithmic**. It is in *evaluation*:
 Crucially, **ns3-leo states our exact use case as its design goal**: a
 simulation environment where *existing routing protocols from the WSN and MANET
 areas can be evaluated in satellite networks*. That is a direct hit on
-[#198](https://github.com/danieljoppi/AntHocNet/issues/198) and a strong signal
+[#198](https://github.com/swarm-routing/AntHocNet/issues/198) and a strong signal
 for the substrate decision — and it further weakens the case for building our
-own module ([#195](https://github.com/danieljoppi/AntHocNet/issues/195)).
+own module ([#195](https://github.com/swarm-routing/AntHocNet/issues/195)).
 
 Two substrate facts recovered from the Westphal et al. full text, both new to
 this track:
@@ -199,10 +199,10 @@ this track:
 - **A candidate the track had missed:** Pedro Silva, *Satellite Mobility Model
   for ns-3 Simulator* (<https://gitlab.inesctec.pt/pmms/ns3-satellite>) — and
   Westphal et al. state that **Hypatia is built on it**. That makes it the layer
-  *beneath* the option [#197](https://github.com/danieljoppi/AntHocNet/issues/197)
+  *beneath* the option [#197](https://github.com/swarm-routing/AntHocNet/issues/197)
   evaluates: potentially the mobility half of a substrate without Hypatia's
   precomputed-forwarding baggage, and a plausible ready-made answer to the
-  roll-your-own floor in [#200](https://github.com/danieljoppi/AntHocNet/issues/200).
+  roll-your-own floor in [#200](https://github.com/swarm-routing/AntHocNet/issues/200).
 
 ## 5. The defensible claim
 
@@ -212,8 +212,8 @@ would have to beat tuned, published load-balancing algorithms on their own
 ground.
 
 The defensible claim is the repo's **existing** positioning
-([#31](https://github.com/danieljoppi/AntHocNet/issues/31),
-[#109](https://github.com/danieljoppi/AntHocNet/issues/109)) applied to a new
+([#31](https://github.com/swarm-routing/AntHocNet/issues/31),
+[#109](https://github.com/swarm-routing/AntHocNet/issues/109)) applied to a new
 domain: an **open, tested, simulator-agnostic implementation** of a canonical
 ACO routing protocol, evaluated on a **current, reproducible ns-3 satellite
 substrate against a precomputed shortest-path control** — the comparison the
@@ -257,19 +257,19 @@ didn't compare".
 
 ## 6. What the benchmark must create
 
-Directly actionable for [#216](https://github.com/danieljoppi/AntHocNet/issues/216) —
+Directly actionable for [#216](https://github.com/swarm-routing/AntHocNet/issues/216) —
 these are the regimes where the deterministic control is blind:
 
 1. **Congestion the control cannot see.** Asymmetric offered load over paths of
    equal length; the literature's own motivation (bursty traffic, idle links
    elsewhere). Requires the non-wifi `ILinkState` signal
-   ([#206](https://github.com/danieljoppi/AntHocNet/issues/206)) or AntHocNet's
+   ([#206](https://github.com/swarm-routing/AntHocNet/issues/206)) or AntHocNet's
    congestion mechanism is inert on ISLs.
 2. **Failures it did not predict.** Unscheduled ISL loss, degraded or jammed
    satellites — as distinct from the *scheduled* topology changes the control
    already has in its tables.
 3. **Endpoint churn.** Ground-station handover
-   ([#211](https://github.com/danieljoppi/AntHocNet/issues/211)) forces the
+   ([#211](https://github.com/swarm-routing/AntHocNet/issues/211)) forces the
    control to recompute whole paths; traffic endpoints should therefore be
    ground stations, not satellites.
 
@@ -280,14 +280,14 @@ makes building them part of #216 rather than a follow-up.
 
 | Ticket | Effect of this survey |
 |---|---|
-| [#192](https://github.com/danieljoppi/AntHocNet/issues/192) | Track is **not** closed as a negative result — a defensible claim exists, but it is an evaluation claim, not an algorithmic one |
-| [#193](https://github.com/danieljoppi/AntHocNet/issues/193) | Substrate must be a *current, reproducible* ns-3 base; that is now a selection criterion, not a nice-to-have |
-| [#198](https://github.com/danieljoppi/AntHocNet/issues/198) | **Promoted** — ns3-leo's stated goal is literally this use case, and it is peer-reviewed (IEEE Access 2022) rather than only a repository |
-| [#200](https://github.com/danieljoppi/AntHocNet/issues/200) | **New candidate:** Silva's *Satellite Mobility Model for ns-3* — Hypatia is built on it, so it may already be the roll-your-own floor this spike was going to estimate |
-| [#197](https://github.com/danieljoppi/AntHocNet/issues/197) | Assess Hypatia's mobility layer separately from its precomputed forwarding — the former is Silva's model, and may be usable without the latter |
-| [#195](https://github.com/danieljoppi/AntHocNet/issues/195) | **Weakened** — the infrastructure exists; building our own is harder to justify |
-| [#206](https://github.com/danieljoppi/AntHocNet/issues/206) | **Confirmed load-bearing** — congestion is *the* claim, and the signal is wifi-only today |
-| [#216](https://github.com/danieljoppi/AntHocNet/issues/216) | Control is mandatory and matches field convention; §6 defines the cells. **Updated by §2.1/§5.1:** AODV/OLSR/DSDV are a sanity row, not the claim; **OPSPF** is the sharper realistic incumbent; and **segment routing** contests the same congestion niche, so "why not SR?" needs an answer |
+| [#192](https://github.com/swarm-routing/AntHocNet/issues/192) | Track is **not** closed as a negative result — a defensible claim exists, but it is an evaluation claim, not an algorithmic one |
+| [#193](https://github.com/swarm-routing/AntHocNet/issues/193) | Substrate must be a *current, reproducible* ns-3 base; that is now a selection criterion, not a nice-to-have |
+| [#198](https://github.com/swarm-routing/AntHocNet/issues/198) | **Promoted** — ns3-leo's stated goal is literally this use case, and it is peer-reviewed (IEEE Access 2022) rather than only a repository |
+| [#200](https://github.com/swarm-routing/AntHocNet/issues/200) | **New candidate:** Silva's *Satellite Mobility Model for ns-3* — Hypatia is built on it, so it may already be the roll-your-own floor this spike was going to estimate |
+| [#197](https://github.com/swarm-routing/AntHocNet/issues/197) | Assess Hypatia's mobility layer separately from its precomputed forwarding — the former is Silva's model, and may be usable without the latter |
+| [#195](https://github.com/swarm-routing/AntHocNet/issues/195) | **Weakened** — the infrastructure exists; building our own is harder to justify |
+| [#206](https://github.com/swarm-routing/AntHocNet/issues/206) | **Confirmed load-bearing** — congestion is *the* claim, and the signal is wifi-only today |
+| [#216](https://github.com/swarm-routing/AntHocNet/issues/216) | Control is mandatory and matches field convention; §6 defines the cells. **Updated by §2.1/§5.1:** AODV/OLSR/DSDV are a sanity row, not the claim; **OPSPF** is the sharper realistic incumbent; and **segment routing** contests the same congestion niche, so "why not SR?" needs an answer |
 
 ## 8. Limits of this survey
 
@@ -299,7 +299,7 @@ Stated plainly so nobody mistakes its reach:
   is how the Iridium claim was caught and withdrawn. **Every other section is
   still abstract-level.** The environment cannot fetch academic PDFs itself
   (proxy 403), the same constraint that gated the 2007 thesis work
-  ([#58](https://github.com/danieljoppi/AntHocNet/issues/58)/[#88](https://github.com/danieljoppi/AntHocNet/issues/88)).
+  ([#58](https://github.com/swarm-routing/AntHocNet/issues/58)/[#88](https://github.com/swarm-routing/AntHocNet/issues/88)).
 - **One claim has already been withdrawn on contact with a source** (§2,
   Iridium). Treat that as a base rate, not a one-off: the unchecked sections
   were written the same way.

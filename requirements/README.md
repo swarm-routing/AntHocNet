@@ -7,7 +7,7 @@ The Python tools CI uses, one pair of files per tool:
   to an exact version **and** to its sha256 hashes.
 
 Every install goes through the `.txt` files with `pip install --require-hashes`
-([#787](https://github.com/danieljoppi/AntHocNet/issues/787)), so a dependency
+([#787](https://github.com/swarm-routing/AntHocNet/issues/787)), so a dependency
 cannot change under a pinned version without the install failing. Workflows
 install with `.github/actions/python-tools` (`packages: ruff pyyaml` installs
 `ruff.txt` and `pyyaml.txt`); `release.yml` installs `commitizen.txt` directly.

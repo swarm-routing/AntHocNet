@@ -23,7 +23,7 @@ Write down your answers before you run anything:
 
 ## 2. Run (15 min)
 
-1. Open [`#manet?seed=6`](https://danieljoppi.github.io/AntHocNet/#manet?seed=6): 30 devices on a field,
+1. Open [`#manet?seed=6`](https://swarm-routing.github.io/AntHocNet/#manet?seed=6): 30 devices on a field,
    two thirds of them moving, with three calls between them.
 2. Run to **t = 60 s** (use ▶▶▶ to speed up), then pause.
 3. Record `✓` (delivered / sent) and `ants` from the status bar.

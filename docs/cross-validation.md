@@ -1,12 +1,12 @@
 # NS-2 / NS-3 cross-validation (retired)
 
 > **Historical.** The NS-2 adapter was removed in v2.0.0
-> ([#307](https://github.com/danieljoppi/AntHocNet/issues/307),
+> ([#307](https://github.com/swarm-routing/AntHocNet/issues/307),
 > [ADR-0023](adr/0023-one-core-one-simulator-adapter.md)), so there is no
 > second simulator on `main` to cross-validate against. The full procedure —
 > `ns3/tools/cross-check.sh` on the ns-3 side, an `ns2/tcl/` scenario and a
 > trace-file PDR on the NS-2 side — is preserved at the
-> [v1.9.0 tag](https://github.com/danieljoppi/AntHocNet/blob/v1.9.0/docs/cross-validation.md),
+> [v1.9.0 tag](https://github.com/swarm-routing/AntHocNet/blob/v1.9.0/docs/cross-validation.md),
 > the last release that ships both adapters.
 
 What it was, for readers arriving from older pages:

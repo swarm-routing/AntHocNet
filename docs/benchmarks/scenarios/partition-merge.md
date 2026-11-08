@@ -1,6 +1,6 @@
 # Scenario: partition/merge
 
-**Class:** stress: a field that splits and re-joins ([#62](https://github.com/danieljoppi/AntHocNet/issues/62))
+**Class:** stress: a field that splits and re-joins ([#62](https://github.com/swarm-routing/AntHocNet/issues/62))
 
 [← Benchmark index](../../benchmarks.md) · [Metrics](../metrics.md) · [Methodology](../methodology.md)
 
@@ -12,11 +12,11 @@ the flows have unreachable destinations. That is where failure-recovery
 machinery either backs off or storms. Two past AntHocNet bugs were exactly
 that, and both were found late, through benchmark forensics:
 
-- the linkfail broadcast storm ([#20](https://github.com/danieljoppi/AntHocNet/issues/20));
-- the unbounded proactive flood ([#45](https://github.com/danieljoppi/AntHocNet/issues/45)).
+- the linkfail broadcast storm ([#20](https://github.com/swarm-routing/AntHocNet/issues/20));
+- the unbounded proactive flood ([#45](https://github.com/swarm-routing/AntHocNet/issues/45)).
 
 This scene catches that class on every PR. It is also the partition building
-block for the disaster family ([#580](https://github.com/danieljoppi/AntHocNet/issues/580)).
+block for the disaster family ([#580](https://github.com/swarm-routing/AntHocNet/issues/580)).
 
 ## Configuration
 
@@ -32,7 +32,7 @@ block for the disaster family ([#580](https://github.com/danieljoppi/AntHocNet/i
 The scene is generated, not hand-written:
 `python3 tools/bench/partition_scene.py gen --out DIR --seed 1` writes an
 ns-2 movement trace and a flow file for `anthocnet-compare --mobility=trace
---traceFile=… --flowsFile=…` ([#639](https://github.com/danieljoppi/AntHocNet/issues/639)).
+--traceFile=… --flowsFile=…` ([#639](https://github.com/swarm-routing/AntHocNet/issues/639)).
 The flow file's `#` header records the phases and which flows cross, so the
 checker reads the scene from the same file the run used.
 
@@ -89,7 +89,7 @@ oracle's re-join time, 12 s, is the bridges' travel time: it is the floor
 for any protocol. PDR is about 65 % for everyone because the five crossing
 flows lose half the run to the partition by construction.
 
-**A finding, filed as [#723](https://github.com/danieljoppi/AntHocNet/issues/723).** While the field is split, AntHocNet's
+**A finding, filed as [#723](https://github.com/swarm-routing/AntHocNet/issues/723).** While the field is split, AntHocNet's
 reactive ants rise from about 40 pkt/s (merged, first phase) to 196–218
 pkt/s. These are route-setup retries toward the unreachable destinations.
 The rate is bounded, so the gate passes. But it is about 10× OLSR's whole

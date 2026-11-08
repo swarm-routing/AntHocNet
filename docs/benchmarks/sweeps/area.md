@@ -6,25 +6,25 @@
 
 > **Provenance — measured at `v1.3.0`.** Every number on this page was
 > produced by the campaign runs named below, all of which predate the
-> [`v1.3.0`](https://github.com/danieljoppi/AntHocNet/releases/tag/v1.3.0) tag
+> [`v1.3.0`](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.3.0) tag
 > (`19009be`). No commit between `v1.2.0` and that tag changes routing
 > behaviour, so **checking out `v1.3.0` reproduces these cells.** The default
 > branch will not: it has since changed the pheromone weighting
-> ([#327](https://github.com/danieljoppi/AntHocNet/issues/327), `betaAnts`/
+> ([#327](https://github.com/swarm-routing/AntHocNet/issues/327), `betaAnts`/
 > `betaData` 2.0 → 20) and the per-seed RNG stream assignment
-> ([#352](https://github.com/danieljoppi/AntHocNet/issues/352)), either of
+> ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)), either of
 > which moves measured values. See
 > [Provenance](../methodology.md#provenance-which-version-a-number-was-measured-at)
-> and [#365](https://github.com/danieljoppi/AntHocNet/issues/365).
+> and [#365](https://github.com/swarm-routing/AntHocNet/issues/365).
 
-> **Restated on CBR sources ([#521](https://github.com/danieljoppi/AntHocNet/issues/521)).** The pinned table below was
+> **Restated on CBR sources ([#521](https://github.com/swarm-routing/AntHocNet/issues/521)).** The pinned table below was
 > measured at half the documented offered load. A 20-seed re-measure on
 > `main` is under [Restated on CBR sources](#restated-on-cbr-sources-521)
 > at the end of this page.
 
-> **OLSR's PDR column is inflated ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)).** These cells
+> **OLSR's PDR column is inflated ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)).** These cells
 > predate the fix that counts a send stock OLSR *refuses* at the source as an
-> offered packet ([PR #511](https://github.com/danieljoppi/AntHocNet/pull/511), `f480d0ae`). Before it, OLSR's PDR
+> offered packet ([PR #511](https://github.com/swarm-routing/AntHocNet/pull/511), `f480d0ae`). Before it, OLSR's PDR
 > was computed over the ticks it had a route for. This page stays pinned to
 > `v1.3.0` and is not re-measured. The offered-based value below is estimated
 > from this table's own columns, as
@@ -78,18 +78,18 @@ superseded pre-#88/#169 5-seed data remains at
 ## Results
 
 > **Post-#88/#169, 20 seeds, 95% CIs.** These numbers include the `T_hop`
-> = 3 ms fix ([#88](https://github.com/danieljoppi/AntHocNet/issues/88), PR
+> = 3 ms fix ([#88](https://github.com/swarm-routing/AntHocNet/issues/88), PR
 > #167) and the reactive-hop-cap removal
-> ([#169](https://github.com/danieljoppi/AntHocNet/issues/169), PR #170), and
+> ([#169](https://github.com/swarm-routing/AntHocNet/issues/169), PR #170), and
 > meet the [methodology](../methodology.md#statistical-policy-293) runs floor.
 > Versus the superseded 5-seed data, AntHocNet's PDR moved **+1.1 to
 > +13.3 pp** across the sweep (baselines moved ≤ ~1 pp, consistent with the
 > 5→20 run-count change) — the re-run existed precisely because #88/#169
 > invalidated the old numbers. The delay99 column carries the known #21 tail
 > (remediation tracked in
-> [#308](https://github.com/danieljoppi/AntHocNet/issues/308)). Do not quote
+> [#308](https://github.com/swarm-routing/AntHocNet/issues/308)). Do not quote
 > `path_div_*`/`entropy` from these cells
-> ([#230](https://github.com/danieljoppi/AntHocNet/issues/230) window
+> ([#230](https://github.com/swarm-routing/AntHocNet/issues/230) window
 > caveat).
 
 <!-- BENCHMARK-TABLE-START -->
@@ -125,7 +125,7 @@ _Sweep `area` — mean of 20 run(s) per point, every baseline on identical reali
 ## Restated on CBR sources (#521)
 
 > **Re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off, so the
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off, so the
 > pinned table above was taken at half the documented offered load. That
 > table stays as the dated `v1.3.0` record.
 >
@@ -137,7 +137,7 @@ _Sweep `area` — mean of 20 run(s) per point, every baseline on identical reali
 > `<run>-run-runs.csv` (per seed).
 > `scenario_check.py results`: 0 FAIL; the WARNs are the #230 path-diversity
 > window caveat and route-flap reorder notes. OLSR's PDR is offered-based
-> ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)), so the estimate table at the top of this page does not apply
+> ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)), so the estimate table at the top of this page does not apply
 > to this block.
 >
 > **Attribution.** This is not a CBR-only A/B. `3edbab6a` also carries
@@ -152,7 +152,7 @@ _Sweep `area` — mean of 20 run(s) per point, every baseline on identical reali
 >
 > ![sweep: area on CBR sources (#521)](../sweep-area.png)
 >
-> _Reproduce: `make reproduce FIG=sweep-area` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=sweep-area` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
 > | area long edge (m) | protocol | PDR % ±95 | mean delay (ms) ±95 | 99th delay (ms) ±95 | throughput (kbps) | NRL ±95 | jitter (ms) | dOff90 (ms) |
 > |---:|----------|----------:|--------------------:|--------------------:|------------------:|--------:|------------:|------------:|

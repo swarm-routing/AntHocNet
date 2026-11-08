@@ -165,7 +165,7 @@ satellite module:
 ```
 
 Every node holds 4 ISLs on 4 **separate subnets**, which is the shape the
-multi-interface routing fix ([#203](https://github.com/danieljoppi/AntHocNet/issues/203))
+multi-interface routing fix ([#203](https://github.com/swarm-routing/AntHocNet/issues/203))
 exists for — a 4×4 delivery smoke runs in CI on every matrix leg. Options:
 `--rows --cols --torus --islDelayMs --islRate --time --flows --cbrBps --runs
 --protocols --csv --diag`.

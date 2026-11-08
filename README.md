@@ -1,24 +1,24 @@
 # AntHocNet
 
-[![CI](https://github.com/danieljoppi/AntHocNet/actions/workflows/ci.yml/badge.svg)](https://github.com/danieljoppi/AntHocNet/actions/workflows/ci.yml)
-[![Core coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fdanieljoppi.github.io%2FAntHocNet%2Fbadges%2Fcoverage.json)](https://github.com/danieljoppi/AntHocNet/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/danieljoppi/AntHocNet/badge)](https://scorecard.dev/viewer/?uri=github.com/danieljoppi/AntHocNet)
-[![Release](https://img.shields.io/github/v/release/danieljoppi/AntHocNet?sort=semver&cacheSeconds=1800)](https://github.com/danieljoppi/AntHocNet/releases)
+[![CI](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml/badge.svg)](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml)
+[![Core coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fswarm-routing.github.io%2FAntHocNet%2Fbadges%2Fcoverage.json)](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/swarm-routing/AntHocNet/badge)](https://scorecard.dev/viewer/?uri=github.com/swarm-routing/AntHocNet)
+[![Release](https://img.shields.io/github/v/release/swarm-routing/AntHocNet?sort=semver&cacheSeconds=1800)](https://github.com/swarm-routing/AntHocNet/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20981979.svg)](https://doi.org/10.5281/zenodo.20981979) 
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
 [![License: GPL-2.0, core and tools MIT OR GPL-2.0](https://img.shields.io/badge/license-GPL--2.0%20%7C%20core%20%2B%20tools%20MIT%20OR%20GPL--2.0-blue)](LICENSING.md)
 [![C++14](https://img.shields.io/badge/C%2B%2B-14-blue?logo=cplusplus)](CONTRIBUTING.md)
 [![Simulators](https://img.shields.io/badge/runs%20on-ns--3%20%C2%B7%20WebAssembly-informational)](#)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org)
-[![Top language](https://img.shields.io/github/languages/top/danieljoppi/AntHocNet)](#)
-[![Docs](https://img.shields.io/badge/docs-site-blue)](https://danieljoppi.github.io/AntHocNet/docs/)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/danieljoppi/AntHocNet?quickstart=1)
+[![Top language](https://img.shields.io/github/languages/top/swarm-routing/AntHocNet)](#)
+[![Docs](https://img.shields.io/badge/docs-site-blue)](https://swarm-routing.github.io/AntHocNet/docs/)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/swarm-routing/AntHocNet?quickstart=1)
 [![Sponsor](https://img.shields.io/github/sponsors/danieljoppi?label=sponsor&logo=githubsponsors&color=ea4aaa)](https://github.com/sponsors/danieljoppi)
 
-**▶ [Learn it by playing](https://danieljoppi.github.io/AntHocNet/)** — a city-builder for networks and ants
+**▶ [Learn it by playing](https://swarm-routing.github.io/AntHocNet/)** — a city-builder for networks and ants
 that runs this repository's routing core, compiled to WebAssembly, in your
 browser: place and move phones, break links, and watch the ants find the way.
-Code reference: [API docs](https://danieljoppi.github.io/AntHocNet/api/).
+Code reference: [API docs](https://swarm-routing.github.io/AntHocNet/api/).
 
 ![How AntHocNet finds a route, in three frames from the learn site: reactive forward ants flood out from phone 0 until one reaches phone 5; a backward ant walks home laying a pheromone trail; data packets follow the strongest trail to phone 5](docs/images/readme-how-it-routes.png)
 
@@ -40,7 +40,7 @@ bars: 95% CI) — current numbers and per-scenario pages in
 An ant-colony-optimization routing protocol for mobile ad-hoc networks,
 implemented once as a **simulator-agnostic algorithm core** with a thin
 **NS-3** adapter (and a browser adapter that runs the same core as WebAssembly
-on the [learn site](https://danieljoppi.github.io/AntHocNet/), the project's front page).
+on the [learn site](https://swarm-routing.github.io/AntHocNet/), the project's front page).
 
 The repository does not bundle a copy of any simulator. You install AntHocNet
 onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.36+, with a
@@ -48,8 +48,8 @@ onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.36+, with a
 
 > [!NOTE]
 > **NS-2 support was removed in v2.0.0**
-> ([#307](https://github.com/danieljoppi/AntHocNet/issues/307)). It was frozen at
-> [v1.2.0](https://github.com/danieljoppi/AntHocNet/releases/tag/v1.2.0) and
+> ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)). It was frozen at
+> [v1.2.0](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.2.0) and
 > shipped through v1.9.0; where to get it, the images and the rationale are in
 > **[docs/ns2-support.md](docs/ns2-support.md)**.
 
@@ -137,7 +137,7 @@ cd /path/to/ns-3 && ./ns3 configure --enable-examples --enable-tests && ./ns3 bu
 ```
 
 Without a checkout: download `anthocnet-ns3-modules-<version>.tar.gz` from the
-[latest release](https://github.com/danieljoppi/AntHocNet/releases/latest), then
+[latest release](https://github.com/swarm-routing/AntHocNet/releases/latest), then
 `tar -xzf anthocnet-ns3-modules-<version>.tar.gz -C /path/to/ns-3/contrib` and
 build as above. The same files are on the generated `ns3-module` branch.
 
@@ -304,7 +304,7 @@ History of the work is in the per-phase commits; design rationale is in
 Versioning follows [SemVer](https://semver.org); see [CHANGELOG.md](CHANGELOG.md).
 Each release publishes a lean **install bundle** zip and the **drop-in ns-3
 modules** tarball on GitHub
-[Releases](https://github.com/danieljoppi/AntHocNet/releases) (via
+[Releases](https://github.com/swarm-routing/AntHocNet/releases) (via
 `.github/workflows/release.yml`). There is no prebuilt simulator `.so`/installer
 by design — an ns-3 module is ABI/version-locked to the user's tree, so it
 is distributed as **source** (`make install-ns3`) plus the

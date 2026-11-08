@@ -5,7 +5,7 @@ where it deviates — honestly. The reference is **[1]** = Di Caro, Ducatelle &
 Gambardella, *AntHocNet: an Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc
 Networks*, PPSN VIII, LNCS 3242, 2004 (digest:
 [`publications/papers/2004-ppsn-anthocnet.md`](publications/papers/2004-ppsn-anthocnet.md)).
-The living compliance ledger is [issue #91](https://github.com/danieljoppi/AntHocNet/issues/91).
+The living compliance ledger is [issue #91](https://github.com/swarm-routing/AntHocNet/issues/91).
 
 > **What v1.0 claims.** A faithful, simulator-agnostic implementation of the
 > AntHocNet algorithm with NS-2 and NS-3 adapters, whose **mechanisms and
@@ -43,7 +43,7 @@ choice / **unknown**) and how to calibrate one are in
 |---|---|---|
 | **PDR ≥ AODV**, gap grows with difficulty | ✅ | 92.1 vs 81.4 (disk); 92.9 vs 83.4 (two-ray). #22 (mobility), taxonomy |
 | **Overhead (NRL) below AODV** | ✅ | 45 vs 61 (disk); 44 vs 75 (two-ray) |
-| **Delay/jitter QoS advantage** (bounded tail) | 🟡 partial | **two-ray (paper PHY): mean-delay parity** with AODV (52.8 vs 52.6 ms), jitter within 11 %, after the #21 reconv hold cap (#104). **Disk model**: tail narrowed (delay99 −37 %, jitter −26 % via `ReconvHoldCap`, measured at the then-default 1 s; 200 ms since [#371](https://github.com/danieljoppi/AntHocNet/issues/371)) but still above AODV |
+| **Delay/jitter QoS advantage** (bounded tail) | 🟡 partial | **two-ray (paper PHY): mean-delay parity** with AODV (52.8 vs 52.6 ms), jitter within 11 %, after the #21 reconv hold cap (#104). **Disk model**: tail narrowed (delay99 −37 %, jitter −26 % via `ReconvHoldCap`, measured at the then-default 1 s; 200 ms since [#371](https://github.com/swarm-routing/AntHocNet/issues/371)) but still above AODV |
 
 ## Correction pending re-measurement (#169, 2026-07-25)
 
@@ -67,14 +67,14 @@ sparse-static weakness as a property of the algorithm.
 fix bears the diagnosis out: `sparse-static` rose 83.8 → **93.0 %**, overtaking
 AODV (81.9 %), and the inversion is gone. But `large-scale` fell 75.8 → 21.7 %
 and `heavy-load` 85.0 → 51.4 %, with NRL rising 99.9 → 3071. Cause
-([#173](https://github.com/danieljoppi/AntHocNet/issues/173)): with
+([#173](https://github.com/swarm-routing/AntHocNet/issues/173)): with
 `enableMultipath` on, a reactive forward ant is admitted by the acceptance band
 *instead of* `(src,seq)` duplicate suppression, so removing the broadcast budget
 left the reactive flood unbounded in dense graphs. `reactiveMaxBroadcasts`
 became a **per-(node, generation)** broadcast count (default 2 at the time)
 rather than a per-path budget — bounding the flood without reintroducing the
 #169 hop limit. Numbers measured between those two fixes carry the flood and
-are not representative either. ([#177](https://github.com/danieljoppi/AntHocNet/issues/177)
+are not representative either. ([#177](https://github.com/swarm-routing/AntHocNet/issues/177)
 later retired the count — default now `-1`, unbounded — because the thesis's
 `a1 = 0.9` acceptance band bounds the flood on its own; see
 [`configuration.md`](configuration.md) §4.)
@@ -88,7 +88,7 @@ the [1] version. That is defensible — [1] is a real published algorithm and th
 one this document's claims are written against — but it had not been stated
 anywhere, so a reader checking us against the thesis would read three
 deliberate choices as three defects. Recorded here (audit:
-[#182](https://github.com/danieljoppi/AntHocNet/issues/182)):
+[#182](https://github.com/swarm-routing/AntHocNet/issues/182)):
 
 1. **Multipath reactive route setup.** [1] §3.1 admits later same-generation
    ants within a 1.5× band (`enableMultipath`, `antAcceptanceFactor`). The
@@ -96,10 +96,10 @@ deliberate choices as three defects. Recorded here (audit:
    for first-hop-disjoint ants) and then records dropping the design: reactive
    setup is restricted to a single route, with multiple routes obtained through
    *proactive* maintenance instead.
-   [#177](https://github.com/danieljoppi/AntHocNet/issues/177) measured the
+   [#177](https://github.com/swarm-routing/AntHocNet/issues/177) measured the
    options and adopted the thesis's **factors** (`a1 = 0.9`, `a2 = 2.0`) while
    keeping [1]'s multipath **mechanism** — so this item is now a hybrid, not a
-   pure [1] choice; [#178](https://github.com/danieljoppi/AntHocNet/issues/178)
+   pure [1] choice; [#178](https://github.com/swarm-routing/AntHocNet/issues/178)
    records the citation trap.
 2. **Proactive broadcast probability** (`proactiveBroadcastProb = 0.1`). Our
    exact value appears in the thesis, but in §4.3.4, *"Older versions of
@@ -142,10 +142,10 @@ than from a flatter distribution.
 
 Unlike the three items above, this one is **measured, not just sourced**. A
 20-seed × 900 s paired A/B across all six discrete scenarios
-([#179](https://github.com/danieljoppi/AntHocNet/issues/179)) moved five of six
+([#179](https://github.com/swarm-routing/AntHocNet/issues/179)) moved five of six
 to `PAIRED-IMPROVED` with none regressing: PDR +0.50 to +3.23 pp and routing
 load −9.7 % to −16.7 % where significant, with the baselines byte-identical
-across arms. It also narrowed the [#21](https://github.com/danieljoppi/AntHocNet/issues/21)
+across arms. It also narrowed the [#21](https://github.com/swarm-routing/AntHocNet/issues/21)
 delay-tail deficit against AODV on five of six scenarios (`heavy-load`
 +125.4 % → +82.4 %) without closing it. The one adverse signal is `dense-small`'s
 tail at +9.55 ms, where the bootstrap CI and the Wilcoxon test disagree.
@@ -163,7 +163,7 @@ be split before anyone deviates per ant type.
    parity on mean delay. The residual is a **channel-model artefact**
    (CONTEXT.md §8), not an algorithmic gap. Mitigated by `ReconvHoldCap`
    (measured at the then-default `1.0 s`; the shipped default is `200 ms`
-   since the [#371](https://github.com/danieljoppi/AntHocNet/issues/371)
+   since the [#371](https://github.com/swarm-routing/AntHocNet/issues/371)
    flip for the v1.5.0 re-baseline). **Note (2026-07-25):** the `T_hop` co-lever named in item 2 has
    now been corrected to the thesis value; the benchmark impact on this tail is
    pending a re-run (#88).
@@ -253,7 +253,7 @@ be split before anyone deviates per ant type.
    between arms. The smoothing touches only the `h·T_hop` term, which at
    `T_hop = 3 ms` is small next to the measured path time, so it rarely
    changes a routing decision here. Runs and the full readout are on
-   [#185](https://github.com/danieljoppi/AntHocNet/issues/185#issuecomment-5823817986).
+   [#185](https://github.com/swarm-routing/AntHocNet/issues/185#issuecomment-5823817986).
    Unrelated to `Config::alpha`, which is an evaporation
    factor the thesis does not have; the naming collision is now called out on
    both fields.

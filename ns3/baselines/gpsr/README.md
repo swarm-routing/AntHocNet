@@ -2,7 +2,7 @@
 
 Vendored GPSR (Greedy Perimeter Stateless Routing, Karp & Kung, MobiCom 2000)
 baseline for the AntHocNet comparison harness —
-[#296](https://github.com/danieljoppi/AntHocNet/issues/296) item 3, built to
+[#296](https://github.com/swarm-routing/AntHocNet/issues/296) item 3, built to
 the spike verdict recorded on that issue.
 
 ## Provenance
@@ -83,7 +83,7 @@ Mechanical/compile changes, each marked `Port change`/`Port fix` in place:
   module (GOD was the only implemented value; RLS printed "not yet
   implemented"). Sidesteps the `MakeEnumAccessor` template drift entirely.
 - The first hello is scheduled in `Start ()`, not `SetIpv4 ()`
-  ([#717](https://github.com/danieljoppi/AntHocNet/issues/717)): `SetIpv4`
+  ([#717](https://github.com/swarm-routing/AntHocNet/issues/717)): `SetIpv4`
   runs inside `InternetStackHelper::Install`, before the harness pins the
   stream, so its draw came from ns-3's process-global auto-stream counter and
   every GPSR run depended on the runs before it in the same process.

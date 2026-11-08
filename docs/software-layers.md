@@ -188,14 +188,14 @@ everything live — the protocol is in its design regime. **Satellite:** the
 discovery half runs but answers a solved problem, hello pays for nothing, the
 two Wi-Fi-coupled mechanisms (detector D, A2) are inert, and the timing is
 mis-sized — while the multipath/load half faces the real problem
-([#192](https://github.com/danieljoppi/AntHocNet/issues/192) research
+([#192](https://github.com/swarm-routing/AntHocNet/issues/192) research
 programme). **FANET/VANET:** no protocol change — the entire Wi-Fi mechanism set
 transfers; the work is mobility models, presets, anchors, and a knob *watchlist*
 resolved by measurement, not pre-tuning
-([#300](https://github.com/danieljoppi/AntHocNet/issues/300)/[#301](https://github.com/danieljoppi/AntHocNet/issues/301)).
+([#300](https://github.com/swarm-routing/AntHocNet/issues/300)/[#301](https://github.com/swarm-routing/AntHocNet/issues/301)).
 **Security:** orthogonal to all of them — it enters through the `ILinkMetric`
 seam and an authenticated-ant wire field, default-off and byte-identical when
-off ([#302](https://github.com/danieljoppi/AntHocNet/issues/302)).
+off ([#302](https://github.com/swarm-routing/AntHocNet/issues/302)).
 
 ## See also
 

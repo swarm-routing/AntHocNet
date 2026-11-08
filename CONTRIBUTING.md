@@ -143,20 +143,20 @@ table is that record.
 | v1.5.0 | `10.5281/zenodo.21956001` | [record 21956001](https://zenodo.org/records/21956001) |
 | v1.6.0 | `10.5281/zenodo.22970218` | [record 22970218](https://zenodo.org/records/22970218) |
 | v1.7.0 | `10.5281/zenodo.23108019` | [record 23108019](https://zenodo.org/records/23108019) — the FANET + static-mesh family release |
-| v1.8.0 | `10.5281/zenodo.23187497` | [record 23187497](https://zenodo.org/records/23187497) — the CBR-source fix-and-restatement roll-up ([#521](https://github.com/danieljoppi/AntHocNet/issues/521)) |
-| v1.9.0 | `10.5281/zenodo.23223132` | [record 23223132](https://zenodo.org/records/23223132) — the VANET family release ([#301](https://github.com/danieljoppi/AntHocNet/issues/301)) |
-| v2.0.0 | `10.5281/zenodo.23250180` | [record 23250180](https://zenodo.org/records/23250180) — the moving-constellation result ([#297](https://github.com/danieljoppi/AntHocNet/issues/297)), the learn site, and the NS-2 removal ([#307](https://github.com/danieljoppi/AntHocNet/issues/307)) |
-| v2.1.0 | `10.5281/zenodo.23265537` | [record 23265537](https://zenodo.org/records/23265537) — the restructure: the whole site is the game ([#626](https://github.com/danieljoppi/AntHocNet/issues/626)), the new `ns3/` layout ([#608](https://github.com/danieljoppi/AntHocNet/issues/608)) and the install path |
-| v2.2.0 | `10.5281/zenodo.23423439` | [record 23423439](https://zenodo.org/records/23423439) — the v2.2.0 re-baseline campaign ([#565](https://github.com/danieljoppi/AntHocNet/issues/565): four knobs A/B'd in every family, no default moves), the learn-site campaign chapters 1–2 and the Workshop, the infrastructure track |
-| v2.3.0 | `10.5281/zenodo.23456208` | [record 23456208](https://zenodo.org/records/23456208) — the v2.3.0 mechanism campaign (six regime-gated mechanisms in every family; quiet mode moves on by default, [#571](https://github.com/danieljoppi/AntHocNet/issues/571)), the restated v2.3.0 corpus, learn-site chapters 3–5, upgrades and the ns-3 replay, signed release artifacts and the bake recipe |
-| v2.4.0 | `10.5281/zenodo.23653720` | [record 23653720](https://zenodo.org/records/23653720) — family-native baselines (ADR-0026: HWMP, GPCR, GPSR-3D, OPSPF), the disaster and SAGIN families, the 50–500-node scale sweep with its known limitation ([#740](https://github.com/danieljoppi/AntHocNet/issues/740)), learn-site chapters 6–8 |
-| v2.5.0 | `10.5281/zenodo.23748858` | [record 23748858](https://zenodo.org/records/23748858) — the adaptive-routing comparators ([#563](https://github.com/danieljoppi/AntHocNet/issues/563): ARA passes its anchor and is compared on the grid; Termite and Q-routing ship as infeasibility verdicts), the #740 scale diagnosis (the adapter's retry flood; gated fix in [#760](https://github.com/danieljoppi/AntHocNet/issues/760)), campaigns on `benchmark-cell.yml` only ([#746](https://github.com/danieljoppi/AntHocNet/issues/746)) |
-| v2.6.0 | `10.5281/zenodo.23777868` | [record 23777868](https://zenodo.org/records/23777868) — the protocol-agnostic comparison harness ([#764](https://github.com/danieljoppi/AntHocNet/issues/764), [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md)): the `routing-bench` module and `routing-compare` program on stock ns-3, self-registering arms, a byte-identical control on every committed MANET-family cell ([#769](https://github.com/danieljoppi/AntHocNet/issues/769)), and the per-packet drop book for re-routing arms ([#761](https://github.com/danieljoppi/AntHocNet/issues/761)) |
+| v1.8.0 | `10.5281/zenodo.23187497` | [record 23187497](https://zenodo.org/records/23187497) — the CBR-source fix-and-restatement roll-up ([#521](https://github.com/swarm-routing/AntHocNet/issues/521)) |
+| v1.9.0 | `10.5281/zenodo.23223132` | [record 23223132](https://zenodo.org/records/23223132) — the VANET family release ([#301](https://github.com/swarm-routing/AntHocNet/issues/301)) |
+| v2.0.0 | `10.5281/zenodo.23250180` | [record 23250180](https://zenodo.org/records/23250180) — the moving-constellation result ([#297](https://github.com/swarm-routing/AntHocNet/issues/297)), the learn site, and the NS-2 removal ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)) |
+| v2.1.0 | `10.5281/zenodo.23265537` | [record 23265537](https://zenodo.org/records/23265537) — the restructure: the whole site is the game ([#626](https://github.com/swarm-routing/AntHocNet/issues/626)), the new `ns3/` layout ([#608](https://github.com/swarm-routing/AntHocNet/issues/608)) and the install path |
+| v2.2.0 | `10.5281/zenodo.23423439` | [record 23423439](https://zenodo.org/records/23423439) — the v2.2.0 re-baseline campaign ([#565](https://github.com/swarm-routing/AntHocNet/issues/565): four knobs A/B'd in every family, no default moves), the learn-site campaign chapters 1–2 and the Workshop, the infrastructure track |
+| v2.3.0 | `10.5281/zenodo.23456208` | [record 23456208](https://zenodo.org/records/23456208) — the v2.3.0 mechanism campaign (six regime-gated mechanisms in every family; quiet mode moves on by default, [#571](https://github.com/swarm-routing/AntHocNet/issues/571)), the restated v2.3.0 corpus, learn-site chapters 3–5, upgrades and the ns-3 replay, signed release artifacts and the bake recipe |
+| v2.4.0 | `10.5281/zenodo.23653720` | [record 23653720](https://zenodo.org/records/23653720) — family-native baselines (ADR-0026: HWMP, GPCR, GPSR-3D, OPSPF), the disaster and SAGIN families, the 50–500-node scale sweep with its known limitation ([#740](https://github.com/swarm-routing/AntHocNet/issues/740)), learn-site chapters 6–8 |
+| v2.5.0 | `10.5281/zenodo.23748858` | [record 23748858](https://zenodo.org/records/23748858) — the adaptive-routing comparators ([#563](https://github.com/swarm-routing/AntHocNet/issues/563): ARA passes its anchor and is compared on the grid; Termite and Q-routing ship as infeasibility verdicts), the #740 scale diagnosis (the adapter's retry flood; gated fix in [#760](https://github.com/swarm-routing/AntHocNet/issues/760)), campaigns on `benchmark-cell.yml` only ([#746](https://github.com/swarm-routing/AntHocNet/issues/746)) |
+| v2.6.0 | `10.5281/zenodo.23777868` | [record 23777868](https://zenodo.org/records/23777868) — the protocol-agnostic comparison harness ([#764](https://github.com/swarm-routing/AntHocNet/issues/764), [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md)): the `routing-bench` module and `routing-compare` program on stock ns-3, self-registering arms, a byte-identical control on every committed MANET-family cell ([#769](https://github.com/swarm-routing/AntHocNet/issues/769)), and the per-packet drop book for re-routing arms ([#761](https://github.com/swarm-routing/AntHocNet/issues/761)) |
 
 **Adding a row is the whole per-release chore.** Append the new version DOI
 here; do **not** touch the README badge or `CITATION.cff`, which already point
 at the concept DOI and therefore need no update. Pinning either of them to a
-version DOI is the regression [#116](https://github.com/danieljoppi/AntHocNet/pull/116)
+version DOI is the regression [#116](https://github.com/swarm-routing/AntHocNet/pull/116)
 fixed — the badge had been left on an earlier release's version DOI and had
 silently gone stale.
 
@@ -168,8 +168,8 @@ release, so a paper reproducing them should cite that release's DOI.
 
 What a stranger can check about this repository without reading its code, and —
 where a signal needs a human — exactly what the maintainer has to do. Landed in
-[#337](https://github.com/danieljoppi/AntHocNet/issues/337), the last ticket of
-the packaging epic [#328](https://github.com/danieljoppi/AntHocNet/issues/328).
+[#337](https://github.com/swarm-routing/AntHocNet/issues/337), the last ticket of
+the packaging epic [#328](https://github.com/swarm-routing/AntHocNet/issues/328).
 
 ### Automated: OpenSSF Scorecard
 
@@ -181,7 +181,7 @@ badge, GitHub's code-scanning dashboard (SARIF), and the public OpenSSF API.
 It is a **report, not a gate** — a low check does not fail a build; it becomes
 an issue (ADR-0013). The heaviest deductions (`Pinned-Dependencies`,
 `Dangerous-Workflow`, `Token-Permissions`) were already paid down by
-[#338](https://github.com/danieljoppi/AntHocNet/pull/338), which SHA-pinned
+[#338](https://github.com/swarm-routing/AntHocNet/pull/338), which SHA-pinned
 every action and added Dependabot, so the score reports a posture that already
 exists.
 
@@ -294,7 +294,7 @@ registered. **Do not invent one.** Steps:
 1. Sign in at <https://www.bestpractices.dev/> with the GitHub account that owns
    the repository.
 2. *Projects → Add a project*, entering
-   `https://github.com/danieljoppi/AntHocNet` as the repository URL. The form
+   `https://github.com/swarm-routing/AntHocNet` as the repository URL. The form
    pre-fills much of the metadata from GitHub.
 3. Answer the criteria. The evidence links to reach *passing* are all in-tree:
    `README.md` (description, install), `CONTRIBUTING.md` (contribution process,

@@ -17,7 +17,7 @@ make sense, what the benchmark must control for, and what may honestly be
 claimed.
 
 This page exists because the satellite track
-([#192](https://github.com/danieljoppi/AntHocNet/issues/192)) kept producing
+([#192](https://github.com/swarm-routing/AntHocNet/issues/192)) kept producing
 findings whose real cause was "this regime does not work like the one the
 protocol was designed for". Rather than re-derive that each time, it is written
 down once. Every row of the difference table below changed a concrete decision
@@ -48,7 +48,7 @@ flowchart LR
 GEO sits near the deterministic end but is a different shape again: a bent-pipe
 hop to a gateway, with essentially no path to choose. That is why SNS3 — the
 most mature ns-3 satellite module — is the wrong substrate for routing work
-([#199](https://github.com/danieljoppi/AntHocNet/issues/199)).
+([#199](https://github.com/swarm-routing/AntHocNet/issues/199)).
 
 The intermediate families change the *evaluation*, not the protocol: the same
 binary runs everywhere, but each family constrains mobility differently, so
@@ -58,11 +58,11 @@ before a number from it means anything.
 | Family | Mobility | What it changes | Status in this repo |
 |---|---|---|---|
 | **MANET** | unconstrained random (RWP), 1–20 m/s, 2D | nothing — the regime the 2004/2007 sources designed and tuned for | supported: the paper and thesis fields ([benchmarks](benchmarks.md)) |
-| **FANET** | 3D smooth trajectories (Gauss-Markov standard), 10–30 m/s, sparse | third dimension, faster link churn, energy budgets that matter | **supported (v1.7.0, [#300](https://github.com/danieljoppi/AntHocNet/issues/300)):** [FANET results](benchmarks/scenarios/fanet.md). `--scenario=fanet` is a sourced preset (#482): 30 UAVs in 1000 × 1000 × 300 m, 3-D Gauss-Markov at 10–30 m/s. It has its own analytic anchors, and 20-seed results for six arms in a main cell and a partition-bound sparse cell. AntHocNet leads every protocol in both cells, and in the main cell delivers within 2.70 pp of the oracle. No geographic arm runs in 3-D (GPSR is planar). Priority rationale: 2024–2026 FANET surveys evaluate AntHocNet directly and rate it strongest among the classical protocols they test, which makes FANET the family where the protocol's reputation is currently made |
-| **VANET** | road-constrained (Manhattan, SUMO traces), 10–40 m/s, platooning | churn is fast but street-shaped; density swings block-by-block; RSU/infrastructure hybrids common | **supported (v1.9.0, [#301](https://github.com/danieljoppi/AntHocNet/issues/301)):** [VANET results](benchmarks/scenarios/vanet.md). `--scenario=vanet` ([#488](https://github.com/danieljoppi/AntHocNet/issues/488)): 100 vehicles on an 800 × 800 m Manhattan grid (Bai & Helmy 2003), 10–20 m/s, two-ray + building shadowing (Sommer et al. 2011), seven arms (GPSR included) and the per-pair oracle, 20 seeds, plus a partition-bound sparse cell. **AntHocNet ties AODV on delivery** (42.1 vs 42.3 %) with half its `delay99` and +13 NRL; every other arm trails both, and the oracle delivers 81.7 %. Losses are 36 % reconvergence: buildings break links at every corner ([#537](https://github.com/danieljoppi/AntHocNet/issues/537)). The Veins/SUMO confirmation arm ([#485](https://github.com/danieljoppi/AntHocNet/issues/485)) is deferred with the OMNeT++ adapter |
-| **Static Wi-Fi mesh** | none (community / Freifunk-class networks) | nothing to track: proactive maintenance pays for a topology that never changes, and the Babel / BATMAN-adv baselines are home here | supported: [static-mesh results](benchmarks/static-mesh.md) (#484). AntHocNet beats AODV on every metric, and OLSR leads, once the [#496](https://github.com/danieljoppi/AntHocNet/issues/496) timer fix is in. The earlier `ReconvHoldCap` finding ([#494](https://github.com/danieljoppi/AntHocNet/issues/494)) was that artifact |
-| **WSN / IoT** | static or near-static, energy-bound | routing problem becomes energy/sleep scheduling, not topology discovery | out of scope (energy-aware `ILinkMetric` is the nearest hook, [#145](https://github.com/danieljoppi/AntHocNet/issues/145)) |
-| **LEO ISL mesh** | deterministic orbits | the §3 inversion: topology known, traffic unknown | supported as a static +Grid snapshot; dynamics are epic [#297](https://github.com/danieljoppi/AntHocNet/issues/297) |
+| **FANET** | 3D smooth trajectories (Gauss-Markov standard), 10–30 m/s, sparse | third dimension, faster link churn, energy budgets that matter | **supported (v1.7.0, [#300](https://github.com/swarm-routing/AntHocNet/issues/300)):** [FANET results](benchmarks/scenarios/fanet.md). `--scenario=fanet` is a sourced preset (#482): 30 UAVs in 1000 × 1000 × 300 m, 3-D Gauss-Markov at 10–30 m/s. It has its own analytic anchors, and 20-seed results for six arms in a main cell and a partition-bound sparse cell. AntHocNet leads every protocol in both cells, and in the main cell delivers within 2.70 pp of the oracle. No geographic arm runs in 3-D (GPSR is planar). Priority rationale: 2024–2026 FANET surveys evaluate AntHocNet directly and rate it strongest among the classical protocols they test, which makes FANET the family where the protocol's reputation is currently made |
+| **VANET** | road-constrained (Manhattan, SUMO traces), 10–40 m/s, platooning | churn is fast but street-shaped; density swings block-by-block; RSU/infrastructure hybrids common | **supported (v1.9.0, [#301](https://github.com/swarm-routing/AntHocNet/issues/301)):** [VANET results](benchmarks/scenarios/vanet.md). `--scenario=vanet` ([#488](https://github.com/swarm-routing/AntHocNet/issues/488)): 100 vehicles on an 800 × 800 m Manhattan grid (Bai & Helmy 2003), 10–20 m/s, two-ray + building shadowing (Sommer et al. 2011), seven arms (GPSR included) and the per-pair oracle, 20 seeds, plus a partition-bound sparse cell. **AntHocNet ties AODV on delivery** (42.1 vs 42.3 %) with half its `delay99` and +13 NRL; every other arm trails both, and the oracle delivers 81.7 %. Losses are 36 % reconvergence: buildings break links at every corner ([#537](https://github.com/swarm-routing/AntHocNet/issues/537)). The Veins/SUMO confirmation arm ([#485](https://github.com/swarm-routing/AntHocNet/issues/485)) is deferred with the OMNeT++ adapter |
+| **Static Wi-Fi mesh** | none (community / Freifunk-class networks) | nothing to track: proactive maintenance pays for a topology that never changes, and the Babel / BATMAN-adv baselines are home here | supported: [static-mesh results](benchmarks/static-mesh.md) (#484). AntHocNet beats AODV on every metric, and OLSR leads, once the [#496](https://github.com/swarm-routing/AntHocNet/issues/496) timer fix is in. The earlier `ReconvHoldCap` finding ([#494](https://github.com/swarm-routing/AntHocNet/issues/494)) was that artifact |
+| **WSN / IoT** | static or near-static, energy-bound | routing problem becomes energy/sleep scheduling, not topology discovery | out of scope (energy-aware `ILinkMetric` is the nearest hook, [#145](https://github.com/swarm-routing/AntHocNet/issues/145)) |
+| **LEO ISL mesh** | deterministic orbits | the §3 inversion: topology known, traffic unknown | supported as a static +Grid snapshot; dynamics are epic [#297](https://github.com/swarm-routing/AntHocNet/issues/297) |
 
 The two supported regimes in detail:
 
@@ -75,7 +75,7 @@ The two supported regimes in detail:
 | Topology | unknown — discovered by ants | unknown — discovered by ants | deterministic — degree/link count asserted every run |
 | Loss | collisions, retry exhaustion, mobility | same | none on the link; any loss indicts the stack |
 | Traffic | 20 CBR flows × 512 bps | 20 CBR flows × 2048 bps | 4 CBR flows × 4096 bps + adversarial cells (scripted link cut, corridor congestion) |
-| Baselines | AODV / OLSR / DSDV on identical seeds | same | same, plus (planned) precomputed shortest-path control ([#216](https://github.com/danieljoppi/AntHocNet/issues/216)) |
+| Baselines | AODV / OLSR / DSDV on identical seeds | same | same, plus (planned) precomputed shortest-path control ([#216](https://github.com/swarm-routing/AntHocNet/issues/216)) |
 | Results | [benchmarks.md](benchmarks.md) | [benchmarks.md](benchmarks.md) | [benchmarks/satellite/isl-grid.md](benchmarks/satellite/isl-grid.md) (static torus), [benchmarks/satellite/leo-walker.md](benchmarks/satellite/leo-walker.md) (moving Walker shell) |
 
 ## 2. The two topologies
@@ -126,7 +126,7 @@ Tiled, that is a **+Grid torus** — the standard LEO abstraction, and what
 
 Measured on the 4×4 harness: **16 nodes, 32 links** — exactly 2 contributed per
 node, hence degree 4. That count is asserted on every run
-([#226](https://github.com/danieljoppi/AntHocNet/issues/226)), because a
+([#226](https://github.com/swarm-routing/AntHocNet/issues/226)), because a
 silently-wrong torus still delivers ~100% of packets and would produce entirely
 plausible numbers for the wrong network.
 
@@ -151,16 +151,16 @@ for exactly this reason.
 
 | Property | MANET | LEO satellite | Consequence in this repo |
 |---|---|---|---|
-| **Topology** | unknown, stochastic | deterministic from orbital elements | the control to beat is a precomputed shortest path (or OPSPF), **not** AODV — [#216](https://github.com/danieljoppi/AntHocNet/issues/216) |
+| **Topology** | unknown, stochastic | deterministic from orbital elements | the control to beat is a precomputed shortest path (or OPSPF), **not** AODV — [#216](https://github.com/swarm-routing/AntHocNet/issues/216) |
 | **Medium** | shared broadcast radio, 802.11 DCF, contention | point-to-point ISL, one peer per link | no contention ⇒ expected values are **analytic**, not literature-derived — the satellite anchors in [`benchmarks/methodology.md`](benchmarks/methodology.md) |
-| **Interfaces per node** | one | four, each on its own `/30` | exposed a real defect: the data path used interface 0 for *every* next hop — [#203](https://github.com/danieljoppi/AntHocNet/issues/203) |
-| **Node degree** | varies with density, 1 to many | exactly 4 | degree becomes an assertable invariant — [#226](https://github.com/danieljoppi/AntHocNet/issues/226) |
+| **Interfaces per node** | one | four, each on its own `/30` | exposed a real defect: the data path used interface 0 for *every* next hop — [#203](https://github.com/swarm-routing/AntHocNet/issues/203) |
+| **Node degree** | varies with density, 1 to many | exactly 4 | degree becomes an assertable invariant — [#226](https://github.com/swarm-routing/AntHocNet/issues/226) |
 | **Loss** | collisions, retry exhaustion | essentially none on the link itself | anything under 100 % delivery indicts the stack, not the channel |
-| **Delay** | queueing/contention dominated; `T_hop` = 3 ms | propagation dominated; 3–18 ms per ISL, GEO ~119 ms | delay becomes predictable: 2 hops × 5 ms → measured **10.39 ms**. Also means the 802.11-calibrated timers are mis-sized — [#205](https://github.com/danieljoppi/AntHocNet/issues/205) |
-| **Neighbour discovery** | hello beacons are the only way to know | the peer is fixed and known from geometry | 1 Hz hello on a known peer is overhead: **NRL 12.18** with nothing to discover — [#204](https://github.com/danieljoppi/AntHocNet/issues/204) |
+| **Delay** | queueing/contention dominated; `T_hop` = 3 ms | propagation dominated; 3–18 ms per ISL, GEO ~119 ms | delay becomes predictable: 2 hops × 5 ms → measured **10.39 ms**. Also means the 802.11-calibrated timers are mis-sized — [#205](https://github.com/swarm-routing/AntHocNet/issues/205) |
+| **Neighbour discovery** | hello beacons are the only way to know | the peer is fixed and known from geometry | 1 Hz hello on a known peer is overhead: **NRL 12.18** with nothing to discover — [#204](https://github.com/swarm-routing/AntHocNet/issues/204) |
 | **Link failure** | random, mobility-driven, constant | mostly **scheduled** (polar seams, visibility windows) | only *unscheduled* failure is interesting; the scheduled kind is already in the control's tables |
-| **Scale** | tens of nodes, diameter ~5 | ~1584 per shell, diameter 20–40 | reactive flooding cost is the open scaling question — [#207](https://github.com/danieljoppi/AntHocNet/issues/207) |
-| **Congestion signal** | wifi MAC queue occupancy | no wifi MAC exists on an ISL | the A2 metric is inert on satellites until the signal is generalised — [#206](https://github.com/danieljoppi/AntHocNet/issues/206) |
+| **Scale** | tens of nodes, diameter ~5 | ~1584 per shell, diameter 20–40 | reactive flooding cost is the open scaling question — [#207](https://github.com/swarm-routing/AntHocNet/issues/207) |
+| **Congestion signal** | wifi MAC queue occupancy | no wifi MAC exists on an ISL | the A2 metric is inert on satellites until the signal is generalised — [#206](https://github.com/swarm-routing/AntHocNet/issues/206) |
 | **Realistic baseline** | AODV, OLSR, DSDV | snapshot routing, OPSPF, segment routing | terrestrial protocols become a sanity row, never the claim — §2.2 of the prior-art survey |
 
 ## 5. What this means for the algorithm
@@ -209,26 +209,26 @@ per-regime build, no per-regime preset. What differs is which mechanisms are
 point-to-point ISL, and some answer a question the regime doesn't ask. The
 harnesses set **no** protocol attributes; every A/B arm goes through explicit
 `--ns3::anthocnet::RoutingProtocol::<Attr>=<v>` overrides
-([#177](https://github.com/danieljoppi/AntHocNet/issues/177)), so a table row
+([#177](https://github.com/swarm-routing/AntHocNet/issues/177)), so a table row
 below describes the *default* run of that regime's harness.
 
 | Mechanism (attribute) | Default | MANET (Wi-Fi broadcast) | Satellite ISL (p2p grid) |
 |---|---|---|---|
 | Reactive forward-ant flood (`EnableReactive`) | on | **live, essential** — the only way to learn a topology nobody knows | live, but steerable-not-blind is the honest framing (§5): the flood re-derives direction the geometry already gives |
 | Proactive ants (`EnableProactive`, `ProactiveInterval` 10 s) + diffusion (`EnableDiffusion`) | on | live — path maintenance and improvement during a session | live — diffusion carries the virtual gradient across the grid; it is what `EnableDirectedReactive` would steer along |
-| Proactive emission gate (`ProactiveVirtualMargin`) | **0 = off** | off deliberately — the thesis's 10% gate measured harmful ([#180](https://github.com/danieljoppi/AntHocNet/issues/180)) | same |
-| Quiet mode (`EnableQuietMode`: proactive back-off on a stable route, [#571](https://github.com/danieljoppi/AntHocNet/issues/571)) | **on** since v2.3.0 | live but rarely engaged: routes change before the back-off grows (often byte-identical to off); on the static mesh it cuts NRL 8.6 % (section 8) | live — the torus's routes hold, so the back-off engages; NRL −0.04 to −0.11 |
-| Hello beacons (`HelloInterval` 1 Hz) | on | live, essential — sole neighbour-discovery mechanism | live but **redundant**: one fixed, known peer per link; measured cost NRL 12.18 on a churn-free grid ([#204](https://github.com/danieljoppi/AntHocNet/issues/204)) |
+| Proactive emission gate (`ProactiveVirtualMargin`) | **0 = off** | off deliberately — the thesis's 10% gate measured harmful ([#180](https://github.com/swarm-routing/AntHocNet/issues/180)) | same |
+| Quiet mode (`EnableQuietMode`: proactive back-off on a stable route, [#571](https://github.com/swarm-routing/AntHocNet/issues/571)) | **on** since v2.3.0 | live but rarely engaged: routes change before the back-off grows (often byte-identical to off); on the static mesh it cuts NRL 8.6 % (section 8) | live — the torus's routes hold, so the back-off engages; NRL −0.04 to −0.11 |
+| Hello beacons (`HelloInterval` 1 Hz) | on | live, essential — sole neighbour-discovery mechanism | live but **redundant**: one fixed, known peer per link; measured cost NRL 12.18 on a churn-free grid ([#204](https://github.com/swarm-routing/AntHocNet/issues/204)) |
 | Multipath acceptance (`EnableMultipath`, a1 `AntAcceptanceFactor` 0.9, a2 `AntAcceptanceFactorNewHop` 2.0) | on | live — disjoint paths when density allows | live — the torus has equal-length corridors by construction; this is the half of the protocol with a real satellite claim (§5) |
-| Local repair ants (`EnableRepair`, `RepairWaitFactor` 5, `RepairTimeout` 1 s) | on | live, constantly exercised — mobility breaks links | live, exercised only by *unscheduled* failure — the `--breakLink` cell ([#260](https://github.com/danieljoppi/AntHocNet/issues/260)); scheduled failure belongs to the control's tables |
+| Local repair ants (`EnableRepair`, `RepairWaitFactor` 5, `RepairTimeout` 1 s) | on | live, constantly exercised — mobility breaks links | live, exercised only by *unscheduled* failure — the `--breakLink` cell ([#260](https://github.com/swarm-routing/AntHocNet/issues/260)); scheduled failure belongs to the control's tables |
 | Link-failure notifications (`EnableLinkFail`, cooldown `LinkfailNotifyInterval` 5 s) | on | live | live |
 | Failure detector A — hello timeout | always on | live | live (and sufficient: `Ipv4::SetDown` on a cut link also raises the interface event) |
 | Failure detector D — Wi-Fi MAC transmit failures (`EnableMacFailureDetector`, `TxFailureThreshold` 3) | on | live — the fast detector ([ADR-0008](adr/0008-neighbour-liveness-two-detectors.md)) | **inert** — subscription requires a `WifiNetDevice`; a p2p ISL has none |
-| A2 congestion metric (`EnableMacMetric`, `MacServiceAlpha` 0.7) | **off** | available — reads `WifiMacQueue` (AC_BE_NQOS) occupancy | **inert even if enabled** — no Wi-Fi MAC queue to read; needs a generalised congestion signal ([#206](https://github.com/danieljoppi/AntHocNet/issues/206)); the corridor experiments ([#216](https://github.com/danieljoppi/AntHocNet/issues/216)) exposed the deeper attribution gap ([#292](https://github.com/danieljoppi/AntHocNet/issues/292)) |
-| Directed reactive discovery (`EnableDirectedReactive`) | **off** | A/B arm — no gradient yet ⇒ degrades to the stock flood | A/B arm — the regime this switch exists to probe (§5, [#245](https://github.com/danieljoppi/AntHocNet/issues/245)) |
-| Pending-queue timing (`QueueTimeout` 3 s, `ReconvHoldCap` 200 ms, `RepairHoldCap` 0, `ReactiveRetryInterval` 0.25 s) | #21/#103 frontier values; `ReconvHoldCap` re-picked at 200 ms by [#371](https://github.com/danieljoppi/AntHocNet/issues/371) | live — tuned on this regime's delay tail | live but calibrated against 802.11 contention delays, not 5–18 ms propagation floors ([#205](https://github.com/danieljoppi/AntHocNet/issues/205)) |
-| Goodness timing reference (`HopTime` 3 ms) | thesis value ([#88](https://github.com/danieljoppi/AntHocNet/issues/88)) | live — matches an unloaded 802.11 hop | mis-sized — an ISL hop is 5 ms of pure propagation before queueing ([#205](https://github.com/danieljoppi/AntHocNet/issues/205)) |
-| Pheromone dynamics (`Alpha` 0.7, `Gamma` 0.7, `BetaAnts` 20, `BetaData` 20) | shipped values (the β exponents are the thesis's, adopted on a measured A/B — [#179](https://github.com/danieljoppi/AntHocNet/issues/179)) | live | live — and on a static grid the closed-form orbit of these constants is exactly reproducible ([#216](https://github.com/danieljoppi/AntHocNet/issues/216) derivation) |
+| A2 congestion metric (`EnableMacMetric`, `MacServiceAlpha` 0.7) | **off** | available — reads `WifiMacQueue` (AC_BE_NQOS) occupancy | **inert even if enabled** — no Wi-Fi MAC queue to read; needs a generalised congestion signal ([#206](https://github.com/swarm-routing/AntHocNet/issues/206)); the corridor experiments ([#216](https://github.com/swarm-routing/AntHocNet/issues/216)) exposed the deeper attribution gap ([#292](https://github.com/swarm-routing/AntHocNet/issues/292)) |
+| Directed reactive discovery (`EnableDirectedReactive`) | **off** | A/B arm — no gradient yet ⇒ degrades to the stock flood | A/B arm — the regime this switch exists to probe (§5, [#245](https://github.com/swarm-routing/AntHocNet/issues/245)) |
+| Pending-queue timing (`QueueTimeout` 3 s, `ReconvHoldCap` 200 ms, `RepairHoldCap` 0, `ReactiveRetryInterval` 0.25 s) | #21/#103 frontier values; `ReconvHoldCap` re-picked at 200 ms by [#371](https://github.com/swarm-routing/AntHocNet/issues/371) | live — tuned on this regime's delay tail | live but calibrated against 802.11 contention delays, not 5–18 ms propagation floors ([#205](https://github.com/swarm-routing/AntHocNet/issues/205)) |
+| Goodness timing reference (`HopTime` 3 ms) | thesis value ([#88](https://github.com/swarm-routing/AntHocNet/issues/88)) | live — matches an unloaded 802.11 hop | mis-sized — an ISL hop is 5 ms of pure propagation before queueing ([#205](https://github.com/swarm-routing/AntHocNet/issues/205)) |
+| Pheromone dynamics (`Alpha` 0.7, `Gamma` 0.7, `BetaAnts` 20, `BetaData` 20) | shipped values (the β exponents are the thesis's, adopted on a measured A/B — [#179](https://github.com/swarm-routing/AntHocNet/issues/179)) | live | live — and on a static grid the closed-form orbit of these constants is exactly reproducible ([#216](https://github.com/swarm-routing/AntHocNet/issues/216) derivation) |
 
 Reading the table column-wise gives each regime's honest summary. **MANET:**
 everything live; the protocol is in its design regime. **Satellite ISL:** the
@@ -237,7 +237,7 @@ discovery half runs but answers a solved problem, two Wi-Fi-coupled mechanisms
 timing constants are calibrated for a medium that isn't there — while the
 multipath/load-response half faces exactly the problem the regime does have.
 That asymmetry is the satellite research programme
-([#192](https://github.com/danieljoppi/AntHocNet/issues/192)), not a defect
+([#192](https://github.com/swarm-routing/AntHocNet/issues/192)), not a defect
 list.
 
 ## 7. Measured: the v2.2.0 knobs per regime
@@ -256,10 +256,10 @@ marks byte-identical runs, where the knob never binds.
 
 | knob (attribute) | MANET grid | static mesh | FANET | VANET | satellite ISL grid | LEO shells |
 |---|---|---|---|---|---|---|
-| `RepairHoldCap=200ms` ([#433](https://github.com/danieljoppi/AntHocNet/issues/433)) | two-ray: PDR −0.3 to −1.0 pp, d99 −3 to −13 %; Nakagami: PDR noise, d99 −22 to −33 %, NRL −4 to −9 % | ≡ | main: d99 −10 %; sparse: PDR −0.4 pp, d99 −22 % | **main: PDR +1.1 pp, d99 −1.1 s, NRL −11 (recommended)**; sparse: PDR −0.2 pp, d99 −340 ms | ≡ | ≡ |
-| `LinkMetric=sinr` ([#181](https://github.com/danieljoppi/AntHocNet/issues/181), ADR-0024) | two-ray: PDR +0.1 to +0.4 pp; Nakagami: d99 up to +98 ms, NRL +1 to +2.4 | d99 +0.4 ms | main: PDR +0.4 pp, d99 +18 ms; sparse: d99 +535 ms | **main: PDR −1.6 pp, d99 +1 s, NRL +13 (avoid)**; sparse: PDR +0.4 pp, d99 +1.5 s | PDR and delay identical (no PHY SINR on a p2p ISL: falls back to hop count) | starlink1: PDR +0.7 pp at NRL +49 (the access links do report SINR) |
-| `HelloInterval=500ms` ([#537](https://github.com/danieljoppi/AntHocNet/issues/537)) | **PDR −0.5 to −8.0 pp, NRL +3.8 to +20 (avoid)** | PDR −0.4 pp, NRL +3.3 | PDR +0.5 to +0.6 pp, NRL +0.9 to +1.5 | **main: PDR +1.9 pp, d99 −15 % (recommended)**; sparse: PDR +0.5 pp, NRL +1.7 | PDR ≡, NRL +1 to +18 (pure beacon cost) | PDR +2.6 to +6.5 pp, NRL +76 to +550 (load roughly doubles) |
-| `ReconvHoldCap=1s` ([#537](https://github.com/danieljoppi/AntHocNet/issues/537)) | two-ray: PDR +0.3 to +1.2 pp, d99 +6 to +36 %; **Nakagami: PDR −1.4 to −6.0 pp, d99 +310 to +470 ms (avoid)** | noise | main: PDR +1.3 pp; sparse: PDR +4.4 pp; d99 +180 to +590 ms | **main: PDR +5.3 pp; sparse: PDR +6.2 pp; d99 +210 to +360 ms (recommended where delay is tolerable)** | ≡ | walker16: noise; Starlink: PDR +0.5 to +0.8 pp, d99 +100 to +120 ms |
+| `RepairHoldCap=200ms` ([#433](https://github.com/swarm-routing/AntHocNet/issues/433)) | two-ray: PDR −0.3 to −1.0 pp, d99 −3 to −13 %; Nakagami: PDR noise, d99 −22 to −33 %, NRL −4 to −9 % | ≡ | main: d99 −10 %; sparse: PDR −0.4 pp, d99 −22 % | **main: PDR +1.1 pp, d99 −1.1 s, NRL −11 (recommended)**; sparse: PDR −0.2 pp, d99 −340 ms | ≡ | ≡ |
+| `LinkMetric=sinr` ([#181](https://github.com/swarm-routing/AntHocNet/issues/181), ADR-0024) | two-ray: PDR +0.1 to +0.4 pp; Nakagami: d99 up to +98 ms, NRL +1 to +2.4 | d99 +0.4 ms | main: PDR +0.4 pp, d99 +18 ms; sparse: d99 +535 ms | **main: PDR −1.6 pp, d99 +1 s, NRL +13 (avoid)**; sparse: PDR +0.4 pp, d99 +1.5 s | PDR and delay identical (no PHY SINR on a p2p ISL: falls back to hop count) | starlink1: PDR +0.7 pp at NRL +49 (the access links do report SINR) |
+| `HelloInterval=500ms` ([#537](https://github.com/swarm-routing/AntHocNet/issues/537)) | **PDR −0.5 to −8.0 pp, NRL +3.8 to +20 (avoid)** | PDR −0.4 pp, NRL +3.3 | PDR +0.5 to +0.6 pp, NRL +0.9 to +1.5 | **main: PDR +1.9 pp, d99 −15 % (recommended)**; sparse: PDR +0.5 pp, NRL +1.7 | PDR ≡, NRL +1 to +18 (pure beacon cost) | PDR +2.6 to +6.5 pp, NRL +76 to +550 (load roughly doubles) |
+| `ReconvHoldCap=1s` ([#537](https://github.com/swarm-routing/AntHocNet/issues/537)) | two-ray: PDR +0.3 to +1.2 pp, d99 +6 to +36 %; **Nakagami: PDR −1.4 to −6.0 pp, d99 +310 to +470 ms (avoid)** | noise | main: PDR +1.3 pp; sparse: PDR +4.4 pp; d99 +180 to +590 ms | **main: PDR +5.3 pp; sparse: PDR +6.2 pp; d99 +210 to +360 ms (recommended where delay is tolerable)** | ≡ | walker16: noise; Starlink: PDR +0.5 to +0.8 pp, d99 +100 to +120 ms |
 
 Read the table by the regime's link-break signature:
 
@@ -284,12 +284,12 @@ excludes zero; "noise" means none does, and "≡" marks byte-identical runs.
 
 | mechanism (attribute) | MANET grid | static mesh | FANET | VANET | satellite ISL grid | LEO shells |
 |---|---|---|---|---|---|---|
-| link lifetime `EnableLinkLifetime` ([#574](https://github.com/danieljoppi/AntHocNet/issues/574)) | **two-ray: PDR +0.3 to +0.7 pp, d99 −28 to −37 ms; Nakagami: PDR +2.1 to +3.9 pp, d99 −159 to −215 ms, NRL −1.1 to −1.8 (recommended)** | d99 +0.7 ms | main: PDR +0.5 pp, d99 −11 ms; sparse: noise | main: NRL +1.7, PDR noise; sparse: noise | ≡ (nothing moves, so no link is predicted to end) | walker16, storm: noise; Starlink S1: PDR −0.5 pp, NRL +37 |
-| quiet mode `EnableQuietMode` ([#571](https://github.com/danieljoppi/AntHocNet/issues/571)) | noise; ≡ on the three Nakagami cells | **NRL −0.40 (−8.6 %), d99 −0.7 ms, PDR noise (default on from v2.3.0)** | noise | noise | **NRL −0.04 to −0.11, PDR and delay ≡** | noise |
-| adaptive evaporation `EnableAdaptiveEvaporation` ([#572](https://github.com/danieljoppi/AntHocNet/issues/572)) | two-ray: noise; Nakagami: d99 +51 to +59 ms, NRL +1.3 to +2.0, PDR −1.1 pp on Gauss-Markov | NRL −0.14 | main: PDR +0.4 pp; sparse: d99 +13 ms | main: d99 +180 ms, NRL +1.5; sparse: d99 +108 ms | noise (seam: NRL −0.01) | **walker16: PDR −0.5 pp; Starlink: PDR −5.4 to −5.5 pp, NRL +164 to +236 (avoid)** |
-| energy metric `LinkMetric=energy` ([#145](https://github.com/danieljoppi/AntHocNet/issues/145)) | two-ray: d99 +8 to +28 ms, NRL +0.2; Nakagami: d99 +126 to +139 ms, NRL +1.4 to +2.3 | noise | main: PDR +0.5 pp, d99 +20 ms; sparse: d99 +564 ms | **main: PDR −1.5 pp, d99 +1.0 s, NRL +13 (avoid)**; sparse: PDR +0.5 pp, d99 +1.6 s | noise (no energy probe: hop count) | walker16: NRL +2.0; Starlink S1: PDR +0.7 pp, NRL +49 |
-| propagation timing `--timingProfile=propagation` ([#205](https://github.com/danieljoppi/AntHocNet/issues/205)) | — | — | — | — | noise | noise |
-| p2p hello throttle `P2pHelloEvery=5` ([#204](https://github.com/danieljoppi/AntHocNet/issues/204)) | — | — | — | — | base, failcell, corridor: **NRL −0.5 to −10.5, PDR ≡**; seam: PDR −0.12 pp, d99 +9 ms | — |
+| link lifetime `EnableLinkLifetime` ([#574](https://github.com/swarm-routing/AntHocNet/issues/574)) | **two-ray: PDR +0.3 to +0.7 pp, d99 −28 to −37 ms; Nakagami: PDR +2.1 to +3.9 pp, d99 −159 to −215 ms, NRL −1.1 to −1.8 (recommended)** | d99 +0.7 ms | main: PDR +0.5 pp, d99 −11 ms; sparse: noise | main: NRL +1.7, PDR noise; sparse: noise | ≡ (nothing moves, so no link is predicted to end) | walker16, storm: noise; Starlink S1: PDR −0.5 pp, NRL +37 |
+| quiet mode `EnableQuietMode` ([#571](https://github.com/swarm-routing/AntHocNet/issues/571)) | noise; ≡ on the three Nakagami cells | **NRL −0.40 (−8.6 %), d99 −0.7 ms, PDR noise (default on from v2.3.0)** | noise | noise | **NRL −0.04 to −0.11, PDR and delay ≡** | noise |
+| adaptive evaporation `EnableAdaptiveEvaporation` ([#572](https://github.com/swarm-routing/AntHocNet/issues/572)) | two-ray: noise; Nakagami: d99 +51 to +59 ms, NRL +1.3 to +2.0, PDR −1.1 pp on Gauss-Markov | NRL −0.14 | main: PDR +0.4 pp; sparse: d99 +13 ms | main: d99 +180 ms, NRL +1.5; sparse: d99 +108 ms | noise (seam: NRL −0.01) | **walker16: PDR −0.5 pp; Starlink: PDR −5.4 to −5.5 pp, NRL +164 to +236 (avoid)** |
+| energy metric `LinkMetric=energy` ([#145](https://github.com/swarm-routing/AntHocNet/issues/145)) | two-ray: d99 +8 to +28 ms, NRL +0.2; Nakagami: d99 +126 to +139 ms, NRL +1.4 to +2.3 | noise | main: PDR +0.5 pp, d99 +20 ms; sparse: d99 +564 ms | **main: PDR −1.5 pp, d99 +1.0 s, NRL +13 (avoid)**; sparse: PDR +0.5 pp, d99 +1.6 s | noise (no energy probe: hop count) | walker16: NRL +2.0; Starlink S1: PDR +0.7 pp, NRL +49 |
+| propagation timing `--timingProfile=propagation` ([#205](https://github.com/swarm-routing/AntHocNet/issues/205)) | — | — | — | — | noise | noise |
+| p2p hello throttle `P2pHelloEvery=5` ([#204](https://github.com/swarm-routing/AntHocNet/issues/204)) | — | — | — | — | base, failcell, corridor: **NRL −0.5 to −10.5, PDR ≡**; seam: PDR −0.12 pp, d99 +9 ms | — |
 
 Five of the six cannot move a default: each loses delivery somewhere, or
 (timing) shows no effect at all. Quiet mode is the one mechanism with no
@@ -316,11 +316,11 @@ Measurements are from this repository's own CI, not from the literature:
 `isl-grid` on a 4×4 torus gives **10.39 ms** mean delay against a **10 ms**
 analytic floor (2 hops × 5 ms) and **5.1 ms** at one hop, with **32** links
 across **16** nodes and **NRL 12.18** on a churn-free grid
-([#214](https://github.com/danieljoppi/AntHocNet/issues/214),
-[#237](https://github.com/danieljoppi/AntHocNet/issues/237)).
+([#214](https://github.com/swarm-routing/AntHocNet/issues/214),
+[#237](https://github.com/swarm-routing/AntHocNet/issues/237)).
 
 `T_hop` = 3 ms is the 2007 Ducatelle thesis value
-([#88](https://github.com/danieljoppi/AntHocNet/issues/88)). The protocol
+([#88](https://github.com/swarm-routing/AntHocNet/issues/88)). The protocol
 landscape and the ~119 ms GEO figure are sourced in
 [`satellite-routing-prior-art.md`](satellite-routing-prior-art.md), which also
 records which of its claims have been checked against a full text and which

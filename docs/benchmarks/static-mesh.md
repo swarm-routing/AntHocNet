@@ -14,12 +14,12 @@ try:
 1500 × 300 m, 20 CBR flows, 900 s) with `pause = 900`, so every node holds its
 t = 0 position for the whole run. It is the community-network / Freifunk-class
 **static Wi-Fi mesh** family, one of the four families of the family axis
-([#484](https://github.com/danieljoppi/AntHocNet/issues/484),
+([#484](https://github.com/swarm-routing/AntHocNet/issues/484),
 [roadmap](../roadmap.md)).
 
 [← Benchmark index](../benchmarks.md) · [Metrics](metrics.md) · [Methodology](methodology.md) · [Regimes](../network-regimes.md)
 
-> **Provenance: measured at `ce81eefe`, the [#496](https://github.com/danieljoppi/AntHocNet/issues/496)
+> **Provenance: measured at `ce81eefe`, the [#496](https://github.com/swarm-routing/AntHocNet/issues/496)
 > timer-jitter fix, after `v1.6.0`.** Every AntHocNet row on this page before
 > #496 was measured with the ns-3 adapter's hello timer phase-locked across all
 > nodes. That artifact is kept below as the dated **pre-#496** record, and it is
@@ -40,7 +40,7 @@ t = 0 position for the whole run. It is the community-network / Freifunk-class
 
 ## Why this family, and why it is framed rather than built
 
-The [#298](https://github.com/danieljoppi/AntHocNet/issues/298) family scan
+The [#298](https://github.com/swarm-routing/AntHocNet/issues/298) family scan
 put the static mesh first on the list because it costs nothing: the
 [`sparse-static`](scenarios/sparse-static.md) cell of the taxonomy **is** this
 network. This page adds no harness work. What it adds:
@@ -64,14 +64,14 @@ Whatever AntHocNet loses here, it loses to its own machinery.
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
 > The blocks below this one are the dated record of their campaigns; their
 > migrant rows are **retired**, not deleted.
 
-**Native set:** AntHocNet, OLSR, IEEE 802.11s HWMP ([#708](https://github.com/danieljoppi/AntHocNet/issues/708)), the oracle. **Retired:** AODV, DSDV. Every arm runs 802.11a at a fixed 6 Mbit/s and `PeerLink::MaxBeaconLoss=20` (the [plan](v2.4.0-campaign.md#the-static-mesh-cell) has why), so these rows are not paired with the 802.11b record below.
+**Native set:** AntHocNet, OLSR, IEEE 802.11s HWMP ([#708](https://github.com/swarm-routing/AntHocNet/issues/708)), the oracle. **Retired:** AODV, DSDV. Every arm runs 802.11a at a fixed 6 Mbit/s and `PeerLink::MaxBeaconLoss=20` (the [plan](v2.4.0-campaign.md#the-static-mesh-cell) has why), so these rows are not paired with the 802.11b record below.
 
 | protocol | PDR % ± 95 % CI | delay99 ms | NRL |
 |---|---|---|---|
@@ -80,12 +80,12 @@ Whatever AntHocNet loses here, it loses to its own machinery.
 | HWMP | 91.00 ± 1.15 | 1098.2 | 49.48 |
 | oracle | 99.94 ± 0.09 | 1.6 | 0.00 |
 
-AntHocNet − oracle -0.60 [-0.90, -0.30] pp; against the best native baseline (olsr, 99.98 %): dPDR -0.65 [-0.91, -0.39] pp, d delay99 +0.20 [+0.05, +0.40] ms, d NRL +2.40 [+2.19, +2.61] (PAIRED-WORSE). OLSR leads the family, as it did on 802.11b. HWMP is third: AntHocNet − HWMP is +8.34 pp [+7.10, +9.58], delay99 −1097 ms, NRL −45.3, all paired-significant. At ns-3's default `MaxBeaconLoss` of 2, HWMP collapses to 56.5 % on this field ([finding on #708](https://github.com/danieljoppi/AntHocNet/issues/708#issuecomment-6294616370)).
+AntHocNet − oracle -0.60 [-0.90, -0.30] pp; against the best native baseline (olsr, 99.98 %): dPDR -0.65 [-0.91, -0.39] pp, d delay99 +0.20 [+0.05, +0.40] ms, d NRL +2.40 [+2.19, +2.61] (PAIRED-WORSE). OLSR leads the family, as it did on 802.11b. HWMP is third: AntHocNet − HWMP is +8.34 pp [+7.10, +9.58], delay99 −1097 ms, NRL −45.3, all paired-significant. At ns-3's default `MaxBeaconLoss` of 2, HWMP collapses to 56.5 % on this field ([finding on #708](https://github.com/swarm-routing/AntHocNet/issues/708#issuecomment-6294616370)).
 
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -94,7 +94,7 @@ AntHocNet − oracle -0.60 [-0.90, -0.30] pp; against the best native baseline (
 > **Quiet mode's effect here**, paired against v2.2.0's AntHocNet: NRL 4.51 → 4.11 (−8.6 %, paired 95 % CI [−0.47, −0.32]) and delay99 10.3 → 9.6 ms, with PDR unchanged. OLSR still leads on NRL (1.78): the hellos and the capped probing remain.
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
-> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
+> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
 > bootstrap).
 >
 > **static mesh**
@@ -121,7 +121,7 @@ AntHocNet − oracle -0.60 [-0.90, -0.30] pp; against the best native baseline (
 ## Restated on CBR sources (#521)
 
 > **Re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off,
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off,
 > so this field was offered 0.5 pkt/s per flow, not the stated 1 pkt/s.
 >
 > **Provenance.** Run `37172238042` at `main`
@@ -133,9 +133,9 @@ AntHocNet − oracle -0.60 [-0.90, -0.30] pp; against the best native baseline (
 >
 > ![Static mesh on CBR sources: every arm delivers above 97 %, OLSR and DSDV lead AntHocNet by a fraction of a point, AODV trails; AntHocNet's delay99 and NRL are far below AODV's and above OLSR's](charts/family-static-mesh.png)
 >
-> _Reproduce: `make reproduce FIG=family-static-mesh` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=family-static-mesh` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
-> _Bars: mean of 20 seeds, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); vertical line: the oracle control. Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cell `static-mesh-v230-published.txt`: since v2.3.0 it shows the v2.3.0 generation (the block above), and the table below is the dated v2.2.0 record._
+> _Bars: mean of 20 seeds, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); vertical line: the oracle control. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cell `static-mesh-v230-published.txt`: since v2.3.0 it shows the v2.3.0 generation (the block above), and the table below is the dated v2.2.0 record._
 >
 > | protocol | PDR % | mean delay (ms) | delay99 (ms, bootstrap) | NRL | energy (mJ/bit) |
 > |---|---:|---:|---:|---:|---:|
@@ -242,13 +242,13 @@ every metric.
    changes: 100 % delivery at 3.56 NRL. That is the Babel / BATMAN-adv home
    turf discussed below. AntHocNet's 0.7 pp gap to OLSR is `route=0.44` +
    `chan=0.27`.
-   OLSR's 100 % predates [#510](https://github.com/danieljoppi/AntHocNet/issues/510), which counts the sends stock
+   OLSR's 100 % predates [#510](https://github.com/swarm-routing/AntHocNet/issues/510), which counts the sends stock
    OLSR refuses at the source. The offered-based estimate from this cell's own
    throughput is 99.95 %, so the ordering and the gap are unchanged.
 3. **The first version of this page measured a timer bug, not the family.** Its
    headline, that the 200 ms `ReconvHoldCap` costs about 10 pp here and that
    #371's "beats AODV on every metric" does not hold for static meshes
-   ([#494](https://github.com/danieljoppi/AntHocNet/issues/494)), was the #496
+   ([#494](https://github.com/swarm-routing/AntHocNet/issues/494)), was the #496
    artifact. Re-measured on the fixed timer, 1 s adds only +0.26 pp here and
    costs 209 ms of mobile tail, so the 200 ms default stands (see
    [above](#the-cap-re-measured-on-the-fixed-timer-494)).
@@ -278,7 +278,7 @@ from the cells above, and both are deliberate:
   relays, peering and beacons reported apart) is in
   [metrics.md](metrics.md#the-hwmp-arm-layer-2-path-selection-on-ip-books-708).
 
-The arm passes the per-PR delivery smoke ([#439](https://github.com/danieljoppi/AntHocNet/issues/439))
+The arm passes the per-PR delivery smoke ([#439](https://github.com/swarm-routing/AntHocNet/issues/439))
 and its own anchor, `mesh-hwmp-shortest`: on a static disk field it must
 converge to the oracle's shortest path (mean hops in [1.00, 1.10] × the
 oracle's). The 20-seed AntHocNet, OLSR, HWMP and oracle cell on 802.11a is
@@ -306,12 +306,12 @@ measured in the v2.4.0 control campaign and published here with it.
 
 | arm | run | commit | image | seeds |
 |---|---|---|---|---|
-| current (`TimerJitter` 0.05, cap 200 ms) | [36595249953](https://github.com/danieljoppi/AntHocNet/actions/runs/36595249953) | `ce81eefe` | `ns3:3.42-opt` | 1–20 |
-| pre-#496, cap 200 ms | [36261077793](https://github.com/danieljoppi/AntHocNet/actions/runs/36261077793) | `4fffedcc` | `ns3:3.42-opt` | 1–20 |
-| pre-#496, cap 1 s | [36269605435](https://github.com/danieljoppi/AntHocNet/actions/runs/36269605435) | `0c524697` | `ns3:3.42-opt` | 1–20 |
-| #494 re-measure: cap 1 s, fixed timer | [36767457453](https://github.com/danieljoppi/AntHocNet/actions/runs/36767457453) | `4c8482fd` | `ns3:3.42-opt` | 1–20 |
-| #494 re-measure: paper mobile, cap 1 s | [36767461455](https://github.com/danieljoppi/AntHocNet/actions/runs/36767461455) | `4c8482fd` | `ns3:3.42-opt` | 1–20 |
-| control: `ce81eefe` at `TimerJitter=0` | [36595255598](https://github.com/danieljoppi/AntHocNet/actions/runs/36595255598) | `ce81eefe` | `ns3:3.42-opt` | 1–20 |
+| current (`TimerJitter` 0.05, cap 200 ms) | [36595249953](https://github.com/swarm-routing/AntHocNet/actions/runs/36595249953) | `ce81eefe` | `ns3:3.42-opt` | 1–20 |
+| pre-#496, cap 200 ms | [36261077793](https://github.com/swarm-routing/AntHocNet/actions/runs/36261077793) | `4fffedcc` | `ns3:3.42-opt` | 1–20 |
+| pre-#496, cap 1 s | [36269605435](https://github.com/swarm-routing/AntHocNet/actions/runs/36269605435) | `0c524697` | `ns3:3.42-opt` | 1–20 |
+| #494 re-measure: cap 1 s, fixed timer | [36767457453](https://github.com/swarm-routing/AntHocNet/actions/runs/36767457453) | `4c8482fd` | `ns3:3.42-opt` | 1–20 |
+| #494 re-measure: paper mobile, cap 1 s | [36767461455](https://github.com/swarm-routing/AntHocNet/actions/runs/36767461455) | `4c8482fd` | `ns3:3.42-opt` | 1–20 |
+| control: `ce81eefe` at `TimerJitter=0` | [36595255598](https://github.com/swarm-routing/AntHocNet/actions/runs/36595255598) | `ce81eefe` | `ns3:3.42-opt` | 1–20 |
 
 All cells:
 

@@ -111,7 +111,7 @@ genuine-anomaly tail of link-checks).
 
 ## References
 
-[#180](https://github.com/danieljoppi/AntHocNet/issues/180) (the finding,
+[#180](https://github.com/swarm-routing/AntHocNet/issues/180) (the finding,
 probe measurements and algebra), #188 (the scalar form's measured failure),
 #262 / ADR-0012 update (clock commensurability), #279 (advert magnitude),
 PR #278 (`exp_uniformity_probe`), #248 (regime scoping), #216 (the satellite

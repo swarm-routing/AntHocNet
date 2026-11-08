@@ -5,7 +5,7 @@
 
 ## Context
 
-The satellite-networking track ([#192](https://github.com/danieljoppi/AntHocNet/issues/192))
+The satellite-networking track ([#192](https://github.com/swarm-routing/AntHocNet/issues/192))
 needs AntHocNet to run on satellite topologies. Two questions followed, and they
 look like one question but are not:
 
@@ -15,7 +15,7 @@ look like one question but are not:
 The relevant facts:
 
 - A satellite substrate (ns3-leo, Hypatia, Silva's `ns3-satellite` mobility
-  model — the candidates in [#193](https://github.com/danieljoppi/AntHocNet/issues/193))
+  model — the candidates in [#193](https://github.com/swarm-routing/AntHocNet/issues/193))
   is a **third-party ns-3 module that must be present in the ns-3 tree**. It is
   not a dependency of our module; it is part of the simulator installation.
 - Those substrates support **narrower ns-3 version ranges** than our CI matrix
@@ -25,9 +25,9 @@ The relevant facts:
 - Against that, **nothing in the AntHocNet module is satellite-specific.**
   `core/` is one algorithm (ADR-0002); the ns-3 adapter is one
   `Ipv4RoutingProtocol`. The multi-interface fix
-  ([#203](https://github.com/danieljoppi/AntHocNet/issues/203)) made the data
+  ([#203](https://github.com/swarm-routing/AntHocNet/issues/203)) made the data
   path correct for *any* topology rather than adding a satellite mode, and
-  `isl-grid` ([#214](https://github.com/danieljoppi/AntHocNet/issues/214)) is an
+  `isl-grid` ([#214](https://github.com/swarm-routing/AntHocNet/issues/214)) is an
   **example**, not a build variant. The only genuine difference between the two
   regimes is *which ns-3 modules are enabled* — `point-to-point` for ISLs,
   `wifi;mobility` for MANET — and both are enabled by a single existing
@@ -51,7 +51,7 @@ The relevant facts:
    validation-anchor and determinism gates (3.42 only), not across the full
    matrix.
 4. **The substrate choice is not baked in before it is made.** Until
-   [#193](https://github.com/danieljoppi/AntHocNet/issues/193) concludes, the
+   [#193](https://github.com/swarm-routing/AntHocNet/issues/193) concludes, the
    satellite image target is a *parameterised, unpublished* build used to answer
    the substrate spikes. Only the winner gets a published tag.
 
@@ -98,7 +98,7 @@ sets.
   break the legs outside it, and it makes every MANET build pay for a module it
   never loads.
 - **Publish the satellite image now.** Rejected as premature: it would bake in a
-  substrate choice that [#193](https://github.com/danieljoppi/AntHocNet/issues/193)
+  substrate choice that [#193](https://github.com/swarm-routing/AntHocNet/issues/193)
   has not made. The parameterised, unpublished target is what *unblocks* that
   decision, since the spikes' decisive question — can a third-party
   `Ipv4RoutingProtocol` be installed on the substrate's nodes? — can only be
@@ -107,14 +107,14 @@ sets.
 ## References
 
 ADR-0002 (one core, thin adapters — the invariant this protects),
-[#192](https://github.com/danieljoppi/AntHocNet/issues/192) (satellite track),
-[#193](https://github.com/danieljoppi/AntHocNet/issues/193) (substrate
-selection), [#197](https://github.com/danieljoppi/AntHocNet/issues/197) /
-[#198](https://github.com/danieljoppi/AntHocNet/issues/198) /
-[#200](https://github.com/danieljoppi/AntHocNet/issues/200) (the spikes this
-unblocks), [#214](https://github.com/danieljoppi/AntHocNet/issues/214)
+[#192](https://github.com/swarm-routing/AntHocNet/issues/192) (satellite track),
+[#193](https://github.com/swarm-routing/AntHocNet/issues/193) (substrate
+selection), [#197](https://github.com/swarm-routing/AntHocNet/issues/197) /
+[#198](https://github.com/swarm-routing/AntHocNet/issues/198) /
+[#200](https://github.com/swarm-routing/AntHocNet/issues/200) (the spikes this
+unblocks), [#214](https://github.com/swarm-routing/AntHocNet/issues/214)
 (`isl-grid`, the satellite-shaped scenario that needs no special build),
-[#233](https://github.com/danieljoppi/AntHocNet/issues/233) (the epic implementing
-this ADR, with [#234](https://github.com/danieljoppi/AntHocNet/issues/234) phase 1
-and [#235](https://github.com/danieljoppi/AntHocNet/issues/235) phase 2),
+[#233](https://github.com/swarm-routing/AntHocNet/issues/233) (the epic implementing
+this ADR, with [#234](https://github.com/swarm-routing/AntHocNet/issues/234) phase 1
+and [#235](https://github.com/swarm-routing/AntHocNet/issues/235) phase 2),
 [`docker/README.md`](../../docker/README.md), `.github/workflows/images.yml`.
