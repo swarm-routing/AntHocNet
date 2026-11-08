@@ -27,8 +27,9 @@ It reports PASS/WARN/FAIL for:
   ADR needs updating.
 - **Rule 8 (WARN):** a new `bool enable… = true` in the diff — new mechanisms
   ship default-off and are A/B'd in every family first (ADR-0019/0020).
-- **Rule 9 (WARN):** `web/src` or `web/include` changed — run
-  `web/test/parity.sh` and the smoke (`learn-site` skill).
+- **Rule 9 (WARN):** the browser adapter lives in swarm-routing.github.io
+  (`site/anthocnet/`, #850); after a `core/` change run
+  `tools/checks/fetch-site-web.sh && web/test/parity.sh` (CI's `web-parity` does).
 - **Rule 10 (FAIL):** a shipped file references a `.claude/skills/…` script —
   move the script to `tools/` (#604; CI's `tools/release/check-bundle.sh`
   catches it too).

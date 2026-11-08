@@ -228,7 +228,7 @@ choice.
 ## 5. What the browser adapter must add
 
 These are scenario and radio features only: **no routing logic in `web/`**
-([web/README.md](https://github.com/swarm-routing/AntHocNet/blob/main/web/README.md)
+([web/README.md](https://github.com/swarm-routing/swarm-routing.github.io/blob/main/site/anthocnet/README.md)
 rules). Each one extends the native-vs-WASM parity gate.
 
 | feature | for | sketch |

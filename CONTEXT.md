@@ -106,7 +106,7 @@ ns3/
   anthocnet/              ← native NS-3 module: model/ helper/ examples/ test/
   baselines/<arm>/        ← vendored comparison arms (aomdv, gpsr, oracle)
   tools/                  ← benchmark harness drivers, chart scripts, anchors.yml
-web/                      ← browser adapter (core/ as WebAssembly) + learn site
+web/                      ← (fetched, not tracked) browser adapter + learn site from swarm-routing.github.io (#850)
   site/                   ← the game (Pages front page); test/ parity.sh + smoke.mjs
 tools/
   bench/                  ← shipped benchmark scripts (stats, parsing, scenario_check)

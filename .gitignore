@@ -67,3 +67,7 @@ __pycache__/
 
 # campaign.py collect downloads run artifacts here (#662); never committed.
 .campaign-artifacts/
+
+# the browser adapter + learn site, fetched from swarm-routing.github.io (#850):
+# tools/checks/fetch-site-web.sh
+/web/

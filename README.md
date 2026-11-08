@@ -56,7 +56,6 @@ onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.36+, with a
 ```
 core/   simulator-agnostic C++ (no simulator dependency) + unit tests
 ns3/    native Ipv4RoutingProtocol module
-web/    browser adapter: core/ compiled to WebAssembly + the learn site
 docs/   architecture, configuration, benchmarks, fidelity, ADRs — map in docs/README.md
 ```
 
@@ -77,7 +76,7 @@ flowchart TB
     subgraph NS3["ns3/ — contrib module (supported)"]
         A3["RoutingProtocol : Ipv4RoutingProtocol<br/>~30 attributes = the config surface"]
     end
-    subgraph WEB["web/ — browser adapter (WebAssembly)"]
+    subgraph WEB["browser adapter (WebAssembly, swarm-routing.github.io)"]
         AW["ahn_web::World<br/>held to native by a trace parity gate"]
     end
 
@@ -296,7 +295,7 @@ History of the work is in the per-phase commits; design rationale is in
 | [CONTEXT.md](CONTEXT.md) | Project orientation: domain background, repo map, current state, glossary, open questions. |
 | [AGENTS.md](AGENTS.md) | Build/verify/conventions and invariants for contributors and AI agents. |
 | [docs/ns2-support.md](docs/ns2-support.md) | **The removed NS-2 target** — which tags and images still carry it, and why it was retired. |
-| [ns3/README.md](ns3/README.md) · [web/README.md](web/README.md) | Per-adapter install/run details. |
+| [ns3/README.md](ns3/README.md) · [browser adapter](https://github.com/swarm-routing/swarm-routing.github.io/tree/main/site/anthocnet) | Per-adapter install/run details (the browser adapter and the game live in swarm-routing.github.io since #850). |
 | [docker/README.md](docker/README.md) | Pre-built container images (plain vs. AntHocNet, per simulator version). |
 
 ## Releases & citing

@@ -1,7 +1,7 @@
 name: CodeQL
 
-# Static analysis of the C++ the repo owns outside ns-3 (#619): core/ and the
-# browser adapter built natively (web/, as web/test/parity.sh builds it). The
+# Static analysis of the C++ the repo owns outside ns-3 (#619): core/. (The
+# browser adapter moved to swarm-routing/swarm-routing.github.io, #850.) The
 # fuzzer and the sanitizers find what executes; this finds what does not,
 # which matters here because ADR-0020 keeps a lot of mechanism code behind
 # default-off switches that no smoke run reaches. Results go to the Security
@@ -26,9 +26,6 @@ on:
     branches: [main]
     paths:
       - 'core/**'
-      - 'web/src/**'
-      - 'web/include/**'
-      - 'web/CMakeLists.txt'
       - '.github/workflows/codeql.yml'
   schedule:
     - cron: '41 4 * * 1'
@@ -59,12 +56,10 @@ jobs:
           languages: c-cpp
           build-mode: manual
           queries: security-and-quality
-      - name: Build core and the native browser adapter
+      - name: Build core
         run: |
           cmake -S core -B build-codeql/core -DCMAKE_BUILD_TYPE=Release
           cmake --build build-codeql/core -j
-          cmake -S web -B build-codeql/web -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-codeql/web -j
       - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: /language:c-cpp

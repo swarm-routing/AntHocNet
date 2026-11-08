@@ -10,8 +10,9 @@ defaults layered on top.
 @AGENTS.md
 
 **Skills** (`.claude/skills/`): `protocol-review` (golden-rule checks on a diff),
-`benchmark-results` (dispatch → fetch → validate → compare), `learn-site`
-(WASM parity, browser smoke, README figures). Skills are procedures only —
+`benchmark-results` (dispatch → fetch → validate → compare). The `learn-site`
+skill (WASM parity, browser smoke, README figures) moved with the game to
+`swarm-routing/swarm-routing.github.io` (#850). Skills are procedures only —
 scripts that anything shipped depends on live in `tools/` (ADR-0014), and
 nothing under `.claude/` reaches a release package (#604).
 
