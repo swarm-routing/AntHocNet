@@ -19,7 +19,14 @@ each other as pages and missions are added:
 Stdlib only; reads the JS as text (the data files are plain object literals).
 
 Usage:  python3 tools/checks/check-site-links.py            # the repo
+        python3 tools/checks/check-site-links.py --warn-nest # Nest findings warn, the rest fail
         python3 tools/checks/check-site-links.py --self-test
+
+The Nest lives in swarm-routing.github.io (#850) and follows this repository's
+core only through that site's protocols.lock bump, so a strict Nest rule on
+both sides would deadlock adding or removing a public core class. This
+repository's CI passes --warn-nest; the site runs the rule strictly at bump
+time (the site's ADR-0001 item 6).
 """
 from __future__ import annotations
 
@@ -241,6 +248,11 @@ def main() -> int:
     if "--self-test" in sys.argv:
         return self_test()
     errs = check(*repo_inputs(), **extra_inputs())
+    if "--warn-nest" in sys.argv:
+        for e in errs:
+            if e.startswith("Nest: "):
+                print(f"WARN {e} (the site's lock bump must add it)")
+        errs = [e for e in errs if not e.startswith("Nest: ")]
     w = worlds(read("web/site/js/worlds.js"))
     ms = missions(read("web/site/js/missions-data.js"))
     for e in errs:
