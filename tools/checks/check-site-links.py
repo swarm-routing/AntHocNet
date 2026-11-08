@@ -19,7 +19,14 @@ each other as pages and missions are added:
 Stdlib only; reads the JS as text (the data files are plain object literals).
 
 Usage:  python3 tools/checks/check-site-links.py            # the repo
-        python3 tools/checks/check-site-links.py --self-test
+        python3 tools/checks/check-site-links.py --warn-nest # Nest findings warn, the rest fail
+        python3 tools/checks/check-site-links.py --self-test [--warn-nest]
+
+The Nest lives in swarm-routing.github.io (#850) and follows this repository's
+core only through that site's protocols.lock bump, so a strict Nest rule on
+both sides would deadlock adding or removing a public core class. This
+repository's CI passes --warn-nest; the site runs the rule strictly at bump
+time (the site's ADR-0001 item 6).
 """
 from __future__ import annotations
 
@@ -209,6 +216,14 @@ def self_test() -> int:
                                                          no_replay["docs/benchmarks/static-mesh.md"])
     bad_world = dict(pages)
     bad_world["docs/ant-types.md"] = bad_world["docs/ant-types.md"].replace("- world: line", "- world: atlantis", 1)
+    # The Nest probes run on a fixture Nest (one chamber, every core class once),
+    # not the fetched one, so drift in the site's Nest cannot turn a probe into a
+    # no-op or crash it; they are compared against that fixture's own baseline.
+    core = sorted(api_classes())
+    nest_fixture = "classes: [" + ", ".join(f"'{c}'" for c in core) + "]"
+    ghost = "NoSuchCoreClass"
+    while ghost in core:
+        ghost += "_"
     cases = [
         ("the repo as committed", (wjs, mjs, pages), {}, False),
         ("a dangling world read:", (wjs.replace("GUIDE + 'ant-types/'", "GUIDE + 'no-such-page/'", 1), mjs, pages), {}, True),
@@ -221,17 +236,28 @@ def self_test() -> int:
          {"replay_js": ex["replay_js"].replace("{ id: 'mesh'", "{ id: 'meshy'", 1)}, True),
         ("an API link to a class that does not exist",
          (wjs, mjs.replace("PheromoneEngine.html", "PheromoneEngin.html", 1), pages), {}, True),
-        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": ex["nest_js"].replace("'Config'", "", 1)}, True),
+        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": nest_fixture.replace(f"'{core[0]}'", "", 1)}, True),
         ("a Nest chamber naming a class that does not exist", (wjs, mjs, pages),
-         {"nest_js": ex["nest_js"].replace("'Config'", "'Konfig'", 1)}, True),
+         {"nest_js": nest_fixture.replace(f"'{core[0]}'", f"'{core[0]}', '{ghost}'", 1)}, True),
         ("an install-quest command not in the docs", (wjs, mjs, pages),
          {"steps_js": ex["steps_js"].replace("cmd: './test.py -s anthocnet'", "cmd: './test.py -s nothing'", 1)}, True),
     ]
+    # Each broken input must add a finding of its own on top of the repo as
+    # committed; with --warn-nest the committed repo may carry Nest findings
+    # (a core class not yet in the site's Nest), which must not fail or mask a case.
+    warn_nest = "--warn-nest" in sys.argv
+    base = set(check(*cases[0][1], **ex))
+    nest_base = set(check(*cases[0][1], **{**ex, "nest_js": nest_fixture}))
     bad = 0
     for name, args, override, should_fire in cases:
-        got = len(check(*args, **{**ex, **override}))
-        ok = (got >= 1) if should_fire else (got == 0)
-        print(f"{'ok  ' if ok else 'FAIL'} {name}: {got} finding(s)")
+        got = set(check(*args, **{**ex, **override}))
+        ref = nest_base if "nest_js" in override else base
+        if should_fire:
+            ok, n = bool(got - ref), len(got - ref)
+        else:
+            n = len([e for e in got if not (warn_nest and e.startswith("Nest: "))])
+            ok = n == 0
+        print(f"{'ok  ' if ok else 'FAIL'} {name}: {n} finding(s)")
         bad += not ok
     print(f"{len(cases) - bad}/{len(cases)} cases passed")
     return 1 if bad else 0
@@ -241,14 +267,20 @@ def main() -> int:
     if "--self-test" in sys.argv:
         return self_test()
     errs = check(*repo_inputs(), **extra_inputs())
+    if "--warn-nest" in sys.argv:
+        for e in errs:
+            if e.startswith("Nest: "):
+                print(f"WARN {e} (warn-only here; fix the Nest in the site's protocols.lock bump)")
+        errs = [e for e in errs if not e.startswith("Nest: ")]
     w = worlds(read("web/site/js/worlds.js"))
     ms = missions(read("web/site/js/missions-data.js"))
     for e in errs:
         print(f"FAIL {e}")
     if errs:
         return 1
+    nest = "the Nest is warn-only here" if "--warn-nest" in sys.argv else "the Nest covers every core class"
     print(f"ok: {len(w)} worlds and {len(ms)} missions link the docs; the {len(FAMILY_PAGES)} family "
-          "pages link the game; every target exists; the Nest covers every core class; "
+          f"pages link the game; every target exists; {nest}; "
           "every install-quest command is in the docs")
     return 0
 
