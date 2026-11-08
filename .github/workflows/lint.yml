@@ -42,7 +42,7 @@ jobs:
         # how a new script ships unlinted. tools/ holds the benchmark scripts
         # since #604 (they used to live in .claude/skills/, which releases
         # exclude).
-        run: ruff check ns3/tools docs/tools tools/ web/shell
+        run: ruff check ns3/tools docs/tools tools/
       - name: Release-package gate (#604)
         # Assembles the install bundle exactly as release.yml does and fails on
         # agent-only files (.claude/, AGENTS.md, CLAUDE.md),
@@ -146,9 +146,12 @@ jobs:
         # results page links its world, every target exists, every public core
         # class has a chamber in the Nest, every install-quest command is in the
         # docs. Self-test first (each rule must fire on a broken input).
+        # The Nest rule only warns here: the Nest follows this core through the
+        # site's protocols.lock bump, where it runs strictly (site ADR-0001 item 6).
         run: |
-          python3 tools/checks/check-site-links.py --self-test
-          python3 tools/checks/check-site-links.py
+          tools/checks/fetch-site-web.sh   # the Nest lives in the site's adapter (#850)
+          python3 tools/checks/check-site-links.py --self-test --warn-nest
+          python3 tools/checks/check-site-links.py --warn-nest
 
   clang-format:
     name: C++ formatting (clang-format)
@@ -163,7 +166,7 @@ jobs:
       - name: clang-format --dry-run -Werror
         run: |
           clang-format-18 --version
-          git ls-files 'core/*.cpp' 'core/*.h' 'web/src/*.cpp' 'web/include/*.h' \
+          git ls-files 'core/*.cpp' 'core/*.h' \
             'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' 'ns3/routing-bench/*.cc' 'ns3/routing-bench/*.h' \
             | xargs clang-format-18 --dry-run -Werror
 
@@ -182,7 +185,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Did C++ under core/ or web/ change?
+      - name: Did C++ under core/ change?
         id: diff
         env:
           EVENT: ${{ github.event_name }}
@@ -192,7 +195,7 @@ jobs:
           if [ "$EVENT" = pull_request ]; then range="$BASE...HEAD"; else range="$BEFORE..HEAD"; fi
           # A first push has no usable BEFORE: lint everything then.
           files=$(git diff --name-only "$range" 2>/dev/null || echo .clang-tidy)
-          if printf '%s\n' "$files" | grep -Eq '^(core|web)/.*\.(cpp|h|hpp)$|^(core|web)/CMakeLists\.txt$|^\.clang-tidy$'; then
+          if printf '%s\n' "$files" | grep -Eq '^core/.*\.(cpp|h|hpp)$|^core/CMakeLists\.txt$|^\.clang-tidy$'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -202,15 +205,11 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq clang-tidy-18 >/dev/null
           cmake -S core -B build-tidy/core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null
-          cmake -S web -B build-tidy/web -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null
           : > tidy.txt
           for f in core/src/*.cpp; do clang-tidy-18 -p build-tidy/core --quiet "$f" >> tidy.txt 2>/dev/null || true; done
-          for f in web/src/sim.cpp web/src/scenarios.cpp web/src/trace_main.cpp; do
-            clang-tidy-18 -p build-tidy/web --quiet "$f" >> tidy.txt 2>/dev/null || true
-          done
           # One annotation per distinct finding (a header's finding repeats
           # once per including translation unit).
-          grep -E '^[^ ].*:[0-9]+:[0-9]+: warning: ' tidy.txt | sed "s|^$GITHUB_WORKSPACE/||; s|^web/\.\./||" | sort -u > findings.txt || true
+          grep -E '^[^ ].*:[0-9]+:[0-9]+: warning: ' tidy.txt | sed "s|^$GITHUB_WORKSPACE/||" | sort -u > findings.txt || true
           n=$(wc -l < findings.txt)
           while IFS= read -r line; do
             file=${line%%:*}; rest=${line#*:}; ln=${rest%%:*}; msg=${line#*warning: }

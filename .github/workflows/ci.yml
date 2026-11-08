@@ -65,7 +65,7 @@ jobs:
           # world) and these workflows: a docs-only PR still gets the page
           # tests (the pages job below).
           site=false
-          if printf '%s\n' "$files" | grep -qE '^(docs/|web/|api/|core/|tools/checks/|mkdocs\.yml$|README\.md$|CHANGELOG\.md$|\.github/workflows/|\.github/actions/)'; then
+          if printf '%s\n' "$files" | grep -qE '^(docs/|api/|core/|tools/checks/|mkdocs\.yml$|README\.md$|CHANGELOG\.md$|\.github/workflows/|\.github/actions/)'; then
             site=true
           fi
           echo "code=$code site=$site"

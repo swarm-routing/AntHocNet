@@ -90,3 +90,10 @@ date,commit,cpu,case,ns_per_op,min_ns,max_ns
 2026-11-03,cf26cecd750e,INTEL(R) XEON(R) PLATINUM 8573C,codec_encode_full_ant,42.06,41.10,44.23
 2026-11-03,cf26cecd750e,INTEL(R) XEON(R) PLATINUM 8573C,codec_decode_full_ant,86.99,83.29,91.75
 2026-11-03,cf26cecd750e,INTEL(R) XEON(R) PLATINUM 8573C,history_dedup,76.82,73.63,79.04
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,pheromone_update,57.28,56.34,59.81
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,select_next_hop_4,69.58,66.66,73.60
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,select_next_hop_16,309.12,305.76,310.02
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,select_next_hop_64,1334.41,1327.75,1346.65
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,codec_encode_full_ant,33.61,33.48,33.68
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,codec_decode_full_ant,101.84,100.89,104.55
+2026-11-08,f3fccdf926db,AMD EPYC 9V45 96-Core Processor,history_dedup,49.78,49.54,51.44

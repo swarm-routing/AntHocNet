@@ -105,7 +105,7 @@ provenance in the registry.
 cosign verify ghcr.io/danieljoppi/anthocnet-ns3:3.48 \
   --certificate-identity-regexp '^https://github.com/(danieljoppi|swarm-routing)/AntHocNet/\.github/workflows/(images|release)\.yml@' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
-gh attestation verify oci://ghcr.io/danieljoppi/anthocnet-ns3:3.48 --repo danieljoppi/AntHocNet
+gh attestation verify oci://ghcr.io/danieljoppi/anthocnet-ns3:3.48 --repo danieljoppi/AntHocNet --bundle-from-oci
 ```
 
 These images were built and signed before the repository moved to

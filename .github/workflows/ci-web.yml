@@ -31,6 +31,8 @@ jobs:
     # traces -- so the game can never drift from the protocol it teaches.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch the browser adapter and site (swarm-routing.github.io, #850)
+        run: tools/checks/fetch-site-web.sh
       - name: Install emsdk (pinned; .github/actions/setup-emsdk)
         uses: ./.github/actions/setup-emsdk
       - name: Native vs WASM decision-trace parity
@@ -42,7 +44,7 @@ jobs:
         run: node web/test/xray.test.mjs
 
   # The whole Pages site, tested as deployed (#626): built by web/build-pages.sh
-  # (the game, the docs, the API, the redirects -- what pages.yml publishes),
+  # (the game, the docs, the API, the redirects -- what swarm-routing.github.io publishes from this repo at a pinned commit, #850),
   # then crawled (every internal link, asset and anchor resolves; the top bar
   # on every page) and driven in a browser (every world, the hub, the reader,
   # the Workshop, axe on every docs page). Runs on every PR that touches the
@@ -54,6 +56,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch the browser adapter and site (swarm-routing.github.io, #850)
+        run: tools/checks/fetch-site-web.sh
       - name: Install emsdk (pinned; .github/actions/setup-emsdk)
         uses: ./.github/actions/setup-emsdk
       - name: Install-quest parser unit test (#636)

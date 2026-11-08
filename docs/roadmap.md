@@ -276,7 +276,10 @@ published page:
 | re-injection waste | ~65–67 % of re-injections are duplicates | [reinjection.md](benchmarks/reinjection.md) | unscheduled ([#430](https://github.com/swarm-routing/AntHocNet/issues/430)) |
 | fidelity: link metric | thesis headline results use SINR; this repo does not | [fidelity.md](fidelity.md) | v2.2.0 (#181: SINR implemented and measured; −1.6 pp on urban VANET, so `classic` stays the default) |
 
-**The learn site evolves with the ladder.** The sandbox becomes a **campaign**: the
+**The learn site evolves with the ladder.** (Since #850 the game, its browser
+adapter and the site shell live in
+[swarm-routing/swarm-routing.github.io](https://github.com/swarm-routing/swarm-routing.github.io),
+which builds them against this repo at a pinned commit; its issues moved there too.) The sandbox becomes a **campaign**: the
 player fixes a broken network by placing, moving and powering devices on a
 budget, and the ants (the real core) find the routes. There is **one chapter
 per supported network type**:
