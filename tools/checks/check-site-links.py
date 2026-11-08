@@ -216,9 +216,14 @@ def self_test() -> int:
                                                          no_replay["docs/benchmarks/static-mesh.md"])
     bad_world = dict(pages)
     bad_world["docs/ant-types.md"] = bad_world["docs/ant-types.md"].replace("- world: line", "- world: atlantis", 1)
-    # The Nest probes edit a chamber both sides agree on, so drift in any one class
-    # (with --warn-nest) cannot turn a probe into a no-op.
-    shared = min(api_classes() & set(nest_classes(ex["nest_js"])))
+    # The Nest probes run on a fixture Nest (one chamber, every core class once),
+    # not the fetched one, so drift in the site's Nest cannot turn a probe into a
+    # no-op or crash it; they are compared against that fixture's own baseline.
+    core = sorted(api_classes())
+    nest_fixture = "classes: [" + ", ".join(f"'{c}'" for c in core) + "]"
+    ghost = "NoSuchCoreClass"
+    while ghost in core:
+        ghost += "_"
     cases = [
         ("the repo as committed", (wjs, mjs, pages), {}, False),
         ("a dangling world read:", (wjs.replace("GUIDE + 'ant-types/'", "GUIDE + 'no-such-page/'", 1), mjs, pages), {}, True),
@@ -231,9 +236,9 @@ def self_test() -> int:
          {"replay_js": ex["replay_js"].replace("{ id: 'mesh'", "{ id: 'meshy'", 1)}, True),
         ("an API link to a class that does not exist",
          (wjs, mjs.replace("PheromoneEngine.html", "PheromoneEngin.html", 1), pages), {}, True),
-        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": ex["nest_js"].replace(f"'{shared}'", "", 1)}, True),
+        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": nest_fixture.replace(f"'{core[0]}'", "", 1)}, True),
         ("a Nest chamber naming a class that does not exist", (wjs, mjs, pages),
-         {"nest_js": ex["nest_js"].replace(f"'{shared}'", f"'{shared}X'", 1)}, True),
+         {"nest_js": nest_fixture.replace(f"'{core[0]}'", f"'{core[0]}', '{ghost}'", 1)}, True),
         ("an install-quest command not in the docs", (wjs, mjs, pages),
          {"steps_js": ex["steps_js"].replace("cmd: './test.py -s anthocnet'", "cmd: './test.py -s nothing'", 1)}, True),
     ]
@@ -242,11 +247,13 @@ def self_test() -> int:
     # (a core class not yet in the site's Nest), which must not fail or mask a case.
     warn_nest = "--warn-nest" in sys.argv
     base = set(check(*cases[0][1], **ex))
+    nest_base = set(check(*cases[0][1], **{**ex, "nest_js": nest_fixture}))
     bad = 0
     for name, args, override, should_fire in cases:
         got = set(check(*args, **{**ex, **override}))
+        ref = nest_base if "nest_js" in override else base
         if should_fire:
-            ok, n = bool(got - base), len(got - base)
+            ok, n = bool(got - ref), len(got - ref)
         else:
             n = len([e for e in got if not (warn_nest and e.startswith("Nest: "))])
             ok = n == 0
