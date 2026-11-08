@@ -355,8 +355,8 @@ citing the [DOI](#releases--citing) helps just as much.
 
 What is planned and in progress here: the issues labelled [`epic`](https://github.com/swarm-routing/AntHocNet/issues?q=label%3Aepic). An epic's open sub-issues carry a `priority:*` and a `model:*` label, so a contributor or an AI agent can pick one up ([how issues work](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues)). The whole org's plan: the [roadmap](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#epics).
 
-| Epic | Status | Sub-issues done |
-|------|--------|-----------------|
+| Epic | Status | Sub-issues closed |
+|------|--------|-------------------|
 | [#64](https://github.com/swarm-routing/AntHocNet/issues/64) Abstract discrete-event testbench in core/tests — trend regression without a simulator | In progress | 1 / 2 |
 | [#109](https://github.com/swarm-routing/AntHocNet/issues/109) Publish the AntHocNet implementation (reproducibility + cross-simulator paper) | In progress | 1 / 4 |
 | [#328](https://github.com/swarm-routing/AntHocNet/issues/328) 5-star open-source packaging — visibility, supply-chain trust, onboarding, docs site | In progress | 10 / 23 |
@@ -366,7 +366,7 @@ What is planned and in progress here: the issues labelled [`epic`](https://githu
 | [#302](https://github.com/swarm-routing/AntHocNet/issues/302) secured AntHocNet — attribute-gated trust + authenticated ants, default-off and byte-identical to the paper-faithful path | Planned | no sub-issues yet |
 | [#564](https://github.com/swarm-routing/AntHocNet/issues/564) Wider threat model (v3.3.0): wormhole, rushing, Sybil and pheromone poisoning | Planned | 0 / 4 |
 
-<details><summary>Done: 32 epics</summary>
+<details><summary>Closed: 32 epics</summary>
 
 | Epic | Closed |
 |------|--------|
