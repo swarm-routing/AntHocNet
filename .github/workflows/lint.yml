@@ -150,7 +150,7 @@ jobs:
         # site's protocols.lock bump, where it runs strictly (site ADR-0001 item 6).
         run: |
           tools/checks/fetch-site-web.sh   # the Nest lives in the site's adapter (#850)
-          python3 tools/checks/check-site-links.py --self-test
+          python3 tools/checks/check-site-links.py --self-test --warn-nest
           python3 tools/checks/check-site-links.py --warn-nest
 
   clang-format:

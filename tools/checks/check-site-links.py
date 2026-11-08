@@ -20,7 +20,7 @@ Stdlib only; reads the JS as text (the data files are plain object literals).
 
 Usage:  python3 tools/checks/check-site-links.py            # the repo
         python3 tools/checks/check-site-links.py --warn-nest # Nest findings warn, the rest fail
-        python3 tools/checks/check-site-links.py --self-test
+        python3 tools/checks/check-site-links.py --self-test [--warn-nest]
 
 The Nest lives in swarm-routing.github.io (#850) and follows this repository's
 core only through that site's protocols.lock bump, so a strict Nest rule on
@@ -234,11 +234,20 @@ def self_test() -> int:
         ("an install-quest command not in the docs", (wjs, mjs, pages),
          {"steps_js": ex["steps_js"].replace("cmd: './test.py -s anthocnet'", "cmd: './test.py -s nothing'", 1)}, True),
     ]
+    # Each broken input must add a finding of its own on top of the repo as
+    # committed; with --warn-nest the committed repo may carry Nest findings
+    # (a core class not yet in the site's Nest), which must not fail or mask a case.
+    warn_nest = "--warn-nest" in sys.argv
+    base = set(check(*cases[0][1], **ex))
     bad = 0
     for name, args, override, should_fire in cases:
-        got = len(check(*args, **{**ex, **override}))
-        ok = (got >= 1) if should_fire else (got == 0)
-        print(f"{'ok  ' if ok else 'FAIL'} {name}: {got} finding(s)")
+        got = set(check(*args, **{**ex, **override}))
+        if should_fire:
+            ok, n = bool(got - base), len(got - base)
+        else:
+            n = len([e for e in got if not (warn_nest and e.startswith("Nest: "))])
+            ok = n == 0
+        print(f"{'ok  ' if ok else 'FAIL'} {name}: {n} finding(s)")
         bad += not ok
     print(f"{len(cases) - bad}/{len(cases)} cases passed")
     return 1 if bad else 0
