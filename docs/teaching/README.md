@@ -46,7 +46,7 @@ v3.0.0.
 ## How the answer keys are checked
 
 Every number in [answer-keys.md](answer-keys.md) is measured by
-[`web/test/labs.mjs`](https://github.com/swarm-routing/AntHocNet/blob/main/web/test/labs.mjs)
+[`web/test/labs.mjs`](https://github.com/swarm-routing/swarm-routing.github.io/blob/main/site/anthocnet/test/labs.mjs)
 on the same WebAssembly core the site runs, at the seed the sheet names.
 The script also checks the claim each key makes, such as "quiet mode (the default)
 spends fewer ants per delivered packet than with it off". If a change to the core moves a number,

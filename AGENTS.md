@@ -20,7 +20,7 @@ v1.2.0–v1.9.0 tags.
 ```
 core/    simulator-agnostic C++ (no simulator headers) + unit tests
 ns3/     anthocnet/ (the ns-3 module + satellite harnesses), routing-bench/ (the comparison harness), baselines/<arm>/ (vendored arms), tools/
-web/     browser adapter (core/ as WebAssembly) + the learn site (the Pages front page)
+web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
 tools/   shipped scripts: bench/ (stats, parsing, scenario_check), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
@@ -99,7 +99,7 @@ results.
   (republish simulator images). Automatic: `charts.yml` (re-renders charts from
   committed data), `core-bench.yml` (core ns/op: PR vs base as a warning, history
   on main; `make bench-core` locally), `links.yml` (weekly external link check; a
-  red week opens a `[docs]` issue), `pages.yml` (game at `/`, docs at `/docs/`, API at `/api/`), `ns3-dev.yml`
+  red week opens a `[docs]` issue), no Pages deploy here: [`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io) builds the game, docs and API from this repo at the commit in its `protocols.lock` and serves them at `/AntHocNet/`, `/AntHocNet/docs/`, `/AntHocNet/api/` (#850), `ns3-dev.yml`
   (nightly build against ns-3-dev; a red night opens a `[ci]` issue), `claude-review.yml`
   (AI review of every PR against this file's golden rules; comments only, never
   approves, not a required check, #811; a second AI reviewer, CodeRabbit, runs as
@@ -109,17 +109,25 @@ results.
 
 ### Validating the browser adapter and the learn site
 
-The `web-parity` CI job is the gate; locally (needs an activated emsdk, pinned
-in `.github/actions/setup-emsdk`):
+The browser adapter, the game and the site shell live in
+[`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io)
+under `site/anthocnet/` (its ADR-0001). This repo's CI fetches them into a
+git-ignored `web/` (`tools/checks/fetch-site-web.sh`, the site's `main`) and
+keeps every gate: the `web-parity` job still fails a `core/` PR that breaks
+native-vs-WASM parity, and the `pages` job still builds the docs and API under
+the shell and smoke-tests them. A change to the game itself is a PR to the site
+repo; a newer core reaches the published site through a `protocols.lock` bump
+there. Locally (needs an activated emsdk, pinned in `.github/actions/setup-emsdk`):
 
 ```bash
+tools/checks/fetch-site-web.sh          # web/ <- site/anthocnet (SITE_DIR=<checkout> to copy a local one)
 web/test/parity.sh 120 "1 2 7 42"      # native vs WASM decision traces, byte-identical
 web/build-site.sh                       # -> web/build-site/ (the Pages root)
 node web/test/smoke.mjs web/build-site  # needs playwright-core + axe-core in cwd
 ```
 
-The `learn-site` skill has the full procedure, including regenerating the README
-figures from the game.
+The site repo's `learn-site` skill has the full procedure, including
+regenerating the README figures from the game.
 
 ### Docs and release-package checks (run before pushing a docs or packaging change)
 
@@ -134,15 +142,13 @@ but not the `pages` job, which builds the whole site, crawls it
 python3 docs/tools/check-links.py .     # relative links resolve
 python3 docs/tools/check-mermaid.py .   # mermaid blocks render on GitHub
 python3 docs/tools/check-headers.py .   # SPDX headers on every source file
-mkdocs build --strict                   # nav + anchors (pages.yml builds it into /docs/)
+mkdocs build --strict                   # nav + anchors (needs web/shell: run tools/checks/fetch-site-web.sh first)
 tools/release/check-bundle.sh           # release package: no agent files, tools present
 # C++ formatting (.clang-format, clang-format-18; lint.yml fails on a diff, #35):
 make format
 # C++ static checks (.clang-tidy; lint.yml runs them warn-only, #619):
 cmake -S core -B build-tidy/core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake -S web  -B build-tidy/web  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
-for f in web/src/{sim,scenarios,trace_main}.cpp; do clang-tidy -p build-tidy/web --quiet "$f"; done
 ```
 
 ## Golden rules (invariants — do not break)
@@ -180,7 +186,8 @@ for f in web/src/{sim,scenarios,trace_main}.cpp; do clang-tidy -p build-tidy/web
    default path stays byte-identical (determinism check), and it is A/B'd on
    identical seeds in *every* family before any default moves.
 9. **The browser adapter stays deterministic and decision-free** (ADR-0021).
-   No routing logic in `web/`. Draw randomness into named locals (argument
+   No routing logic in the browser adapter (`web/`, now
+   `swarm-routing.github.io` `site/anthocnet/`; this repo's CI still runs its parity on every PR). Draw randomness into named locals (argument
    evaluation order differs between compilers), keep mobility to arithmetic
    (`detSin`/`detCos`, never libm trig), keep `-ffp-contract=off`.
    `web/test/parity.sh` must stay byte-identical.
@@ -246,15 +253,15 @@ for f in web/src/{sim,scenarios,trace_main}.cpp; do clang-tidy -p build-tidy/web
 | Change the wire format | `docs/wire-format.md` → `core/include/.../ant_message_codec.h` (+ the ns-3 header; bump `kWireVersion`) |
 | Find the removed NS-2 adapter | [`docs/ns2-support.md`](docs/ns2-support.md) — the v1.2.0 / v1.9.0 tags and images |
 | Work on the NS-3 adapter | `ns3/anthocnet/model/`, `ns3/anthocnet/helper/`, `ns3/anthocnet/examples/` |
-| Work on the browser adapter (the learn site's simulation) | `web/` ([README](web/README.md), [ADR-0021](docs/adr/0021-the-browser-is-an-adapter.md)); `web/test/parity.sh` must stay byte-identical native vs WASM (CI job `web-parity`) |
+| Work on the browser adapter (the learn site's simulation) | `swarm-routing/swarm-routing.github.io` `site/anthocnet/` (its README, [ADR-0021](docs/adr/0021-the-browser-is-an-adapter.md)); fetched here as `web/` by `tools/checks/fetch-site-web.sh`; `web/test/parity.sh` must stay byte-identical native vs WASM (CI job `web-parity`) |
 | Run / read benchmarks | `docs/benchmarks.md` (index → `docs/benchmarks/{metrics,methodology}.md`, `scenarios/<name>.md`, `sweeps/<name>.md`), `ns3/tools/run-scenarios.py` + `make-charts.py` + `update-benchmarks.py`; family/cross-family + sweep charts from committed data: `ns3/tools/family-charts.py` (re-rendered and committed by `charts.yml`), `anthocnet-compare --diag` |
 | Inspect protocol internals | NS-3 `Tx`/`Rx`/`RouteChanged` trace sources; core counters via `IRouterObserver` |
 | Run the benchmark campaign loop (dispatch → fetch → parse) | `benchmark-results` skill (SKILL.md documents the whole procedure) |
 | Run a campaign (cells × arms, throttled so PR CI keeps runners) | `tools/bench/campaign.py` + a plan in `tools/bench/campaigns/` (#662): `plan`, `dispatch`, `status`, `collect`, `verdicts` |
 | Run the comparison harness, or add a protocol (arm) to it | [`docs/comparison-harness.md`](docs/comparison-harness.md) — running `routing-compare` (alias `anthocnet-compare`), markers, readers, the `adaptive` `RoutingBase` hooks, registering an arm, the three gates. The harness is the `routing-bench` module (`ns3/routing-bench/`, its README); each arm module registers through `helper/<module>-bench-arms.cc`. The design (arm contract, hook order, explicit registration, compatibility promise): [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md) (epic #764) |
 | Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`tools/bench/bench_parse.py`) |
-| Build, test or screenshot the learn site | `learn-site` skill (parity, smoke, README figures) |
-| Change the site's top bar, places or the docs/API look | `web/shell/` (one source for game, docs and API; `inject.py`), `docs/places/`, the nav in `mkdocs.yml`; checked by `web/test/smoke.mjs` on `web/build-pages.sh` output |
+| Build, test or screenshot the learn site | the `learn-site` skill in `swarm-routing/swarm-routing.github.io` (parity, smoke, README figures) |
+| Change the site's top bar, places or the docs/API look | the site repo's `site/anthocnet/shell/` (one source for game, docs and API; `inject.py`), `docs/places/`, the nav in `mkdocs.yml`; checked by `web/test/smoke.mjs` on `web/build-pages.sh` output |
 | Add a world, a mission or a core class | it needs its docs links (`read:` / `links:`), a family page needs `try:` front matter, a public core class needs a chamber in `web/site/js/nest-data.js`: `python3 tools/checks/check-site-links.py` (CI) says what is missing |
 | Summarize / export campaign sweep CSVs | `benchmark-results` skill (`tools/bench/sweep_summary.py`; `--export-sweeps` feeds the papers repo) |
 | Validate a scenario config or result plausibility | `benchmark-results` skill (`tools/bench/scenario_check.py`, #134): `preflight` before dispatching, `results [--anchor …]` before trusting numbers |

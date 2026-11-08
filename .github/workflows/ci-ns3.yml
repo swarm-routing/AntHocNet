@@ -198,6 +198,7 @@ jobs:
         # same line.
         if: matrix.version == inputs.gate-version
         run: |
+          tools/checks/fetch-site-web.sh   # config_fields.py is the site's (#850)
           python3 web/tools/config_fields.py check
           args=$(python3 web/tools/config_fields.py ns3-args)
           echo "$args"

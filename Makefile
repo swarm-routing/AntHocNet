@@ -34,7 +34,7 @@ bench-core:
 # .clang-format-ignore). CI runs the same file list with --dry-run -Werror.
 CLANG_FORMAT ?= clang-format-18
 format:
-	git ls-files 'core/*.cpp' 'core/*.h' 'web/src/*.cpp' 'web/include/*.h' \
+	git ls-files 'core/*.cpp' 'core/*.h' \
 	  'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' 'ns3/routing-bench/*.cc' 'ns3/routing-bench/*.h' | xargs $(CLANG_FORMAT) -i
 
 doctor:
