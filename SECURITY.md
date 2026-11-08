@@ -103,9 +103,15 @@ provenance in the registry.
 
 ```bash
 cosign verify ghcr.io/danieljoppi/anthocnet-ns3:3.48 \
-  --certificate-identity-regexp '^https://github.com/swarm-routing/AntHocNet/\.github/workflows/(images|release)\.yml@' \
+  --certificate-identity-regexp '^https://github.com/(danieljoppi|swarm-routing)/AntHocNet/\.github/workflows/(images|release)\.yml@' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
-gh attestation verify oci://ghcr.io/danieljoppi/anthocnet-ns3:3.48 --repo swarm-routing/AntHocNet
+gh attestation verify oci://ghcr.io/danieljoppi/anthocnet-ns3:3.48 --repo danieljoppi/AntHocNet
 ```
+
+These images were built and signed before the repository moved to
+`swarm-routing` (2026-11-03), so their signatures and provenance name
+`danieljoppi/AntHocNet`; the identity pattern also accepts `swarm-routing`
+for images signed after the move (verify those with
+`--repo swarm-routing/AntHocNet`).
 
 Releases before v2.3.0 have only the checksum.
