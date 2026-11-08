@@ -2,14 +2,14 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-08
-- **Decides:** [#193](https://github.com/danieljoppi/AntHocNet/issues/193)
+- **Decides:** [#193](https://github.com/swarm-routing/AntHocNet/issues/193)
   (substrate spike set). **Refines** [ADR-0015](0015-satellite-substrate-lives-in-the-image.md)
   on one point: with a substrate that ships *inside* ns-3, the substrate image
   is the existing `ns3:3.48` image — no new image target.
 
 ## Context
 
-The satellite track ([#192](https://github.com/danieljoppi/AntHocNet/issues/192))
+The satellite track ([#192](https://github.com/swarm-routing/AntHocNet/issues/192))
 needed a platform on which AntHocNet could route a **moving** constellation.
 #193 set seven selection criteria (version distance from the CI matrix;
 whether a third-party `Ipv4RoutingProtocol` can be installed; real ISL net

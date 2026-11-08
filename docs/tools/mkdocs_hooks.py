@@ -9,7 +9,7 @@ The site's ``docs_dir`` is ``docs/``, so a relative link that escapes it —
 Those links must keep working when the same file is read in the repo tree (the
 tree is canonical, the site only renders it), so the sources are never
 rewritten. Instead the escaping targets are rewritten *at render time* into
-``https://github.com/danieljoppi/AntHocNet/blob|tree/main/<path>`` URLs: the
+``https://github.com/swarm-routing/AntHocNet/blob|tree/main/<path>`` URLs: the
 site's copy sends the reader to the file on GitHub, the repo's copy keeps its
 relative link. Links that stay inside ``docs/`` are left untouched for mkdocs
 to resolve. See the decision note in ``mkdocs.yml``.
@@ -22,8 +22,8 @@ import posixpath
 import re
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_BLOB = "https://github.com/danieljoppi/AntHocNet/blob/main/"
-_TREE = "https://github.com/danieljoppi/AntHocNet/tree/main/"
+_BLOB = "https://github.com/swarm-routing/AntHocNet/blob/main/"
+_TREE = "https://github.com/swarm-routing/AntHocNet/tree/main/"
 
 # Inline markdown link/image; the target runs up to whitespace (an optional
 # title) or the closing paren. Reference-style links and links inside code
@@ -156,7 +156,7 @@ def on_post_build(config) -> None:
 # A release lands on the site when release.yml finishes (pages.yml redeploys).
 from mkdocs.structure.files import File as _File
 
-_REPO = "https://github.com/danieljoppi/AntHocNet"
+_REPO = "https://github.com/swarm-routing/AntHocNet"
 _RELEASE = re.compile(r"^## (v\d+\.\d+\.\d+\S*) \((\d{4}-\d{2}-\d{2})\)[ \t]*$", re.MULTILINE)
 _KINDS = {"BREAKING CHANGE": "Breaking changes", "Feat": "Features", "Fix": "Fixes",
           "Refactor": "Refactoring", "Perf": "Performance"}

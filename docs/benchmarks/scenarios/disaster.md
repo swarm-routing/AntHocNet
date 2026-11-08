@@ -1,7 +1,7 @@
 # Scenario: disaster
 
 **Class:** disaster / emergency response: first-responder teams in a partly
-walled incident area, moving by role ([#580](https://github.com/danieljoppi/AntHocNet/issues/580), family axis III)
+walled incident area, moving by role ([#580](https://github.com/swarm-routing/AntHocNet/issues/580), family axis III)
 
 [← Benchmark index](../../benchmarks.md) · [Metrics](../metrics.md) · [Methodology](../methodology.md)
 
@@ -127,13 +127,13 @@ These are 2 seeds of the full 900 s scene, not the published cell:
 **The oracle loses about 19 % to the partition.** It routes on the true
 graph, so these packets have no path when they are sent. That is the
 condition #580 names for the store-carry-forward follow-up. It is filed as
-[#727](https://github.com/danieljoppi/AntHocNet/issues/727) with these
+[#727](https://github.com/swarm-routing/AntHocNet/issues/727) with these
 numbers, and the campaign below measures it at 20 seeds.
 
 ## Pre-registered campaign
 
 The plan is
-[`tools/bench/campaigns/v2.4.0-disaster.yaml`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-disaster.yaml).
+[`tools/bench/campaigns/v2.4.0-disaster.yaml`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/campaigns/v2.4.0-disaster.yaml).
 It is merged before its first dispatch, as every campaign here is:
 
 - **one cell,** `disaster-main`: the committed scene, 900 s, harness seeds
@@ -155,7 +155,7 @@ then reads seven families. One scene seed is a disclosed threat (below).
 
 The pre-registered campaign, as planned: `disaster-main`, 20 seeds, 900 s,
 on `ns3:3.42-opt` at `bb628a0` (runs 39539327103 and 39539339168). The cell
-is [`results/cells/disaster-main-v240.txt`](https://github.com/danieljoppi/AntHocNet/blob/main/results/cells/disaster-main-v240.txt).
+is [`results/cells/disaster-main-v240.txt`](https://github.com/swarm-routing/AntHocNet/blob/main/results/cells/disaster-main-v240.txt).
 Mean over 20 seeds, PDR with its 95 % t-interval:
 
 | protocol | PDR % ± 95 % CI | delay99 ms | NRL |
@@ -189,7 +189,7 @@ What they say:
 - **The oracle loses 18.5 %.** The 2-seed runs above read 81.4 and
   81.5 %; at 20 seeds it is 81.47 ± 0.04 %. Those packets have no path when
   they are sent, which is #580's condition for a store-carry-forward arm.
-  [#727](https://github.com/danieljoppi/AntHocNet/issues/727) carries it to
+  [#727](https://github.com/swarm-routing/AntHocNet/issues/727) carries it to
   v2.5.0.
 - **`scenario_check.py results`: WARN, 0 FAIL.**
   - The oracle is approximate on this channel (it is a reference point, not
@@ -214,7 +214,7 @@ control overhead is the binding cost. Stock ns-3 has no substrate for it:
   routing.
 
 The maintainer moved it to v2.5.0 (decision 2026-10-20).
-[#726](https://github.com/danieljoppi/AntHocNet/issues/726) tracks the
+[#726](https://github.com/swarm-routing/AntHocNet/issues/726) tracks the
 narrowband channel it needs.
 
 ## Threats to validity
@@ -228,4 +228,4 @@ narrowband channel it needs.
 - **The walls are Sommer et al.'s,** fitted for buildings at 5.9 GHz and
   used here at 2.4 GHz, as on VANET. A fire compartment's real walls are
   heavier, and smoke is not modelled.
-- **No DTN arm** ([#727](https://github.com/danieljoppi/AntHocNet/issues/727)), see above.
+- **No DTN arm** ([#727](https://github.com/swarm-routing/AntHocNet/issues/727)), see above.

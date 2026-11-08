@@ -1,14 +1,14 @@
 # ADR-0019: Network families change the evaluation, not the protocol
 
 - **Status:** Accepted — codifies existing practice; governs the family epics
-  [#300](https://github.com/danieljoppi/AntHocNet/issues/300) (FANET),
-  [#301](https://github.com/danieljoppi/AntHocNet/issues/301) (VANET) and the
-  realism epic [#295](https://github.com/danieljoppi/AntHocNet/issues/295)
+  [#300](https://github.com/swarm-routing/AntHocNet/issues/300) (FANET),
+  [#301](https://github.com/swarm-routing/AntHocNet/issues/301) (VANET) and the
+  realism epic [#295](https://github.com/swarm-routing/AntHocNet/issues/295)
 - **Date:** 2026-08-03
 
 ## Context
 
-The 2026 roadmap research ([#298](https://github.com/danieljoppi/AntHocNet/issues/298))
+The 2026 roadmap research ([#298](https://github.com/swarm-routing/AntHocNet/issues/298))
 put four more network families in scope — FANET, VANET, static Wi-Fi mesh, and
 (further out) underwater and space–air–ground integrated networks — on top of
 the two regimes we already run. The obvious way to support a family is to give
@@ -23,7 +23,7 @@ decisions bound it:
   does not justify a second binary, a faster random-waypoint field certainly
   does not justify a second attribute profile.
 - The A/B discipline ([`configuration.md`](../configuration.md) §5,
-  [#177](https://github.com/danieljoppi/AntHocNet/issues/177)) exists because
+  [#177](https://github.com/swarm-routing/AntHocNet/issues/177)) exists because
   every default in this repo must trace to a source or a measurement. A
   per-family profile is a bulk edit of defaults with no measurement behind any
   of them — precisely the thing the discipline forbids, wearing a scenario's
@@ -59,7 +59,7 @@ finding, not a preset: it opens an issue, gets an A/B on identical seeds, and �
 if the delta holds — changes the value **for everyone**, or becomes a gated
 mechanism with its own default-off switch. The satellite regime already works
 this way: the propagation-dominated timing mismatch is
-[#205](https://github.com/danieljoppi/AntHocNet/issues/205), an open ticket with
+[#205](https://github.com/swarm-routing/AntHocNet/issues/205), an open ticket with
 measurements pending, not a `--scenario=satellite` block that quietly retunes
 `HopTime`.
 

@@ -13,7 +13,7 @@ AntHocNet — an ant-colony-optimization MANET routing protocol — implemented
 **once** as a simulator-agnostic algorithm core, with a thin **NS-3** adapter
 (and a browser adapter for the learn site). The repo does **not** vendor a
 simulator; the module installs onto *your* NS-3 tree. The NS-2 adapter was
-removed in v2.0.0 ([#307](https://github.com/danieljoppi/AntHocNet/issues/307),
+removed in v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307),
 [ADR-0023](docs/adr/0023-one-core-one-simulator-adapter.md)); it lives on at the
 v1.2.0–v1.9.0 tags.
 
@@ -52,7 +52,7 @@ gcovr --root . core/build-coverage --filter 'core/src/' --filter 'core/include/'
 
 CI's `core-coverage` job reports the same line/branch numbers **on every PR**
 (per-file table in the job log, HTML + Cobertura XML as a downloadable
-artifact). It is **report-only — there is no threshold** ([#162](https://github.com/danieljoppi/AntHocNet/issues/162)); a floor gets
+artifact). It is **report-only — there is no threshold** ([#162](https://github.com/swarm-routing/AntHocNet/issues/162)); a floor gets
 chosen from evidence later. Read it as a map of untested paths to aim tests at,
 not as a number to chase (CLAUDE.md rule 2).
 
@@ -230,14 +230,14 @@ for f in web/src/{sim,scenarios,trace_main}.cpp; do clang-tidy -p build-tidy/web
 | See what v1.0 reproduces / deviates from the paper | `docs/fidelity.md` |
 | Understand a structural decision / its "why" | `docs/adr/` |
 | **Pick up open work** | GitHub issues — start with the highest open `priority:P*` label (query live; see `CONTEXT.md` §10) |
-| **Know which release a piece of work serves, or why something is *not* planned** | [`docs/roadmap.md`](docs/roadmap.md) — the ladder v2.1.0 → v3.3.0 ([replan accepted 2026-10-09](docs/roadmap.md#replan-after-v200-accepted-2026-10-09)), per-release exit criteria and the non-goals; issues carry `release:` labels. Epics: #626 the whole site is the game (v2.1.0), #634 the Workshop (API + ns-3 in the game), #562 game campaign, #563 comparators, #564 wider threat model, #328 packaging and infrastructure (#603 closed into it). History and the original gap analysis: [#298](https://github.com/danieljoppi/AntHocNet/issues/298) |
+| **Know which release a piece of work serves, or why something is *not* planned** | [`docs/roadmap.md`](docs/roadmap.md) — the ladder v2.1.0 → v3.3.0 ([replan accepted 2026-10-09](docs/roadmap.md#replan-after-v200-accepted-2026-10-09)), per-release exit criteria and the non-goals; issues carry `release:` labels. Epics: #626 the whole site is the game (v2.1.0), #634 the Workshop (API + ns-3 in the game), #562 game campaign, #563 comparators, #564 wider threat model, #328 packaging and infrastructure (#603 closed into it). History and the original gap analysis: [#298](https://github.com/swarm-routing/AntHocNet/issues/298) |
 | Know what research a plan item rests on (families, mechanisms, comparators, secure protocols) | [`docs/research-landscape-2026.md`](docs/research-landscape-2026.md) — abstract-level; read the paper before citing a number |
 | Work on the learn-site game / campaign | [`docs/learn-campaign.md`](docs/learn-campaign.md): campaign design, levels, UI, adapter features; §10 the whole site as the game; §11 the Workshop (API + ns-3 in the game). Plus the `learn-site` skill. Epics #562 (campaign), #626 (site), #634 (Workshop) |
 | Change what a release ships, or the install path | `tools/release/` (assemble + gate), `release.yml`, `ns3/Makefile`; infrastructure epic #328 (was #603) |
 | Understand the ant types (what each one is for, what it writes, which switch gates it) | [`docs/ant-types.md`](docs/ant-types.md) — comparison table + lifecycle diagrams for Hello / Reactive / Proactive / Repair / LinkFail and the backward ant |
 | See the whole stack, or which mechanism is live/inert in a given regime | [`docs/software-layers.md`](docs/software-layers.md) — core → ports → adapters → harnesses, mechanisms × their config switches, and per-regime support |
-| **Add support for a new network family** (FANET, VANET, …) | [ADR-0019](docs/adr/0019-network-families-change-the-evaluation-not-the-protocol.md) — a family is a *scenario* concern: mobility model, preset, preflight rules, anchor, metrics. **Never** family-specific protocol defaults; a mis-sized constant is an issue + A/B, not a preset. Tracks: [#300](https://github.com/danieljoppi/AntHocNet/issues/300), [#301](https://github.com/danieljoppi/AntHocNet/issues/301) |
-| Work on security / trust mechanisms | [ADR-0020](docs/adr/0020-security-is-a-default-off-profile.md) — same implementation, behind attributes, **default off**, default path provably byte-identical; no fork. Track: [#302](https://github.com/danieljoppi/AntHocNet/issues/302) (v3.0.0) |
+| **Add support for a new network family** (FANET, VANET, …) | [ADR-0019](docs/adr/0019-network-families-change-the-evaluation-not-the-protocol.md) — a family is a *scenario* concern: mobility model, preset, preflight rules, anchor, metrics. **Never** family-specific protocol defaults; a mis-sized constant is an issue + A/B, not a preset. Tracks: [#300](https://github.com/swarm-routing/AntHocNet/issues/300), [#301](https://github.com/swarm-routing/AntHocNet/issues/301) |
+| Work on security / trust mechanisms | [ADR-0020](docs/adr/0020-security-is-a-default-off-profile.md) — same implementation, behind attributes, **default off**, default path provably byte-identical; no fork. Track: [#302](https://github.com/swarm-routing/AntHocNet/issues/302) (v3.0.0) |
 | Record a bug / finding, or hand off across sessions | [ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md): always open or update an issue. **A handoff is always an issue**, labelled `handoff` (template: *Handoff*), never a file in the repo: before a session ends with work in flight, or when asked for a handoff, open one with the state, the ordered next steps, the procedures and the pitfalls. A new session starts from the newest open `handoff` issue. |
 | Maintain the wire format | `docs/wire-format.md`, `docs/porting-notes.md` |
 | Change the algorithm | `core/src/`, `core/include/anthocnet/core/` |
@@ -260,7 +260,7 @@ for f in web/src/{sim,scenarios,trace_main}.cpp; do clang-tidy -p build-tidy/web
 | Validate a scenario config or result plausibility | `benchmark-results` skill (`tools/bench/scenario_check.py`, #134): `preflight` before dispatching, `results [--anchor …]` before trusting numbers |
 | Pre-push invariant check on a diff | `protocol-review` skill (`.claude/skills/protocol-review/check_invariants.sh`) |
 | Understand why skills are script-first (and add a new analysis loop) | [ADR-0014](docs/adr/0014-agent-skills-are-script-first.md) — raw data stays out of LLM context; extend a skill script, don't eyeball |
-| Work on satellite / ISL topologies | [ADR-0015](docs/adr/0015-satellite-substrate-lives-in-the-image.md) — **there is no separate satellite build**: one binary, scenario differences live in examples and flags (`isl-grid` static, `leo-walker` moving). [ADR-0022](docs/adr/0022-satellite-substrate-is-stock-ns3-leo.md) — the substrate is stock ns-3.48's LEO model, so moving-constellation work is 3.48-only. Track: [#192](https://github.com/danieljoppi/AntHocNet/issues/192) |
+| Work on satellite / ISL topologies | [ADR-0015](docs/adr/0015-satellite-substrate-lives-in-the-image.md) — **there is no separate satellite build**: one binary, scenario differences live in examples and flags (`isl-grid` static, `leo-walker` moving). [ADR-0022](docs/adr/0022-satellite-substrate-is-stock-ns3-leo.md) — the substrate is stock ns-3.48's LEO model, so moving-constellation work is 3.48-only. Track: [#192](https://github.com/swarm-routing/AntHocNet/issues/192) |
 | **Understand why satellite ≠ MANET** (before assuming a MANET intuition transfers) | [`docs/network-regimes.md`](docs/network-regimes.md) — the inversion in one line: MANET hides the *topology* and gives you the traffic; a constellation gives you the topology and hides the *traffic*. Diagrams, and a difference table where every row traces to a defect, parameter or control in this repo |
 | Cut a release | run the `Release` workflow (Commitizen); see `CONTRIBUTING.md`. **Post-release, record the version DOI** — Zenodo mints it async a few minutes after publish; read it from the public API (`curl -sL https://zenodo.org/api/records/20981980/versions/latest \| python3 -c "import json,sys; d=json.load(sys.stdin); print(d['metadata']['version'], d['doi'])"`; address it through a *version* record — the concept ID 20981979 returns 404 there — and check the version printed is the one you released), or ask the maintainer if `zenodo.org` is proxy-blocked (403, as it was until 2026-09). Never invent one. Then append a row to the DOI table in `CONTRIBUTING.md` via a `docs:` PR — the README badge and `CITATION.cff` stay on the concept DOI (#116) |
 | Tune defaults | `core/include/anthocnet/core/config.h` |

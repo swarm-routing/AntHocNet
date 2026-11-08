@@ -4,7 +4,7 @@
 helps. Then read the measured gap between AntHocNet and a protocol that
 knows the topology.
 **Time.** 60 min. **Site.** Campaign levels 3.1 and 3.4
-([`#campaign?open=all`](https://danieljoppi.github.io/AntHocNet/#campaign?open=all)).
+([`#campaign?open=all`](https://swarm-routing.github.io/AntHocNet/#campaign?open=all)).
 
 [← Classroom pack](README.md) · [Answer key](answer-keys.md#lab-3)
 
@@ -49,7 +49,7 @@ On the ns-3 VANET main cell (20 seeds, 900 s), AntHocNet delivers
 **81.7 %** on the same field ([vanet.md](../benchmarks/scenarios/vanet.md)).
 1. The oracle shows the network is connected most of the time. Where does
    the other ~40 % go?
-2. Link-lifetime prediction ([#574](https://github.com/danieljoppi/AntHocNet/issues/574),
+2. Link-lifetime prediction ([#574](https://github.com/swarm-routing/AntHocNet/issues/574),
    the *Look-ahead* upgrade) discounts a next hop whose link is about to
    break. Why could a prediction based only on distance and speed miss a
    break at a corner?

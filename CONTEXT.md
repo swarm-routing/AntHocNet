@@ -181,7 +181,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   game campaign ([`docs/learn-campaign.md`](docs/learn-campaign.md)) and the
   infrastructure track (#603, closed 2026-10-30 into #328) alongside. The research behind it is
   [`docs/research-landscape-2026.md`](docs/research-landscape-2026.md).
-- **The original 2026 roadmap** ([#298](https://github.com/danieljoppi/AntHocNet/issues/298)):
+- **The original 2026 roadmap** ([#298](https://github.com/swarm-routing/AntHocNet/issues/298)):
   a literature gap analysis (recent MANET routing · satellite/LEO · evaluation
   methodology, all three survey reports attached to the issue) crossed against
   this repo's capability, with release goals **v1.3.0 → v3.0.0** and one epic
@@ -246,7 +246,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 > OMNeT++/INET adapter).
 >
 > **For sequencing** — which of those to do first, and which release it serves —
-> read the 2026 roadmap [#298](https://github.com/danieljoppi/AntHocNet/issues/298):
+> read the 2026 roadmap [#298](https://github.com/swarm-routing/AntHocNet/issues/298):
 > it maps every gap to an epic (#293–#297, #300–#302) and a release goal, and
 > records the deliberate non-goals with the reasoning that would reverse each.
 
@@ -258,7 +258,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   not in prose that nobody updates. The live query is:
 
   ```
-  gh issue list --repo danieljoppi/AntHocNet --state open --label priority:P1
+  gh issue list --repo swarm-routing/AntHocNet --state open --label priority:P1
   ```
 
   (or the equivalent GitHub UI filter). That list has itself gone stale once

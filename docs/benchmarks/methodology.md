@@ -9,10 +9,10 @@ validation anchors that gate publishing them. Part of the
 
 ## Reproducing a run
 
-### Reproduce a published figure ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))
+### Reproduce a published figure ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))
 
 Every chart under `docs/benchmarks/` has an entry in
-[`results/figures.yml`](https://github.com/danieljoppi/AntHocNet/blob/main/results/figures.yml).
+[`results/figures.yml`](https://github.com/swarm-routing/AntHocNet/blob/main/results/figures.yml).
 The entry gives the committed data the chart is drawn from, the script that
 draws it, and how to re-measure each cell. One command per figure:
 
@@ -68,11 +68,11 @@ bash /path/to/AntHocNet/ns3/tools/run-comparison.sh "$PWD" 10 20 40 300 5
 
 ### Reproducing a *thesis* run
 
-`--scenario=paper` is the **calibration** field ([#24](https://github.com/danieljoppi/AntHocNet/issues/24));
+`--scenario=paper` is the **calibration** field ([#24](https://github.com/swarm-routing/AntHocNet/issues/24));
 `--scenario=thesis` is AntHocNet's **own evaluation** field, and is what a
 fidelity claim runs on. Its constants come from Ducatelle, *Adaptive Routing in
 Ad Hoc Wireless Multi-hop Networks* (PhD thesis, 2007) **§5.1.3**, read from the
-PDF ([#58](https://github.com/danieljoppi/AntHocNet/issues/58)):
+PDF ([#58](https://github.com/swarm-routing/AntHocNet/issues/58)):
 
 | axis | thesis §5.1.3 | set by the preset? |
 |---|---|---|
@@ -106,7 +106,7 @@ thesis figure**:
 Averaging over fewer than 20 runs is a legitimate cheap probe, but it is not a
 thesis reproduction: several arguments in this repo have turned on differences
 smaller than the dispersion at low run counts, and `pdr_sd` as high as 6.43 has
-been observed ([#173](https://github.com/danieljoppi/AntHocNet/issues/173)).
+been observed ([#173](https://github.com/swarm-routing/AntHocNet/issues/173)).
 Record the run count next to any number quoted against a thesis figure.
 
 Publishing the results back into these pages is
@@ -131,12 +131,12 @@ published GHCR images (Actions → workflow → *Run workflow*):
   extra `--ns3::anthocnet::RoutingProtocol::<Attr>=<value>` flags, a
   dispatch, not a branch. A sweep is a set of cells, one per point, and a
   point too big for the 6 h hosted-runner ceiling
-  ([#121](https://github.com/danieljoppi/AntHocNet/issues/121)) splits by
+  ([#121](https://github.com/swarm-routing/AntHocNet/issues/121)) splits by
   seed blocks (`--firstRun`); a campaign plan in `tools/bench/campaigns/`
   lists the cells and `tools/bench/campaign.py` dispatches, throttles and
   collects them (#662). It replaced `paper-benchmark.yml`,
   `scenario-matrix.yml` and `satellite-benchmark.yml`, removed in v2.5.0
-  ([#746](https://github.com/danieljoppi/AntHocNet/issues/746)); the
+  ([#746](https://github.com/swarm-routing/AntHocNet/issues/746)); the
   committed CSVs those produced stay readable by `sweep_summary.py` and
   [`pool_runs.py`](../../tools/bench/pool_runs.py).
 
@@ -184,7 +184,7 @@ realisations, so the classification covers all of them. What each of those arms
 is *for* — and which comparisons the baseline set does and does not support — is
 [the next section](#baselines-what-each-arm-is-for-296).
 
-## Baselines: what each arm is for ([#296](https://github.com/danieljoppi/AntHocNet/issues/296))
+## Baselines: what each arm is for ([#296](https://github.com/swarm-routing/AntHocNet/issues/296))
 
 The arms in this harness are not all the same kind of thing, and reading them as
 one undifferentiated "comparison set" gets the conclusions wrong in both
@@ -199,10 +199,10 @@ written here — and each provenance carries its own quality risk.
 |---|---|---|---|
 | `anthocnet` | subject under test | this repo (`core/` + `ns3/`) | measured everywhere |
 | `aodv`, `olsr`, `dsdv` | **replication anchors** | stock ns-3 modules, never vendored | the published corpus |
-| `gpsr` | **attempted → documented gap** (was: competitive frontier) | vendored third-party port, repaired here ([#412](https://github.com/danieljoppi/AntHocNet/pull/412)) | builds + ASan green, beacons correctly — and **delivers zero packets on 40/40 seeds** ([#425](https://github.com/danieljoppi/AntHocNet/issues/425)). Not a usable arm |
-| `oracle` | **upper bound** | written here ([`ns3/baselines/oracle/`](../../ns3/baselines/oracle/README.md), [#415](https://github.com/danieljoppi/AntHocNet/issues/415)) | **measured** in [phase 3](v1.5.0-campaign.md#phase-3-the-oracle-control) — six grid cells (`approx=1`) and the exact `approx=0` [ISL torus](satellite/isl-grid.md) |
-| `aomdv` | **attempted → documented gap** | vendored third-party port, repaired here ([#414](https://github.com/danieljoppi/AntHocNet/pull/414)) | builds on all five ns-3 versions; **does not route multi-hop** |
-| RL / DRL baseline | **deferred by design** | — | out of scope until [#293](https://github.com/danieljoppi/AntHocNet/issues/293) + [#295](https://github.com/danieljoppi/AntHocNet/issues/295) land |
+| `gpsr` | **attempted → documented gap** (was: competitive frontier) | vendored third-party port, repaired here ([#412](https://github.com/swarm-routing/AntHocNet/pull/412)) | builds + ASan green, beacons correctly — and **delivers zero packets on 40/40 seeds** ([#425](https://github.com/swarm-routing/AntHocNet/issues/425)). Not a usable arm |
+| `oracle` | **upper bound** | written here ([`ns3/baselines/oracle/`](../../ns3/baselines/oracle/README.md), [#415](https://github.com/swarm-routing/AntHocNet/issues/415)) | **measured** in [phase 3](v1.5.0-campaign.md#phase-3-the-oracle-control) — six grid cells (`approx=1`) and the exact `approx=0` [ISL torus](satellite/isl-grid.md) |
+| `aomdv` | **attempted → documented gap** | vendored third-party port, repaired here ([#414](https://github.com/swarm-routing/AntHocNet/pull/414)) | builds on all five ns-3 versions; **does not route multi-hop** |
+| RL / DRL baseline | **deferred by design** | — | out of scope until [#293](https://github.com/swarm-routing/AntHocNet/issues/293) + [#295](https://github.com/swarm-routing/AntHocNet/issues/295) land |
 | Babel · BATMAN-adv · OLSRv2 | **decided against, for now** | — | [surveyed and declined](#modern-deployed-baseline-decided-not-skipped-item-4) |
 
 ### Replication anchors — AODV / OLSR / DSDV
@@ -235,7 +235,7 @@ baseline code.
    project's own protocol uses (ADR-0008's second detector). ns-3's DSDV sheds
    packets from its routing queue with no observable signal at all, which this
    harness had to reason around before its drop-conservation check could mean
-   anything ([#229](https://github.com/danieljoppi/AntHocNet/issues/229); see the
+   anything ([#229](https://github.com/swarm-routing/AntHocNet/issues/229); see the
    `ns3/routing-bench/model/routing-bench-run.cc` conservation block). Baselines inherit
    their simulator's model gaps, and those gaps are not symmetric across arms.
 2. *They are the comparison set of 2004–2005, and 2026 reviewers increasingly
@@ -250,7 +250,7 @@ baseline code.
 
 **What it is for.** Geographic/greedy forwarding is the dominant baseline class
 in FANET and DRL routing papers, and the closest competitor class for the
-satellite/ISL suite (the grid-greedy family, [#296](https://github.com/danieljoppi/AntHocNet/issues/296)'s
+satellite/ISL suite (the grid-greedy family, [#296](https://github.com/swarm-routing/AntHocNet/issues/296)'s
 second premise). It is the one arm here that AntHocNet's own literature never
 faced.
 
@@ -260,7 +260,7 @@ commit `15241ef`, itself the ns-3.29 refresh of António Fonseca's 2011–12 por
 GPLv2 verified end to end. Ported here to the ns-3.36–3.48 matrix with the three
 faults the spike named fixed: the dead `TxErrHeader` trace re-pointed at
 `DroppedMpdu`, per-call RNG objects replaced by an `AssignStreams`-pinned member
-(the [#352](https://github.com/danieljoppi/AntHocNet/issues/352) requirement),
+(the [#352](https://github.com/swarm-routing/AntHocNet/issues/352) requirement),
 and the position-header layering reordered to `IP|UDP|GPSR` so FlowMonitor
 classifies data flows correctly. Full detail and per-file port notes:
 [`ns3/baselines/gpsr/README.md`](../../ns3/baselines/gpsr/README.md).
@@ -270,10 +270,10 @@ implementation.**
 
 - There is no upstream to diff against and no independent validation of the
   numbers it will produce. Its acceptance evidence has to be its own measured
-  behaviour in phase 3, not its pedigree. [#414](https://github.com/danieljoppi/AntHocNet/pull/414)
+  behaviour in phase 3, not its pedigree. [#414](https://github.com/swarm-routing/AntHocNet/pull/414)
   is the standing reminder of what "it builds" is worth.
 
-> **Measured, and it does not route ([#425](https://github.com/danieljoppi/AntHocNet/issues/425)).**
+> **Measured, and it does not route ([#425](https://github.com/swarm-routing/AntHocNet/issues/425)).**
 > The paragraph above says the acceptance evidence has to be measured behaviour
 > rather than pedigree. It was measured — after the arm had already been
 > merged — and the arm **delivers 0.00 % on 40/40 seeds** across `rwp × tworay`
@@ -290,14 +290,14 @@ implementation.**
 > GPSR, handed free perfect position knowledge — delivers nothing where plain
 > DSDV delivers 85 %. That is false about GPSR and would read as a straw man.
 >
-> This is [#414](https://github.com/danieljoppi/AntHocNet/pull/414)'s lesson
+> This is [#414](https://github.com/swarm-routing/AntHocNet/pull/414)'s lesson
 > recurring in the arm whose own risk note cited it. The rule it should have
 > produced, stated here so the next vendored arm inherits it: **no baseline
 > merges without a smoke run showing non-zero delivery and a drop book that
 > closes** — one `runs=2 time=300` dispatch, which would have caught both
 > #414 and #425 at merge time rather than at campaign time.
 >
-> **Update (2026-08-16): the [#425](https://github.com/danieljoppi/AntHocNet/issues/425)
+> **Update (2026-08-16): the [#425](https://github.com/swarm-routing/AntHocNet/issues/425)
 > defect was found and fixed post-v1.5.0.** Root cause: `RouteOutput` had no
 > broadcast handling, so on a subnet-masked interface the port's own hellos
 > (subnet-directed broadcasts, resolved through `RouteOutput` by
@@ -322,7 +322,7 @@ implementation.**
   bound on GPSR**, and a GPSR win reads as "geographic routing *with free
   location information* beats us", not "GPSR beats us".
 
-### Upper bound — the oracle control ([#415](https://github.com/danieljoppi/AntHocNet/issues/415))
+### Upper bound — the oracle control ([#415](https://github.com/swarm-routing/AntHocNet/issues/415))
 
 Global-knowledge Dijkstra over the ground-truth topology, replayed as an
 `Ipv4RoutingProtocol`. **Not a protocol — a control**, and the only arm that can
@@ -344,9 +344,9 @@ derived per interface from the simulator's own objects; every oracle row carries
 |---|---|---|
 | satellite +Grid ISL torus, and any non-wifi channel | co-membership of the point-to-point channel | **yes** — the graph *is* the wiring |
 | MANET, `--propagation=range` | the channel's own `RangePropagationLossModel` cutoff | **yes** — a disk has a crisp cutoff |
-| MANET, `--propagation=tworay` | the **decode disk** ([#431](https://github.com/danieljoppi/AntHocNet/issues/431)): the two-ray power's crossing of the PHY's decode floor, derived from the installed objects | **no** — flagged `approx=1` (propagation-exact, interference-blind), WARNed on every read |
+| MANET, `--propagation=tworay` | the **decode disk** ([#431](https://github.com/swarm-routing/AntHocNet/issues/431)): the two-ray power's crossing of the PHY's decode floor, derived from the installed objects | **no** — flagged `approx=1` (propagation-exact, interference-blind), WARNed on every read |
 | MANET, `--propagation=nakagami` | the **median disk** (#431): the closed-form Gamma fading law's P = 1/2 crossing at the same decode floor | **no** — flagged `approx=1`, WARNed on every read |
-| VANET, `--propagation=urban` | **per pair** ([#488](https://github.com/danieljoppi/AntHocNet/issues/488)): inside the two-ray decode disk, a pair is a link iff the deterministic two-ray + building-shadowing chain reaches the decode floor (`decode-los-approx`) | **no** — flagged `approx=1` (propagation-exact, interference-blind, as `tworay`) |
+| VANET, `--propagation=urban` | **per pair** ([#488](https://github.com/swarm-routing/AntHocNet/issues/488)): inside the two-ray decode disk, a pair is a link iff the deterministic two-ray + building-shadowing chain reaches the decode floor (`decode-los-approx`) | **no** — flagged `approx=1` (propagation-exact, interference-blind, as `tworay`) |
 
 **What it is not exact for**, stated so no reader over-reads it later:
 
@@ -383,7 +383,7 @@ derived per interface from the simulator's own objects; every oracle row carries
   upper-bounds *path quality by hop count*, which is why the falsifiable
   assertions are "hop count ≤ every other arm" generally, and "PDR ≥ every
   other arm" only on a static lossless topology — and not on the
-  [#216](https://github.com/danieljoppi/AntHocNet/issues/216) adversarial cells,
+  [#216](https://github.com/swarm-routing/AntHocNet/issues/216) adversarial cells,
   which exist precisely so the control loses.
 - **The hop-count assertion carries a survivorship guard**, and it had to.
   `path_hops_mean` is a mean over *delivered* packets, so a low-PDR arm skims
@@ -420,7 +420,7 @@ derived per interface from the simulator's own objects; every oracle row carries
   matched set) — a real FAIL on every mode that claims the hop bound, a loud
   WARN on `p50-approx` for a sub-defect excess (≤ 0.15), and a FAIL regardless
   of mode beyond that. Full six-cell readout and the superseded numbers:
-  [#431](https://github.com/danieljoppi/AntHocNet/issues/431#issuecomment-5339246820);
+  [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820);
   corpus-wide blast radius of the instrument defect: #460.
 - Consequently the AntHocNet-to-oracle gap is an **upper bound on how much of
   the shortfall is protocol overhead** — it does not decompose that shortfall
@@ -437,7 +437,7 @@ one. The honest answer, with its evidence:
   (probed 2026-08-13; see the
   [availability survey](modern-baseline-survey.md#what-stock-ns-3-ships)).
 - **The best available third-party port was vendored and repaired here**
-  ([#414](https://github.com/danieljoppi/AntHocNet/pull/414)): stock ns-3.36
+  ([#414](https://github.com/swarm-routing/AntHocNet/pull/414)): stock ns-3.36
   `src/aodv` rebased with the AOMDV delta from the CharithaS fork, licence
   verified GPLv2, cross-version gated for the whole CI matrix, with **nine
   defects in the fork fixed** — two of them compiler-proved undefined behaviour,
@@ -484,7 +484,7 @@ The paragraph this produces, in the form the paper will use it:
 > geographic one, and any claim about its multipath advantage is relative to
 > those, not to a multipath competitor.
 
-> **Update (2026-08-16): the [#416](https://github.com/danieljoppi/AntHocNet/issues/416)
+> **Update (2026-08-16): the [#416](https://github.com/swarm-routing/AntHocNet/issues/416)
 > defects were found and fixed post-v1.5.0.** The audit traced the multi-hop
 > failure to three functional defects in the fork's `RecvReply` (RREQ-id cache
 > queried by the wrong key so relayed RREPs were dropped; the forward path
@@ -504,10 +504,10 @@ The paragraph this produces, in the form the paper will use it:
 ### Deferred by design — the RL / DRL baseline
 
 An ACO-versus-RL comparison under one rigorous harness is uncommon and would be
-publishable ([#296](https://github.com/danieljoppi/AntHocNet/issues/296)'s third
+publishable ([#296](https://github.com/swarm-routing/AntHocNet/issues/296)'s third
 premise). It is nonetheless **out of scope until the statistics
-([#293](https://github.com/danieljoppi/AntHocNet/issues/293)) and realism
-([#295](https://github.com/danieljoppi/AntHocNet/issues/295)) epics land**, and
+([#293](https://github.com/swarm-routing/AntHocNet/issues/293)) and realism
+([#295](https://github.com/swarm-routing/AntHocNet/issues/295)) epics land**, and
 the reason is not effort but validity: a learned baseline evaluated on the
 topologies, densities and speeds it trained on leaks, and a leaked comparison
 produces a number that survives review and is wrong — the generalisation of the
@@ -536,7 +536,7 @@ with sources, probe dates and the questions it could not answer — is
 **Decision: write the threat-to-validity paragraph, do not write the code — and
 record the trigger that reverses it.** The reasoning, in the order that decided
 it: nothing available today is both maintained and buildable on this matrix;
-[#414](https://github.com/danieljoppi/AntHocNet/pull/414) is direct, recent
+[#414](https://github.com/swarm-routing/AntHocNet/pull/414) is direct, recent
 evidence that a third-party port which compiles is not a baseline that works,
 and a *subtly* broken modern arm would be worse than an absent one; and upstream
 ns-3 has an open draft `manet` module (MR
@@ -586,11 +586,11 @@ rather than assumed permanent:
 |---|---|
 | no modern deployed protocol | ns-3 MR [!2887](https://gitlab.com/nsnam/ns-3-dev/-/merge_requests/2887) merging with an OLSRv2 or B.A.T.M.A.N. model, or any other [reversal trigger](modern-baseline-survey.md#what-would-reverse-this-decision) |
 | no multipath protocol | the `Path*` aliasing audit in [`ns3/baselines/aomdv/README.md`](../../ns3/baselines/aomdv/README.md) being completed and the arm passing a multi-hop smoke run |
-| geographic arm is **non-functional** ([#425](https://github.com/danieljoppi/AntHocNet/issues/425)) | `gpsr` delivering a non-zero PDR with a drop book that closes, *then* its results being checked against published GPSR behaviour. Measured at 0.00 % on 40/40 seeds, so the clause is now "no geographic protocol is compared", not "the geographic arm is unvalidated" |
-| no upper bound | [#415](https://github.com/danieljoppi/AntHocNet/issues/415) landing the oracle control |
-| no learned baseline | [#293](https://github.com/danieljoppi/AntHocNet/issues/293) + [#295](https://github.com/danieljoppi/AntHocNet/issues/295) landing, then #296 item 5 |
+| geographic arm is **non-functional** ([#425](https://github.com/swarm-routing/AntHocNet/issues/425)) | `gpsr` delivering a non-zero PDR with a drop book that closes, *then* its results being checked against published GPSR behaviour. Measured at 0.00 % on 40/40 seeds, so the clause is now "no geographic protocol is compared", not "the geographic arm is unvalidated" |
+| no upper bound | [#415](https://github.com/swarm-routing/AntHocNet/issues/415) landing the oracle control |
+| no learned baseline | [#293](https://github.com/swarm-routing/AntHocNet/issues/293) + [#295](https://github.com/swarm-routing/AntHocNet/issues/295) landing, then #296 item 5 |
 
-## Mobility models (`--mobility`, [#61](https://github.com/danieljoppi/AntHocNet/issues/61))
+## Mobility models (`--mobility`, [#61](https://github.com/swarm-routing/AntHocNet/issues/61))
 
 `anthocnet-compare` takes `--mobility=rwp|ssrwp|gaussmarkov|manhattan`; a
 `benchmark-cell.yml` dispatch passes it in `args`.
@@ -600,7 +600,7 @@ rather than assumed permanent:
 | **`rwp`** (default) | `RandomWaypointMobilityModel` | The original evaluation's model, and **the model every published number in this repo was measured under.** The default does not change. |
 | `ssrwp` | `SteadyStateRandomWaypointMobilityModel` | Draws initial speed and position from RWP's *stationary* distribution, removing the speed-decay and density transients that make long RWP runs slower than their nominal speed (Yoon et al., INFOCOM 2003). The closest honest comparison to `rwp`. |
 | `gaussmarkov` | `GaussMarkovMobilityModel` (α = 0.85) | Temporally correlated velocity/direction, so tracks are smooth rather than sharp waypoint turns. The qualitatively different model, and the one aerial/FANET claims require. |
-| `manhattan` | `WaypointMobilityModel`, waypoints built in the harness ([#488](https://github.com/danieljoppi/AntHocNet/issues/488)) | The Manhattan-grid model of Bai, Sadagopan & Helmy (INFOCOM 2003; BonnMotion's ManhattanGrid) for the VANET family: vehicles drive a `--blocksX` × `--blocksY` street grid, go straight with p = 0.5 and turn left/right with 0.25 each at intersections, and draw each block-to-block leg's speed `U(speedMin, speed)`. Built from one pinned RNG stream rather than imported from a BonnMotion trace, so a run stays a function of its seed alone (#352). No pauses. Pairs with `--propagation=urban`, whose buildings are the grid's blocks (Sommer et al., WONS 2011: 9 dB per wall, 0.4 dB/m inside, Veins' defaults). |
+| `manhattan` | `WaypointMobilityModel`, waypoints built in the harness ([#488](https://github.com/swarm-routing/AntHocNet/issues/488)) | The Manhattan-grid model of Bai, Sadagopan & Helmy (INFOCOM 2003; BonnMotion's ManhattanGrid) for the VANET family: vehicles drive a `--blocksX` × `--blocksY` street grid, go straight with p = 0.5 and turn left/right with 0.25 each at intersections, and draw each block-to-block leg's speed `U(speedMin, speed)`. Built from one pinned RNG stream rather than imported from a BonnMotion trace, so a run stays a function of its seed alone (#352). No pauses. Pairs with `--propagation=urban`, whose buildings are the grid's blocks (Sommer et al., WONS 2011: 9 dB per wall, 0.4 dB/m inside, Veins' defaults). |
 
 Three things worth knowing before dispatching a non-default arm:
 
@@ -616,14 +616,14 @@ Three things worth knowing before dispatching a non-default arm:
 - **The `manet-baselines` control harness has no `--mobility`** and is RWP-only.
   The flag is passed to `anthocnet-compare` alone; ns-3 treats an unknown
   command-line argument as fatal, so adding it to the shared argument string
-  would kill the [#24](https://github.com/danieljoppi/AntHocNet/issues/24)
+  would kill the [#24](https://github.com/swarm-routing/AntHocNet/issues/24)
   baselines arm outright.
 
 `gaussmarkov` is two-dimensional by default — the bounding box has zero
 z extent and pitch is fixed at 0 — so nodes stay in the plane the propagation
 models and the field geometry assume.
 
-### Replaying a scene (`--mobility=trace`, `--flowsFile`, [#639](https://github.com/danieljoppi/AntHocNet/issues/639))
+### Replaying a scene (`--mobility=trace`, `--flowsFile`, [#639](https://github.com/swarm-routing/AntHocNet/issues/639))
 
 `anthocnet-compare` can replay a fixed scene instead of generating one. This is
 how a game level, or any external mobility tool, becomes an ns-3 run.
@@ -666,10 +666,10 @@ together with:
 and checks the files the same way. It WARNs that its degree and link-lifetime
 rules read `--speed`/`--pause`, not the trace's own motion.
 
-### 3-D fields (`--areaZ`, [#480](https://github.com/danieljoppi/AntHocNet/issues/480))
+### 3-D fields (`--areaZ`, [#480](https://github.com/swarm-routing/AntHocNet/issues/480))
 
 `--areaZ=<m>` gives the field a vertical extent for the FANET family
-([#300](https://github.com/danieljoppi/AntHocNet/issues/300)). The default is
+([#300](https://github.com/swarm-routing/AntHocNet/issues/300)). The default is
 **0**, the planar field every published number was measured under. At 0 the
 harness is **byte-identical** to before: the same `RandomRectanglePositionAllocator`
 is used, and `##CONFIG##` does not print the `areaZ` key.
@@ -680,7 +680,7 @@ With `--areaZ > 0`:
 |---|---|
 | placement | a uniform 3-D box, `[0,areaX]×[0,areaY]×[0,areaZ]` |
 | `rwp` | waypoints come from the same box, so legs are straight 3-D segments |
-| `gaussmarkov` | the bounding box gains the z extent, and pitch gets a small symmetric spread: mean U(−0.05, 0.05) rad, Normal(0, 0.02) perturbation bounded at 0.04 rad. These pitch values are a **harness placeholder, not a sourced profile**. [#482](https://github.com/danieljoppi/AntHocNet/issues/482) fixes FANET mobility against published setups, so do not publish numbers measured with them before that lands. |
+| `gaussmarkov` | the bounding box gains the z extent, and pitch gets a small symmetric spread: mean U(−0.05, 0.05) rad, Normal(0, 0.02) perturbation bounded at 0.04 rad. These pitch values are a **harness placeholder, not a sourced profile**. [#482](https://github.com/swarm-routing/AntHocNet/issues/482) fixes FANET mobility against published setups, so do not publish numbers measured with them before that lands. |
 | `ssrwp` | **refused** — ns-3's steady-state RWP is planar (fixed Z) and would silently flatten the field |
 | `tworay`, `nakagami` | **refused** — ground reflection assumes 1.5 m antennas over a ground plane, which is meaningless between aircraft. The disk (`range`) channel is 3-D-correct as is. |
 | `gpsr` arm | **refused** — the vendored GPSR carries only x/y in its headers and planarizes a 2-D graph, so it would route on projected positions |
@@ -694,7 +694,7 @@ left the mobility bounds planar, so every node was clamped back to z = 0 after
 its first step. A placement-only check would have passed that run.
 
 `scenario_check.py preflight --areaZ <m>` checks a 3-D cell before dispatch
-([#481](https://github.com/danieljoppi/AntHocNet/issues/481)):
+([#481](https://github.com/swarm-routing/AntHocNet/issues/481)):
 
 - **Mean degree** is `(n−1) × P(two uniform nodes within range)` in the box,
   measured with a fixed-seed Monte Carlo instead of the 2-D strip cap. The
@@ -706,7 +706,7 @@ its first step. A placement-only check would have passed that run.
 - **The harness's five refusals** are mirrored as FAILs, so a bad cell fails
   at zero dispatches: tworay, nakagami, ssrwp, gpsr and a negative `--areaZ`.
 - **A standing WARN** says a 3-D cell is harness validation only, not
-  publishable, until [#482](https://github.com/danieljoppi/AntHocNet/issues/482)
+  publishable, until [#482](https://github.com/swarm-routing/AntHocNet/issues/482)
   sources the preset and its anchor.
 
 One new rule applies to every cell, planar included: **hello interval vs link
@@ -716,7 +716,7 @@ clear of it: paper-base links last about 7.5 s, thesis links about 12.5 s. The
 FANET envelope (≈4 s at 30 m/s over 250 m) is what it is for. Every existing
 2-D and satellite preflight verdict is unchanged.
 
-## Channel models (`--propagation`, [#24](https://github.com/danieljoppi/AntHocNet/issues/24) / [#60](https://github.com/danieljoppi/AntHocNet/issues/60))
+## Channel models (`--propagation`, [#24](https://github.com/swarm-routing/AntHocNet/issues/24) / [#60](https://github.com/swarm-routing/AntHocNet/issues/60))
 
 | value | model | why |
 |---|---|---|
@@ -733,8 +733,8 @@ once cannot attribute what it finds.
 The Nakagami *m*-profile is left at ns-3's defaults (`Distance1` 80 m,
 `Distance2` 200 m, `m0` 1.5, `m1` 0.75, `m2` 0.75) — near-Rician close in,
 Rayleigh-like further out. Not tuned: an unsourced *m*-profile would be exactly
-the kind of invented constant [#88](https://github.com/danieljoppi/AntHocNet/issues/88)
-and [#173](https://github.com/danieljoppi/AntHocNet/issues/173) were.
+the kind of invented constant [#88](https://github.com/swarm-routing/AntHocNet/issues/88)
+and [#173](https://github.com/swarm-routing/AntHocNet/issues/173) were.
 
 Two consequences the preflight now states at dispatch time rather than leaving
 to be discovered:
@@ -749,9 +749,9 @@ to be discovered:
   a minimum rather than a target — check interval widths before quoting a tail
   metric. Its RNG draws are pinned per seed by the existing channel
   `AssignStreams` call, so runs stay reproducible
-  ([#352](https://github.com/danieljoppi/AntHocNet/issues/352)).
+  ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)).
 
-## Transport (`--transport`, [#63](https://github.com/danieljoppi/AntHocNet/issues/63))
+## Transport (`--transport`, [#63](https://github.com/swarm-routing/AntHocNet/issues/63))
 
 `udp` (default) is the paper's CBR/OnOff traffic and what **every published
 number was measured under**. `tcp` installs a saturating `BulkSendApplication`
@@ -778,7 +778,7 @@ The congestion-control variant is recorded in the run's `##CONFIG##` block
 releases and a cell that does not state it is not reproducible against a future
 image.
 
-## Statistical policy ([#293](https://github.com/danieljoppi/AntHocNet/issues/293))
+## Statistical policy ([#293](https://github.com/swarm-routing/AntHocNet/issues/293))
 
 Every number published in these pages or in the papers repo carries a **95%
 confidence interval**, or is explicitly marked single-run/diagnostic. The
@@ -814,7 +814,7 @@ Significance in an A/B is "the difference CI excludes zero" — when per-seed
 `##RUN##` rows are present, this **replaces** `bench_parse.py`'s materiality
 thresholds (which remain the fallback for aggregate-only cells). Campaigns
 persist the per-run values in a sibling `<out>-runs.csv`
-([#319](https://github.com/danieljoppi/AntHocNet/issues/319), rescued
+([#319](https://github.com/swarm-routing/AntHocNet/issues/319), rescued
 alongside the aggregate CSV), so sweep `delay99` intervals use the bootstrap
 once that file exists for a campaign; older aggregate-only CSVs fall back to
 the t-CI, which is then a documented approximation. Sweeps that
@@ -866,7 +866,7 @@ resets that counter. Both harnesses build a fresh scenario per run inside one
 process (the protocol-major loop in `main`), so run *N* used to draw from
 whatever stream indices runs 1…*N*−1 had left behind: the realisation depended on
 the run's **position in the process**, not on its seed
-([#352](https://github.com/danieljoppi/AntHocNet/issues/352)). So every
+([#352](https://github.com/swarm-routing/AntHocNet/issues/352)). So every
 stream-consuming helper — position allocator, mobility, wifi channel + devices,
 the IPv4 stack, the routing helper for the arm, the flow-start variable and the
 OnOff sources — is now pinned with `AssignStreams()` from a **seed-derived base**,
@@ -910,7 +910,7 @@ difference is worth stating rather than implying:
 |---|---|---|---|
 | `anthocnet-compare` | ✅ (`--firstRun`) | ✅ | `##RUN##` rows |
 | `manet-baselines` | ✗ — no `--firstRun` | ✅ | per-seed `[diag]` lines |
-| `isl-grid` | ✗ — no `--firstRun` | ✅ `anthocnet` arm only; `aodv` excluded ([#362](https://github.com/danieljoppi/AntHocNet/issues/362)) | `##RUN##` rows |
+| `isl-grid` | ✗ — no `--firstRun` | ✅ `anthocnet` arm only; `aodv` excluded ([#362](https://github.com/swarm-routing/AntHocNet/issues/362)) | `##RUN##` rows |
 
 Neither of the last two exposes a first-run offset, so the structure half cannot
 be expressed against them.
@@ -929,7 +929,7 @@ be expressed against them.
 > 99.51 and mean delay 7.47 → 9.65 ms for the same seed, purely from reversing
 > `--protocols`; AntHocNet's data plane was unchanged but its control counts
 > (`nrl`, `nrlBytes`, `jitter`) moved.
-> [#362](https://github.com/danieljoppi/AntHocNet/issues/362) re-keyed
+> [#362](https://github.com/swarm-routing/AntHocNet/issues/362) re-keyed
 > AntHocNet's maps on the bound device's index, and the seed-independence gate
 > now runs the `isl-grid` order case and compares the `anthocnet` rows. **AODV's
 > half is upstream and remains:** its rows are still excluded from the gate, so
@@ -942,7 +942,7 @@ be expressed against them.
 > identical invocations are reproducible, which is the weaker property.
 >
 > **The same exposure reaches across commits, and the attribution control
-> classifies it ([#675](https://github.com/danieljoppi/AntHocNet/issues/675)).**
+> classifies it ([#675](https://github.com/swarm-routing/AntHocNet/issues/675)).**
 > A code change anywhere in the process (v2.2.0's first one was #659, which
 > touches neither AODV nor the satellite harnesses) shifts the heap, so AODV's
 > satellite rows move between two commits even with the same invocation. The
@@ -973,10 +973,10 @@ be expressed against them.
 
 A benchmark number without a version is not reproducible, however many seeds
 stand behind it. Two merges made that concrete
-([#365](https://github.com/danieljoppi/AntHocNet/issues/365)):
-[#327](https://github.com/danieljoppi/AntHocNet/issues/327) (`ca4deb7`) changed
+([#365](https://github.com/swarm-routing/AntHocNet/issues/365)):
+[#327](https://github.com/swarm-routing/AntHocNet/issues/327) (`ca4deb7`) changed
 the protocol — `betaAnts`/`betaData` 2.0 → 20 — and
-[#352](https://github.com/danieljoppi/AntHocNet/issues/352) (`e39252f`) changed
+[#352](https://github.com/swarm-routing/AntHocNet/issues/352) (`e39252f`) changed
 the realisation, pinning RNG streams per seed so that "seed 7" no longer denotes
 the run it used to. Neither number is wrong; they are simply not the same
 experiment.
@@ -984,7 +984,7 @@ experiment.
 **Run IDs in plain text.** A results page links each workflow run it cites.
 A run ID shown as plain code, not a link, names a run whose record was later
 deleted from GitHub Actions
-([#737](https://github.com/danieljoppi/AntHocNet/issues/737)). The numbers do
+([#737](https://github.com/swarm-routing/AntHocNet/issues/737)). The numbers do
 not depend on the run record. Each cell the page cites is committed under
 `results/` (`results/cells/`, `results/campaign/`), and its `##PROV##` lines
 name the commit and the run it came from.
@@ -1015,13 +1015,13 @@ entire corpus rather than a convenient label:
   the **default branch** instead will not, and that is expected, not a defect.
 
 The papers repo's Artifact Availability statement pins to `v1.3.0` for exactly
-this reason (`danieljoppi/papers#23`).
+this reason (`swarm-routing/papers#23`).
 
 ### The #371 flip: the corpus is re-established at `a1daa7a`
 
 The merge flipping the shipped `ReconvHoldCap` default from `1 s` to `200 ms`
-([#371](https://github.com/danieljoppi/AntHocNet/issues/371) /
-[#411](https://github.com/danieljoppi/AntHocNet/pull/411), phase 1 of the
+([#371](https://github.com/swarm-routing/AntHocNet/issues/371) /
+[#411](https://github.com/swarm-routing/AntHocNet/pull/411), phase 1 of the
 [v1.5.0 campaign](v1.5.0-campaign.md)) was a protocol-behaviour change under
 the rule above, and it superseded the entire published corpus — the `v1.4.0`
 grid included — the day it merged. **The phase-1 re-baseline has since
@@ -1034,15 +1034,15 @@ section will name). The `v1.4.0` numbers were measured at
 `ReconvHoldCap = 1 s` and remain valid only as historical evidence of that
 operating point (`git show v1.4.0:docs/benchmarks/grid.md`). The sweep pages
 keep their `v1.3.0` pin per
-[#365](https://github.com/danieljoppi/AntHocNet/issues/365)'s disposition, and
+[#365](https://github.com/swarm-routing/AntHocNet/issues/365)'s disposition, and
 the [TCP arm](tcp.md) keeps its `0b42c89` / 1 s vintage — each is re-measured
 only when a claim needs its shape at the new default.
 
 ### The #496 flip: the grid is re-established at `dd171e5e`
 
 The next invalidating merge the section above anticipated was
-[#497](https://github.com/danieljoppi/AntHocNet/pull/497) (`43dd2f96`, issue
-[#496](https://github.com/danieljoppi/AntHocNet/issues/496)). It
+[#497](https://github.com/swarm-routing/AntHocNet/pull/497) (`43dd2f96`, issue
+[#496](https://github.com/swarm-routing/AntHocNet/issues/496)). It
 desynchronised the ns-3 adapter's hello and proactive timers
 (`TimerJitter = 0.05`). Before it, every node beaconed at the same instant
 every period, so hidden terminals collided on those broadcasts and two lost
@@ -1063,7 +1063,7 @@ hellos in a row evicted a live neighbour, about 93 k spurious evictions per
   instead of relying on the Actions log retention window.
 - **The static mesh** was republished at the fixed timer in the same PR as the
   fix ([static-mesh.md](static-mesh.md)), and the
-  [#494](https://github.com/danieljoppi/AntHocNet/issues/494) cap re-measure
+  [#494](https://github.com/swarm-routing/AntHocNet/issues/494) cap re-measure
   confirmed `ReconvHoldCap = 200 ms` on the fixed timer.
 - **Unchanged by policy:** the sweep pages keep their `v1.3.0` pin and the
   [TCP arm](tcp.md) keeps its `0b42c89` / 1 s vintage; each is re-measured only
@@ -1083,8 +1083,8 @@ one is generated. OLSR's PDR was therefore "delivered over the ticks it had a
 route for".
 
 **The fixes.**
-- [PR #511](https://github.com/danieljoppi/AntHocNet/pull/511) (`f480d0ae`) fixed `anthocnet-compare`.
-- [PR #516](https://github.com/danieljoppi/AntHocNet/pull/516) fixed `isl-grid` ([#513](https://github.com/danieljoppi/AntHocNet/issues/513)).
+- [PR #511](https://github.com/swarm-routing/AntHocNet/pull/511) (`f480d0ae`) fixed `anthocnet-compare`.
+- [PR #516](https://github.com/swarm-routing/AntHocNet/pull/516) fixed `isl-grid` ([#513](https://github.com/swarm-routing/AntHocNet/issues/513)).
 - Both mirror the oracle's #466 fix.
 
 **What is unaffected.** Every other arm, and every OLSR column except PDR, the
@@ -1107,7 +1107,7 @@ sparse FANET cell.
 ### #521: the sources were not CBR before the fix
 
 This is a harness defect, not a protocol-behaviour change. It was found on
-2026-10-03 by the [#294](https://github.com/danieljoppi/AntHocNet/issues/294) `##ROUTE##` setup-latency column: the
+2026-10-03 by the [#294](https://github.com/swarm-routing/AntHocNet/issues/294) `##ROUTE##` setup-latency column: the
 oracle, which needs no discovery, took 2.01 s to deliver each flow's first
 packet.
 
@@ -1124,7 +1124,7 @@ the premise, not the behaviour.
 `isl-grid`'s corridor background load had already set `OffTime=0` for this
 reason (#216); the data flows had not.
 
-**The fix ([#521](https://github.com/danieljoppi/AntHocNet/issues/521)).** Every data source now sets `OnTime=1`,
+**The fix ([#521](https://github.com/swarm-routing/AntHocNet/issues/521)).** Every data source now sets `OnTime=1`,
 `OffTime=0`: `anthocnet-compare`, `manet-baselines`, `isl-grid` (data and
 probe flows) and `anthocnet-example`.
 
@@ -1224,17 +1224,17 @@ commit visibly lags `main` instead of the page silently claiming to track it.
 ### What this does not cover
 
 Nothing here decides *which* numbers the paper should quote — that is
-[#109](https://github.com/danieljoppi/AntHocNet/issues/109)/[#110](https://github.com/danieljoppi/AntHocNet/issues/110)'s
+[#109](https://github.com/swarm-routing/AntHocNet/issues/109)/[#110](https://github.com/swarm-routing/AntHocNet/issues/110)'s
 call. And a stamp is not a re-measurement: a page marked with a superseded
 commit stays superseded until someone re-runs it.
 
 ## Build profiles: `default` for CI, `release` for campaigns
 
-ns-3 builds under a *build profile*, and until [#123](https://github.com/danieljoppi/AntHocNet/issues/123)
+ns-3 builds under a *build profile*, and until [#123](https://github.com/swarm-routing/AntHocNet/issues/123)
 every benchmark minute the project had ever spent ran under the `default` one —
 assertions **and** `NS_LOG` compiled in. For simulation-heavy runs that is
 typically **2-10x slower** than ns-3's optimized (`release`) profile, which is the single
-biggest cost lever on the campaign budget ([#121](https://github.com/danieljoppi/AntHocNet/issues/121)).
+biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routing/AntHocNet/issues/121)).
 
 | profile | `./ns3 configure` | what it compiles | published as |
 |---|---|---|---|
@@ -1275,7 +1275,7 @@ So the workflows resolve the profile in a dedicated step and pass it explicitly:
    before #123.
 
 Each job then logs `./ns3 show profile`, so a run's cost (the `##PERF##`
-wall-clock line from [#131](https://github.com/danieljoppi/AntHocNet/issues/131))
+wall-clock line from [#131](https://github.com/swarm-routing/AntHocNet/issues/131))
 is always attributable to a profile after the fact.
 
 ### Caveats when reading `-opt` numbers
@@ -1304,7 +1304,7 @@ is always attributable to a profile after the fact.
 
 ## The campaign loop, end to end
 
-**One cell, one workflow ([#612](https://github.com/danieljoppi/AntHocNet/issues/612)).**
+**One cell, one workflow ([#612](https://github.com/swarm-routing/AntHocNet/issues/612)).**
 `benchmark-cell.yml` runs any harness (`anthocnet-compare`, `isl-grid` or
 `leo-walker`) with its own command line in `args`. It stamps `##ARGS##`
 and `##PROV##` into the results file, runs `scenario_check.py results`,
@@ -1360,9 +1360,9 @@ sequenceDiagram
 
 The two gates are not ceremony. `preflight` is what turns a misconfigured
 scenario into a zero-cost finding instead of a 115-minute one
-([#230](https://github.com/danieljoppi/AntHocNet/issues/230)), and `results` is
+([#230](https://github.com/swarm-routing/AntHocNet/issues/230)), and `results` is
 what stops a harness regression from being published as a protocol result
-([#51](https://github.com/danieljoppi/AntHocNet/issues/51)).
+([#51](https://github.com/swarm-routing/AntHocNet/issues/51)).
 
 ## Which check enforces what
 
@@ -1423,14 +1423,14 @@ Two things this map makes obvious that prose kept hiding:
   order too, or merged campaign CSVs compare unlike runs.
 - **Coverage is the only non-gate in the picture** (dashed): report-only by
   decision, until a floor is chosen from measured evidence
-  ([#162](https://github.com/danieljoppi/AntHocNet/issues/162)).
+  ([#162](https://github.com/swarm-routing/AntHocNet/issues/162)).
 
 ## Validation anchors (known-expected results)
 
 A benchmark is only trustworthy if it reproduces a *known* result on a reference
 scenario. We anchor against scenarios whose expected behaviour is documented in
 the literature, so an off absolute number is caught as a **harness/config bug**
-rather than mistaken for a protocol property (see [#24](https://github.com/danieljoppi/AntHocNet/issues/24)).
+rather than mistaken for a protocol property (see [#24](https://github.com/swarm-routing/AntHocNet/issues/24)).
 
 | anchor | configuration | expected (literature) | what it checks |
 |---|---|---|---|
@@ -1438,7 +1438,7 @@ rather than mistaken for a protocol property (see [#24](https://github.com/danie
 | **Broch/Perkins field, low mobility** | 50 nodes, 1500×300 m, RWP, **pause = 900 s** (≈ static) | **AODV ≈ 90–100% PDR** (Broch et al., *MobiCom* 1998; Perkins, AODV) | the channel/PHY calibration target |
 | Broch pause-sweep | as above, pause 0 → 900 s | AODV PDR **rises** with pause; DSDV worst under high mobility | the trend/shape, not one point |
 | ns-3 `manet-routing-compare` | upstream example | community-calibrated AODV/OLSR/DSDV numbers | an in-simulator witness independent of this repo |
-| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/danieljoppi/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, 2 runs | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[1.00, 1.10] × the oracle's** shortest path, PDR ≥ 95 (measured on ns-3.42: 98.2 %, 4.73 vs 4.50 hops) | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
+| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, 2 runs | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[1.00, 1.10] × the oracle's** shortest path, PDR ≥ 95 (measured on ns-3.42: 98.2 %, 4.73 vs 4.50 hops) | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
 
 **Why this matters here.** The `paper-base` preset *is* the Broch/Perkins
 1500×300 m / 50-node field, where AODV is known to deliver ~90–100% at low
@@ -1447,7 +1447,7 @@ stock-baseline control (`manet-baselines`, which links no AntHocNet code) confir
 this is the *scenario/harness config*, not our module (stock-only ≈ harness
 baselines).
 
-**Root cause (resolved — [#51](https://github.com/danieljoppi/AntHocNet/issues/51)).**
+**Root cause (resolved — [#51](https://github.com/swarm-routing/AntHocNet/issues/51)).**
 The single-hop sanity anchor did **not** read ~100%: a **2-node, 1-flow, in-range,
 static** link delivered only ~50% (`tx=121 rx=61`), confirmed real by independent
 app/sink counters (`appTx==fmTx`, `appRx==fmRx`) — a **stock single-hop 802.11
@@ -1461,17 +1461,17 @@ pin the paper's fixed 2 Mbit/s radio (`ConstantRateWifiManager`,
 `DsssRate2Mbps` data / `DsssRate1Mbps` control), restoring the 2-node anchor to
 **100.0%**; `--rateManager` still reaches `ideal`/`arf`/other fixed rates for A/B.
 The earlier "300 m partitions the field / adopt ~600 m" reading is superseded —
-see the [#24 correction](https://github.com/danieljoppi/AntHocNet/issues/24#issuecomment-4828992577).
+see the [#24 correction](https://github.com/swarm-routing/AntHocNet/issues/24#issuecomment-4828992577).
 
 **Acceptance / do-not-do-yet.** The single-hop anchor must deliver ≈100% (and stock
 **AODV ≈ 90%** on the low-mobility Broch field — `check-anchors.sh
 broch-low-mobility`, which CI runs on every merge) **before** absolute numbers are trusted or the
 taxonomy is re-baselined. **Re-baselining and any "adopt a larger range as default"
-change are blocked on the [#51](https://github.com/danieljoppi/AntHocNet/issues/51)
+change are blocked on the [#51](https://github.com/swarm-routing/AntHocNet/issues/51)
 fix** — doing it sooner would bake the single-hop penalty into the baseline. The
 *relative* comparison (identical per-protocol realisations) is valid throughout.
 
-**Enforcement ([#59](https://github.com/danieljoppi/AntHocNet/issues/59)).** With
+**Enforcement ([#59](https://github.com/swarm-routing/AntHocNet/issues/59)).** With
 #51 fixed, the first two anchors are **blocking CI gates**, run on the stock
 `manet-baselines` harness by
 [`tools/checks/check-anchors.sh`](../../tools/checks/check-anchors.sh) with floors kept in
@@ -1489,7 +1489,7 @@ enforced locally by
 (#134), which reads `anchors.yml` rather than duplicating it.
 
 ### Grid-arm regression floors — a third kind, and not an anchor
-([#61](https://github.com/danieljoppi/AntHocNet/issues/61) / [#60](https://github.com/danieljoppi/AntHocNet/issues/60))
+([#61](https://github.com/swarm-routing/AntHocNet/issues/61) / [#60](https://github.com/swarm-routing/AntHocNet/issues/60))
 
 `anchors.yml` also carries `grid_tworay_aodv_pdr_min` and
 `grid_nakagami_aodv_pdr_min`, reachable as `--anchor grid-tworay` /
@@ -1502,11 +1502,11 @@ can tell you the number is **wrong**. For AODV under steady-state RWP,
 Gauss-Markov or Nakagami fading at the paper base scenario there is **no
 published reference value and no analytic identity** — so there is nothing
 external to check against, and inventing a figure would be exactly the kind of
-unsourced constant [#88](https://github.com/danieljoppi/AntHocNet/issues/88) and
-[#173](https://github.com/danieljoppi/AntHocNet/issues/173) turned out to be.
+unsourced constant [#88](https://github.com/swarm-routing/AntHocNet/issues/88) and
+[#173](https://github.com/swarm-routing/AntHocNet/issues/173) turned out to be.
 
 What these two floors do instead is catch a
-[#51](https://github.com/danieljoppi/AntHocNet/issues/51)-class harness or
+[#51](https://github.com/swarm-routing/AntHocNet/issues/51)-class harness or
 channel regression on arms **CI never runs** — a 4-hour campaign cell is not a
 per-merge gate, so without them a broken substrate would be discovered only by
 reading the results. They are derived from our own 20-seed measurement
@@ -1522,16 +1522,16 @@ Two consequences of that provenance:
 - **The margins are deliberately generous** (~11 % below the worst measured
   two-ray cell, ~18 % below the worst fading one — wider there because link
   existence includes a random draw). A floor that false-fires gets ignored, and
-  then it is not a gate ([#229](https://github.com/danieljoppi/AntHocNet/issues/229)).
+  then it is not a gate ([#229](https://github.com/swarm-routing/AntHocNet/issues/229)).
 
 Picking the wrong one is a loud error rather than a quiet pass: a healthy
 Nakagami reading checked against `grid-tworay` FAILs, and there is a test case
 pinning that.
 
-### FANET validation anchors ([#482](https://github.com/danieljoppi/AntHocNet/issues/482))
+### FANET validation anchors ([#482](https://github.com/swarm-routing/AntHocNet/issues/482))
 
 The Broch floor is a measurement of RWP on the ground and says nothing about a
-3-D field. The FANET family ([#300](https://github.com/danieljoppi/AntHocNet/issues/300))
+3-D field. The FANET family ([#300](https://github.com/swarm-routing/AntHocNet/issues/300))
 therefore has its own anchors, and like the satellite ones below they are
 **analytic**: the expected value follows from geometry. Both shrink the
 `--scenario=fanet` preset (Gauss-Markov, 10–30 m/s, 350 m disk) to a field whose
@@ -1546,12 +1546,12 @@ They run on `anthocnet-compare` rather than `manet-baselines`, because only the
 former has a 3-D field, and they gate in `ci.yml` on the 3.42 leg. The preset's
 provenance is on [the fanet scenario page](scenarios/fanet.md).
 
-### Satellite validation anchors ([#237](https://github.com/danieljoppi/AntHocNet/issues/237))
+### Satellite validation anchors ([#237](https://github.com/swarm-routing/AntHocNet/issues/237))
 
 The anchors above are **literature-derived and approximate** ("AODV ≈ 90–100%")
 because a wifi channel is stochastic — the best available reference is somebody
 else's measurement. The satellite/ISL topology
-([`isl-grid`](../../ns3/anthocnet/examples/isl-grid.cc), [#214](https://github.com/danieljoppi/AntHocNet/issues/214))
+([`isl-grid`](../../ns3/anthocnet/examples/isl-grid.cc), [#214](https://github.com/swarm-routing/AntHocNet/issues/214))
 is different in kind: a point-to-point link has **no contention and no loss
 model**, so the expected values are **analytic**. The anchor is a derivation,
 not a remembered number, and a wrong substrate, image or topology cannot hide
@@ -1562,26 +1562,26 @@ Notation: `d` = per-ISL one-way delay (`--islDelayMs`), `h` = hop count,
 
 | anchor | configuration | expected (derived) | what it checks |
 |---|---|---|---|
-| `single-isl` | 2 satellites, 1 ISL, stock AODV | **PDR = 100%** — a p2p link drops nothing | that the link/IP/app stack delivers at all on this device. The ISL analogue of the single-hop anchor, and the same lesson as [#51](https://github.com/danieljoppi/AntHocNet/issues/51) |
+| `single-isl` | 2 satellites, 1 ISL, stock AODV | **PDR = 100%** — a p2p link drops nothing | that the link/IP/app stack delivers at all on this device. The ISL analogue of the single-hop anchor, and the same lesson as [#51](https://github.com/swarm-routing/AntHocNet/issues/51) |
 | `hop-delay` | 4×4 torus, both default flows at `h = 2`, uniform `d` | **delay ∈ [h·d, h·d + s]** | topology construction, delay application **and** routing optimality in one number |
 
 **Why `hop-delay` is the strongest number this repo produces.** Its *lower*
 bound is physics: a packet cannot arrive faster than propagation, so
 `delay < h·d` is impossible and means either the channel delay is not being
-applied ([#200](https://github.com/danieljoppi/AntHocNet/issues/200)'s
+applied ([#200](https://github.com/swarm-routing/AntHocNet/issues/200)'s
 load-bearing unknown) or the path is not the `h`-hop one it claims
-([#226](https://github.com/danieljoppi/AntHocNet/issues/226)). Its *upper* bound
+([#226](https://github.com/swarm-routing/AntHocNet/issues/226)). Its *upper* bound
 is nearly as sharp, because one extra hop costs a whole `d` — far more than the
 serialisation slack. On the 4×4 torus the wrap makes opposite corners near
 neighbours (`min(3, 4−3) = 1` step per dimension, so `h = 2`), predicting 10 ms
 at `d = 5`; the measured value is **10.39 ms**
-([#214](https://github.com/danieljoppi/AntHocNet/issues/214), CI run
+([#214](https://github.com/swarm-routing/AntHocNet/issues/214), CI run
 30190452648), i.e. 0.39 ms of serialisation over an exact floor.
 
 **Identity anchor.** The determinism gate also runs on the ISL topology
 (`check-determinism.sh <dir> isl-grid`) rather than being assumed to follow from
 the wifi case: the grid exercises a different device and channel plus the
-post-[#203](https://github.com/danieljoppi/AntHocNet/issues/203) multi-interface
+post-[#203](https://github.com/swarm-routing/AntHocNet/issues/203) multi-interface
 next-hop resolution, whose peer map is built from received hellos — an ordering
 a container-iteration bug could perturb without ever showing on a
 single-interface wifi node.
@@ -1597,12 +1597,12 @@ is pinned to one ns-3 version.
 satellite substrate. `S3` delay-linearity (sweep `d`, delay must scale linearly)
 and `S4` diameter-scaling follow from the same script with different flags;
 `S6` image-equivalence and `S7` substrate-presence-null need the image from
-[#234](https://github.com/danieljoppi/AntHocNet/issues/234) and are what will
+[#234](https://github.com/swarm-routing/AntHocNet/issues/234) and are what will
 validate *it* — S7 in particular tests ADR-0015's "one binary" premise directly,
 by requiring `isl-grid` to give **identical** numbers with and without a
 substrate installed.
 
-**Determinism anchor ([#129](https://github.com/danieljoppi/AntHocNet/issues/129)).**
+**Determinism anchor ([#129](https://github.com/swarm-routing/AntHocNet/issues/129)).**
 One further anchor's expected result is not a number but *identity*: golden
 rule 3 (AGENTS.md) routes all randomness through `IRng` and all time through
 `IClock`, so **the same seed twice must produce byte-identical results**.

@@ -13,7 +13,7 @@ not change. Switch off the mechanism that backs off, and measure what it saves.
 data packet. On the ns-3 static mesh, OLSR delivers 99.82 % at NRL 1.78.
 AntHocNet delivers 99.34 % at NRL 4.51 ([static-mesh.md](../benchmarks/static-mesh.md)).
 AntHocNet keeps sampling routes that never change. **Quiet mode**
-(`enableQuietMode`, [#571](https://github.com/danieljoppi/AntHocNet/issues/571))
+(`enableQuietMode`, [#571](https://github.com/swarm-routing/AntHocNet/issues/571))
 backs proactive ants off while a destination's best route stays the same.
 It is on by default since v2.3.0. Before that, every route was probed every
 10 s whether or not anything changed.
@@ -26,7 +26,7 @@ It is on by default since v2.3.0. Before that, every route was probed every
 
 ## 2. Run (15 min)
 
-1. Open [`#mesh?seed=8`](https://danieljoppi.github.io/AntHocNet/#mesh?seed=8): rooftop routers that never
+1. Open [`#mesh?seed=8`](https://swarm-routing.github.io/AntHocNet/#mesh?seed=8): rooftop routers that never
    move.
 2. Run to **t = 120 s** and pause. Record `✓` and `ants`, then compute
    ants ÷ delivered. This is the default: quiet mode on.

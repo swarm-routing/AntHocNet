@@ -15,9 +15,9 @@ try:
 
 [← Benchmark index](../benchmarks.md) · [Metrics](metrics.md) · [Methodology](methodology.md)
 
-> **Provenance — measured at `dd171e5e`, the [#496](https://github.com/danieljoppi/AntHocNet/issues/496) timer
+> **Provenance — measured at `dd171e5e`, the [#496](https://github.com/swarm-routing/AntHocNet/issues/496) timer
 > fix in place (`TimerJitter = 0.05`, `ReconvHoldCap = 200 ms`).** This is the
-> **#496 re-baseline**. [PR #497](https://github.com/danieljoppi/AntHocNet/pull/497) (`43dd2f96`) desynchronised the
+> **#496 re-baseline**. [PR #497](https://github.com/swarm-routing/AntHocNet/pull/497) (`43dd2f96`) desynchronised the
 > ns-3 adapter's hello and proactive timers. Before it, every node beaconed at
 > the same instant every second, hidden terminals collided on those broadcasts,
 > and two consecutive lost hellos evicted a live neighbour. That is a
@@ -30,7 +30,7 @@ try:
 > run per cell.
 >
 > **The attribution control is the oracle, not the baselines.** The per-seed
-> logs of the last pre-#496 grid (the [#431](https://github.com/danieljoppi/AntHocNet/issues/431#issuecomment-5339246820)
+> logs of the last pre-#496 grid (the [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820)
 > re-measure at `4611bbb`) have expired, so a byte-level baseline comparison is
 > no longer possible. What survives is #431's per-cell table. The oracle, which
 > runs no AntHocNet code, reproduces it in **6 / 6 cells** (to the printed
@@ -49,11 +49,11 @@ try:
 > The per-seed cells are committed as `results/cells/grid-<mobility>-<channel>.txt`.
 
 > **OLSR's delivery column is restated
-> ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)).** Stock ns-3 OLSR refuses an unroutable send at
+> ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)).** Stock ns-3 OLSR refuses an unroutable send at
 > the source: `RouteOutput` returns no route, the socket send fails, and
 > FlowMonitor never counts the packet. So OLSR's PDR left those sends out of its
 > denominator. This is the oracle's #464 defect, in the one real arm that shares
-> it. [PR #511](https://github.com/danieljoppi/AntHocNet/pull/511) counts them. The OLSR column below comes from a
+> it. [PR #511](https://github.com/swarm-routing/AntHocNet/pull/511) counts them. The OLSR column below comes from a
 > 20-seed OLSR-only re-run of each cell on the fix (`bd1f4e49`).
 >
 > The re-runs reproduce every other OLSR column byte-for-byte. Only PDR, the
@@ -76,7 +76,7 @@ try:
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
@@ -168,7 +168,7 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -177,7 +177,7 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 > **Quiet mode's effect here**, paired against v2.2.0's AntHocNet: noise on PDR, delay99 and NRL in all six cells, and byte-identical runs on the three Nakagami cells: routes change before the back-off grows.
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
-> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
+> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
 > bootstrap).
 >
 > **RWP · two-ray**
@@ -284,7 +284,7 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 ## Restated on CBR sources (#521)
 
 > **All six cells were re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off,
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) every source ran ns-3's default 1 s on / 1 s off,
 > so each flow was offered 0.5 pkt/s, not the stated 1 pkt/s.
 >
 > **Provenance.** Six `paper-benchmark.yml` dispatches at `main` @
@@ -302,9 +302,9 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 >
 > ![MANET grid on CBR sources, six mobility-by-channel cells: AntHocNet delivers the most of the three arms in every cell, at or above the oracle on two-ray and below it on Nakagami; its delay99 sits between OLSR's and AODV's on two-ray; OLSR has the lowest NRL and AODV the highest](charts/grid.png)
 >
-> _Reproduce: `make reproduce FIG=grid` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=grid` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
-> _Dots: mean of 20 seeds; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); black tick: the oracle control, `approx=1` on these channels ([#431](https://github.com/danieljoppi/AntHocNet/issues/431): its delay99 is not a bound on Nakagami). DSDV is in the cells and tables, not plotted, to keep three series apart. Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `grid-*-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above._
+> _Dots: mean of 20 seeds; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); black tick: the oracle control, `approx=1` on these channels ([#431](https://github.com/swarm-routing/AntHocNet/issues/431): its delay99 is not a bound on Nakagami). DSDV is in the cells and tables, not plotted, to keep three series apart. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `grid-*-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above._
 >
 > Cells: `results/cells/grid-<mobility>-<channel>-cbr521.txt`. Each marker carries
 > 20 rows per arm. Rows split by the workflow's interleaved `##RSS##` line
@@ -424,13 +424,13 @@ is that grid, re-established at the v1.5.0 default.
 The axes are deliberately built as *controlled contrasts* rather than as a
 collection of unrelated models:
 
-- **Mobility** ([#61](https://github.com/danieljoppi/AntHocNet/issues/61)) —
+- **Mobility** ([#61](https://github.com/swarm-routing/AntHocNet/issues/61)) —
   `rwp` is the original evaluation's Random Waypoint; `ssrwp` is the same model
   started from its stationary distribution, so `rwp` vs `ssrwp` isolates the
   speed-decay transient alone; `gaussmarkov` is the qualitatively different
   model (smooth correlated tracks). `pause` is inert under Gauss-Markov and is
   set to 0 there — preflight FAILs any other value.
-- **Channel** ([#60](https://github.com/danieljoppi/AntHocNet/issues/60)) —
+- **Channel** ([#60](https://github.com/swarm-routing/AntHocNet/issues/60)) —
   `nakagami` stacks Nakagami-*m* fading on **the same two-ray path loss** used
   by the `tworay` arm, so the pair isolates fading alone. The `range` disk
   model is deliberately *not* one of the two: it is a propagation abstraction
@@ -445,7 +445,7 @@ the paper base scenario (50 nodes, 1500 × 300 m, 900 s, 20 CBR flows) at
 **20 seeds**, with all four protocols on identical realisations inside that
 cell. Phase 3 repeated the same six dispatches with the oracle control added as
 a fifth arm — same scenario, same 20 seeds, same
-[#352](https://github.com/danieljoppi/AntHocNet/issues/352)-pinned RNG streams
+[#352](https://github.com/swarm-routing/AntHocNet/issues/352)-pinned RNG streams
 (the oracle evaluates no propagation model, so it draws from none of them).
 
 Because the cells come from independent dispatches rather than one classified
@@ -468,7 +468,7 @@ of its columns may be read as a bound is settled in
 
 ### Delivery — PDR %, mean ± 95 % CI
 
-| mobility | channel | anthocnet | aodv | olsr ([#510](https://github.com/danieljoppi/AntHocNet/issues/510)) | dsdv | oracle |
+| mobility | channel | anthocnet | aodv | olsr ([#510](https://github.com/swarm-routing/AntHocNet/issues/510)) | dsdv | oracle |
 |---|---|---|---|---|---|---|
 | rwp | tworay | 97.78 ± 0.22 | 85.48 ± 0.70 | 88.41 ± 0.57 | 84.64 ± 0.82 | 98.08 ± 0.16 |
 | ssrwp | tworay | 97.97 ± 0.23 | 86.23 ± 0.41 | 89.38 ± 0.70 | 85.62 ± 0.84 | 98.20 ± 0.22 |
@@ -540,7 +540,7 @@ AntHocNet only.
   the fix, on the same harness, oracle and seeds.
 - **Pre-#496 NRL and `delay99`** come from the previous version of this page at
   `a1daa7a`, because #431 did not republish them. `a1daa7a` predates the
-  [#459](https://github.com/danieljoppi/AntHocNet/pull/459) flow-start fix,
+  [#459](https://github.com/swarm-routing/AntHocNet/pull/459) flow-start fix,
   which moved AntHocNet's PDR by 0.1–0.5 pp (`a1daa7a` → `4611bbb` column).
   So the NRL and `delay99` deltas are #496 plus a small #459 share.
 
@@ -600,7 +600,7 @@ however, essentially exact on the one arm that cannot be influenced by
 AntHocNet.
 
 **Do not compare these baselines with the `a1daa7a` version of this page.**
-The [#459](https://github.com/danieljoppi/AntHocNet/pull/459) flow-start fix
+The [#459](https://github.com/swarm-routing/AntHocNet/pull/459) flow-start fix
 landed between the two and moved every arm by a few tenths of a point. For
 example, aodv rwp-tworay reads 85.92 there and 85.48 here.
 
@@ -621,7 +621,7 @@ so far compares protocols *to each other*; none of them says how much of the
 distance to **perfect** is protocol overhead and how much is the channel. The
 oracle — global-knowledge Dijkstra over the ground-truth topology, replayed as
 an `Ipv4RoutingProtocol`, emitting no control traffic whatsoever
-([#415](https://github.com/danieljoppi/AntHocNet/issues/415); framing in
+([#415](https://github.com/swarm-routing/AntHocNet/issues/415); framing in
 [methodology.md](methodology.md#upper-bound-the-oracle-control-415)) — is the
 arm that makes the split measurable.
 
@@ -663,7 +663,7 @@ reason the rest of this section is legitimate rather than merely convenient.
 
 Two structural facts back it up: the oracle module is off unless `--protocols`
 names it, and it evaluates **no propagation model at all**, so it takes no draw
-from the channel's [#352](https://github.com/danieljoppi/AntHocNet/issues/352)-pinned
+from the channel's [#352](https://github.com/swarm-routing/AntHocNet/issues/352)-pinned
 RNG stream and every other arm sees the identical fading realisation it saw in
 phase 1.
 
@@ -748,7 +748,7 @@ routing side.
 
 > **This decomposition is pending a re-derivation, and the direction of the
 > change is known.** The table above uses the v1.5.0 oracle, whose adjacency was
-> the scenario's `--range` — a 300 m geometric disk. [#457](https://github.com/danieljoppi/AntHocNet/pull/457)
+> the scenario's `--range` — a 300 m geometric disk. [#457](https://github.com/swarm-routing/AntHocNet/pull/457)
 > replaced that with a radius derived from the installed PHY (423.3 m on
 > two-ray, 373.4 m on Nakagami), and a wider graph routes over marginal links,
 > so the oracle's own delivery falls. Re-measured at 20 seeds on the fixed
@@ -765,11 +765,11 @@ routing side.
 > in range, so `100 − oracle_pdr` is a tighter floor on what no router could
 > deliver), while the derived radius is the better *adjacency* model and is what
 > makes the hop bound hold. Picking one for this table is tracked on
-> [#460](https://github.com/danieljoppi/AntHocNet/issues/460) with the measured
+> [#460](https://github.com/swarm-routing/AntHocNet/issues/460) with the measured
 > numbers for both.
 >
 > **A second, independent reason the same figures are overstated
-> ([#464](https://github.com/danieljoppi/AntHocNet/issues/464)).** When the
+> ([#464](https://github.com/swarm-routing/AntHocNet/issues/464)).** When the
 > oracle's graph holds no path it refuses the send outright — `RouteOutput`
 > returns `nullptr`, so the packet never reaches `Ipv4L3Protocol::Send` and
 > FlowMonitor never counts it as transmitted. Until #464 those refusals were
@@ -806,7 +806,7 @@ against an absolute reference instead of against AODV.
 `approx=1`. A two-ray or Nakagami channel has no crisp adjacency — link
 viability is a continuous function of distance, and under fading a random one —
 so the control cannot derive the true graph. Since
-[#457](https://github.com/danieljoppi/AntHocNet/pull/457) it is held to a
+[#457](https://github.com/swarm-routing/AntHocNet/pull/457) it is held to a
 radius derived from the installed PHY rather than to the scenario's `--range`:
 `mode=decode-approx` at **423.3 m** on two-ray (where the two-ray power crosses
 the decode floor) and `mode=p50-approx` at **373.4 m** on Nakagami (the
@@ -827,21 +827,21 @@ the [satellite ISL suite](satellite/isl-grid.md), which publishes the
 > started every flow at a different instant and `##COMMON##`'s `(flow, seq)`
 > keys named packets **sent at different times in each arm** — the identity
 > match was by index, not by transmission
-> ([#459](https://github.com/danieljoppi/AntHocNet/pull/459)). On the `paper`
+> ([#459](https://github.com/swarm-routing/AntHocNet/pull/459)). On the `paper`
 > scenario's 180 s start window the expected separation between two arms' copies
 > of the same key is `startWindow / 3` ≈ 60 s, which at 20 m/s is a different
 > topology entirely. The tables below are the same six cells re-measured on the
 > fixed harness at 20 seeds; the superseded values are kept in
-> [#431](https://github.com/danieljoppi/AntHocNet/issues/431#issuecomment-5339246820)
+> [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820)
 > and the blast radius across the corpus in
-> [#460](https://github.com/danieljoppi/AntHocNet/issues/460). Per the
-> [#352](https://github.com/danieljoppi/AntHocNet/issues/352) rule, do not run
+> [#460](https://github.com/swarm-routing/AntHocNet/issues/460). Per the
+> [#352](https://github.com/swarm-routing/AntHocNet/issues/352) rule, do not run
 > `sweep_summary --vs` across that commit.
 
 The approximation is not hypothetical, and it has now been measured twice — the
 second time with an instrument that works. The instrument is the
 identity-matched `##COMMON##` set
-([#308](https://github.com/danieljoppi/AntHocNet/issues/308)) — the exact
+([#308](https://github.com/swarm-routing/AntHocNet/issues/308)) — the exact
 `(flow, seq)` packets **all five arms delivered**, now genuinely the same
 transmissions — so nothing below is survivorship:
 
@@ -994,7 +994,7 @@ moved is AntHocNet:
 unsupported.** OLSR's inversion carries that on its own. What #496 retired is
 every remaining AntHocNet tail deficit: it beats AODV's `delay99` by
 276–480 ms in all six cells (paired, p ≤ 9.6 × 10⁻⁵), and the
-[#21](https://github.com/danieljoppi/AntHocNet/issues/21) deficit against AODV no longer appears anywhere on this
+[#21](https://github.com/swarm-routing/AntHocNet/issues/21) deficit against AODV no longer appears anywhere on this
 grid.
 
 **Mobility is the weaker axis.** Across the three mobility models at fixed
@@ -1020,17 +1020,17 @@ what drives the result.
 
 | mobility | channel | pause | run ID | cell |
 |---|---|---|---|---|
-| rwp | tworay | 30 | [`36810709154`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810709154) | `results/cells/grid-rwp-tworay.txt` |
-| ssrwp | tworay | 30 | [`36810711356`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810711356) | `results/cells/grid-ssrwp-tworay.txt` |
-| gaussmarkov | tworay | 0 | [`36810713478`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810713478) | `results/cells/grid-gaussmarkov-tworay.txt` |
-| rwp | nakagami | 30 | [`36810715413`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810715413) | `results/cells/grid-rwp-nakagami.txt` |
-| ssrwp | nakagami | 30 | [`36810717701`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810717701) | `results/cells/grid-ssrwp-nakagami.txt` |
-| gaussmarkov | nakagami | 0 | [`36810720076`](https://github.com/danieljoppi/AntHocNet/actions/runs/36810720076) | `results/cells/grid-gaussmarkov-nakagami.txt` |
+| rwp | tworay | 30 | [`36810709154`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810709154) | `results/cells/grid-rwp-tworay.txt` |
+| ssrwp | tworay | 30 | [`36810711356`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810711356) | `results/cells/grid-ssrwp-tworay.txt` |
+| gaussmarkov | tworay | 0 | [`36810713478`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810713478) | `results/cells/grid-gaussmarkov-tworay.txt` |
+| rwp | nakagami | 30 | [`36810715413`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810715413) | `results/cells/grid-rwp-nakagami.txt` |
+| ssrwp | nakagami | 30 | [`36810717701`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810717701) | `results/cells/grid-ssrwp-nakagami.txt` |
+| gaussmarkov | nakagami | 0 | [`36810720076`](https://github.com/swarm-routing/AntHocNet/actions/runs/36810720076) | `results/cells/grid-gaussmarkov-nakagami.txt` |
 
 Every cell self-identifies through its `##CONFIG##` row
-([#369](https://github.com/danieljoppi/AntHocNet/issues/369)) — cell identity
+([#369](https://github.com/swarm-routing/AntHocNet/issues/369)) — cell identity
 is read from the data, not from dispatch order — and its `##PROV##` line pins
-`commit=dd171e5e` ([#365](https://github.com/danieljoppi/AntHocNet/issues/365)).
+`commit=dd171e5e` ([#365](https://github.com/swarm-routing/AntHocNet/issues/365)).
 `bench_parse` column-mapping self-checks passed (25 checks) on all six cells.
 `scenario_check.py results`:
 
@@ -1045,7 +1045,7 @@ The superseded versions:
   `40b434d` oracle dispatch beside it (runs `31807666381` … `31807678924`):
   `git show 0caa508d:docs/benchmarks/grid.md`.
 - **`4611bbb` #431 re-measure** (runs `32209168271` … `32209193038`): per-cell
-  table on [#431](https://github.com/danieljoppi/AntHocNet/issues/431#issuecomment-5339246820);
+  table on [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820);
   its run logs have expired.
 
 ## What is deliberately not published here
@@ -1055,13 +1055,13 @@ to be unreadable in these cells. The columns are left **empty** rather than
 filled with wrong values — the same rule `##HOLD##`/`##AIR##` follow.
 
 - **`drop_*` — broken on the fading cells.**
-  [#377](https://github.com/danieljoppi/AntHocNet/issues/377): `drop_chan_pct`
+  [#377](https://github.com/swarm-routing/AntHocNet/issues/377): `drop_chan_pct`
   is a *residual*, not a measurement, and it goes to −13.77 with ~20 pp
   unaccounted on every Nakagami cell and every protocol. The two-ray cells are
   clean, but publishing the family for half a grid would invite exactly the
   cross-cell comparison that is invalid.
 - **`path_div_*` / `path_entropy_bits` — the standing
-  [#230](https://github.com/danieljoppi/AntHocNet/issues/230) limit.**
+  [#230](https://github.com/swarm-routing/AntHocNet/issues/230) limit.**
   `pathWindowS` outlives the route, so route *replacement* reads as concurrent
   multipath. Diversity remains readable only from the dedicated cell.
 

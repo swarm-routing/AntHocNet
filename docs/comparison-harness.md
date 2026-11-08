@@ -32,7 +32,7 @@ the arm, runs it and measures it with FlowMonitor and the harness's own trace
 sinks. Arms never share a process state that could leak between them. Their
 randomness is pinned through `AssignStreams`, so seed *k* gives every arm the
 same node trajectories and flow schedule
-([#352](https://github.com/danieljoppi/AntHocNet/issues/352)).
+([#352](https://github.com/swarm-routing/AntHocNet/issues/352)).
 
 Built-in arms, as of v2.5.0:
 
@@ -167,13 +167,13 @@ decay, bounded with floor, ceiling and pruning) and the proportional draw.
 target and a value.
 
 The module links only stock ns-3 (core, network, internet, wifi). Start from
-[`qrouting-routing-protocol.cc`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/baselines/adaptive/model/qrouting-routing-protocol.cc),
+[`qrouting-routing-protocol.cc`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/baselines/adaptive/model/qrouting-routing-protocol.cc),
 the smallest complete arm (about 270 lines), and install it with `AdaptiveHelper("ns3::adaptive::<YourType>")`.
 
 ### Registering an arm
 
 An arm is a class derived from `ns3::bench::Arm`
-([`routing-bench-arm.h`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/routing-bench/model/routing-bench-arm.h)),
+([`routing-bench-arm.h`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/routing-bench/model/routing-bench-arm.h)),
 created fresh for every (seed, arm) run. Three hooks are required:
 
 - `Name()`, the `--protocols` token;
@@ -185,16 +185,16 @@ The optional hooks cover everything else the harness used to special-case:
 own devices (`hwmp`), post-stack wiring (`gpsr`), trace connections, refused
 sends added back to the offered load (`oracle`, `olsr`), extra diagnostics,
 self-checks and the replay. The stock arms in
-[`stock-arms.cc`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/routing-bench/helper/stock-arms.cc)
+[`stock-arms.cc`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/routing-bench/helper/stock-arms.cc)
 and the module arms are the worked examples; Q-routing's is a dozen lines
-([`adaptive-bench-arms.cc`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/baselines/adaptive/helper/adaptive-bench-arms.cc)).
+([`adaptive-bench-arms.cc`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/baselines/adaptive/helper/adaptive-bench-arms.cc)).
 
 To join the harness, your module ships one file,
 `helper/<module>-bench-arms.cc`, defining
 `ns3::bench::RegisterArms_<module>()` (hyphens become underscores), which
 calls `RegisterArm("<name>", "<summary>", &MakeYourArm)` for each arm. Compile
 it into your module only when `routing-bench` is installed and enabled, the way
-[`adaptive`'s CMakeLists](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/baselines/adaptive/CMakeLists.txt)
+[`adaptive`'s CMakeLists](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/baselines/adaptive/CMakeLists.txt)
 does. `routing-compare` finds the file at configure time, links your module and
 calls the function at start-up. No harness source, check script or workflow
 changes.
@@ -208,15 +208,15 @@ fails on a list that is missing it).
 A protocol this project did not design must clear three gates before its
 numbers are published (AGENTS.md, Conventions). These keep comparisons honest:
 two vendored arms once compiled, passed CI and forwarded nothing
-([#425](https://github.com/danieljoppi/AntHocNet/issues/425),
-[#416](https://github.com/danieljoppi/AntHocNet/issues/416)).
+([#425](https://github.com/swarm-routing/AntHocNet/issues/425),
+[#416](https://github.com/swarm-routing/AntHocNet/issues/416)).
 
 1. **Fidelity sheet.** Every parameter from the paper with its section, every
    value the paper does not give marked as a repo choice, and every deviation
    with its reason. The model is the
-   [`adaptive` README](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/baselines/adaptive/README.md).
+   [`adaptive` README](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/baselines/adaptive/README.md).
 2. **Delivery smoke** (`tools/checks/check-arm-delivery.sh <ns3-dir>`, on
-   every PR; [#439](https://github.com/danieljoppi/AntHocNet/issues/439)).
+   every PR; [#439](https://github.com/swarm-routing/AntHocNet/issues/439)).
    Every arm in `routing-compare`'s `--protocols` help runs on a small static multi-hop field.
    It must deliver above a floor, use multi-hop paths, and close its drop book.
 3. **Anchor.** The arm must reproduce its own paper's headline trend on a
@@ -239,7 +239,7 @@ two vendored arms once compiled, passed CI and forwarded nothing
 - The `adaptive` module also works on its own in any ns-3 ≥ 3.36 tree. Copy
   `contrib/adaptive` alone and use `AdaptiveHelper` in your own program.
 
-**Planned** (epic [#764](https://github.com/danieljoppi/AntHocNet/issues/764)):
+**Planned** (epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764)):
 
 - **v2.7.0:** the harness and the `adaptive` arms ship as their own release
   packages, the readers as a Python package with a versioned marker contract,
@@ -252,7 +252,7 @@ See the [roadmap](roadmap.md) for the exit criteria.
 
 Cite the harness and the comparators through the release DOI of the version
 you used. The version DOIs are in
-[CONTRIBUTING.md](https://github.com/danieljoppi/AntHocNet/blob/main/CONTRIBUTING.md#doi-record);
+[CONTRIBUTING.md](https://github.com/swarm-routing/AntHocNet/blob/main/CONTRIBUTING.md#doi-record);
 v2.5.0 is `10.5281/zenodo.23748858`. The concept DOI in `CITATION.cff` always
 resolves to the latest release. Name the arms and the version: a number
 measured at one version is not guaranteed at another

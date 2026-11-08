@@ -1,6 +1,6 @@
 # AOMDV baseline module — provenance and license
 
-Vendored multipath on-demand baseline for the [#296](https://github.com/danieljoppi/AntHocNet/issues/296)
+Vendored multipath on-demand baseline for the [#296](https://github.com/swarm-routing/AntHocNet/issues/296)
 oracle-phase comparison (epic item 2). This module is a **baseline for the
 benchmark harness only** — it is not part of the AntHocNet protocol, carries no
 AntHocNet measurement hooks, and follows the layout/build conventions of the
@@ -10,7 +10,7 @@ AntHocNet measurement hooks, and follows the layout/build conventions of the
 
 The port is **stock ns-3.36 `src/aodv` rebased with the AOMDV delta** from the
 CharithaS fork, exactly as the
-[feasibility spike](https://github.com/danieljoppi/AntHocNet/issues/296#issuecomment-5245550798)
+[feasibility spike](https://github.com/swarm-routing/AntHocNet/issues/296#issuecomment-5245550798)
 prescribed:
 
 - **Base**: `src/aodv` at tag `ns-3.36` of
@@ -156,7 +156,7 @@ All original copyright headers are preserved in the vendored files.
      propagate path, and `SendReply`'s reverse-path sends. The remaining
      `PathFind ()->` sites are audited but unguarded — the full site-by-site
      verdict table lives in
-     [#416](https://github.com/danieljoppi/AntHocNet/issues/416) (#416).
+     [#416](https://github.com/swarm-routing/AntHocNet/issues/416) (#416).
 - **Fork semantics kept as-is** (faithful port, not a rewrite): the RREP
   forwarding path does not carry/decrement the `SocketIpTtlTag` (the fork
   dropped stock's TTL bookkeeping there), node-disjoint path computation is the
@@ -188,7 +188,7 @@ smoke.
 History: the arm used to deliver **PDR 0.0 % with 86 % route drops**
 (ns-3.48, `anthocnet-compare`, 25 nodes / 300 m / 4 flows / 40 s / 5 m·s⁻¹)
 against 16 % PDR for stock `aodv`, with only one-hop discovery working. The
-[#416 audit](https://github.com/danieljoppi/AntHocNet/issues/416) traced that
+[#416 audit](https://github.com/swarm-routing/AntHocNet/issues/416) traced that
 to three separable RREP-handling defects (items 10–12) plus a crash the first
 of them was masking (item 13), and demonstrated recovery on an N-node
 point-to-point chain oracle against ns-3-dev master: stock fork = 1-hop

@@ -1,7 +1,7 @@
 # ADR-0020: Security ships as a default-off profile, not a fork
 
 - **Status:** Accepted — governs
-  [#302](https://github.com/danieljoppi/AntHocNet/issues/302), targeted at
+  [#302](https://github.com/swarm-routing/AntHocNet/issues/302), targeted at
   **v3.0.0**; no code yet (phase 0 of that epic is the threat-model ADR that
   will follow this one)
 - **Date:** 2026-08-03
@@ -11,7 +11,7 @@
 Trust- and security-aware ACO routing is the most common contemporary extension
 of AntHocNet in the literature: blackhole/grayhole mitigation, trust-weighted
 next-hop selection, fuzzy-trust hybrids. The 2026 roadmap research
-([#298](https://github.com/danieljoppi/AntHocNet/issues/298)) initially recorded
+([#298](https://github.com/swarm-routing/AntHocNet/issues/298)) initially recorded
 security as a **non-goal**, on the grounds that a trust-aware AntHocNet is a new
 protocol wearing the name: this repository's value is being the paper-faithful
 reference implementation, and mechanisms absent from the 2004 paper and 2007
@@ -44,10 +44,10 @@ Four binding constraints:
    knobs. No security branch, no second binary, no `#ifdef SECURE`.
 2. **`EnableSecurity = false` by default, and provably inert when off.** Not
    "we believe it is off" — a determinism check in the style of
-   [#129](https://github.com/danieljoppi/AntHocNet/issues/129) proves the OFF
+   [#129](https://github.com/swarm-routing/AntHocNet/issues/129) proves the OFF
    path produces bit-identical traces to the pre-feature build. If the default
    path moved, the change is wrong regardless of how well the ON path performs
-   (the [#292](https://github.com/danieljoppi/AntHocNet/issues/292) verification
+   (the [#292](https://github.com/swarm-routing/AntHocNet/issues/292) verification
    pattern).
 3. **Wire changes obey the existing rule.** Authenticated ants add fields, so
    `kWireVersion` bumps and the codec round-trip and fuzz coverage extend with
@@ -89,7 +89,7 @@ v2.0.0 dynamic-satellite line, and the version number should say so.
 - **Compile-time flag instead of a runtime attribute.** Rejected: a runtime
   attribute is what makes the A/B on identical seeds possible in one binary,
   which is how every other mechanism here is evaluated
-  ([#177](https://github.com/danieljoppi/AntHocNet/issues/177)).
+  ([#177](https://github.com/swarm-routing/AntHocNet/issues/177)).
 
 ## Consequences
 
@@ -101,7 +101,7 @@ v2.0.0 dynamic-satellite line, and the version number should say so.
   regression, and the A/B discipline is what catches it.
 - Ant authentication has a measurable, permanent overhead in `nrl_bytes`; that
   cost is a first-class result of the epic, not a footnote.
-- [#263](https://github.com/danieljoppi/AntHocNet/issues/263) (adverts reflected
+- [#263](https://github.com/swarm-routing/AntHocNet/issues/263) (adverts reflected
   back at their originator) is the *accidental* instance of the forgery class
   this profile addresses deliberately — fixing it remains independent of, and
   prior to, any security work.

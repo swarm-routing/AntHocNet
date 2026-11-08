@@ -1,7 +1,7 @@
 # Modern deployed baselines — the ns-3 availability survey
 
 **The question:** the 2026 literature review behind
-[#296](https://github.com/danieljoppi/AntHocNet/issues/296) observed that
+[#296](https://github.com/swarm-routing/AntHocNet/issues/296) observed that
 testbed-era MANET comparisons centre on OLSR vs BATMAN-adv vs Babel, and that a
 comparison set of AODV/OLSR/DSDV alone increasingly reads as a strawman set.
 Item 4 of that epic asks whether one of those **modern deployed** protocols can
@@ -26,7 +26,7 @@ decision, and the conditions that would reverse it.
 
 ## Why the survey had to be honest rather than quick
 
-[#414](https://github.com/danieljoppi/AntHocNet/pull/414) is the reason this
+[#414](https://github.com/swarm-routing/AntHocNet/pull/414) is the reason this
 page exists in this form. The AOMDV spike vendored a third-party port, fixed
 nine defects in it, got it compiling **clean on all five ns-3 versions in the CI
 matrix** — and then measured **0 % PDR** against stock AODV's 16 % on an
@@ -61,7 +61,7 @@ index of contributed modules**), `dl.acm.org`, `net.in.tum.de` and
 - The App Store catalogue was **not** browsed directly; its coverage here rests
   on search results and on the absence of any upstream issue/MR pointing at such
   a module. The same caveat was recorded in the
-  [original spike](https://github.com/danieljoppi/AntHocNet/issues/296#issuecomment-5245550798)
+  [original spike](https://github.com/swarm-routing/AntHocNet/issues/296#issuecomment-5245550798)
   — *two minutes of human browsing would close it*, and that remains true.
 - Two papers below are cited from their metadata and from the ns-3 merge request
   that references them, not from their full text.
@@ -78,7 +78,7 @@ Probing `src/<module>/CMakeLists.txt` on `ns-3-dev` `master`:
 | `aodv`, `olsr`, `dsdv`, `dsr` | ✅ | the classical set — this project's [replication anchors](methodology.md#replication-anchors-aodv-olsr-dsdv) are three of these |
 | `mesh` | ✅ | IEEE 802.11s: peering management + **HWMP**. See [below](#the-second-thing-the-epic-did-not-predict-80211s-hwmp-is-already-in-stock-ns-3) |
 | `babel`, `batman`, `batmand`, `olsrv2`, `nhdp` | ❌ (404) | no modern deployed L3 protocol |
-| `aomdv`, `gpsr` | ❌ (404) | why both are vendored here at all ([#414](https://github.com/danieljoppi/AntHocNet/pull/414), [#412](https://github.com/danieljoppi/AntHocNet/pull/412)) |
+| `aomdv`, `gpsr` | ❌ (404) | why both are vendored here at all ([#414](https://github.com/swarm-routing/AntHocNet/pull/414), [#412](https://github.com/swarm-routing/AntHocNet/pull/412)) |
 
 And the ns-3 OLSR model's own documentation is explicit about its vintage:
 
@@ -163,7 +163,7 @@ recorded because the next person to ask this question should start here.
 | Size | **~7,330 lines** across 9 model/helper files, plus a companion `src/nhdp` of **~1,915 lines** | line counts, 2026-08-13 |
 | Tests | **5 suites** declared: regression, hello-regression, TC-regression, header, routing-protocol, plus a bug-780 case | `src/olsrv2/CMakeLists.txt` |
 | Licence | **GPL-2.0-only**, headers inherited from ns-3's `olsr` (Ros / Carneiro) — matches this repo | `olsrv2-routing-protocol.h` |
-| `AssignStreams`? | **Yes** (`RoutingProtocol::AssignStreams`) — the [#352](https://github.com/danieljoppi/AntHocNet/issues/352) stream-pinning requirement is met | `olsrv2-routing-protocol.{h,cc}` |
+| `AssignStreams`? | **Yes** (`RoutingProtocol::AssignStreams`) — the [#352](https://github.com/swarm-routing/AntHocNet/issues/352) stream-pinning requirement is met | `olsrv2-routing-protocol.{h,cc}` |
 | Maintained? | **No.** The branch is *by its authors' own statement* archival | branch README |
 
 The README says it plainly:
@@ -259,7 +259,7 @@ recorded here rather than scheduled:
    penalises HWMP for a model limitation rather than a protocol property.
 
 None of these is fatal; all three are work, and item (2) is measurement work of
-the kind [#229/#230](https://github.com/danieljoppi/AntHocNet/issues/229) taught
+the kind [#229/#230](https://github.com/swarm-routing/AntHocNet/issues/229) taught
 this project to take seriously. It is the strongest candidate the survey found
 for a *future* modern arm, and it is written down here so the next attempt does
 not start from the epic's three-name list.
@@ -277,7 +277,7 @@ Reasoning, in the order that decided it:
 2. **The AOMDV evidence is direct and recent.** A vendored port that compiled
    clean on five ns-3 versions still delivered 0 % PDR, and only a smoke run
    distinguished "builds" from "routes"
-   ([#414](https://github.com/danieljoppi/AntHocNet/pull/414)). Every candidate
+   ([#414](https://github.com/swarm-routing/AntHocNet/pull/414)). Every candidate
    here is a third-party research port of the same species. Shipping a second
    broken arm — or worse, one broken *subtly* enough to produce plausible
    numbers — would damage the comparison more than the missing arm does.
@@ -305,7 +305,7 @@ Any one of these, in decreasing order of likelihood:
 |---|---|---|
 | **ns-3 MR !2887 merges** and a `manet` module lands with an OLSRv2 or B.A.T.M.A.N. model | Adopt it as an upstream module — the same standing as `aodv`/`olsr`/`dsdv`, no vendoring, no maintenance burden. This is the outcome this decision is waiting for. | <https://gitlab.com/nsnam/ns-3-dev/-/merge_requests/2887> |
 | **NHDP + OLSRv2 are contributed to `ns-3-dev`** by any route (the branch README says an updated NHDP "is likely to be contributed") | Same as above; OLSRv2 is the highest-value modern arm because it is the direct RFC 7181 successor to a protocol already in the comparison set, which makes the pairing a controlled contrast rather than a new axis. | probe `src/olsrv2` and `src/nhdp` on `ns-3-dev` master |
-| **A maintained contrib module appears in the ns-3 App Store** for any of the three | Evaluate to the [#414](https://github.com/danieljoppi/AntHocNet/pull/414) bar: build on all five matrix versions, `AssignStreams` present, and a **smoke run with non-zero multi-hop PDR before anything else** | <https://apps.nsnam.org/> — *not checkable from agent sessions; needs a human* |
+| **A maintained contrib module appears in the ns-3 App Store** for any of the three | Evaluate to the [#414](https://github.com/swarm-routing/AntHocNet/pull/414) bar: build on all five matrix versions, `AssignStreams` present, and a **smoke run with non-zero multi-hop PDR before anything else** | <https://apps.nsnam.org/> — *not checkable from agent sessions; needs a human* |
 | **The harness grows layer-2 arm support** (device-layer install + a link-layer control-traffic counter) | 802.11s HWMP becomes the cheapest modern arm available, since the model is already in stock ns-3 and maintained | this repo |
 | **Someone releases the TUM Babel module** | Evaluate to the same bar; expect it to be a first-release research module, i.e. the AOMDV risk profile | search for a repository; the paper's authors are the contact |
 
@@ -330,10 +330,10 @@ the start of any campaign that will publish a baseline comparison.
 | 11 | von Ehren, Andre & Wiedner, *An Implementation of the Babel Routing Protocol for ns-3*, TUM NET-2022-01-1 (2022), <https://www.net.in.tum.de/fileadmin/TUM/NET/NET-2022-01-1/NET-2022-01-1_15.pdf> | the only located Babel-for-ns-3 work; no released code found (host egress-blocked) |
 | 12 | ns-3 GitLab issues/MR search for "babel", "batman" (2026-08-13) | zero upstream tickets for either |
 | 13 | ns-3 wiki `NSOC2020Routing` | a batman-adv-for-ns-3 project existed and is paused/incomplete (**second-hand**: page egress-blocked, read from search summary) |
-| 14 | [#414](https://github.com/danieljoppi/AntHocNet/pull/414) · [`ns3/baselines/aomdv/README.md`](../../ns3/baselines/aomdv/README.md) | the local evidence that a compiling third-party port is not a working arm |
+| 14 | [#414](https://github.com/swarm-routing/AntHocNet/pull/414) · [`ns3/baselines/aomdv/README.md`](../../ns3/baselines/aomdv/README.md) | the local evidence that a compiling third-party port is not a working arm |
 
-Refs [#296](https://github.com/danieljoppi/AntHocNet/issues/296)
-([item 4](https://github.com/danieljoppi/AntHocNet/issues/296#issuecomment-5275396168)),
-[#412](https://github.com/danieljoppi/AntHocNet/pull/412),
-[#414](https://github.com/danieljoppi/AntHocNet/pull/414),
-[#415](https://github.com/danieljoppi/AntHocNet/issues/415).
+Refs [#296](https://github.com/swarm-routing/AntHocNet/issues/296)
+([item 4](https://github.com/swarm-routing/AntHocNet/issues/296#issuecomment-5275396168)),
+[#412](https://github.com/swarm-routing/AntHocNet/pull/412),
+[#414](https://github.com/swarm-routing/AntHocNet/pull/414),
+[#415](https://github.com/swarm-routing/AntHocNet/issues/415).

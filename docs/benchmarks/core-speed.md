@@ -8,7 +8,7 @@ AntHocNet slower. These numbers can.
 
 ![Cost per operation of each core benchmark case, on each merge to main](charts/core-speed.png)
 
-_Reproduce: `make reproduce FIG=core-speed` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+_Reproduce: `make reproduce FIG=core-speed` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 
 ## The cases
 
@@ -40,7 +40,7 @@ rounds. The median is reported, with the fastest and slowest round beside it.
   and puts the table in the job summary. A case more than 25 % slower gets a
   warning annotation. It never fails the PR: shared runners are noisy.
 - **On main**, it appends one run to
-  [`results/core-bench/history.csv`](https://github.com/danieljoppi/AntHocNet/blob/main/results/core-bench/history.csv)
+  [`results/core-bench/history.csv`](https://github.com/swarm-routing/AntHocNet/blob/main/results/core-bench/history.csv)
   with the commit and the runner's CPU model, and redraws the chart above.
 
 Numbers compare only within one CPU model. GitHub-hosted runners change model

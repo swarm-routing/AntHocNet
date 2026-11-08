@@ -22,7 +22,7 @@ roads*, shows the split on this world.
 
 ## 2. Run (20 min)
 
-1. Open [`#mesh?seed=4`](https://danieljoppi.github.io/AntHocNet/#mesh?seed=4). Select the first call's
+1. Open [`#mesh?seed=4`](https://swarm-routing.github.io/AntHocNet/#mesh?seed=4). Select the first call's
    source and turn on the *pheromone* overlay. Run to **t = 120 s**.
 2. Watch which neighbours the source's data goes to. The *strongest route*
    overlay draws the best next hop, and the *pheromone* overlay draws every

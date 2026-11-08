@@ -42,11 +42,11 @@ Every family keeps two references that are not migrants:
 | family | keep (native, or the family's own standard baseline) | add | retire from the next campaign |
 |---|---|---|---|
 | MANET grid | AODV, OLSR, DSDV, AOMDV (the family these protocols were built for) | — | — |
-| static Wi-Fi mesh | OLSR (community meshes) | IEEE 802.11s HWMP ([#708](https://github.com/danieljoppi/AntHocNet/issues/708)) | AODV, DSDV |
-| FANET | AODV, OLSR (the FANET literature's standard baselines) | a 3-D geographic arm ([#710](https://github.com/danieljoppi/AntHocNet/issues/710)) | DSDV, AOMDV |
-| VANET | GPSR (position-based), AODV (the VANET literature's standard reactive baseline) | a junction-aware geographic arm, GPCR-style ([#709](https://github.com/danieljoppi/AntHocNet/issues/709)) | OLSR, DSDV, AOMDV |
-| satellite ISL grid | the oracle (precomputed shortest path, the snapshot-routing family at its best case) | OPSPF-style predictable link state ([#707](https://github.com/danieljoppi/AntHocNet/issues/707)) | AODV, OLSR |
-| LEO shells | geo-greedy (idealised position-based), oracle, oracle-delay (Hypatia-style) | OPSPF-style predictable link state ([#707](https://github.com/danieljoppi/AntHocNet/issues/707)) | AODV, OLSR (OLSR retired already from v2.3.0) |
+| static Wi-Fi mesh | OLSR (community meshes) | IEEE 802.11s HWMP ([#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | AODV, DSDV |
+| FANET | AODV, OLSR (the FANET literature's standard baselines) | a 3-D geographic arm ([#710](https://github.com/swarm-routing/AntHocNet/issues/710)) | DSDV, AOMDV |
+| VANET | GPSR (position-based), AODV (the VANET literature's standard reactive baseline) | a junction-aware geographic arm, GPCR-style ([#709](https://github.com/swarm-routing/AntHocNet/issues/709)) | OLSR, DSDV, AOMDV |
+| satellite ISL grid | the oracle (precomputed shortest path, the snapshot-routing family at its best case) | OPSPF-style predictable link state ([#707](https://github.com/swarm-routing/AntHocNet/issues/707)) | AODV, OLSR |
+| LEO shells | geo-greedy (idealised position-based), oracle, oracle-delay (Hypatia-style) | OPSPF-style predictable link state ([#707](https://github.com/swarm-routing/AntHocNet/issues/707)) | AODV, OLSR (OLSR retired already from v2.3.0) |
 
 "The family's own standard baseline" is a test, not a loophole. A protocol
 stays only where the family's survey literature uses it as a baseline. AODV
@@ -61,11 +61,11 @@ on VANET and FANET passes; AODV on a constellation does not.
 - **The cross-family view changes.** `families-vs-aodv` compares against a
   protocol that is no longer in every family. It is replaced by AntHocNet's
   gap to each family's oracle, plus AntHocNet against each family's best
-  native baseline ([#711](https://github.com/danieljoppi/AntHocNet/issues/711)).
+  native baseline ([#711](https://github.com/swarm-routing/AntHocNet/issues/711)).
 - **New comparators are real work.** HWMP is stock ns-3 (`mesh` module). The
   others are written in `ns3/baselines/`, beside GPSR, AOMDV and the oracle,
   each with an anchor and a preflight rule, and each must route
-  ([#439](https://github.com/danieljoppi/AntHocNet/issues/439)).
+  ([#439](https://github.com/swarm-routing/AntHocNet/issues/439)).
 - **Harness support for migrant protocols stays.** `--protocols=olsr` still
   works on every harness. A reader may run any protocol anywhere; the
   published comparison is just not built on it.

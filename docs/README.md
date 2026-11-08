@@ -5,10 +5,10 @@ Where to find things in `docs/`. Repo-level orientation is one directory up:
 (project orientation + glossary), [`AGENTS.md`](../AGENTS.md) (build/verify,
 golden rules, where-to-look), [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
-**Learn by playing:** [the interactive site](https://danieljoppi.github.io/AntHocNet/) — the project's front page — runs the real core as
+**Learn by playing:** [the interactive site](https://swarm-routing.github.io/AntHocNet/) — the project's front page — runs the real core as
 WebAssembly, with missions for every mechanism and a world per network family
 ([ADR-0021](adr/0021-the-browser-is-an-adapter.md)). The code reference is the
-[API documentation](https://danieljoppi.github.io/AntHocNet/api/).
+[API documentation](https://swarm-routing.github.io/AntHocNet/api/).
 
 ![How AntHocNet finds a route: reactive forward ants search, a backward ant lays pheromone on the way home, data packets follow the strongest trail](images/readme-how-it-routes.png)
 
@@ -36,7 +36,7 @@ learned and secure protocols, and the game campaign ([learn-campaign.md](learn-c
 | Page | What it is |
 |---|---|
 | [porting-notes.md](porting-notes.md) | Bugs fixed in extraction, what an adapter does, wire-format and version caveats. |
-| [ns2-support.md](ns2-support.md) | **The removed NS-2 target in one place** — frozen at v1.2.0, shipped through v1.9.0, removed at v2.0.0 ([#307](https://github.com/danieljoppi/AntHocNet/issues/307)): which tags and images still carry it, and why it was retired. |
+| [ns2-support.md](ns2-support.md) | **The removed NS-2 target in one place** — frozen at v1.2.0, shipped through v1.9.0, removed at v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)): which tags and images still carry it, and why it was retired. |
 | [wire-format.md](wire-format.md) | Canonical on-wire ant layout and the `kWireVersion` rules (golden rule 4). |
 | [configuration.md](configuration.md) | Every tunable, its default's **provenance**, the ns-3 attribute for it, and the calibration loop. |
 | [cross-validation.md](cross-validation.md) | *Retired:* the NS-2 vs NS-3 behaviour re-validation, kept as a historical note. |

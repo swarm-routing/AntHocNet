@@ -57,9 +57,9 @@ release-pinned tier is published by the `Release` workflow (which reuses
 > **v1.5.0 has no `anthocnet-ns3` pins.** Its release run's image jobs failed:
 > the `v1.5.0` tag's `Dockerfile.ns3` enabled `anthocnet;wifi;…` but not the
 > `aomdv`/`gpsr`/`oracle` modules the examples include, so the ns-3 example
-> build broke ([#436](https://github.com/danieljoppi/AntHocNet/pull/436)
+> build broke ([#436](https://github.com/swarm-routing/AntHocNet/pull/436)
 > fixed `main` the next day, after the tag). A 2026-09-24 backfill from the tag
-> ([#473](https://github.com/danieljoppi/AntHocNet/pull/473)'s pin-only
+> ([#473](https://github.com/swarm-routing/AntHocNet/pull/473)'s pin-only
 > dispatch) confirmed the tag cannot build them, and published what it can:
 > `ns2:<ver>-v1.5.0`, `anthocnet-ns2:<ver>-v1.5.0` and the plain
 > `ns3:<ver>-v1.5.0`. For a pinned AntHocNet ns-3 image use `-v1.6.0` (the

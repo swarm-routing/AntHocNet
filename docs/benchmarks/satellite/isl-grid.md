@@ -22,8 +22,8 @@ to need separate suites is [`network-regimes.md`](../../network-regimes.md).
 > are the **first satellite numbers this project has produced against a
 > control**, from the v1.5.0 campaign's phase 3
 > ([campaign plan](../v1.5.0-campaign.md),
-> [#415](https://github.com/danieljoppi/AntHocNet/issues/415)): run
-> [31830581632](https://github.com/danieljoppi/AntHocNet/actions/runs/31830581632),
+> [#415](https://github.com/swarm-routing/AntHocNet/issues/415)): run
+> [31830581632](https://github.com/swarm-routing/AntHocNet/actions/runs/31830581632),
 > `ref=main`, `commit=0f7a3ab9f3b7ba837b43bbd2d3fd7e04f7090c1c`,
 > `image=ghcr.io/danieljoppi/ns3:3.42-opt`, `profile=release`,
 > `harness=isl-grid`. Cell: 4×4 +Grid torus — 16 satellites / 32 ISLs (mean
@@ -35,7 +35,7 @@ to need separate suites is [`network-regimes.md`](../../network-regimes.md).
 > carry their own provenance (corridor/failcell `820f5cf`, seam cell
 > `5220bd0`).
 
-**Re-measured for v2.2.0 (2026-10-16).** The [v2.2.0 campaign](../v2.2.0-campaign.md#results) re-ran every cell on this page as its control generation, at `a8a16991`, with the shipped defaults and the same 20 seeds. Every `##RUN##` row is byte-identical to the cells this page cites except AODV's, which differ through stock AODV's pointer-keyed socket map on multi-interface nodes ([#362](https://github.com/danieljoppi/AntHocNet/issues/362)); its paired deltas are within noise. No default moved, so the numbers here stand as v2.2.0's. The control cells are `results/cells/sat-*-v220.txt`. What the campaign's four knobs do on this family is in [network-regimes.md §7](../../network-regimes.md#7-measured-the-v220-knobs-per-regime).
+**Re-measured for v2.2.0 (2026-10-16).** The [v2.2.0 campaign](../v2.2.0-campaign.md#results) re-ran every cell on this page as its control generation, at `a8a16991`, with the shipped defaults and the same 20 seeds. Every `##RUN##` row is byte-identical to the cells this page cites except AODV's, which differ through stock AODV's pointer-keyed socket map on multi-interface nodes ([#362](https://github.com/swarm-routing/AntHocNet/issues/362)); its paired deltas are within noise. No default moved, so the numbers here stand as v2.2.0's. The control cells are `results/cells/sat-*-v220.txt`. What the campaign's four knobs do on this family is in [network-regimes.md §7](../../network-regimes.md#7-measured-the-v220-knobs-per-regime).
 
 On this suite the campaign's `sinr` arm is the hop-count metric under another name. A point-to-point ISL has no PHY SINR ([ADR-0024](../../adr/0024-per-neighbour-link-quality-port.md)), so the metric falls back, and PDR and delay are identical to the control. The two hold caps (`repair200`, `reconv1s`) never bind: their cells are byte-identical. The faster hello (`hello500`) costs NRL +1 to +18 and buys nothing on a fixed topology.
 
@@ -43,7 +43,7 @@ On this suite the campaign's `sinr` arm is the hop-count metric under another na
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](../v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
@@ -85,7 +85,7 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](../v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -94,8 +94,8 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 > **Quiet mode's effect here**, paired against v2.2.0's AntHocNet: NRL −0.04 to −0.11 in all four cells, with PDR and delay byte-identical: the torus's routes hold, so the back-off engages.
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
-> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
-> bootstrap). Stock AODV's rows are the v2.3.0 control's. On these multi-interface nodes they differ from v2.2.0's in iteration order only ([#362](https://github.com/danieljoppi/AntHocNet/issues/362), [#675](https://github.com/danieljoppi/AntHocNet/issues/675)), and the paired difference is within noise.
+> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
+> bootstrap). Stock AODV's rows are the v2.3.0 control's. On these multi-interface nodes they differ from v2.2.0's in iteration order only ([#362](https://github.com/swarm-routing/AntHocNet/issues/362), [#675](https://github.com/swarm-routing/AntHocNet/issues/675)), and the paired difference is within noise.
 >
 > **base torus**
 >
@@ -164,7 +164,7 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 > drew flow start times from a stream that depended on the routing arm, so on
 > the same seed each arm started its flows at different times and was offered
 > a different number of packets (up to ~1 % apart). Since
-> [#517](https://github.com/danieljoppi/AntHocNet/issues/517) (PR #531) the application streams sit at a fixed,
+> [#517](https://github.com/swarm-routing/AntHocNet/issues/517) (PR #531) the application streams sit at a fixed,
 > arm-independent offset, as #431 did for `anthocnet-compare`, and every arm
 > on a seed is offered the identical packet sequence. Each arm's own metrics
 > in the #521 block below were valid; its **cross-arm paired deltas were
@@ -185,9 +185,9 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 >
 > ![ISL grid corridor and failcell, every seed as a dot: in the corridor AntHocNet and OLSR split between the clean route near 15 ms and the loaded one near 97 ms while AODV takes the loaded route every time; in the failcell AntHocNet reconverges next to the oracle, AODV about twice as slow and OLSR about four seconds later](../charts/satellite.png)
 >
-> _Reproduce: `make reproduce FIG=satellite` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=satellite` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
-> _One dot per seed (20 per arm), with a short bar at the mean: a mean alone would hide the corridor's bimodal split. Vertical line: the oracle (the congestion-blind bound in the corridor, the exact floor in the failcell). Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `sat-{corridor,failcell}-app517.txt`._
+> _One dot per seed (20 per arm), with a short bar at the mean: a mean alone would hide the corridor's bimodal split. Vertical line: the oracle (the congestion-blind bound in the corridor, the exact floor in the failcell). Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `sat-{corridor,failcell}-app517.txt`._
 >
 > **Base, seam: unchanged.** Every arm sits on the bound for delay and
 > `delay99` (base 10.15–10.16 ms / 11.0 ms; seam 21.57–21.63 ms / 31.0 ms).
@@ -230,7 +230,7 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 ## Restated on CBR sources (#521)
 
 > **Every cell below was re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) every data flow ran ns-3's default OnOff schedule,
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) every data flow ran ns-3's default OnOff schedule,
 > 1 s on and 1 s off. That halved the offered rate. On this harness it also
 > put a 1 s silence into every recovery window. The corridor's background
 > load was already continuous (#216); its probe flow was not.
@@ -300,17 +300,17 @@ AntHocNet matches the oracle's delivery on all four cells, as it did at v2.3.0 (
 
 ## The headline result: the base torus does not discriminate
 
-**The [#216](https://github.com/danieljoppi/AntHocNet/issues/216) control now
+**The [#216](https://github.com/swarm-routing/AntHocNet/issues/216) control now
 exists, it ran on this cell, and its first finding is a negative one — all
 three real protocols already sit exactly on the upper bound, so this cell
 cannot carry a comparative delivery or latency claim in either direction.**
 
-> **OLSR's PDR is restated ([#513](https://github.com/danieljoppi/AntHocNet/issues/513)).** Stock ns-3 OLSR
+> **OLSR's PDR is restated ([#513](https://github.com/swarm-routing/AntHocNet/issues/513)).** Stock ns-3 OLSR
 > refuses a send while it has no route at the source. Here that happens
 > during its start-up convergence: flows start in [1, 11] s, before the first
 > HELLO/TC rounds complete. The refused packet never reaches FlowMonitor, so
 > OLSR's PDR left those sends out of its denominator. This is the #510 defect,
-> fixed for this harness in [PR #516](https://github.com/danieljoppi/AntHocNet/pull/516).
+> fixed for this harness in [PR #516](https://github.com/swarm-routing/AntHocNet/pull/516).
 >
 > 20-seed OLSR-only re-runs on the fix (`152b8999`) put OLSR **0.3–0.4 pp
 > below** the bound in every multi-flow cell:
@@ -343,7 +343,7 @@ cannot carry a comparative delivery or latency claim in either direction.**
 ### The control is exact here
 
 On this topology the oracle arm
-([#419](https://github.com/danieljoppi/AntHocNet/pull/419)) is not an
+([#419](https://github.com/swarm-routing/AntHocNet/pull/419)) is not an
 approximation of an upper bound — it *is* one. Every seed self-describes as
 
 ```
@@ -370,7 +370,7 @@ there (do not carry its numbers across regimes).
 PDR, mean delay and `delay99` are **identical to the bound on all three real
 protocols**. The 10.2 ms is simply two ISL hops at 5.00 ms — the analytic
 floor this page already gates on — plus the small unattributed excess tracked
-in [#250](https://github.com/danieljoppi/AntHocNet/issues/250), which the
+in [#250](https://github.com/swarm-routing/AntHocNet/issues/250), which the
 oracle now shows is not a protocol artefact: the control pays it too. On a
 static,
 lossless, uncongested 4-regular torus every protocol finds a shortest path;
@@ -406,24 +406,24 @@ control — but the base torus cannot carry a comparative result. Discrimination
 must come from the adversarial cells this suite already anticipates:
 
 - the **asymmetric-congestion corridor**
-  ([#280](https://github.com/danieljoppi/AntHocNet/issues/280), instrument
+  ([#280](https://github.com/swarm-routing/AntHocNet/issues/280), instrument
   described [below](#the-congestion-cell-216-cell-1)) — **now measured with
   the oracle arm**, [below](#the-adversarial-cells-corridor-and-failcell-432);
 - **scripted ISL breaks**
-  ([#260](https://github.com/danieljoppi/AntHocNet/issues/260)) — **now
+  ([#260](https://github.com/swarm-routing/AntHocNet/issues/260)) — **now
   measured with the oracle arm**,
   [below](#the-adversarial-cells-corridor-and-failcell-432);
 - **larger or less regular constellations** — this one now has a designed,
-  measured answer: the [#432](https://github.com/danieljoppi/AntHocNet/issues/432)
+  measured answer: the [#432](https://github.com/swarm-routing/AntHocNet/issues/432)
   item 3 **seam cell** (a deliberately irregular 6×6 torus with the rows-axis
-  wrap seam cut, [PR #453](https://github.com/danieljoppi/AntHocNet/pull/453))
+  wrap seam cut, [PR #453](https://github.com/swarm-routing/AntHocNet/pull/453))
   was measured at 20 seeds with the oracle arm,
   [below](#the-seam-cell-static-irregularity-also-ties-the-floor-432-item-3) —
   and **static irregularity also cannot discriminate** on this substrate.
   Headline discrimination in the static suite comes only from load (the
   corridor) or an event instrument (the failcell); the residue of item 3
   (dynamics/churn) is subsumed by
-  [#297](https://github.com/danieljoppi/AntHocNet/issues/297).
+  [#297](https://github.com/swarm-routing/AntHocNet/issues/297).
 
 The recommendation this section used to close on — add the `oracle` arm to
 those cells before any satellite comparison is published — **was followed**:
@@ -435,16 +435,16 @@ out of the `Channel` adjacency).
 
 > **Provenance — measured at `820f5cf`, 20 seeds per cell, with the exact
 > control.** Both cells are from the
-> [#432](https://github.com/danieljoppi/AntHocNet/issues/432) dispatch
-> ([dispatch record + pre-registered expectations](https://github.com/danieljoppi/AntHocNet/issues/432#issuecomment-5305417841)):
+> [#432](https://github.com/swarm-routing/AntHocNet/issues/432) dispatch
+> ([dispatch record + pre-registered expectations](https://github.com/swarm-routing/AntHocNet/issues/432#issuecomment-5305417841)):
 > `ref=main`, `commit=820f5cfa2295baf8f7b734ece862bd93747b2521`,
 > `image=ghcr.io/danieljoppi/ns3:3.42-opt`, `profile=release`,
 > `harness=isl-grid`, 900 s, 20 seeds (1–20),
 > `protocols=anthocnet,aodv,olsr,oracle` (the pinned canonical order).
 > Corridor cell: run
-> [31922945507](https://github.com/danieljoppi/AntHocNet/actions/runs/31922945507).
+> [31922945507](https://github.com/swarm-routing/AntHocNet/actions/runs/31922945507).
 > Failcell: run
-> [31922957019](https://github.com/danieljoppi/AntHocNet/actions/runs/31922957019).
+> [31922957019](https://github.com/swarm-routing/AntHocNet/actions/runs/31922957019).
 > Every number below is a 20-seed mean computed by script from the per-seed
 > `##RUN##` / `# corridor` / `# failcell` rows (`bench_parse.py` plus a
 > diagnostic-line reducer — nothing eyeballed or hand-averaged); `±` is a
@@ -479,7 +479,7 @@ headline `##RUN##` row **is** the probe flow `(0,0)→(0,3)` over two equal
 at **shipped defaults** (`EnableMacMetric` off): this cell's question is
 where the *shipped* protocols sit against the exact bound; the
 mac-metric/gate mechanism ladder stays on
-[#216](https://github.com/danieljoppi/AntHocNet/issues/216)/[#180](https://github.com/danieljoppi/AntHocNet/issues/180).
+[#216](https://github.com/swarm-routing/AntHocNet/issues/216)/[#180](https://github.com/swarm-routing/AntHocNet/issues/180).
 
 | protocol | probe PDR % | delay (ms) | delay99 (ms) | NRL | clean-corridor seeds |
 |---|---|---|---|---|---|
@@ -518,7 +518,7 @@ arrives** — the `# pher` traces show both corridors hold pheromone at load
 onset, then the unused corridor's entry evaporates to zero and never
 re-forms at the source. The #216 round-2 lock-in observation therefore
 **persists at 900 s**; session length did not break it (follow-up (a) of the
-[round-2 readout](https://github.com/danieljoppi/AntHocNet/issues/216#issuecomment-5153883684),
+[round-2 readout](https://github.com/swarm-routing/AntHocNet/issues/216#issuecomment-5153883684),
 now answered). What beats the bound is not measured congestion adaptation
 but *initial-choice diversity*: the stochastic ant choice lands half the
 seeds on the corridor that will stay clean, and lock-in keeps them there.
@@ -601,7 +601,7 @@ unaffected flows.
 ### The seam cell: static irregularity also ties the floor (#432 item 3)
 
 > **Provenance — measured at `5220bd0`, 20 seeds, with the exact control.**
-> Run [31985601548](https://github.com/danieljoppi/AntHocNet/actions/runs/31985601548),
+> Run [31985601548](https://github.com/swarm-routing/AntHocNet/actions/runs/31985601548),
 > `ref=main`, `commit=5220bd0d6275413d58b9701d944b45d5496462d3`,
 > `image=ghcr.io/danieljoppi/ns3:3.42-opt`, `profile=release`,
 > `harness=isl-grid`. Cell: 6×6 +Grid torus with the rows-axis wrap seam
@@ -610,9 +610,9 @@ unaffected flows.
 > min 3 / max 4, mean 3.72, connected), 5 ms / 10 Mbps, 8 standard flows
 > (`i → 35−i`), cbrBps 4096, 900 s, seeds 1–20,
 > `protocols=anthocnet,aodv,olsr,oracle` (the pinned canonical order). Design
-> and pre-registration: [PR #453](https://github.com/danieljoppi/AntHocNet/pull/453)
+> and pre-registration: [PR #453](https://github.com/swarm-routing/AntHocNet/pull/453)
 > and the
-> [issue design record](https://github.com/danieljoppi/AntHocNet/issues/432#issuecomment-5310762041),
+> [issue design record](https://github.com/swarm-routing/AntHocNet/issues/432#issuecomment-5310762041),
 > both written before any 20-seed data existed. Every number below is a
 > 20-seed mean computed by script from the per-seed `##RUN##` rows
 > (`bench_parse.py`; paired per-seed deltas against the oracle rows via the
@@ -623,7 +623,7 @@ unaffected flows.
 > **OK (0 fail, 0 warn)**. Reproduce this subsection at commit `5220bd0`.
 
 The cell is the designed answer to "larger or less regular constellations"
-([#432](https://github.com/danieljoppi/AntHocNet/issues/432) item 3). The
+([#432](https://github.com/swarm-routing/AntHocNet/issues/432) item 3). The
 base torus tied because on a 4-regular torus every alternative is an
 equal-cost shortest path, so no routing choice has a price. Cutting the
 rows-axis wrap seam at every column but 0 makes choices priced while staying
@@ -648,7 +648,7 @@ post-removal ISLs, both directions — the oracle proves it solved the seam
 graph, not the full torus). Oracle PDR 100.00, delay99 exactly 31.0 in all
 20 seeds, and mean delay 21.57 ±0.00 = the 21.25 ms analytic floor plus a
 0.32 ms excess (~0.075 ms/hop at 4.25 mean hops — the same
-[#250](https://github.com/danieljoppi/AntHocNet/issues/250)-class per-hop
+[#250](https://github.com/swarm-routing/AntHocNet/issues/250)-class per-hop
 excess the base cell pays).
 
 **Pre-registered expectation 2 — hop-stretch discrimination — failed: the
@@ -701,7 +701,7 @@ corridor's instrument); events and now irregularity are absorbed without
 headline trace** (the failcell needed its reconvergence instrument; the seam
 cell has no instrument left to fall back on — that is its verdict). The
 remaining scope of item 3 — dynamics, churn, handover — is **subsumed by the
-[#297](https://github.com/danieljoppi/AntHocNet/issues/297) satellite
+[#297](https://github.com/swarm-routing/AntHocNet/issues/297) satellite
 evaluation-credibility epic**, per the closing criterion pre-registered on
 the issue. Honest caveats: the cell is lossless and uncongested *by design*
 (that isolation is the point, and also the reason nothing separates); the
@@ -716,7 +716,7 @@ One harness, [`ns3/anthocnet/examples/isl-grid.cc`](../../../ns3/anthocnet/examp
 an R×C **+Grid torus** of point-to-point ISLs — one `/30` subnet per link, so
 every satellite holds one interface *per neighbour* (degree 4 on the torus).
 That multi-interface shape is the point: it is what the MANET suite can never
-exercise, and it is what #203 broke on before [#224](https://github.com/danieljoppi/AntHocNet/pull/224)
+exercise, and it is what #203 broke on before [#224](https://github.com/swarm-routing/AntHocNet/pull/224)
 fixed next-hop resolution per interface. Metrics mirror `anthocnet-compare`'s
 definitions at the same IP-layer counting point, so a number here is comparable
 in *kind* (never in regime) to a MANET number.
@@ -724,7 +724,7 @@ in *kind* (never in regime) to a MANET number.
 It is a **static snapshot** grid: no orbital mechanics, no GSL handover, no
 link churn. That makes it the quiet-cell instrument — and the measured
 answer is sharper than the expectation this page used to record. It said the
-[#216](https://github.com/danieljoppi/AntHocNet/issues/216) precomputed
+[#216](https://github.com/swarm-routing/AntHocNet/issues/216) precomputed
 shortest-path control was *expected to win* here and AntHocNet *expected to
 lose*; [with the control measured](#the-headline-result-the-base-torus-does-not-discriminate),
 neither happened — every protocol ties the bound exactly, and the cell
@@ -733,12 +733,12 @@ discriminates nothing. Of the adversarial cells that could separate them
 **two have instruments**:
 
 - **Unpredicted ISL loss** —
-  [#260](https://github.com/danieljoppi/AntHocNet/issues/260) added a scripted
+  [#260](https://github.com/swarm-routing/AntHocNet/issues/260) added a scripted
   single-ISL break (`--breakLink=r1,c1,r2,c2 --breakAt=<s>`, cut via
   `Ipv4::SetDown` on both endpoint interfaces) that reports a per-run
   `# failcell … tDetect=<s> tReconverge=<s>` line.
-- **Asymmetric congestion** ([#216](https://github.com/danieljoppi/AntHocNet/issues/216)
-  cell 1, unblocked by [#206](https://github.com/danieljoppi/AntHocNet/issues/206)) —
+- **Asymmetric congestion** ([#216](https://github.com/swarm-routing/AntHocNet/issues/216)
+  cell 1, unblocked by [#206](https://github.com/swarm-routing/AntHocNet/issues/206)) —
   `--corridorLoad=<rate>` offers background load over one of two equal-length
   corridors and reports a per-run `# corridor` line; see
   [the congestion cell](#the-congestion-cell-216-cell-1) below.
@@ -776,18 +776,18 @@ gap measures re-convergence.
 | `islDelayMs` | 5 | one-way ISL propagation delay (LEO ISLs are ~3–13 ms) |
 | `islRate` | 10Mbps | ISL data rate |
 | `flows` / `cbrBps` | 8 / 4096 | CBR load |
-| `protocols` | anthocnet,aodv,olsr,oracle | `anthocnet,aodv` is the [#250](https://github.com/danieljoppi/AntHocNet/issues/250) hop-delay discriminator pair; `oracle` is the [#419](https://github.com/danieljoppi/AntHocNet/pull/419) exact upper bound. **`dsdv` is not available in this suite** — see below |
-| `breakLink` / `breakAt` | off | [#260](https://github.com/danieljoppi/AntHocNet/issues/260) scripted single-ISL break: endpoints `r1,c1,r2,c2` + cut time (s); emits `# failcell` detect/reconverge lines |
-| `corridorLoad` / `corridorLoadAt` | off / 15 | [#216](https://github.com/danieljoppi/AntHocNet/issues/216) cell 1: background rate (e.g. `12Mbps`) loading one of two equal-length corridors, switched on at `corridorLoadAt` (s); emits `# corridor` path-shift lines. Needs `torus=true` and even `cols` ≥ 4 |
-| `removeLinks` | off | [#432](https://github.com/danieljoppi/AntHocNet/issues/432) item 3: static ISL removals — semicolon-separated `r1,c1,r2,c2` endpoint quadruples, each adjacent on the grid (same rules as `breakLink`), never built (absent from t=0, both directions). Makes the constellation deliberately irregular: non-uniform degree, unequal-length alternatives. The remaining graph must stay connected (harness abort; the preflight proves it by BFS) |
+| `protocols` | anthocnet,aodv,olsr,oracle | `anthocnet,aodv` is the [#250](https://github.com/swarm-routing/AntHocNet/issues/250) hop-delay discriminator pair; `oracle` is the [#419](https://github.com/swarm-routing/AntHocNet/pull/419) exact upper bound. **`dsdv` is not available in this suite** — see below |
+| `breakLink` / `breakAt` | off | [#260](https://github.com/swarm-routing/AntHocNet/issues/260) scripted single-ISL break: endpoints `r1,c1,r2,c2` + cut time (s); emits `# failcell` detect/reconverge lines |
+| `corridorLoad` / `corridorLoadAt` | off / 15 | [#216](https://github.com/swarm-routing/AntHocNet/issues/216) cell 1: background rate (e.g. `12Mbps`) loading one of two equal-length corridors, switched on at `corridorLoadAt` (s); emits `# corridor` path-shift lines. Needs `torus=true` and even `cols` ≥ 4 |
+| `removeLinks` | off | [#432](https://github.com/swarm-routing/AntHocNet/issues/432) item 3: static ISL removals — semicolon-separated `r1,c1,r2,c2` endpoint quadruples, each adjacent on the grid (same rules as `breakLink`), never built (absent from t=0, both directions). Makes the constellation deliberately irregular: non-uniform degree, unequal-length alternatives. The remaining graph must stay connected (harness abort; the preflight proves it by BFS) |
 
-### Why `dsdv` is not one of the arms ([#420](https://github.com/danieljoppi/AntHocNet/issues/420))
+### Why `dsdv` is not one of the arms ([#420](https://github.com/swarm-routing/AntHocNet/issues/420))
 
 **This table used to list `anthocnet,aodv,olsr,dsdv` as the default protocol
 list. That list never ran.** DSDV has been an arm of `isl-grid.cc` since the
 file was added, and it has aborted on every multi-ISL grid since — the
 suite's own documented default was never once exercised end to end. It
-surfaced only when the [#415](https://github.com/danieljoppi/AntHocNet/issues/415)
+surfaced only when the [#415](https://github.com/swarm-routing/AntHocNet/issues/415)
 campaign asked for all five arms and the process died, with an empty stderr,
 straight after the `olsr` rows. This is a **latent defect, not a regression**;
 the narrowing above is a correction of the documentation to what the harness
@@ -808,11 +808,11 @@ list with `-1` in the optimised profile the campaign runs — hence a SIGSEGV
 with nothing on stderr.
 
 There is no fix on this side of the boundary. One interface per link *is* the
-ISL mesh (it is the shape [#203](https://github.com/danieljoppi/AntHocNet/issues/203)
+ISL mesh (it is the shape [#203](https://github.com/swarm-routing/AntHocNet/issues/203)
 exists for), so the harness rejects the combination up front with an
 explanatory message instead of dying mid-campaign. The rejection is keyed on
 the **topology**, not on the arm: the 1×2 single-ISL grid used by the
-[#237](https://github.com/danieljoppi/AntHocNet/issues/237) anchors gives every
+[#237](https://github.com/swarm-routing/AntHocNet/issues/237) anchors gives every
 node one interface, and DSDV is correct there. DSDV remains a full baseline in
 the MANET suite, where every node has a single wifi interface and the
 assumption holds.
@@ -827,7 +827,7 @@ from the result table above is not a gap in the comparison.
 
 "Congestion the precomputed control cannot see" — the adversarial regime the
 [#202 survey](../../satellite-routing-prior-art.md) §6 names first, runnable
-since [#206](https://github.com/danieljoppi/AntHocNet/issues/206) gave
+since [#206](https://github.com/swarm-routing/AntHocNet/issues/206) gave
 `EnableMacMetric` a real per-next-hop signal on ISLs (ADR-0017).
 
 **Construction** (fixed, derived from the grid): probe flow from satellite
@@ -888,7 +888,7 @@ standard pipeline compares the cell without any new parsing.
   + `time -v` artifact, a compact tail block cheap to fetch from the job log,
   ns-3 attribute overrides as extra flags (e.g.
   `--ns3::anthocnet::RoutingProtocol::EnableDirectedReactive=true` for the
-  [#244](https://github.com/danieljoppi/AntHocNet/issues/244) satellite arm).
+  [#244](https://github.com/swarm-routing/AntHocNet/issues/244) satellite arm).
 - **Locally**, with an ns-3 tree carrying the module:
   `./ns3 run "isl-grid --rows=4 --cols=4 --runs=3 --protocols=anthocnet,aodv"`.
 
@@ -907,13 +907,13 @@ a point-to-point grid with fixed per-link delay has no stochastic channel, so
   (`check-determinism.sh … isl-grid`);
 - **arms actually run**: `check-sat-arms.sh` exercises every arm this page
   advertises, so an unrunnable default cannot stay latent again
-  ([#422](https://github.com/danieljoppi/AntHocNet/pull/422); the DSDV case
+  ([#422](https://github.com/swarm-routing/AntHocNet/pull/422); the DSDV case
   above is why it exists).
 
 Values live in [`ns3/tools/anchors.yml`](../../../ns3/tools/anchors.yml);
 the gate is [`tools/checks/check-sat-anchors.sh`](../../../tools/checks/check-sat-anchors.sh)
 (#237/#238). Known open question against the hop-delay floor: the ~0.25 ms
-excess tracked in [#250](https://github.com/danieljoppi/AntHocNet/issues/250)
+excess tracked in [#250](https://github.com/swarm-routing/AntHocNet/issues/250)
 — inside the slack, not yet attributed.
 
 ## Results
@@ -931,7 +931,7 @@ arms on its reconvergence instrument while confirming the headline-metric
 tie, and the seam cell is the suite's second designed negative: static
 irregularity also ties the floor, closing the static discrimination map. The pipeline
 that lands and gates results is
-real ([#259](https://github.com/danieljoppi/AntHocNet/issues/259)) — the same
+real ([#259](https://github.com/swarm-routing/AntHocNet/issues/259)) — the same
 dispatch → rescue → validate → parse loop the MANET suite runs, so no
 satellite number is ever eyeball-only. When results do land here they fall
 under the [statistical policy](../methodology.md#statistical-policy-293):
@@ -959,8 +959,8 @@ deterministic point-to-point links — those stay low-run and are read as
 4. **Parse / A/B** with
    `python3 tools/bench/bench_parse.py OFF ON` — both
    the text output and `--csv` rows are accepted; the
-   [#244](https://github.com/danieljoppi/AntHocNet/issues/244) directed-arm
-   and [#250](https://github.com/danieljoppi/AntHocNet/issues/250) comparisons
+   [#244](https://github.com/swarm-routing/AntHocNet/issues/244) directed-arm
+   and [#250](https://github.com/swarm-routing/AntHocNet/issues/250) comparisons
    are exactly this. Record the verdict + run IDs on the driving issue
    (ADR-0013).
 
@@ -969,31 +969,31 @@ job). Do not quote the CI smoke numbers — they are delivery gates at tiny
 scale, not measurements.
 
 What the suite is waiting on, in dependency order. **The control is no longer
-one of them** — [#419](https://github.com/danieljoppi/AntHocNet/pull/419)
-built it, [#415](https://github.com/danieljoppi/AntHocNet/issues/415) measured
+one of them** — [#419](https://github.com/swarm-routing/AntHocNet/pull/419)
+built it, [#415](https://github.com/swarm-routing/AntHocNet/issues/415) measured
 it, and it runs `approx=0` here. What the suite waits on now is a cell where
 the control's answer and the protocols' answers can differ at all:
 
 1. **Discriminating cells** — the adversarial regimes under
-   [#216](https://github.com/danieljoppi/AntHocNet/issues/216), each re-run
+   [#216](https://github.com/swarm-routing/AntHocNet/issues/216), each re-run
    with the `oracle` arm beside it. Three are now
    [measured](#the-adversarial-cells-corridor-and-failcell-432): asymmetric
-   congestion ([#280](https://github.com/danieljoppi/AntHocNet/issues/280)),
+   congestion ([#280](https://github.com/swarm-routing/AntHocNet/issues/280)),
    scripted ISL breaks
-   ([#260](https://github.com/danieljoppi/AntHocNet/issues/260)), and static
+   ([#260](https://github.com/swarm-routing/AntHocNet/issues/260)), and static
    irregularity (the
    [#432 item 3 seam cell](#the-seam-cell-static-irregularity-also-ties-the-floor-432-item-3)
    — measured, and it ties: of the three static instruments, only load
    moves headline metrics). Still open: the handover cell (no instrument
    yet) and dynamics/churn generally — subsumed by
-   [#297](https://github.com/danieljoppi/AntHocNet/issues/297). **A
+   [#297](https://github.com/swarm-routing/AntHocNet/issues/297). **A
    satellite comparison published from the base torus would be a comparison
    of four ties.**
-2. [#206](https://github.com/danieljoppi/AntHocNet/issues/206) — per-next-hop
+2. [#206](https://github.com/swarm-routing/AntHocNet/issues/206) — per-next-hop
    congestion signal, precondition for the congestion cell.
-3. [#244](https://github.com/danieljoppi/AntHocNet/issues/244) /
-   [#245](https://github.com/danieljoppi/AntHocNet/issues/245) — the directed
+3. [#244](https://github.com/swarm-routing/AntHocNet/issues/244) /
+   [#245](https://github.com/swarm-routing/AntHocNet/issues/245) — the directed
    reactive A/B and its open steering hazard.
 4. The strategy frame for reading any of it:
-   [#192 analysis](https://github.com/danieljoppi/AntHocNet/issues/192)
+   [#192 analysis](https://github.com/swarm-routing/AntHocNet/issues/192)
    (detect+reconverge race, path-stretch cost, bootstrap uniformity).

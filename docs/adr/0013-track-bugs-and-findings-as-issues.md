@@ -16,7 +16,7 @@ The #19 work made the cost of not having a rule concrete:
 - A change was implemented, merged (#43), and only **afterwards** found — via the
   paper benchmark — to have **regressed** the protocol in its design regime (PDR
   22.7→19.7%, NRL 167.9→274.2). See
-  [#19 root-cause comment](https://github.com/danieljoppi/AntHocNet/issues/19#issuecomment-4826657475).
+  [#19 root-cause comment](https://github.com/swarm-routing/AntHocNet/issues/19#issuecomment-4826657475).
 - The investigation that produced the fix (#44) surfaced **several distinct,
   separable follow-ups** (a latent unbounded proactive broadcast; NS-2 data-reinject
   parity; two noisy benchmark cells) that had nothing to do with finishing #19.

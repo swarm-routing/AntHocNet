@@ -253,7 +253,7 @@ they sample the paths more evenly." That is the origin of this codebase's
 - **`betaData`** — greediness of payload forwarding.
 
 The fields remain separate so the two *can* diverge, but **both ship at 20**
-since [#179](https://github.com/danieljoppi/AntHocNet/issues/179): the 2007
+since [#179](https://github.com/swarm-routing/AntHocNet/issues/179): the 2007
 thesis sets β₁ = β₂ = β₃ = 20, and a 20-seed paired A/B improved 5 of 6
 scenarios with none worse. So the paper's asymmetry above describes [1], not
 what this codebase ships — the thesis reaches exploration through the virtual
@@ -387,10 +387,10 @@ Two properties worth holding onto, because they are easy to get backwards:
   stale state, and is deliberately secondary
   ([ADR-0012](adr/0012-evaporation-is-a-secondary-safety-net.md); virtual
   entries age on the same tick and factor as regular ones since
-  [#262](https://github.com/danieljoppi/AntHocNet/issues/262)).
+  [#262](https://github.com/swarm-routing/AntHocNet/issues/262)).
 - **Eviction is quiet.** Falling below `minPheromone` removes the entry with no
   packet, no notification, no trace — which is exactly why the
-  [#216](https://github.com/danieljoppi/AntHocNet/issues/216) investigation had
+  [#216](https://github.com/swarm-routing/AntHocNet/issues/216) investigation had
   to reconstruct the decay arithmetic by hand to explain why a route never
   disappeared.
 

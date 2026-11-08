@@ -5,7 +5,7 @@
 - **Supersedes:** [ADR-0002](0002-one-core-two-adapters.md) ("one
   simulator-agnostic core, thin per-simulator adapters"), on the number of
   simulator adapters only.
-- **Decides:** [#307](https://github.com/danieljoppi/AntHocNet/issues/307) phase 3.
+- **Decides:** [#307](https://github.com/swarm-routing/AntHocNet/issues/307) phase 3.
 
 ## Context
 

@@ -1,10 +1,10 @@
 # Oracle shortest-path control — design, exactness and cadence
 
 The global-knowledge upper bound for both benchmark suites —
-[#415](https://github.com/danieljoppi/AntHocNet/issues/415), i.e.
-[#296](https://github.com/danieljoppi/AntHocNet/issues/296) item 1, folding the
-control half of [#216](https://github.com/danieljoppi/AntHocNet/issues/216) /
-[#196](https://github.com/danieljoppi/AntHocNet/issues/196). Off by default;
+[#415](https://github.com/swarm-routing/AntHocNet/issues/415), i.e.
+[#296](https://github.com/swarm-routing/AntHocNet/issues/296) item 1, folding the
+control half of [#216](https://github.com/swarm-routing/AntHocNet/issues/216) /
+[#196](https://github.com/swarm-routing/AntHocNet/issues/196). Off by default;
 it runs only when `--protocols` names `oracle`.
 
 **How to read an oracle number** — which arm is an anchor, which is a
@@ -51,16 +51,16 @@ reproducibility failure in a different guise.
 Adjacency is derived per interface, from the simulator's own objects, by device
 class. **The oracle never assumes a disk.** Interfaces that are administratively
 down (`Ipv4::IsUp`) are excluded, which is what makes a scripted ISL break
-([#260](https://github.com/danieljoppi/AntHocNet/issues/260)) visible to the
+([#260](https://github.com/swarm-routing/AntHocNet/issues/260)) visible to the
 control with no extra plumbing.
 
 | Channel | Rule | `mode=` | Exact? |
 |---|---|---|---|
 | Not a `WifiNetDevice` — point-to-point ISLs, CSMA | channel co-membership, read off the ns-3 `Channel` | `wired` | **Yes.** The graph *is* the wiring. |
 | Wifi whose loss chain is exactly one `RangePropagationLossModel` (`--propagation=range`) | that model's own `MaxRange`, read off the live channel | `disk` | **Yes.** A disk model has a crisp cutoff and this is it. |
-| Wifi on a lone `TwoRayGroundPropagationLossModel` (`--propagation=tworay`) | the **decode disk** ([#431](https://github.com/danieljoppi/AntHocNet/issues/431)): the distance at which the deterministic two-ray received power crosses the PHY's decode floor, every parameter read off the installed objects | `decode-approx` | **No — flagged `approx=1`** (propagation-exact, interference-blind; below). |
+| Wifi on a lone `TwoRayGroundPropagationLossModel` (`--propagation=tworay`) | the **decode disk** ([#431](https://github.com/swarm-routing/AntHocNet/issues/431)): the distance at which the deterministic two-ray received power crosses the PHY's decode floor, every parameter read off the installed objects | `decode-approx` | **No — flagged `approx=1`** (propagation-exact, interference-blind; below). |
 | Wifi on two-ray + `NakagamiPropagationLossModel` (`--propagation=nakagami`) | the **median disk** (#431): under Nakagami the received power is Gamma-distributed, so P(decode\|d) has a closed form; the P = 1/2 crossing of that form, zero RNG draws | `p50-approx` | **No — flagged `approx=1`** (a probabilistic link has no true radius). |
-| Wifi on two-ray + `UrbanObstacleShadowingLossModel` (`--propagation=urban`, the VANET family, [#488](https://github.com/danieljoppi/AntHocNet/issues/488)) | **per pair**: the two-ray decode disk is a prefilter (buildings only add loss), and each pair inside it is admitted iff the chain's received power (`TxPowerEnd + TxGain`, through two-ray and the building shadowing, `+ RxGain`) reaches the same decode floor. Both models are deterministic, so evaluating the chain takes no RNG draw — the one case where a model is *evaluated* rather than mirrored | `decode-los-approx` | **No — flagged `approx=1`** (propagation-exact, interference-blind, as `decode-approx`). |
+| Wifi on two-ray + `UrbanObstacleShadowingLossModel` (`--propagation=urban`, the VANET family, [#488](https://github.com/swarm-routing/AntHocNet/issues/488)) | **per pair**: the two-ray decode disk is a prefilter (buildings only add loss), and each pair inside it is admitted iff the chain's received power (`TxPowerEnd + TxGain`, through two-ray and the building shadowing, `+ RxGain`) reaches the same decode floor. Both models are deterministic, so evaluating the chain takes no RNG draw — the one case where a model is *evaluated* rather than mirrored | `decode-los-approx` | **No — flagged `approx=1`** (propagation-exact, interference-blind, as `decode-approx`). |
 | Any other wifi channel | the explicit `LinkRangeM` radius — **required** here, an **override** everywhere above | `disk-approx` | **No — flagged `approx=1`.** |
 
 With neither a derivation nor `LinkRangeM` the oracle **aborts** at `t = 0`
@@ -148,7 +148,7 @@ chain the oracle has no derivation for.
 No propagation model is ever *evaluated* — the derivations mirror ns-3's
 formulas — which has a second benefit: the oracle takes no draw from the
 channel's pinned RNG stream
-([#352](https://github.com/danieljoppi/AntHocNet/issues/352)), so the oracle arm
+([#352](https://github.com/swarm-routing/AntHocNet/issues/352)), so the oracle arm
 sees the same fading realisation as every other arm rather than a perturbed one.
 And because the `tworay` and `nakagami` radii derive from the **same decode
 threshold through each channel's own law**, the harness's controlled
@@ -288,7 +288,7 @@ The flood model, its control-traffic accounting and its simplifications are
 in leo-walker.md's opspf section. On failure cells opspf can deliver more
 than this oracle at its 1 s cadence, by 2–5 pp measured: the oracle is
 stale by up to its `RecomputeInterval` after an unpredicted failure
-([#720](https://github.com/danieljoppi/AntHocNet/issues/720)).
+([#720](https://github.com/swarm-routing/AntHocNet/issues/720)).
 
 ## Using it
 

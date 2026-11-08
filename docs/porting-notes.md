@@ -1,7 +1,7 @@
 # Porting notes
 
 Reference for maintaining the adapters and for writing a new one. The NS-2
-adapter was removed in v2.0.0 ([#307](https://github.com/danieljoppi/AntHocNet/issues/307));
+adapter was removed in v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307));
 its rows below are kept because they show the contract met by a second, very
 different simulator, and the patch-anchor section is historical.
 
@@ -31,7 +31,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 The same three steps in both: **decode to `AntMessage` → call the core →
 execute the returned `RouteDecision`s**. Only the simulator-facing calls
 differ. This is the contract a third adapter (OMNeT++/INET,
-[#32](https://github.com/danieljoppi/AntHocNet/issues/32)) has to satisfy.
+[#32](https://github.com/swarm-routing/AntHocNet/issues/32)) has to satisfy.
 
 ```mermaid
 sequenceDiagram
@@ -82,7 +82,7 @@ retired.
 ## NS-2 patch anchors (historical, ≤ v1.9.0)
 
 > The installer lives at the
-> [v1.9.0 tag](https://github.com/danieljoppi/AntHocNet/tree/v1.9.0/ns2/patch);
+> [v1.9.0 tag](https://github.com/swarm-routing/AntHocNet/tree/v1.9.0/ns2/patch);
 > this section documents how it worked.
 
 `ns2/patch/apply-patch.sh` injected by these stable anchors (never line

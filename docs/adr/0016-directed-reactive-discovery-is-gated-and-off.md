@@ -1,8 +1,8 @@
 # ADR-0016: Reactive ants may follow the diffusion gradient, gated and default-off
 
 - **Status:** Accepted — mechanism shipped in
-  [#243](https://github.com/danieljoppi/AntHocNet/pull/243), measured by
-  [#244](https://github.com/danieljoppi/AntHocNet/issues/244)
+  [#243](https://github.com/swarm-routing/AntHocNet/pull/243), measured by
+  [#244](https://github.com/swarm-routing/AntHocNet/issues/244)
 - **Date:** 2026-07-27
 
 ## Context
@@ -25,7 +25,7 @@ network-wide broadcast.
 
 Two adjacent questions arrived at the same time and sharpened this one:
 
-- **Satellites** ([#192](https://github.com/danieljoppi/AntHocNet/issues/192)).
+- **Satellites** ([#192](https://github.com/swarm-routing/AntHocNet/issues/192)).
   On a constellation the topology is knowable, so blind flooding looks
   obviously wrong. But knowing the topology is not the same as holding a next
   hop — see [`network-regimes.md`](../network-regimes.md) §5. What a node lacks
@@ -63,7 +63,7 @@ Observable: `AntRouterLogic::directedSteers()`, surfaced as ns-3
 ## Two properties that bound the claim
 
 Both were established while implementing, and both constrain what a result from
-[#244](https://github.com/danieljoppi/AntHocNet/issues/244) can say.
+[#244](https://github.com/swarm-routing/AntHocNet/issues/244) can say.
 
 1. **It is not position-based.** Unlike LAR or GPSR, nothing here needs
    coordinates, a location service, or an orbital model — the "direction" is
@@ -96,7 +96,7 @@ Both were established while implementing, and both constrain what a result from
   Rejected for now: it removes the entire overhead saving, which is the only
   reason to do this. But it is the natural mitigation if the hazard below turns
   out to bite — see
-  [#245](https://github.com/danieljoppi/AntHocNet/issues/245).
+  [#245](https://github.com/swarm-routing/AntHocNet/issues/245).
 - **Make it satellite-only.** Rejected: nothing in the mechanism is
   satellite-specific, and scoping it that way would have made it untestable on
   the scenarios we actually run.
@@ -106,7 +106,7 @@ Both were established while implementing, and both constrain what a result from
 - One ablation axis added to the benchmark matrix, and one new question for it
   to answer: does a directed walk find the destination as reliably as a flood?
 - **Known hazard, tracked in
-  [#245](https://github.com/danieljoppi/AntHocNet/issues/245):** the steer
+  [#245](https://github.com/swarm-routing/AntHocNet/issues/245):** the steer
   *replaces* the broadcast rather than supplementing it, so a stale gradient can
   send the single ant down a dead end where a flood would have found a path.
   Where the failure is local (dead next hop) detector D

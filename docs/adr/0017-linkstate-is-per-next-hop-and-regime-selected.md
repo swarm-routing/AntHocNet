@@ -1,7 +1,7 @@
 # ADR-0017: The congestion signal is per-next-hop, and its implementation is selected by what the build instantiates
 
 - **Status:** Accepted — owner decision recorded on
-  [#206](https://github.com/danieljoppi/AntHocNet/issues/206) (2026-07-31);
+  [#206](https://github.com/swarm-routing/AntHocNet/issues/206) (2026-07-31);
   shipped by the #206 step-1/step-2 PRs
 - **Date:** 2026-08-01
 
@@ -107,7 +107,7 @@ Two design questions had to be settled before generalising the source:
 
 ## References
 
-[#206](https://github.com/danieljoppi/AntHocNet/issues/206) (decisions and
+[#206](https://github.com/swarm-routing/AntHocNet/issues/206) (decisions and
 blocker analysis), #194/#202/#216 (the satellite claim this enables), #55/#67/#68
 (A2 metric as shipped), #260 (interface-down fast path), ADR-0015 (the
 one-build-per-regime axis this extends), `core/include/anthocnet/core/ports.h`,

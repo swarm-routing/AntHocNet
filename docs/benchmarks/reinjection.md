@@ -1,10 +1,10 @@
 # Re-injection: the MAC-failure detector arm
 
-**Varies:** the [#46](https://github.com/danieljoppi/AntHocNet/issues/46)
+**Varies:** the [#46](https://github.com/swarm-routing/AntHocNet/issues/46)
 re-injection path alone — `EnableMacFailureDetector` on/off, and
 `MaxReinjectPerPacket` ∈ {∞, 1, 2} while it is on. Four arms × two mobility
 models on the fading channel, everything else pinned. This is the publishable
-**detector A/B** at the [#293](https://github.com/danieljoppi/AntHocNet/issues/293)
+**detector A/B** at the [#293](https://github.com/swarm-routing/AntHocNet/issues/293)
 20-seed floor, plus the cap sweep that shares its ON arm.
 
 [← Benchmark index](../benchmarks.md) · [Metrics](metrics.md) · [Methodology](methodology.md) · [Campaign plan](v1.5.0-campaign.md)
@@ -16,7 +16,7 @@ models on the fading channel, everything else pinned. This is the publishable
 > the same commit and default as the re-baselined grid, so it is comparable with
 > that corpus and with nothing older. Run IDs in [Provenance](#provenance)
 > below; the full readout is
-> [#386 (comment)](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5279088201).
+> [#386 (comment)](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5279088201).
 
 ## What it varies
 
@@ -58,7 +58,7 @@ detector A/B, A vs B vs C is the cap frontier, one dispatch set.
 **Fading cells only.** Both mobility models run against `nakagami`; the
 mechanism does not engage under two-ray, where the reorder ratio is already
 0.0004 and retry-limit drops are rare
-([reading 2](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5234323092)).
+([reading 2](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5234323092)).
 
 ## How it is produced
 
@@ -77,7 +77,7 @@ only the labelling was wrong. The corrected mapping is in
 
 **Validation before any comparison.** `scenario_check.py results` on all 8
 cells: **zero anthocnet FAILs anywhere** — every FAIL is the known
-non-blocking [#230](https://github.com/danieljoppi/AntHocNet/issues/230)
+non-blocking [#230](https://github.com/swarm-routing/AntHocNet/issues/230)
 path-diversity FAIL on the three baselines. The baselines are **byte-identical
 across arms A/B/C/D within each mobility (all 63 rows)**, so the #51-class
 control passes and every anthocnet delta is attributable to the knob. The cap's
@@ -86,7 +86,7 @@ own self-check passes by construction: `skips` is exactly 0 in arm A
 
 **Drop-cause columns are readable on every arm here**, including the capped
 ones, only because
-[#402](https://github.com/danieljoppi/AntHocNet/issues/402)/[#407](https://github.com/danieljoppi/AntHocNet/pull/407)
+[#402](https://github.com/swarm-routing/AntHocNet/issues/402)/[#407](https://github.com/swarm-routing/AntHocNet/pull/407)
 landed first: anthocnet drop-cause `sum` residues are +1.29 (A-rwp), +0.69
 (B-rwp), +0.89 (C-rwp), +0.00 (D-rwp), +2.22 (A-gm), +1.22 (B-gm), +1.60
 (C-gm), +0.00 (D-gm). The capped arms are now *tighter* than the uncapped ones
@@ -168,7 +168,7 @@ A duplicate arrives with a sequence number below the running maximum and is
 therefore counted as reordered by RFC 4737's criterion, so this is not a
 surprise mechanism — it is the predicted one, measured. **Duplicates, not
 multipath spreading, are what AntHocNet's fading reorder ratio measures.** The
-attribution and the [#399](https://github.com/danieljoppi/AntHocNet/issues/399)
+attribution and the [#399](https://github.com/swarm-routing/AntHocNet/issues/399)
 `metrics.md` gloss correction do not reopen; see
 [metrics.md § Packet reordering](metrics.md#packet-reordering-212-ns-3-only).
 
@@ -226,7 +226,7 @@ by sign) while still cutting `postTx` ~27 %. cap=1 is strictly the worse buy:
 **`MaxReinjectPerPacket = 0` (unlimited) — unchanged**, and
 `EnableMacFailureDetector = true`. Per the pre-registration this is a maintainer
 decision rather than an auto-adopt, and the recommendation with its reasoning is
-on the [issue](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5279088201).
+on the [issue](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5279088201).
 The sweep above is that default's documentation: the cost of the shipped
 configuration is now measured (two thirds of re-injections are duplicates, and
 they are what the fading reorder ratio is made of), and so is the cost of every
@@ -261,14 +261,14 @@ alternative that was on the table.
 
 | arm | cap | detector | mobility | run ID |
 |---|---|---|---|---|
-| A | 0 (unlimited) | `true` | rwp | [`31662269404`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662269404) |
-| B | 1 | `true` | rwp | [`31662271976`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662271976) |
-| C | 2 | `true` | rwp | [`31662274139`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662274139) |
-| D | — | **`false`** | rwp | [`31662275527`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662275527) |
-| A | 0 (unlimited) | `true` | gaussmarkov | [`31662277724`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662277724) |
-| B | 1 | `true` | gaussmarkov | [`31662280223`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662280223) |
-| C | 2 | `true` | gaussmarkov | [`31662282155`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662282155) |
-| D | — | **`false`** | gaussmarkov | [`31662284121`](https://github.com/danieljoppi/AntHocNet/actions/runs/31662284121) |
+| A | 0 (unlimited) | `true` | rwp | [`31662269404`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662269404) |
+| B | 1 | `true` | rwp | [`31662271976`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662271976) |
+| C | 2 | `true` | rwp | [`31662274139`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662274139) |
+| D | — | **`false`** | rwp | [`31662275527`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662275527) |
+| A | 0 (unlimited) | `true` | gaussmarkov | [`31662277724`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662277724) |
+| B | 1 | `true` | gaussmarkov | [`31662280223`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662280223) |
+| C | 2 | `true` | gaussmarkov | [`31662282155`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662282155) |
+| D | — | **`false`** | gaussmarkov | [`31662284121`](https://github.com/swarm-routing/AntHocNet/actions/runs/31662284121) |
 
 > **The dispatch comment's run-ID table is wrong for 4 of these 8 rows** (the
 > four middle ones) and must not be used: it assigned `31662275527` to A-gaussmarkov, `31662277724`
@@ -276,11 +276,11 @@ alternative that was on the table.
 > Analysing against it would compare a detector-off `rwp` cell against a cap=2
 > `gaussmarkov` cell. The correction, with the per-cell `##CONFIG##` evidence,
 > is at the top of
-> [#386 (comment)](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5279088201).
+> [#386 (comment)](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5279088201).
 
 One further deviation from the pre-registration is recorded for the same
 reason: it planned 32 dispatches via
-[#126](https://github.com/danieljoppi/AntHocNet/issues/126) four-way `firstRun`
+[#126](https://github.com/swarm-routing/AntHocNet/issues/126) four-way `firstRun`
 splits, and what ran was 8 dispatches of `runs=20 firstRun=1`. Seeds 1–20 are
 present in every cell, so validity is unaffected — but plan and artefact
 disagree, and the artefact is what these tables are read from.

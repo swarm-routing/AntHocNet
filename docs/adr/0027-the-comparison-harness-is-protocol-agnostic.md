@@ -1,6 +1,6 @@
 # ADR-0027: The comparison harness is a protocol-agnostic module
 
-- **Status:** Accepted (maintainer request 2026-10-29, epic [#764](https://github.com/danieljoppi/AntHocNet/issues/764); decides [#765](https://github.com/danieljoppi/AntHocNet/issues/765)). Implemented in v2.6.0 (#766, #767, #768); amended 2026-10-29 with the hooks the extraction needed (below)
+- **Status:** Accepted (maintainer request 2026-10-29, epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764); decides [#765](https://github.com/swarm-routing/AntHocNet/issues/765)). Implemented in v2.6.0 (#766, #767, #768); amended 2026-10-29 with the hooks the extraction needed (below)
 - **Date:** 2026-10-29
 - **Builds on:** [ADR-0023](0023-one-core-one-simulator-adapter.md) (one simulator), [ADR-0026](0026-baselines-are-family-native.md) (family-native baselines)
 
@@ -10,7 +10,7 @@
 several routing protocols ("arms") on identical seeds and emits per-seed
 marker lines that pair across arms ([comparison-harness.md](../comparison-harness.md)).
 Outside developers want to use it for their own protocols: an undergraduate
-asked on [#589](https://github.com/danieljoppi/AntHocNet/issues/589). The
+asked on [#589](https://github.com/swarm-routing/AntHocNet/issues/589). The
 maintainer asked for it to be agnostic and packaged on its own.
 
 Three facts stand in the way.
@@ -37,7 +37,7 @@ on the protocol name in about 25 places:
 **3. Adding an arm is a scavenger hunt.** It means editing three places in
 the `.cc`, the help literal, the CMake link list, the module lists and
 `check-determinism.sh`'s alternation.
-`tools/checks/check-allowlists.sh` ([#435](https://github.com/danieljoppi/AntHocNet/issues/435))
+`tools/checks/check-allowlists.sh` ([#435](https://github.com/swarm-routing/AntHocNet/issues/435))
 exists only to catch the edits people forget.
 
 The arms themselves are already separable. The v2.5.0 `adaptive` module links
@@ -68,7 +68,7 @@ Its program is `routing-compare`. The stock ns-3 arms (`aodv`, `olsr`,
 `dsdv`, `hwmp`) register from inside `routing-bench`, so it is useful alone.
 
 The `anthocnet` module keeps no harness code. `isl-grid` and `leo-walker` stay
-where they are for now ([#773](https://github.com/danieljoppi/AntHocNet/issues/773)).
+where they are for now ([#773](https://github.com/swarm-routing/AntHocNet/issues/773)).
 
 ### 2. The arm contract
 
@@ -161,14 +161,14 @@ An explicit call is deterministic and visible in the build.
 The `--protocols` help, the `--PrintHelp` arm list, `check-arm-delivery.sh`,
 `check-determinism.sh` and the arm half of `check-allowlists.sh` all derive
 from the registry (#768). An unknown arm still aborts
-([#448](https://github.com/danieljoppi/AntHocNet/issues/448)).
+([#448](https://github.com/swarm-routing/AntHocNet/issues/448)).
 
 ### 4. The compatibility promise
 
 - **No published number moves.** The move is accepted only when one cheap
   block of every committed v2.4.0/v2.5.0 MANET-family cell reproduces its
   `##RUN##`, `##ROUTE##` and `##COMMON##` rows byte for byte through
-  `routing-compare` ([#769](https://github.com/danieljoppi/AntHocNet/issues/769)).
+  `routing-compare` ([#769](https://github.com/swarm-routing/AntHocNet/issues/769)).
   The precedent is the #746 path control.
 - **The old name keeps working.** `anthocnet-compare` stays as a second
   program in `routing-bench/examples/`. It takes the same arguments and gives
@@ -183,7 +183,7 @@ from the registry (#768). An unknown arm still aborts
     today.
   - v2.7.0 versions it with a leading `##HARNESS## version=<n>` line, so the
     readers refuse layouts they do not know
-    ([#771](https://github.com/danieljoppi/AntHocNet/issues/771)).
+    ([#771](https://github.com/swarm-routing/AntHocNet/issues/771)).
   - Until then, adding a marker or a field is allowed; reordering or removing
     one is not.
 

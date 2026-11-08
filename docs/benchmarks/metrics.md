@@ -10,7 +10,7 @@ mobility and traffic, driven from the same RNG runs so every protocol sees the
 same realisations. Metrics come from an NS-3 `FlowMonitor`:
 
 A fifth arm, the **oracle** control
-([#415](https://github.com/danieljoppi/AntHocNet/issues/415)), appears in the
+([#415](https://github.com/swarm-routing/AntHocNet/issues/415)), appears in the
 [grid](grid.md#the-oracle-control-how-much-of-the-shortfall-is-routing) and
 [satellite](satellite/isl-grid.md) suites. It is a control, not a protocol —
 global-knowledge Dijkstra over the ground-truth topology — and it changes how
@@ -50,7 +50,7 @@ metric one, and live in
   `|delay_i − delay_{i−1}|`, where `delay = arrival − send`.
 - **jitterEq51** (`jitter_eq51_ms`) — the **thesis's** delay jitter, eq 5.1,
   ms. **This is a different quantity from `jitter_ms`, not a variant of it**
-  ([#89](https://github.com/danieljoppi/AntHocNet/issues/89)):
+  ([#89](https://github.com/swarm-routing/AntHocNet/issues/89)):
 
   ```
   eq 5.1:       Σ |(t_i − t_{i−1}) − (t_{i−1} − t_{i−2})|      normalised by (n−2)
@@ -95,7 +95,7 @@ metric one, and live in
   hop) per data packet delivered, counted uniformly at the IP layer.
 
   **What it counts is *control* traffic only — re-injected data frames are not
-  in it.** A packet the [#46](https://github.com/danieljoppi/AntHocNet/issues/46)
+  in it.** A packet the [#46](https://github.com/swarm-routing/AntHocNet/issues/46)
   MAC-failure detector re-injects is a data packet; it consumes airtime, hops
   and retries exactly like any other data transmission, and NRL's numerator
   never sees it (its denominator, deliveries, is where it shows up — and only
@@ -249,7 +249,7 @@ Both are appended at the end of the line, never inserted: the earlier fields are
 read positionally.
 
 Worked example, from the phase-2 re-measure ([run
-31042812548](https://github.com/danieljoppi/AntHocNet/actions/runs/31042812548),
+31042812548](https://github.com/swarm-routing/AntHocNet/actions/runs/31042812548),
 paper base, disk, 20 seeds) — using the all-delivered basis, which was the only
 one available then:
 
@@ -343,7 +343,7 @@ Two things this is **not**:
   *quantiles* differ. A survivorship correction that equalises populations
   (`##MATCH##`, `##COMMON##`) fixes it; a caveat sentence does not.
 
-**The correct instrument is `##COMMON##`'s `p99Common`** ([#308](https://github.com/danieljoppi/AntHocNet/issues/308),
+**The correct instrument is `##COMMON##`'s `p99Common`** ([#308](https://github.com/swarm-routing/AntHocNet/issues/308),
 the `p99C` columns) — the 99th percentile over the `(flow, seq)` packets every
 arm in the run delivered. One population, one quantile, one depth. On the same
 rwp-nakagami cell it reads **586.8 ms (anthocnet) against 1469.1 ms (oracle)**,
@@ -411,7 +411,7 @@ the compact block ahead of every result row.
 It exists because the alternative was tried and failed. The effective knobs
 used to live only in the workflow's command echo, which sits roughly 900 lines
 above the reachable log tail and disappears with the run: three hold-cap
-ablation arms ([#308](https://github.com/danieljoppi/AntHocNet/issues/308))
+ablation arms ([#308](https://github.com/swarm-routing/AntHocNet/issues/308))
 were cancelled before producing output, their logs expired, and the
 `ReconvHoldCap`/`RepairHoldCap` values they were dispatched with are
 unrecoverable. A run that cannot state its own configuration is not
@@ -452,7 +452,7 @@ seed per protocol, so the identity in
 can be audited in counts rather than in percentages.
 
 The two bracketed tail fields appear **only on the dsdv and aodv rows**, where
-the [#229](https://github.com/danieljoppi/AntHocNet/issues/229) pending-queue
+the [#229](https://github.com/swarm-routing/AntHocNet/issues/229) pending-queue
 conservation hook is connected (`pqSilent` = keys the protocol queue swallowed
 with no observable signal; `pqEcb` = aodv queue drops re-attributed from the
 route to the queue column). On the other arms the quantity is unmeasured, and
@@ -467,7 +467,7 @@ below.
 after the counted causes are removed — so it is only non-negative while those
 causes are genuinely a subset of `hopLoss`. They were not, and the failure was
 large: on every Nakagami cell the residual ran negative, to −13.10 % with 19.85
-pp unaccounted ([#377](https://github.com/danieljoppi/AntHocNet/issues/377)).
+pp unaccounted ([#377](https://github.com/swarm-routing/AntHocNet/issues/377)).
 
 ### Why a retry-limit drop is not a lost packet
 
@@ -498,13 +498,13 @@ what the residual subtracts:
 `macLost`. `drop_mac_pct` subtracts it **only where that column is
 `macDrops`-based** — i.e. where nothing was re-injected. AntHocNet's
 `drop_mac_pct` already reports `macTerminal`, with
-[#46](https://github.com/danieljoppi/AntHocNet/issues/46) re-injection removed,
+[#46](https://github.com/swarm-routing/AntHocNet/issues/46) re-injection removed,
 and correcting it a second time would double-count.
 
 Measured at 900 s, 5 seeds, runs
-[31288485211](https://github.com/danieljoppi/AntHocNet/actions/runs/31288485211)
+[31288485211](https://github.com/swarm-routing/AntHocNet/actions/runs/31288485211)
 (Nakagami) and
-[31288489422](https://github.com/danieljoppi/AntHocNet/actions/runs/31288489422)
+[31288489422](https://github.com/swarm-routing/AntHocNet/actions/runs/31288489422)
 (two-ray):
 
 | cell | `unackedRx` per run | `drop_chan_pct` before → after | identity `sum` after |
@@ -527,7 +527,7 @@ failed, was re-injected by #46 and then travelled on contributes additional
 That straddle is **expected and documented, not a books error**: the #386
 detector A/B measured the identity closing at **exactly 100.00** on both
 900 s Nakagami cells with `EnableMacFailureDetector=false` on identical seeds
-([#386 comment 5234323092](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5234323092)),
+([#386 comment 5234323092](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5234323092)),
 so the whole overshoot is the detector's re-injection traffic. `##REINJ##`
 below is the per-packet accounting of the same mechanism; the hop-level bound
 (`unackedRx` vs `reinjected`, ≥ 58.8 % per run under fading) was its floor.
@@ -554,7 +554,7 @@ delivered or finally dropped. Every book above counts loss **events** —
 channel each column could pass 100 % of the offered packets: the v2.5.0
 campaign's `grid-rwp-nakagami` termite rows read `mac` 162.27 + `chan` 190.26
 (`sum` 403 %), and ara's closed 9 pp high
-([#761](https://github.com/danieljoppi/AntHocNet/issues/761)). The identity
+([#761](https://github.com/swarm-routing/AntHocNet/issues/761)). The identity
 assumes one terminal cause per packet.
 
 On those arms (UDP only) the harness therefore keeps the drop book **per
@@ -620,7 +620,7 @@ re-routed packet, including copies of packets another copy delivered.
 ```
 
 The **direct counter** behind the `##DROPID##` inclusion–exclusion floor: under
-fading, ≥ 58.8 % of the [#46](https://github.com/danieljoppi/AntHocNet/issues/46)
+fading, ≥ 58.8 % of the [#46](https://github.com/swarm-routing/AntHocNet/issues/46)
 detector-D re-injections are of packets that had *already arrived* at the
 destination (`unackedRx` vs `reinjected`, a lower bound). This row measures
 that overlap per packet instead of bounding it, and follows what re-injected
@@ -647,7 +647,7 @@ packet (UDP header + SeqTs, the queued form) and off each IP hop transmission.
 |---|---|---|
 | `events` | `MacReinject` trace fires | must equal `##DROPID##` `reinjected` — a mismatch is an instrumentation bug (FAIL) |
 | `parsed` | fires where the `(flow, seq)` parse succeeded | `parsed + unparsedIcmp + unparsedOther` must equal `events` — every re-injection is either named or classified (FAIL when the books do not close) |
-| `unparsedIcmp` / `unparsedOther` | parse failures, split by IP protocol 1 vs anything else | **a finding, not an error** (WARN when non-zero): `NotifyTxError` re-injects *any* non-ant IP payload, so ICMP (e.g. TTL-exceeded) rides the detector too. Measured on the invariance probe: 2 events at one seed the SeqTs identity could not name ([#386](https://github.com/danieljoppi/AntHocNet/issues/386) comment 5233656930). The fate buckets below cover only the parsed events |
+| `unparsedIcmp` / `unparsedOther` | parse failures, split by IP protocol 1 vs anything else | **a finding, not an error** (WARN when non-zero): `NotifyTxError` re-injects *any* non-ant IP payload, so ICMP (e.g. TTL-exceeded) rides the detector too. Measured on the invariance probe: 2 events at one seed the SeqTs identity could not name ([#386](https://github.com/swarm-routing/AntHocNet/issues/386) comment 5233656930). The fate buckets below cover only the parsed events |
 | `ofDelivered` | fires where the key was already in the sink's delivered set **at trace-fire time** | re-injections of already-delivered packets. No timestamps needed: traces fire in simulation-event order, so presence in the delivered map means "delivered strictly earlier" |
 
 `ofDelivered` is deliberately **"already delivered AT RE-INJECTION TIME"**, not
@@ -664,7 +664,7 @@ run):
 | `pktsDelivBefore` | delivered before their **first** re-injection (the waste-certain class) |
 | `pktsDelivAfterOnly` | never delivered before first re-injection, delivered by end of run (delivered late — the re-injection plausibly saved them) |
 | `pktsNever` | never delivered at all (dropped) |
-| `pktsDupDeliv` / `dupRx` | keys the sink delivered ≥ 2 times / total surplus deliveries — duplicate arrivals at the **application layer**, counted by the sink-side `(flow, seq)` books. The [#386 A/B arithmetic](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5235242703) shows FlowMonitor's `rxPackets` does **not** count them materially (a counted `dupRx` would have moved the ON−OFF PDR contrast by ~27 pp; measured +6.4), so FlowMonitor PDR reads unique delivery and `dupRx` measures real duplicate traffic, not metric inflation |
+| `pktsDupDeliv` / `dupRx` | keys the sink delivered ≥ 2 times / total surplus deliveries — duplicate arrivals at the **application layer**, counted by the sink-side `(flow, seq)` books. The [#386 A/B arithmetic](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5235242703) shows FlowMonitor's `rxPackets` does **not** count them materially (a counted `dupRx` would have moved the ON−OFF PDR contrast by ~27 pp; measured +6.4), so FlowMonitor PDR reads unique delivery and `dupRx` measures real duplicate traffic, not metric inflation |
 | `postTx` / `postRx` | IP-layer hop transmissions / arrivals of re-injected keys **after** their first re-injection — the hops re-injected packets go on to consume (the wasted-work number); `postTx − postRx` is their post-re-injection in-medium loss |
 
 `pktsDelivBefore + pktsDelivAfterOnly + pktsNever = pkts` exactly;
@@ -675,13 +675,13 @@ WARNs when `ofDelivered` falls below the same-seed inclusion–exclusion floor
 shortfall can be timing rather than broken books).
 
 **Measured reference (reading 2,
-[#386 comment 5234323092](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5234323092)).**
+[#386 comment 5234323092](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5234323092)).**
 On the 900 s Nakagami cells, both mobility models, 5 seeds each:
 `ofDelivered/events` ≈ **0.62–0.63** — the direct rate, above the hop-level
 inclusion–exclusion floor on **10/10** seeds; `dupRx` ≈ **0.5 per event**
 (duplicate deliveries are not suppressed); `pktsNever` ≈ **2–5 %** of
 re-injected keys. n=5 per cell is below the
-[#293](https://github.com/danieljoppi/AntHocNet/issues/293) publishable floor —
+[#293](https://github.com/swarm-routing/AntHocNet/issues/293) publishable floor —
 treat these as the diagnostic reference the checks calibrate against, not as
 publishable points. The same reading measured the detector as an *operating
 point*: switching it off cost **−6.4 pp PDR** on 5/5 seeds in both cells, so
@@ -699,12 +699,12 @@ The trailing `l3DropRoute`/`l3DropTtl`/`l3DropOther` fields attribute the
 L3-visible drops of re-injected keys (the pending-queue ageout's error callback
 lands in `DROP_ROUTE_ERROR`; TTL exhaustion in `DROP_TTL_EXPIRED`). A key that
 ends in `pktsNever` with no L3 drop died in the medium/MAC — the residue the
-#377/[#388](https://github.com/danieljoppi/AntHocNet/issues/388) drop identity
+#377/[#388](https://github.com/swarm-routing/AntHocNet/issues/388) drop identity
 is sensitive to. This stage is deliberately isolated (own callback, own trace
 connect, fields grouped last) so it can be cut cleanly if an ns-3 version in
 the CI matrix rejects the `Ipv4L3Protocol` `Drop` trace signature.
 
-**Capped skips (`skips*` tail, [#402](https://github.com/danieljoppi/AntHocNet/issues/402)).**
+**Capped skips (`skips*` tail, [#402](https://github.com/swarm-routing/AntHocNet/issues/402)).**
 These count the `MaxReinjectPerPacket` cap's early-return — a MAC
 retry-limit drop the detector matched but the cap refused to re-inject, so the
 drop stays **terminal**:
@@ -766,7 +766,7 @@ The other half of provenance: `##CONFIG##` says *how* the run was configured,
 `##PROV##` says *which version of the code* was configured that way. A number
 carrying only one of the two is not reproducible — the same knobs against a
 different protocol build are a different experiment, which is the whole content
-of [#365](https://github.com/danieljoppi/AntHocNet/issues/365).
+of [#365](https://github.com/swarm-routing/AntHocNet/issues/365).
 
 **Emitted by the workflow, not by the harness.** This is the one marker in the
 compact block that does not come from `anthocnet-compare`'s stdout, and it
@@ -937,7 +937,7 @@ means the keys did not line up, which no real routing difference could produce.
 Every offered packet lands in exactly one bucket. That is the whole of #215,
 and it is why the identity can be checked rather than trusted — measured
 values below are the 20-seed × 900 s disk arm
-([run 30772704321](https://github.com/danieljoppi/AntHocNet/actions/runs/30772704321)),
+([run 30772704321](https://github.com/swarm-routing/AntHocNet/actions/runs/30772704321)),
 percentages of offered packets:
 
 ```mermaid
@@ -959,7 +959,7 @@ A cause that accounts for nothing is the failure mode this instrumentation
 exists to expose — DSDV's routing-layer queue drops used to land in no bucket
 at all and open an 11.46 pp hole (−21.8 pp once #388's honest MAC accounting
 stopped masking part of it,
-[#229](https://github.com/danieljoppi/AntHocNet/issues/229)). Since the #229
+[#229](https://github.com/swarm-routing/AntHocNet/issues/229)). Since the #229
 fix the harness measures those sheds itself (the pending-queue conservation
 hook below) and folds them into `drop_queue_pct`, which is what re-admits DSDV
 into cross-protocol drop comparisons.
@@ -1068,7 +1068,7 @@ That is the source followed by every forwarder. It is fixed at the packet's
 includes the source's own schedule: a CBR source sends its first packet one
 packet interval after its start time (1 s at the paper's 512 bps). The oracle,
 which needs no discovery, reads 1.01–1.04 s on the paper field. The excess over
-the oracle is the discovery cost. On a pre-[#521](https://github.com/danieljoppi/AntHocNet/issues/521) cell, or one
+the oracle is the discovery cost. On a pre-[#521](https://github.com/swarm-routing/AntHocNet/issues/521) cell, or one
 run with `--offTime=1`, the source waited a further 1 s off-phase first, and
 the oracle read 2.01–2.04 s.
 
@@ -1087,7 +1087,7 @@ cross-arm comparison only between protocols of the same kind.
 - **Path identity.** On `aodv`, `olsr`, `dsdv` and `oracle` each hop is one
   `Tx` and one TTL decrement, so `pathHopsMean == hopsMean` (to 0.001). A gap
   FAILs: the hook missed hops or mis-keyed them. AntHocNet is exempt. On the
-  disk channel it matches exactly since [#522](https://github.com/danieljoppi/AntHocNet/issues/522) (3.0241 vs
+  disk channel it matches exactly since [#522](https://github.com/swarm-routing/AntHocNet/issues/522) (3.0241 vs
   3.0241 on the static paper field). Under fading, though, #386 re-injection
   and duplicate deliveries put the two means on different populations: 1.66 vs
   2.07 on a Nakagami cell. GPSR and AOMDV are not asserted until the identity is
@@ -1134,7 +1134,7 @@ from the denominator *and* the drop book, so PDR reads as "delivered over the
 ticks the protocol had a route for". Two arms refuse rather than defer:
 
 - the oracle, corrected in #466 from its own `noRouteOrigin` counter;
-- **stock OLSR**, corrected in [#510](https://github.com/danieljoppi/AntHocNet/issues/510)
+- **stock OLSR**, corrected in [#510](https://github.com/swarm-routing/AntHocNet/issues/510)
   by a fallback router installed behind it that counts each refusal.
 
 Both add the refused ticks to offered traffic and to `drop_route_pct`.
@@ -1206,7 +1206,7 @@ This is the part that matters when reading a table. Not every drop is a bug.
 | **drop_repair_pct** | **Expected, deliberate behaviour.** The AntHocNet paper (§3.4 link failures / §3.5 local repair) chooses to discard the packets buffered behind a failed local repair rather than hold them indefinitely: it trades a slice of PDR for a **bounded delay tail**. A non-zero repair-discard share is the protocol working as specified, and #21's `RepairHoldCap`/`ReconvHoldCap` levers move packets *deliberately* between this column and the delay tail. Read it against `delay99_ms`/`jitter_ms`, never on its own. |
 | **drop_reconv_pct** | **Expected under mobility**, in proportion to how fast links break. It is the direct cost of reactive re-discovery; a *rising* share as `pause` falls is the protocol responding to mobility, not degrading. It becomes a finding only when it dominates on a **static** field. |
 | **drop_setup_pct** | Expected during the start-up transient and for genuinely unreachable destinations (a partitioned field — `scenario_check.py preflight` warns about those before the run). A large steady-state share means discovery is failing: that is #169's signature. |
-| **drop_chan_pct** | **PHY/scenario property, not a protocol property**, up to the control traffic the protocol puts on the air. All four arms share a channel, so compare the column *across* arms: the protocol with the higher share is the one filling the medium. A collapse dominated by this column is [#173](https://github.com/danieljoppi/AntHocNet/issues/173)'s exact signature — and having it as a column is why #215 exists at all, since #173 cost a benchmark campaign, a testbench reproduction and a code audit to reach that same conclusion. |
+| **drop_chan_pct** | **PHY/scenario property, not a protocol property**, up to the control traffic the protocol puts on the air. All four arms share a channel, so compare the column *across* arms: the protocol with the higher share is the one filling the medium. A collapse dominated by this column is [#173](https://github.com/swarm-routing/AntHocNet/issues/173)'s exact signature — and having it as a column is why #215 exists at all, since #173 cost a benchmark campaign, a testbench reproduction and a code audit to reach that same conclusion. |
 | **drop_queue_pct** | Congestion, same reading as `drop_chan_pct`: offered load (or control overhead) exceeding what the interface can drain. Cross-check against `--qdiag` and `preflight`'s offered-load fraction. |
 | **drop_mac_pct** | Link breakage. Expected under mobility; a high share at low speed points at the PHY setup (`--rateManager`, #51) rather than at routing. |
 | **drop_ttl_pct** | **Always a fault signal.** Data should not loop. Anything materially above zero means forwarding loops — read it with `EnableMultipath` and the A1 loop-suppression caveat in the NS-3 adapter. |
@@ -1231,12 +1231,12 @@ regression, in the same class as the #51 anchor floors:
   the same packet.
 - **One documented overshoot: the AntHocNet re-injection straddle on fading
   cells.** An AntHocNet fading-cell sum of ~**101–103** is expected, not a
-  books error ([#377](https://github.com/danieljoppi/AntHocNet/issues/377)'s
+  books error ([#377](https://github.com/swarm-routing/AntHocNet/issues/377)'s
   closure): the per-hop books count a #46-re-injected packet's extra copies
   while the identity is end-to-end. The #386 detector A/B pinned it — on
   identical seeds the same cells read **exactly 100.00** with
   `EnableMacFailureDetector=false`
-  ([#386 comment 5234323092](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5234323092)).
+  ([#386 comment 5234323092](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5234323092)).
   Read the overshoot against `##REINJ##`'s `postTx`/`dupRx`; it scales with
   re-injection volume, not with any misattribution.
 
@@ -1251,7 +1251,7 @@ partitions `drop_route_pct`: all three exit paths end in the same L3 error
 callback, so the parent already contains them. Adding them to the identity
 double-counts route failures and manufactures a ~156 % total out of a correct
 breakdown — a mistake made once while reading these very columns
-([#229](https://github.com/danieljoppi/AntHocNet/issues/229)). The identity has
+([#229](https://github.com/swarm-routing/AntHocNet/issues/229)). The identity has
 **five** terms plus PDR. `scenario_check.py` cross-checks the partition
 separately (WARN if the three do not reconstruct their parent within 1 pp).
 
@@ -1266,7 +1266,7 @@ has the error callback commented out (identical ns-3.36 through ns-3.48), its
 `Enqueue()` overflow returns `false` into a caller that ignores it, and the
 protocol registers no TraceSource — every one of its shed paths is silent.
 
-The [#229](https://github.com/danieljoppi/AntHocNet/issues/229) fix closes
+The [#229](https://github.com/swarm-routing/AntHocNet/issues/229) fix closes
 this from the harness alone (the baselines run stock ns-3 code, so nothing in
 `src/dsdv` is patched): a **pending-queue conservation hook** in
 `routing-bench-run.cc` (`PqTrackTx`/`PqTrackDrop`, dsdv + aodv arms, UDP
@@ -1548,7 +1548,7 @@ not a blank column.
 > falsifiable control `path_div_used` never had. `path_hops_*` and `jain_pkts`
 > are unaffected by all of this and readable from any cell.
 
-- **Before [#522](https://github.com/danieljoppi/AntHocNet/issues/522), AntHocNet read one hop high on packets it
+- **Before [#522](https://github.com/swarm-routing/AntHocNet/issues/522), AntHocNet read one hop high on packets it
   held at the source.** A protocol with no route yet bounces the packet through
   the loopback device to reach `RouteInput` (AODV and this adapter both do).
   The packet then leaves via `IpForward`, costing one TTL decrement that no
@@ -1679,13 +1679,13 @@ cause is a different mechanism entirely, and the correction below is the
 measurement that established which. It is a trade, not a defect: what it buys is the load spreading and
 the route redundancy that the PDR and NRL columns report. The number that
 matters is whether the reordering an application would feel is worth those
-gains — which is exactly the question [#179](https://github.com/danieljoppi/AntHocNet/issues/179) (`betaData` 2 → the thesis's 20)
+gains — which is exactly the question [#179](https://github.com/swarm-routing/AntHocNet/issues/179) (`betaData` 2 → the thesis's 20)
 has to answer, and could not before this metric existed.
 
-> **Correction for fading cells ([#399](https://github.com/danieljoppi/AntHocNet/issues/399),
+> **Correction for fading cells ([#399](https://github.com/swarm-routing/AntHocNet/issues/399),
 > #386).** The gloss above holds on the deterministic channels only. Under a
 > fading channel AntHocNet's `reorder_ratio` is dominated by the
-> [#46](https://github.com/danieljoppi/AntHocNet/issues/46) MAC-failure
+> [#46](https://github.com/swarm-routing/AntHocNet/issues/46) MAC-failure
 > re-injection's **duplicate deliveries**, not by multipath spreading — and
 > that attribution rests on a direct ablation, not on an inference from the
 > mechanism's plausibility.
@@ -1701,7 +1701,7 @@ has to answer, and could not before this metric existed.
 > the [re-injection arm page](reinjection.md) carries the full tables and
 > provenance. (The earlier 5-seed reading of the same ablation, at the pre-flip
 > 1 s hold cap, is
-> [#386 comment 5234323092](https://github.com/danieljoppi/AntHocNet/issues/386#issuecomment-5234323092):
+> [#386 comment 5234323092](https://github.com/swarm-routing/AntHocNet/issues/386#issuecomment-5234323092):
 > 0.1788 / 0.2408 → 0.0008 / 0.0007.)
 >
 > The multipath reading stays valid off-fading — the matched two-ray cell
@@ -1826,7 +1826,7 @@ buffer depth concurrent paths actually impose, and it separates AntHocNet from
 every baseline on **6 of 6** scenarios (anthocnet 12.6–973.8, baselines
 0.0–22.6, largest in every scenario). Prefer it. Quote `reorder_ratio` or
 `reorder_extent_*` only alongside the caveat above —
-[#230](https://github.com/danieljoppi/AntHocNet/issues/230) tracks the
+[#230](https://github.com/swarm-routing/AntHocNet/issues/230) tracks the
 documentation and check work.
 
 ### Caveats
@@ -1854,20 +1854,20 @@ protocol defaults were corrected on 2026-07-25. The **scenario** pages are
 regenerated on every merge and already include both; the **sweep** pages come
 from the manual campaign workflow and do not:
 
-- [#88](https://github.com/danieljoppi/AntHocNet/issues/88) (PR #167, merged):
+- [#88](https://github.com/swarm-routing/AntHocNet/issues/88) (PR #167, merged):
   `T_hop` 50 ms → **3 ms**, the value stated in the 2007 thesis. It scales the
   hop-count term of every pheromone deposit, so it moves all delay-derived
   metrics. Measured effect on the pause sweep: mean delay −7…−16 %, jitter
   −8…−17 %, delay99 −8…−12 % under mobility, at flat PDR and NRL
-  ([#88 measurement](https://github.com/danieljoppi/AntHocNet/issues/88#issuecomment-5079151172)).
-- [#169](https://github.com/danieljoppi/AntHocNet/issues/169) (PR #170, merged):
+  ([#88 measurement](https://github.com/swarm-routing/AntHocNet/issues/88#issuecomment-5079151172)).
+- [#169](https://github.com/swarm-routing/AntHocNet/issues/169) (PR #170, merged):
   `reactiveMaxBroadcasts` 2 → **unbounded**. The finite budget was a *hop limit
   on route discovery* — destinations more than ~5 hops away were never found —
   so it affects **PDR and NRL**, not just the delay columns.
 
 So: read a **sweep** page as the pre-fix behaviour, pending re-measurement. Read
 a **scenario** page as current — with one exception, because #169's fix exposed
-a third defect: [#173](https://github.com/danieljoppi/AntHocNet/issues/173) (P1,
+a third defect: [#173](https://github.com/swarm-routing/AntHocNet/issues/173) (P1,
 **open**) leaves reactive forward ants bounded neither by a broadcast budget nor
 by `(src,seq)` duplicate suppression, so discovery floods combinatorially in
 dense graphs. That inflates **NRL** and depresses **PDR** on `large-scale` and

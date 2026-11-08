@@ -68,7 +68,7 @@ def resolve(site: str, page_path: str, url: str) -> tuple[str | None, str]:
     if parts.scheme in ("mailto", "javascript", "data", "tel"):
         return None, ""
     if parts.scheme or parts.netloc:
-        if parts.netloc == "danieljoppi.github.io" and parts.path.startswith(SITE_PREFIX):
+        if parts.netloc == "swarm-routing.github.io" and parts.path.startswith(SITE_PREFIX):
             target = os.path.join(site, parts.path[len(SITE_PREFIX):])
         else:
             return None, ""

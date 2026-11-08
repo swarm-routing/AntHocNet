@@ -36,7 +36,7 @@ of the updated criteria (independent of code quality):
 
 Revisit once the ICNS3 study paper is published (the citable reference that
 seeds #2) and the repo shows a few months of ordinary, spaced-out post-v1.0
-activity. Full reasoning: `danieljoppi/papers` repo,
+activity. Full reasoning: `swarm-routing/papers` repo,
 `docs/adr/0002-venue-strategy.md` (update section) and
 `AntHocNet/publication-options.md`.
 

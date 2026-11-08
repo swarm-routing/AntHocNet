@@ -10,13 +10,13 @@ try:
 
 # Scenario: fanet
 
-**Class:** FANET — 3-D, smooth trajectories, fast link churn ([#300](https://github.com/danieljoppi/AntHocNet/issues/300))
+**Class:** FANET — 3-D, smooth trajectories, fast link churn ([#300](https://github.com/swarm-routing/AntHocNet/issues/300))
 
 [← Benchmark index](../../benchmarks.md) · [Metrics](../metrics.md) · [Methodology](../methodology.md)
 
 > **A separate family, not a variant of the planar corpus.** Every other
 > scenario page measures a planar field. This one places and moves nodes in a
-> 3-D box (`--areaZ`, [#480](https://github.com/danieljoppi/AntHocNet/issues/480)),
+> 3-D box (`--areaZ`, [#480](https://github.com/swarm-routing/AntHocNet/issues/480)),
 > so its cells are **not comparable** with the MANET pages. Read them against
 > each other and against the [FANET anchors](#anchors), never against the
 > Broch floor, which is RWP-on-the-ground only.
@@ -37,7 +37,7 @@ cell measures the **partition** regime deliberately.
 
 ## Configuration
 
-`--scenario=fanet` (added in [#482](https://github.com/danieljoppi/AntHocNet/issues/482)).
+`--scenario=fanet` (added in [#482](https://github.com/swarm-routing/AntHocNet/issues/482)).
 The preset carries **scenario knobs only**
 ([ADR-0019](../../adr/0019-network-families-change-the-evaluation-not-the-protocol.md)):
 no AntHocNet attribute (`HelloInterval`, `QueueTimeout`, acceptance factors, …)
@@ -117,7 +117,7 @@ with only the field shrunk, and route only stock AODV and the oracle control.
 |---|---|---|---|---|
 | `fanet-single-hop-3d` | 10 nodes, 100 m cube, 350 m | the 173 m diagonal keeps every pair in range, so every flow is one hop: **PDR ≈ 100 %** and oracle **hopsMean = 1.00** exactly | AODV 100.0 %, oracle 100.0 %, hopsMean 1.00 | 3-D placement, mobility and channel deliver at all |
 | `fanet-vertical-3d` | 10 nodes, 10 × 10 × 1000 m column, 350 m | planar distances are all < 15 m, so a field flattened to 2-D reads hopsMean = 1.00; with altitude honoured, pairs > 350 m apart need relays: **hopsMean > 1.2** | AODV 98.9 %, oracle 98.9 % (98.6 % at the pre-#506 1 s recompute), hopsMean 1.90 | the third dimension is real end to end |
-| `fanet-gpsr3d-recovery` ([#710](https://github.com/danieljoppi/AntHocNet/issues/710)) | 50 nodes, static 600 m cube, 200 m, 2 flows at 512 bit/s, 4 runs | the 3-D geographic arm's own paper trend (Bujari et al., IEEE TMC 2018, §5.2): face recovery delivers more than greedy alone. gpsr3d with CFace(3) must beat gpsr3d with `Recovery=false` by **≥ 5 pp** on the same seeds | ns-3.42: 74.9 % vs 62.5 % (+12.4 pp), oracle 74.9 % | the gpsr3d arm reproduces the trend its source reports |
+| `fanet-gpsr3d-recovery` ([#710](https://github.com/swarm-routing/AntHocNet/issues/710)) | 50 nodes, static 600 m cube, 200 m, 2 flows at 512 bit/s, 4 runs | the 3-D geographic arm's own paper trend (Bujari et al., IEEE TMC 2018, §5.2): face recovery delivers more than greedy alone. gpsr3d with CFace(3) must beat gpsr3d with `Recovery=false` by **≥ 5 pp** on the same seeds | ns-3.42: 74.9 % vs 62.5 % (+12.4 pp), oracle 74.9 % | the gpsr3d arm reproduces the trend its source reports |
 
 ## The 3-D geographic comparator: gpsr3d (#710)
 
@@ -163,14 +163,14 @@ are geographic routing's known weakness, and the sparse cell shows it. The
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](../v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
 > The blocks below this one are the dated record of their campaigns; their
 > migrant rows are **retired**, not deleted.
 
-**Native set:** AntHocNet, AODV, OLSR (the FANET literature's standard baselines), 3-D GPSR ([#710](https://github.com/danieljoppi/AntHocNet/issues/710)), the oracle. **Retired:** DSDV, AOMDV.
+**Native set:** AntHocNet, AODV, OLSR (the FANET literature's standard baselines), 3-D GPSR ([#710](https://github.com/swarm-routing/AntHocNet/issues/710)), the oracle. **Retired:** DSDV, AOMDV.
 
 #### main (range 350 m)
 
@@ -201,7 +201,7 @@ AntHocNet − oracle -7.70 [-8.12, -7.28] pp; against the best native baseline (
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](../v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -210,7 +210,7 @@ AntHocNet − oracle -7.70 [-8.12, -7.28] pp; against the best native baseline (
 > **Quiet mode's effect here**, paired against v2.2.0's AntHocNet: noise on PDR, delay99 and NRL in both cells: the swarm's routes change before the back-off grows.
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
-> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
+> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
 > bootstrap).
 >
 > **main (range 350 m)**
@@ -269,7 +269,7 @@ percentile-bootstrap interval. Provenance and run IDs are
 
 **GPSR is not in the arm set, and no geographic protocol is.** The harness
 refuses `gpsr` whenever `--areaZ > 0`
-([#480](https://github.com/danieljoppi/AntHocNet/issues/480)), because the
+([#480](https://github.com/swarm-routing/AntHocNet/issues/480)), because the
 vendored GPSR's headers and planarization are 2-D: it would route on projected
 positions and measure an artifact of the projection. This is a threat to
 validity for the family. Geographic forwarding is a major FANET design point,
@@ -277,15 +277,15 @@ and this page has no arm for it.
 
 **The oracle column uses a 100 ms `RecomputeInterval`, not the 1 s default.**
 At the default it is not a bound on this family
-([#506](https://github.com/danieljoppi/AntHocNet/issues/506)); see
+([#506](https://github.com/swarm-routing/AntHocNet/issues/506)); see
 [the oracle at FANET speeds](#the-oracle-at-fanet-speeds) below. Since
-[#506](https://github.com/danieljoppi/AntHocNet/issues/506), `--scenario=fanet` sets the 100 ms itself and records
+[#506](https://github.com/swarm-routing/AntHocNet/issues/506), `--scenario=fanet` sets the 100 ms itself and records
 it on the `##CONFIG##` row. The published cells passed it explicitly, with
 byte-identical effect. An explicit `RecomputeInterval` on the command line
 still wins.
 
 **The OLSR column is offered-based
-([#510](https://github.com/danieljoppi/AntHocNet/issues/510)).** Before #510,
+([#510](https://github.com/swarm-routing/AntHocNet/issues/510)).** Before #510,
 stock OLSR's PDR left out the sends its source refused for want of a route, so
 it read **3.80 pp high here and 23.53 pp high in the sparse cell**. The OLSR
 column below comes from a re-run with the fix. Its other columns are
@@ -293,7 +293,7 @@ byte-identical to the six-arm dispatch. Only PDR, the offered-load percentiles
 and the drop book changed.
 
 Energy is **energy per delivered application bit** (mJ/bit, `##ENERGY##`,
-[#508](https://github.com/danieljoppi/AntHocNet/pull/508)). The radio's idle
+[#508](https://github.com/swarm-routing/AntHocNet/pull/508)). The radio's idle
 draw dominates the total, which is near-identical across arms on a seed. This
 column is therefore an efficiency restatement of delivery
 ([metrics.md](../metrics.md#per-seed-energy-294-item-3-483)). It is quoted
@@ -303,7 +303,7 @@ independent evidence.
 ### Restated on CBR sources (#521)
 
 > **Both cells were re-measured on constant-bit-rate sources.** Until
-> [#521](https://github.com/danieljoppi/AntHocNet/issues/521) the sources ran ns-3's default 1 s on / 1 s off,
+> [#521](https://github.com/swarm-routing/AntHocNet/issues/521) the sources ran ns-3's default 1 s on / 1 s off,
 > so each FANET flow was offered 2 pkt/s in bursts of four, not the
 > configured 4 pkt/s. The cell offered 10 kbps, not the 20 kbps in the
 > configuration table.
@@ -320,9 +320,9 @@ independent evidence.
 >
 > ![FANET main and sparse cells on CBR sources: AntHocNet delivers the most of the real arms in both, with the shortest tail of the reactive arms; its NRL is slightly below AODV's in the main cell and above it in the sparse cell](../charts/family-fanet.png)
 >
-> _Reproduce: `make reproduce FIG=family-fanet` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+> _Reproduce: `make reproduce FIG=family-fanet` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 >
-> _Bars: mean of 20 seeds, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); vertical line: the oracle control. Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `fanet-{main,sparse}-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above._
+> _Bars: mean of 20 seeds, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99); vertical line: the oracle control. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `fanet-{main,sparse}-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above._
 >
 > **Main cell:**
 >
@@ -477,7 +477,7 @@ sends at the source. That refusal is the share the pre-#510 PDR left out.
 
 The oracle is a global-knowledge shortest-path control that re-derives the
 graph every `RecomputeInterval`. Two of its properties do not survive this
-family's speeds ([#506](https://github.com/danieljoppi/AntHocNet/issues/506)).
+family's speeds ([#506](https://github.com/swarm-routing/AntHocNet/issues/506)).
 
 **Delivery: a bound only with a fast recompute.** At the default 1 s, nodes
 closing at up to 60 m/s move up to 60 m between recomputes. A fewest-hops route
@@ -531,7 +531,7 @@ current code, with OLSR offered-based (#510) everywhere:
 
 - the six [grid](../grid.md) cells, two-ray or Nakagami;
 - the disk-propagation paper cell (`results/cells/paper-mobile-jitter*.txt`, RWP,
-  pause 0, from [#494](https://github.com/danieljoppi/AntHocNet/issues/494)).
+  pause 0, from [#494](https://github.com/swarm-routing/AntHocNet/issues/494)).
 
 The paper cell is the channel-matched comparator, because FANET also runs on
 the disk model.

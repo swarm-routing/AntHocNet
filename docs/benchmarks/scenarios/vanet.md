@@ -10,7 +10,7 @@ try:
 
 # Scenario: vanet
 
-**Class:** VANET — vehicles on a street grid, corridor-shaped links, buildings that cut line of sight ([#301](https://github.com/danieljoppi/AntHocNet/issues/301), [#488](https://github.com/danieljoppi/AntHocNet/issues/488))
+**Class:** VANET — vehicles on a street grid, corridor-shaped links, buildings that cut line of sight ([#301](https://github.com/swarm-routing/AntHocNet/issues/301), [#488](https://github.com/swarm-routing/AntHocNet/issues/488))
 
 [← Benchmark index](../../benchmarks.md) · [Metrics](../metrics.md) · [Methodology](../methodology.md)
 
@@ -40,7 +40,7 @@ cell measures the **partition** regime deliberately.
 
 ## Configuration
 
-`--scenario=vanet` (added in [#488](https://github.com/danieljoppi/AntHocNet/issues/488)).
+`--scenario=vanet` (added in [#488](https://github.com/swarm-routing/AntHocNet/issues/488)).
 The preset carries **scenario knobs only**
 ([ADR-0019](../../adr/0019-network-families-change-the-evaluation-not-the-protocol.md)):
 no AntHocNet attribute is changed for this family. Every value below can be
@@ -157,7 +157,7 @@ AODV and the oracle control.
 |---|---|---|---|---|
 | `vanet-single-hop` | one block, street width 279 m (a 1 m building) | the 396 m block diagonal is inside the 423.3 m two-ray decode radius and no line of sight is cut, so every flow is one hop: **PDR ≈ 100 %**, oracle **hopsMean ≈ 1.00** | AODV 99.5 %, oracle 99.9 %, hopsMean 1.00 | the street grid, mobility and channel deliver at all |
 | `vanet-building` | one block, street width 100 m (a 180 × 180 m building) | vehicles on opposite streets lose line of sight and must relay around a corner: oracle **hopsMean > 1.2**; a channel that ignored the building reads the single-hop 1.00 | AODV 80.4 %, oracle 99.6 %, hopsMean 1.36 | the buildings are honoured end to end |
-| `vanet-gpcr-vs-gpsr` ([#709](https://github.com/danieljoppi/AntHocNet/issues/709)) | the `vanet-building` block, `gpsr,gpcr,oracle` | GPCR's own paper trend (Lochert et al. 2005, §V): around a blocked corner the junction-aware arm **beats GPSR by ≥ 2 pp** on the same seeds; every arm ≥ 75 % | ns-3.42: GPCR 89.3 %, GPSR 84.4 % (+4.9 pp), oracle 99.6 % | the GPCR arm reproduces the trend its paper reports |
+| `vanet-gpcr-vs-gpsr` ([#709](https://github.com/swarm-routing/AntHocNet/issues/709)) | the `vanet-building` block, `gpsr,gpcr,oracle` | GPCR's own paper trend (Lochert et al. 2005, §V): around a blocked corner the junction-aware arm **beats GPSR by ≥ 2 pp** on the same seeds; every arm ≥ 75 % | ns-3.42: GPCR 89.3 %, GPSR 84.4 % (+4.9 pp), oracle 99.6 % | the GPCR arm reproduces the trend its paper reports |
 
 The harness's own CI smoke (`tools/checks/check-manhattan.sh`) adds the
 invariants the anchors do not: every vehicle is on a street at t = 0 and
@@ -206,7 +206,7 @@ On the full 100-vehicle grid (1 seed, 120 s) it delivers 24.2 / 23.7 % at
 
 **GPSR rows measured before #717.** The vendored GPSR drew its first hello
 before the harness pinned its random stream
-([#717](https://github.com/danieljoppi/AntHocNet/issues/717)), so each GPSR
+([#717](https://github.com/swarm-routing/AntHocNet/issues/717)), so each GPSR
 row depended on the runs before it in the same process. For example, seed 2
 on the delivery-smoke field read 27.9 % alone and 18.1 % after seed 1. The
 GPSR rows on this page are one realisation of that order-dependent run. The
@@ -234,14 +234,14 @@ per-family protocol default ADR-0019 forbids.
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](../v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
 > The blocks below this one are the dated record of their campaigns; their
 > migrant rows are **retired**, not deleted.
 
-**Native set:** AntHocNet, AODV (the VANET literature's standard reactive baseline), GPSR, GPCR ([#709](https://github.com/danieljoppi/AntHocNet/issues/709)), the oracle. **Retired:** OLSR, DSDV, AOMDV. GPSR's rows differ from v2.3.0's: the [#717](https://github.com/danieljoppi/AntHocNet/issues/717) fix moved its first hello after stream pinning.
+**Native set:** AntHocNet, AODV (the VANET literature's standard reactive baseline), GPSR, GPCR ([#709](https://github.com/swarm-routing/AntHocNet/issues/709)), the oracle. **Retired:** OLSR, DSDV, AOMDV. GPSR's rows differ from v2.3.0's: the [#717](https://github.com/swarm-routing/AntHocNet/issues/717) fix moved its first hello after stream pinning.
 
 #### main (100 vehicles)
 
@@ -272,7 +272,7 @@ AntHocNet ties AODV on delivery in both cells, with a far shorter tail at more o
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](../v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -281,7 +281,7 @@ AntHocNet ties AODV on delivery in both cells, with a far shorter tail at more o
 > **Quiet mode's effect here**, paired against v2.2.0's AntHocNet: noise on PDR, delay99 and NRL in both cells: corner breaks reset the back-off.
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
-> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
+> `results/cells/<cell>-v230-published.txt`, composed by [`tools/bench/compose_cell.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/compose_cell.py) from the campaign's `<cell>-v230.txt` (control) and `<cell>-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
 > bootstrap).
 >
 > **main (100 vehicles)**
@@ -367,9 +367,9 @@ and is now scoped, with its evidence:
 
 ![VANET main and sparse cells: AntHocNet and AODV tie on delivery, AntHocNet's delay99 is about half of AODV's (main) and far lower (sparse), and its NRL is the highest of the arms that deliver comparably; the oracle line sits far above every arm on delivery](../charts/family-vanet.png)
 
-_Reproduce: `make reproduce FIG=family-vanet` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+_Reproduce: `make reproduce FIG=family-vanet` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 
-_Bars: mean of 20 seeds per arm, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99). The vertical line is the oracle control (not drawn for NRL, where it is 0 by construction). Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `vanet-{main,sparse}-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above. The tables below are the dated v2.2.0 record._
+_Bars: mean of 20 seeds per arm, AntHocNet highlighted; whiskers: 95 % CI (t for PDR and NRL, bootstrap for delay99). The vertical line is the oracle control (not drawn for NRL, where it is 0 by construction). Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed cells `vanet-{main,sparse}-v230-published.txt`: the v2.3.0 generation, whose tables are in the block above. The tables below are the dated v2.2.0 record._
 
 Means ± 95 % t-CI half-width over 20 seeds; paired deltas are per seed
 (t-CI, Wilcoxon p). Energy is per delivered bit.
@@ -466,7 +466,7 @@ AODV's (4.83 against 3.56 hops), so each crosses more of those breaks.
 This is the knob-watchlist item #301 named (`HelloInterval` vs link
 lifetime, hold caps under corridor-shaped reconvergence). ADR-0019 forbids
 retuning per family before a measured A/B, so it is recorded as a follow-up,
-[#537](https://github.com/danieljoppi/AntHocNet/issues/537), not changed here: a paired `HelloInterval` / `ReconvHoldCap` A/B on
+[#537](https://github.com/swarm-routing/AntHocNet/issues/537), not changed here: a paired `HelloInterval` / `ReconvHoldCap` A/B on
 this cell, and a corner-aware link-lifetime rule for the preflight. Both have
 since landed: the preflight rule in v2.2.0's phase 0, and the A/B in the
 v2.2.0 campaign (the next section).
@@ -496,7 +496,7 @@ not known to add.
 **None of them closes the reconvergence gap.** At best a knob claws back
 5–6 pp of the 39.6 pp to the oracle. The loss is set by link lifetime at
 corners (above), which no timer fixes. That is why v2.3.0's link-lifetime
-mechanism ([#574](https://github.com/danieljoppi/AntHocNet/issues/574)) keeps its place.
+mechanism ([#574](https://github.com/swarm-routing/AntHocNet/issues/574)) keeps its place.
 
 ### Threats to validity
 
@@ -521,7 +521,7 @@ mechanism ([#574](https://github.com/danieljoppi/AntHocNet/issues/574)) keeps it
 ADR-0019 keeps AntHocNet's configuration identical across families, so a
 ranking that changes between them is a property of the network. From v2.4.0
 the statement is read in two terms that need no migrated protocol
-([#711](https://github.com/danieljoppi/AntHocNet/issues/711),
+([#711](https://github.com/swarm-routing/AntHocNet/issues/711),
 [ADR-0026](../../adr/0026-baselines-are-family-native.md)): AntHocNet's gap
 to each cell's oracle, and AntHocNet against each cell's best native baseline
 (highest mean PDR), both paired per seed. The numbers are the
@@ -533,7 +533,7 @@ in all.
 
 ![AntHocNet against each family's own yardsticks: its paired PDR gap to the oracle and to the best native baseline, in every cell of eight families](../charts/families-native.png)
 
-_Each dot is the mean over 20 paired seeds with its 95 % paired t-CI; filled = the CI excludes 0. Drawn by [`ns3/tools/family-charts.py`](https://github.com/danieljoppi/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed v2.4.0 cells; the numbers come from [`tools/bench/native_view.py`](https://github.com/danieljoppi/AntHocNet/blob/main/tools/bench/native_view.py)._
+_Each dot is the mean over 20 paired seeds with its 95 % paired t-CI; filled = the CI excludes 0. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed v2.4.0 cells; the numbers come from [`tools/bench/native_view.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/native_view.py)._
 
 | family | best native baseline | AntHocNet − best native, PDR | AntHocNet − oracle, PDR |
 |---|---|---|---|
@@ -565,7 +565,7 @@ _Each dot is the mean over 20 paired seeds with its 95 % paired t-CI; filled = t
   (+0.58 pp, CI [−0.22, +1.38]), with OLSR 11 pp behind both. AntHocNet is
   3.8 pp from the oracle, which itself loses 18.5 % of the packets to the
   partition: no path exists when they are sent
-  ([#727](https://github.com/danieljoppi/AntHocNet/issues/727)).
+  ([#727](https://github.com/swarm-routing/AntHocNet/issues/727)).
 - **The overhead ordering is family-dependent.** AntHocNet sends less
   control than AODV on the MANET grid (−23.9 NRL on Gauss-Markov/two-ray)
   but more than OLSR in every family OLSR runs in, and more than AODV on

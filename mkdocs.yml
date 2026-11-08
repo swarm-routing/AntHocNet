@@ -3,9 +3,9 @@ site_description: >-
   AntHocNet — an ant-colony-optimization MANET routing protocol implemented once
   as a simulator-agnostic core, with a thin ns-3 adapter and a WebAssembly
   browser adapter.
-site_url: https://danieljoppi.github.io/AntHocNet/docs/
-repo_url: https://github.com/danieljoppi/AntHocNet
-repo_name: danieljoppi/AntHocNet
+site_url: https://swarm-routing.github.io/AntHocNet/docs/
+repo_url: https://github.com/swarm-routing/AntHocNet
+repo_name: swarm-routing/AntHocNet
 edit_uri: edit/main/docs/
 copyright: GPL-2.0-only (core/ and the tooling MIT OR GPL-2.0-only, see LICENSING.md) — the repository tree is canonical; this site renders it.
 
@@ -28,7 +28,7 @@ docs_dir: docs
 #       exists to provide.
 #
 # (c) is implemented by docs/tools/mkdocs_hooks.py, which rewrites *only* the
-# escaping targets to https://github.com/danieljoppi/AntHocNet/blob|tree/main/…
+# escaping targets to https://github.com/swarm-routing/AntHocNet/blob|tree/main/…
 # while the markdown is rendered. No .md file is modified: the repo tree stays
 # canonical and every link keeps working when read on GitHub.
 #
@@ -88,7 +88,7 @@ nav:
   # the other four group every docs page. The top bar links each place's
   # overview page (docs/places/); the API reference lives in the Workshop.
   - Home: README.md
-  - Play: https://danieljoppi.github.io/AntHocNet/
+  - Play: https://swarm-routing.github.io/AntHocNet/
   - Field guide:
       - Overview: places/field-guide.md
       - ant-colony-routing.md
@@ -140,7 +140,7 @@ nav:
           - benchmarks/sweeps/scale.md
   - Workshop:
       - Overview: places/workshop.md
-      - API reference: https://danieljoppi.github.io/AntHocNet/api/
+      - API reference: https://swarm-routing.github.io/AntHocNet/api/
       - configuration.md
       - wire-format.md
       - porting-notes.md

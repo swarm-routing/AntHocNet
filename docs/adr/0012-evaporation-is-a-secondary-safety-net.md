@@ -78,7 +78,7 @@ consistency but is not the deviation this ADR fixes.
 > silently assumed. The NRL cost is moot under the #248 MANET guidance
 > (proactive off); the satellite regime, which keeps proactive, needs the
 > clock correct. Full evidence on
-> [#262](https://github.com/danieljoppi/AntHocNet/issues/262).
+> [#262](https://github.com/swarm-routing/AntHocNet/issues/262).
 
 ## Alternatives considered
 

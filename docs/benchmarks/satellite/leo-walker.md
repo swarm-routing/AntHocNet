@@ -37,7 +37,7 @@ hand over, ISLs fail and recover. The static ISL torus that came first is
 > number measured before `0b5a65ad` is superseded** — see
 > [the pairing bug](#the-cross-plane-pairing-bug-and-the-superseded-runs).
 
-**Re-measured for v2.2.0 (2026-10-16).** The [v2.2.0 campaign](../v2.2.0-campaign.md#results) re-ran every cell on this page as its control generation, at `a8a16991`, with the shipped defaults and the same 20 seeds. Every `##RUN##` row is byte-identical to the cells this page cites except AODV's, which differ through stock AODV's pointer-keyed socket map on multi-interface nodes ([#362](https://github.com/danieljoppi/AntHocNet/issues/362)); its paired deltas are within noise. No default moved, so the numbers here stand as v2.2.0's. The control cells are `results/cells/leo-*-v220.txt`. What the campaign's four knobs do on this family is in [network-regimes.md §7](../../network-regimes.md#7-measured-the-v220-knobs-per-regime).
+**Re-measured for v2.2.0 (2026-10-16).** The [v2.2.0 campaign](../v2.2.0-campaign.md#results) re-ran every cell on this page as its control generation, at `a8a16991`, with the shipped defaults and the same 20 seeds. Every `##RUN##` row is byte-identical to the cells this page cites except AODV's, which differ through stock AODV's pointer-keyed socket map on multi-interface nodes ([#362](https://github.com/swarm-routing/AntHocNet/issues/362)); its paired deltas are within noise. No default moved, so the numbers here stand as v2.2.0's. The control cells are `results/cells/leo-*-v220.txt`. What the campaign's four knobs do on this family is in [network-regimes.md §7](../../network-regimes.md#7-measured-the-v220-knobs-per-regime).
 
 On this suite the campaign's `sinr` arm is **not** a no-op. The ISLs have no PHY SINR, but the ground-to-satellite access links are wireless and report it. On `starlink1` it buys +0.7 pp of PDR for +49 NRL. The faster hello (`hello500`) gives the campaign's largest PDR gain, +2.6 to +6.5 pp, at NRL +76 to +550, which roughly doubles the routing load. `repair200` never binds (byte-identical). `reconv1s` is noise on walker16; on the Starlink shells it trades about +100 to +120 ms of delay99 for at most +0.8 pp.
 
@@ -71,7 +71,7 @@ Arms:
   and at 20 seeds its walker16 run no longer fits the 6 h job limit. The
   proactive link-state slot goes to the comparator the field actually
   proposes: predictability-aware link state (OPSPF,
-  [#707](https://github.com/danieljoppi/AntHocNet/issues/707); the `opspf`
+  [#707](https://github.com/swarm-routing/AntHocNet/issues/707); the `opspf`
   arm [below](#opspf-the-link-state-incumbent-707)).
 - **geo-greedy** — an *idealised* greedy geographic comparator: each hop goes
   to the neighbour nearest the destination's serving satellite, with perfect
@@ -94,14 +94,14 @@ CI for 20 seeds, and its v2.3.0 re-run exceeded the 6 h limit twice.
 
 > **Current numbers: v2.4.0.** From v2.4.0 every family is compared against
 > its own protocols plus its oracle
-> ([ADR-0026](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
+> ([ADR-0026](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0026-baselines-are-family-native.md)).
 > These cells are the [v2.4.0 control campaign](../v2.4.0-campaign.md#results)
 > at the shipped defaults (no default moved), 20 seeds, mean ± 95 % t-interval.
 > AntHocNet's rows and every kept baseline row are byte-identical to v2.3.0's.
 > The blocks below this one are the dated record of their campaigns; their
 > migrant rows are **retired**, not deleted.
 
-**Native set:** AntHocNet, OPSPF ([#707](https://github.com/danieljoppi/AntHocNet/issues/707)), geo-greedy, the hop oracle and the delay oracle. **Retired:** AODV (OLSR was retired at v2.3.0).
+**Native set:** AntHocNet, OPSPF ([#707](https://github.com/swarm-routing/AntHocNet/issues/707)), geo-greedy, the hop oracle and the delay oracle. **Retired:** AODV (OLSR was retired at v2.3.0).
 
 #### walker16
 
@@ -139,12 +139,12 @@ AntHocNet − oracle -15.94 [-16.64, -15.23] pp; against the best native baselin
 
 AntHocNet − oracle -15.91 [-16.80, -15.01] pp; against the best native baseline (opspf, 96.12 %): dPDR -16.94 [-19.27, -14.61] pp, d delay99 +74.75 [+70.35, +79.70] ms, d NRL -15422.35 [-15955.05, -14889.66] (PAIRED-MIXED).
 
-**The headline satellite comparison is AntHocNet − OPSPF, and it goes against AntHocNet:** −6.17 pp on walker16, −17.48 and −16.94 pp on Starlink S1 and its storm. OPSPF pays 5–20× AntHocNet's control for it (NRL 499 against 98; 16 357–19 399 against 934–974). Its LSA floods are also accounted, not transmitted. The [opspf section](#opspf-the-link-state-incumbent-707) lists that and its other simplifications. OPSPF also sits at or above the 1 s hop oracle (+0.55, +1.54 and +1.04 pp), so on these failure cells the oracle is not a delivery bound ([#720](https://github.com/danieljoppi/AntHocNet/issues/720)).
+**The headline satellite comparison is AntHocNet − OPSPF, and it goes against AntHocNet:** −6.17 pp on walker16, −17.48 and −16.94 pp on Starlink S1 and its storm. OPSPF pays 5–20× AntHocNet's control for it (NRL 499 against 98; 16 357–19 399 against 934–974). Its LSA floods are also accounted, not transmitted. The [opspf section](#opspf-the-link-state-incumbent-707) lists that and its other simplifications. OPSPF also sits at or above the 1 s hop oracle (+0.55, +1.54 and +1.04 pp), so on these failure cells the oracle is not a delivery bound ([#720](https://github.com/swarm-routing/AntHocNet/issues/720)).
 
 ## Restated at v2.3.0 defaults (quiet mode on)
 
 > **Dated record: v2.3.0 defaults** (superseded by the v2.4.0 block above). v2.3.0 turns quiet mode on by
-> default ([#571](https://github.com/danieljoppi/AntHocNet/issues/571), the
+> default ([#571](https://github.com/swarm-routing/AntHocNet/issues/571), the
 > [v2.3.0 campaign](../v2.3.0-campaign.md#results)). AntHocNet's rows below are the
 > campaign's `quiet` arm. Every baseline row is the campaign's `control`, and the
 > attribution control found those identical to the v2.2.0 corpus. 20 seeds,
@@ -154,7 +154,7 @@ AntHocNet − oracle -15.91 [-16.80, -15.01] pp; against the best native baselin
 >
 > **Provenance.** The campaign's runs at `main`, `54cdfae7..cc230126`. Cells:
 > the per-arm cells `results/cells/leo-<shell>-<arm>-v230.txt`, with AntHocNet from `leo-<shell>-anthocnet-v230-quiet.txt`. Tables recomputed from the cells' `##RUN##` rows (t-intervals; delay99 by
-> bootstrap). Stock AODV's rows are the v2.3.0 control's. On these multi-interface nodes they differ from v2.2.0's in iteration order only ([#362](https://github.com/danieljoppi/AntHocNet/issues/362), [#675](https://github.com/danieljoppi/AntHocNet/issues/675)), and the paired difference is within noise. OLSR is no longer a LEO arm (decision 2026-10-18, see the arm list); its last measurement, v2.2.0's walker16 cell, stays in the dated tables below.
+> bootstrap). Stock AODV's rows are the v2.3.0 control's. On these multi-interface nodes they differ from v2.2.0's in iteration order only ([#362](https://github.com/swarm-routing/AntHocNet/issues/362), [#675](https://github.com/swarm-routing/AntHocNet/issues/675)), and the paired difference is within noise. OLSR is no longer a LEO arm (decision 2026-10-18, see the arm list); its last measurement, v2.2.0's walker16 cell, stays in the dated tables below.
 >
 > **walker16**
 >
@@ -210,7 +210,7 @@ AntHocNet − oracle -15.91 [-16.80, -15.01] pp; against the best native baselin
 
 ![Moving LEO constellation: PDR, packets lost per scheduled handover and delay99 per arm, with the delay oracle as a reference line](../charts/constellation.png)
 
-_Reproduce: `make reproduce FIG=constellation` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+_Reproduce: `make reproduce FIG=constellation` re-renders it from the committed data and diffs the PNG; `MODE=rerun NS3DIR=…` re-measures a cell first ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 
 - **AntHocNet beats AODV on every cell, by more as the shell grows:** +15.5 pp
   PDR on walker16, +28.2 pp on Starlink S1, +32.3 pp under the S1 storm — all
@@ -319,7 +319,7 @@ Handover metric family (sums over seeds; outage = ≥ 3 consecutive lost send at
 
 On S1, AntHocNet's control overhead (NRL 955) is in the same range as AODV's
 (904), on a 1584-node shell — the cost question
-[#207](https://github.com/danieljoppi/AntHocNet/issues/207) asked. It pays
+[#207](https://github.com/swarm-routing/AntHocNet/issues/207) asked. It pays
 for that with 4.7× the hop-change rate of AODV: ants keep moving traffic to
 the currently-shortest path, which is what the delay result shows. The oracle
 arms' "unplanned" outages are the 1 s re-solve interval on S1 meeting the 1 %
@@ -382,7 +382,7 @@ one flow.
 
 ![Paris–Luanda RTT on Starlink S1 under the delay oracle, with Hypatia's published 85–117 ms band](../charts/calibration-hypatia.png)
 
-_Reproduce: `make reproduce FIG=calibration-hypatia` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/danieljoppi/AntHocNet/issues/621))._
+_Reproduce: `make reproduce FIG=calibration-hypatia` re-renders it from the committed data and diffs the PNG ([#621](https://github.com/swarm-routing/AntHocNet/issues/621))._
 
 | | min | p25 | p50 | p75 | p95 | max |
 |---|---|---|---|---|---|---|
@@ -488,7 +488,7 @@ Two readings follow, and both change how this page reads.
 1. **The hop oracle is not a delivery bound on failure cells.** At its 1 s
    cadence it routes into a dead ISL for up to a second. The flood reaches
    every node in milliseconds, so opspf out-delivers it by 2–5 pp. Tracked in
-   [#720](https://github.com/danieljoppi/AntHocNet/issues/720). Until that is
+   [#720](https://github.com/swarm-routing/AntHocNet/issues/720). Until that is
    decided, read the oracle's delivery on failure cells as "within its 1 s
    staleness".
 2. **OPSPF pays for that delivery in flooding.** Every ISL change floods the
@@ -563,16 +563,16 @@ on this page.
   every 1 s everywhere; the delay oracle every 0.1 s on walker16 and every
   1 s on S1, to keep the 20-seed CI run bounded. Their "unplanned" outages
   are that sampling meeting the ISL failure overlay.
-- **AODV is order-dependent in ns-3** ([#362](https://github.com/danieljoppi/AntHocNet/issues/362)):
+- **AODV is order-dependent in ns-3** ([#362](https://github.com/swarm-routing/AntHocNet/issues/362)):
   stock AODV keys socket maps on heap addresses. Each arm runs alone in its
   own dispatch here, so no arm's numbers depend on another's.
 - **10 Mbps links, 2 kbit/s flows.** The load is light on purpose — this is a
   reachability-under-motion test, not a capacity one. Congestion on ISLs is
-  [#206](https://github.com/danieljoppi/AntHocNet/issues/206)'s question.
+  [#206](https://github.com/swarm-routing/AntHocNet/issues/206)'s question.
 - **No OLSR from v2.3.0, and never on S1.** Proactive link-state flooding on
   1584 nodes exceeds the CI budget; walker16 alone took 5 h 54 min for 20
   seeds in v2.2.0 and exceeded 6 h in v2.3.0. The arm is retired; OPSPF
-  ([#707](https://github.com/danieljoppi/AntHocNet/issues/707)) is the
+  ([#707](https://github.com/swarm-routing/AntHocNet/issues/707)) is the
   link-state comparator to add.
 
 ## Reproduce

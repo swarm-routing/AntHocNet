@@ -1,7 +1,7 @@
 # ADR-0028: `core/` is dual-licensed `MIT OR GPL-2.0-only`
 
 - **Status:** Accepted (maintainer decision 2026-10-29; decides
-  [#782](https://github.com/danieljoppi/AntHocNet/issues/782)). Implemented by
+  [#782](https://github.com/swarm-routing/AntHocNet/issues/782)). Implemented by
   the PR that closes #782 (checklist under [Implementation](#implementation));
   takes effect from the first release after v2.6.0. **Amended** the same day
   to extend the dual licence to the standalone tooling
@@ -190,7 +190,7 @@ possible indirection; review covers the rest. The data files in those roots
 
 ## Implementation
 
-Tracked in [#782](https://github.com/danieljoppi/AntHocNet/issues/782); one
+Tracked in [#782](https://github.com/swarm-routing/AntHocNet/issues/782); one
 PR:
 
 - [x] Provenance confirmed by the maintainer (Consequences, above).
@@ -215,7 +215,7 @@ PR:
 
 ## References
 
-- [#782](https://github.com/danieljoppi/AntHocNet/issues/782): the decision issue.
+- [#782](https://github.com/swarm-routing/AntHocNet/issues/782): the decision issue.
 - [ADR-0023](0023-one-core-one-simulator-adapter.md): one core, one simulator
   adapter, with the seam kept.
 - [ADR-0021](0021-the-browser-is-an-adapter.md): the browser is an adapter.
