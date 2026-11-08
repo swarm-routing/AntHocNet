@@ -216,6 +216,9 @@ def self_test() -> int:
                                                          no_replay["docs/benchmarks/static-mesh.md"])
     bad_world = dict(pages)
     bad_world["docs/ant-types.md"] = bad_world["docs/ant-types.md"].replace("- world: line", "- world: atlantis", 1)
+    # The Nest probes edit a chamber both sides agree on, so drift in any one class
+    # (with --warn-nest) cannot turn a probe into a no-op.
+    shared = min(api_classes() & set(nest_classes(ex["nest_js"])))
     cases = [
         ("the repo as committed", (wjs, mjs, pages), {}, False),
         ("a dangling world read:", (wjs.replace("GUIDE + 'ant-types/'", "GUIDE + 'no-such-page/'", 1), mjs, pages), {}, True),
@@ -228,9 +231,9 @@ def self_test() -> int:
          {"replay_js": ex["replay_js"].replace("{ id: 'mesh'", "{ id: 'meshy'", 1)}, True),
         ("an API link to a class that does not exist",
          (wjs, mjs.replace("PheromoneEngine.html", "PheromoneEngin.html", 1), pages), {}, True),
-        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": ex["nest_js"].replace("'Config'", "", 1)}, True),
+        ("a core class missing from the Nest", (wjs, mjs, pages), {"nest_js": ex["nest_js"].replace(f"'{shared}'", "", 1)}, True),
         ("a Nest chamber naming a class that does not exist", (wjs, mjs, pages),
-         {"nest_js": ex["nest_js"].replace("'Config'", "'Konfig'", 1)}, True),
+         {"nest_js": ex["nest_js"].replace(f"'{shared}'", f"'{shared}X'", 1)}, True),
         ("an install-quest command not in the docs", (wjs, mjs, pages),
          {"steps_js": ex["steps_js"].replace("cmd: './test.py -s anthocnet'", "cmd: './test.py -s nothing'", 1)}, True),
     ]
@@ -260,7 +263,7 @@ def main() -> int:
     if "--warn-nest" in sys.argv:
         for e in errs:
             if e.startswith("Nest: "):
-                print(f"WARN {e} (the site's lock bump must add it)")
+                print(f"WARN {e} (warn-only here; fix the Nest in the site's protocols.lock bump)")
         errs = [e for e in errs if not e.startswith("Nest: ")]
     w = worlds(read("web/site/js/worlds.js"))
     ms = missions(read("web/site/js/missions-data.js"))
@@ -268,8 +271,9 @@ def main() -> int:
         print(f"FAIL {e}")
     if errs:
         return 1
+    nest = "the Nest is warn-only here" if "--warn-nest" in sys.argv else "the Nest covers every core class"
     print(f"ok: {len(w)} worlds and {len(ms)} missions link the docs; the {len(FAMILY_PAGES)} family "
-          "pages link the game; every target exists; the Nest covers every core class; "
+          f"pages link the game; every target exists; {nest}; "
           "every install-quest command is in the docs")
     return 0
 
