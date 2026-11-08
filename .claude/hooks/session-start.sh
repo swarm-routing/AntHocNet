@@ -37,7 +37,7 @@ if [ "${AHN_WEB:-0}" = "1" ]; then
             || log "emsdk install failed"
     fi
     # The adapter and the game live in swarm-routing.github.io (#850).
-    [ -d web ] || tools/checks/fetch-site-web.sh >/dev/null 2>&1 || log "fetch-site-web.sh failed"
+    [ -f web/test/browser-tools/package.json ] || tools/checks/fetch-site-web.sh >/dev/null 2>&1 || log "fetch-site-web.sh failed"
     pw="$HOME/.cache/ahn-node"
     if [ ! -d "$pw/node_modules/playwright-core" ]; then
         # The same lockfile CI installs with npm ci (#787).
