@@ -1,16 +1,16 @@
 ---
-name: protocol-review
+name: anthocnet-review
 description: Run AntHocNet's AGENTS.md golden-rule checks on the current diff (no NS or emscripten headers in core/, wire-format changes bump kWireVersion, core logic changes carry a core test, new mechanisms ship off, web/ changes run parity, nothing shipped depends on .claude/, new docs pages are in the nav). Use when reviewing or preparing any change to core/ or the adapters, to catch the invariants that are cheap to miss before pushing.
 ---
 
-# protocol-review
+# anthocnet-review
 
 `check_invariants.sh` (in this skill dir) runs the mechanical half of a protocol
 review in one call, so you spend tokens on judgement, not on rediscovering the
 invariants with a dozen greps.
 
 ```bash
-bash .claude/skills/protocol-review/check_invariants.sh [BASE]   # BASE defaults to origin/main
+bash .claude/skills/anthocnet-review/check_invariants.sh [BASE]   # BASE defaults to origin/main
 ```
 
 It reports PASS/WARN/FAIL for:

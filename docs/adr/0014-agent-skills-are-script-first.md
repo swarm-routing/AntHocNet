@@ -54,7 +54,7 @@ Current inventory:
 | `bench_parse.py` | `benchmark-results` | parse `##BENCH##` cells, A/B deltas, noise verdict |
 | `sweep_summary.py` | `benchmark-results` | campaign-CSV schema check, per-point deltas, stddev-aware noise call, papers export |
 | `scenario_check.py` | `benchmark-results` | pre-flight scenario degeneracy checks; result plausibility + anchor floors (#134) |
-| `check_invariants.sh` | `protocol-review` | golden-rule checks on a diff |
+| `check_invariants.sh` | `anthocnet-review` (named `protocol-review` until 2026-11-09, #860) | golden-rule checks on a diff |
 | `figdata.py` | `figures` (papers repo) | campaign CSV / `##BENCH##` → paper plot data, diff report, preliminary-flag audit |
 
 ## Alternatives considered
