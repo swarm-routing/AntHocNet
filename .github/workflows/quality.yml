@@ -125,7 +125,10 @@ jobs:
                    --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/'
                    --filter 'ns3/routing-bench/model/' --filter 'ns3/routing-bench/helper/')
           gcovr --root . core/build-coverage "${filters[@]}" --json /tmp/cov-core.json
-          gcovr --root . /opt/ns-3/cmake-cache "${filters[@]}" --json /tmp/cov-ns3.json
+          # The test-suite objects measure nothing reported, and gcovr 8.8
+          # fails on anthocnet-test's ("maximum recursion depth exceeded").
+          gcovr --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
+            "${filters[@]}" --json /tmp/cov-ns3.json
           python3 - /tmp/cov-core.json /tmp/cov-ns3.json <<'EOF'
           import json, os, sys
           for t in sys.argv[1:]:
