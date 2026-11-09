@@ -9,7 +9,7 @@ defaults layered on top.
 
 @AGENTS.md
 
-**Skills** (`.claude/skills/`): `protocol-review` (golden-rule checks on a diff),
+**Skills** (`.claude/skills/`): `anthocnet-review` (golden-rule checks on a diff),
 `benchmark-results` (dispatch → fetch → validate → compare). The `learn-site`
 skill (WASM parity, browser smoke, README figures) moved with the game to
 `swarm-routing/swarm-routing.github.io` (#850). Skills are procedures only —
