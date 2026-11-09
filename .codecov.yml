@@ -1,0 +1,15 @@
+# Codecov (quality.yml uploads the merged core + ns-3 module report).
+# Report-only: these statuses are not required checks; the CI gate (ci.yml)
+# does not wait for them.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+comment:
+  layout: "reach,diff,flags,files"
+  require_changes: true

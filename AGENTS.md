@@ -56,6 +56,20 @@ artifact). It is **report-only — there is no threshold** ([#162](https://githu
 chosen from evidence later. Read it as a map of untested paths to aim tests at,
 not as a number to chase (CLAUDE.md rule 2).
 
+`quality.yml` (Quality) measures the wider picture on every push to `main` and
+every non-prose PR: the core **plus** the ns-3 module and the routing-bench
+harness (`test.py -s anthocnet`, `-s routing-bench` in
+`ns3-dev:latest-debug`, gcov on those two modules only through
+`ns3-build-contrib --coverage`), merged into one gcovr report that goes to
+[Codecov](https://codecov.io/gh/swarm-routing/AntHocNet) (`.codecov.yml`) and,
+with the merged compilation database, to
+[SonarQube Cloud](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+(`sonar-project.properties`; `ns3/baselines/` is not analysed). It is also
+report-only: the `CI gate` does not wait for it, and neither service's status
+is a required check. The Sonar step skips itself (with a notice) without the
+`SONAR_TOKEN` secret, as on fork PRs, and (with a warning) while the
+SonarQube Cloud project still has Automatic Analysis on.
+
 `make test` is the check that runs in CI (`.github/workflows/ci.yml`) on every
 push/PR and is runnable here. An actual NS-3 build needs an external simulator
 tree and is **not** possible from this repo alone. **Always run `make test`
@@ -99,7 +113,8 @@ results.
   (republish simulator images). Automatic: `charts.yml` (re-renders charts from
   committed data), `core-bench.yml` (core ns/op: PR vs base as a warning, history
   on main; `make bench-core` locally), `links.yml` (weekly external link check; a
-  red week opens a `[docs]` issue), no Pages deploy here: [`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io) builds the game, docs and API from this repo at the commit in its `protocols.lock` and serves them at `/AntHocNet/`, `/AntHocNet/docs/`, `/AntHocNet/api/` (#850), `ns3-dev.yml`
+  red week opens a `[docs]` issue), `quality.yml` (SonarQube Cloud + Codecov,
+  report-only, not part of the CI gate; see *Test coverage*), no Pages deploy here: [`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io) builds the game, docs and API from this repo at the commit in its `protocols.lock` and serves them at `/AntHocNet/`, `/AntHocNet/docs/`, `/AntHocNet/api/` (#850), `ns3-dev.yml`
   (nightly build against ns-3-dev; a red night opens a `[ci]` issue), `claude-review.yml`
   (AI review of every PR against this file's golden rules; comments only, never
   approves, not a required check, #811; a second AI reviewer, CodeRabbit, runs as
