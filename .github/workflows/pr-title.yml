@@ -17,4 +17,8 @@ jobs:
     # ran the check a second time on the same commit and title (#864). Check
     # an edit only when it changed the title.
     if: github.event.action != 'edited' || github.event.changes.title != null
+    # @main, not a SHA, on purpose: the org's reusable workflows are called at
+    # @main by contract (swarm-routing/.github AGENTS.md). Scorecard's
+    # Pinned-Dependencies flags each such line; this repo accepts that warning
+    # (#787, CONTRIBUTING.md "Automated: OpenSSF Scorecard").
     uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@main
