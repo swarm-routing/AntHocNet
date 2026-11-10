@@ -104,7 +104,7 @@ AntHocNet uses *two different* values of it; see §5.)
 ## 3. AntNet: ACO for routing in wired networks
 
 The first ant-based routing algorithms were **ABC** (Schoonderwoerd et al.,
-1996) and **AntNet** (Gianni Di Caro & Marco Dorigo, 1998) — both cited by the
+1997) and **AntNet** (Gianni Di Caro & Marco Dorigo, 1998) — both cited by the
 AntHocNet paper as its direct ancestors. ACO is a natural fit for routing: a
 routing table is essentially a set of "which next hop is good for this
 destination?" preferences — exactly what pheromone expresses.
@@ -473,7 +473,7 @@ The canonical sources for the algorithm lineage:
 - M. Dorigo, G. Di Caro, L. M. Gambardella — *Ant Algorithms for Discrete
   Optimization*, Artificial Life 5(2):137–172 (1999). The ACO framework.
 - R. Schoonderwoerd, O. Holland, J. Bruten, L. Rothkrantz — *Ant-Based Load
-  Balancing in Telecommunications Networks*, Adaptive Behavior (1996). ABC, the
+  Balancing in Telecommunications Networks*, Adaptive Behavior 5(2):169–207 (1997). ABC, the
   first ant-routing algorithm.
 - G. Di Caro, M. Dorigo — *AntNet: Distributed Stigmergic Control for
   Communications Networks*, JAIR 9:317–365 (1998). ACO applied to wired routing.
