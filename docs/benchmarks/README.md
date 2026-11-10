@@ -60,7 +60,7 @@ In CI:
   branch's code changed, or on demand) runs the *discrete* scenarios with `--quick` and commits the refreshed
   index summary, scenario pages and `discrete-summary.png`.
 - **Benchmark cell** (`.github/workflows/benchmark-cell.yml`, manual, dispatched
-  by `tools/bench/campaign.py`) runs the heavier campaigns and sweeps one cell
+  by `ns3-campaign` from swarm-routing/ns3-tools, #905) runs the heavier campaigns and sweeps one cell
   at a time; **Charts** (`charts.yml`) re-renders the sweep figures from the
   committed CSVs. The `scenario-matrix.yml` workflow that used to run the sweeps
   was removed in v2.5.0 (#746).

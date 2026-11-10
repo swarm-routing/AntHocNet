@@ -133,8 +133,11 @@ published GHCR images (Actions → workflow → *Run workflow*):
   point too big for the 6 h hosted-runner ceiling
   ([#121](https://github.com/swarm-routing/AntHocNet/issues/121)) splits by
   seed blocks (`--firstRun`); a campaign plan in `tools/bench/campaigns/`
-  lists the cells and `tools/bench/campaign.py` dispatches, throttles and
-  collects them (#662). It replaced `paper-benchmark.yml`,
+  lists the cells and `ns3-campaign` (swarm-routing/ns3-tools) dispatches,
+  throttles and collects them (#662, #905; `tools/bench/campaign.py` keeps
+  only a control's legacy in-job-build arm). Every cell checks out the plan's
+  `source_sha`, whatever ref it was dispatched at, and fails unless HEAD is
+  that commit. It replaced `paper-benchmark.yml`,
   `scenario-matrix.yml` and `satellite-benchmark.yml`, removed in v2.5.0
   ([#746](https://github.com/swarm-routing/AntHocNet/issues/746)); the
   committed CSVs those produced stay readable by `sweep_summary.py` and
@@ -145,10 +148,11 @@ a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
 image once: `campaign-image.yml` builds the AntHocNet modules of one commit
 `FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized` (3.48
 while the ns-3.49 AODV livelock #843 is open), tests them and pushes
-`anthocnet-ns3-campaign:<commit7>-<base7>-optimized`; `campaign.py dispatch
---build-image` runs it and passes the digest to every cell as
-`benchmark-cell.yml`'s `image` input. Each cell then runs in that image by
-digest, builds nothing (`./ns3 run --no-build`), and its `##PROV##` line names
+`anthocnet-ns3-campaign:<commit7>-<base7>-optimized`; the campaign plan
+pins that digest and the commit (`image`, `source_sha`), and `ns3-campaign`
+passes both to every cell as `benchmark-cell.yml`'s inputs, which hand them to
+swarm-routing/.github's `reusable-benchmark-cell.yml` (#905). Each cell then
+runs in that image by digest, builds nothing (`./ns3 run --no-build`), and its `##PROV##` line names
 the image digest, the base digest and the modules' commits. Without `image`, a
 cell takes the older path, kept to replay published cells: a `version` input
 naming this repo's historical `ghcr.io/swarm-routing/ns3:<version>` image

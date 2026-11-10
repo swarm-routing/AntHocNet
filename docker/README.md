@@ -44,9 +44,9 @@ reaches `latest`.
 
 **Campaigns.** `campaign-image.yml` builds the image of one commit on one
 ns3-dev digest, once (a second call with the same pair reuses it and pushes
-nothing). `tools/bench/campaign.py dispatch --build-image` runs it and passes
-the digest to every `benchmark-cell.yml` cell, so all cells run one binary
-and none builds anything. Published numbers pin an ns3-dev digest and a
+nothing). A campaign plan pins its digest and commit (`image`, `source_sha`),
+and `ns3-campaign` passes both to every `benchmark-cell.yml` cell, so all cells
+run one binary on one commit and none builds anything (#905). Published numbers pin an ns3-dev digest and a
 campaign-image digest, never a rolling tag; both are in each cell's
 `##PROV##` line.
 

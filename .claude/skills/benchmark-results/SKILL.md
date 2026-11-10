@@ -22,8 +22,8 @@ the blob hosts (`api.github.com` JSON reads work; log/artifact/zip 403). So the
 result text must come through `mcp__github__get_job_logs`. Two ways to keep that
 fetch cheap:
 
-- **Preferred:** collect the run's artifact (`campaign.py collect`, or
-  `open_pr=true` on the dispatch). The artifact's `results.txt` is the
+- **Preferred:** collect the run's artifact (`ns3-campaign collect` or
+  `campaign.py collect`, or `open_pr=true` on the dispatch). The artifact's `results.txt` is the
   harness output plus `##ARGS##` and `##PROV## commit=…` (#365, #674).
 - **Log tail:** `benchmark-cell.yml`'s last step prints a compact block (the
   `##RUN##` and table rows, the scenario_check verdict, then `##PROV##`), so
@@ -73,51 +73,79 @@ never quote numbers from that cell. Details: [reference/statistics.md](reference
 
 ## Dispatching runs
 
-Fire a single run via `mcp__github__actions_run_trigger` on
-`benchmark-cell.yml` (#612): `harness` (anthocnet-compare | isl-grid |
-leo-walker), `version` (`3.42-opt`; `3.48` for leo-walker) and `args`, the
-harness's own flags verbatim, e.g.
-`--scenario=paper --runs=20 --diag --protocols=anthocnet,aodv --ns3::anthocnet::RoutingProtocol::EnableMacMetric=true`.
-`open_pr=true` with `cell=<name>` opens a PR adding `results/cells/<name>.txt`.
+Every cell runs one pinned commit (#905, swarm-routing/.github#156):
+`benchmark-cell.yml` takes `source_sha` (40 hex), checks it out whatever ref
+it was dispatched at, fails unless HEAD is that commit, and stamps it as
+`##PROV## commit=`. Two paths, chosen by `image`:
+
+- **`image`** (a campaign image by digest, built by `campaign-image.yml` from
+  `source_sha`): the job is the org's `reusable-benchmark-cell.yml`. It checks
+  the image's labels name this repository at `source_sha`, runs the harness
+  with `--no-build`, and a `verdict` job adds the scenario_check verdict.
+  Inputs: `image`, `source_sha`, `harness` (routing-compare | anthocnet-compare
+  | isl-grid | leo-walker), `args` (the harness's own flags verbatim), `seeds`
+  (`<first>-<last>`, optional), `cell`, `label`. This is the path for every
+  new number.
+- **no `image`** (the legacy in-job build): builds `source_sha` inside
+  `ghcr.io/swarm-routing/ns3:<version>` or `legacy_image` (by digest). Only for
+  replay traces (`replay`, `published`) and a control's legacy arm (#867).
+
+A single run: `mcp__github__actions_run_trigger` on `benchmark-cell.yml` with
+those inputs. To build an image for a commit, dispatch `campaign-image.yml`
+with `commit=<40 hex>` (and `ns3-version`, 3.48 while #843 is open); its
+summary and `campaign-image` artifact give the digest. `open_pr=true` with
+`cell=<name>` opens a PR adding `results/cells/<name>.txt`.
 paper-benchmark / satellite-benchmark / scenario-matrix were removed in v2.5.0
-(#746); `campaign.py` still translates plans that name them.
+(#746); both campaign tools still translate plans that name them.
 Pair every ON run with an identical OFF run for a clean A/B (baselines are
 deterministic on identical seeds).
 
-**A campaign (more than a handful of runs) goes through
-`tools/bench/campaign.py` and a committed plan** (#662). The plan is
-`tools/bench/campaigns/<release>.yaml`: cells, arms and which arm runs where;
-`campaigns/v2.2.0-phase2.yaml` is the worked example. Every job runs on
-`benchmark-cell.yml`; cells written for the retired workflows are translated
-to the same command line (`plan` prints it). The plan is committed in
-the PR that pre-registers the campaign.
+**A campaign (more than a handful of runs) goes through `ns3-campaign` and a
+committed plan** (#662, #905). `ns3-campaign` is swarm-routing/ns3-tools'
+runner (`pip install ./python` in a checkout of it; or run
+`python/ns3_tool/change_plan.py` directly), a port of `tools/bench/campaign.py`.
+The plan is `tools/bench/campaigns/<release>.yaml`: cells, arms and which arm
+runs where, plus `repo`, `source_sha` and `image` (or per arm
+`pins.<arm>: {source_sha, image}`), all required to dispatch. Cells written
+for the retired workflows are translated to the same command line (`plan`
+prints it). The plan is committed in the PR that pre-registers the campaign.
 
 ```bash
-C=tools/bench/campaign.py; P=tools/bench/campaigns/v2.3.0.yaml
-python3 $C plan $P                            # review the job list; sends nothing
-python3 $C dispatch $P --log runs.tsv --build-image   # campaign image once (#866), then cells up to the cap (12)
-python3 $C status $P --log runs.tsv --brief   # only labels not yet green; counts
-python3 $C collect $P --log runs.tsv --out results/cells [--from DIR]
-python3 $C verdicts $P --dir results/cells    # bench_parse --ab per arm x cell x protocol
+P=tools/bench/campaigns/<plan>.yaml
+ns3-campaign plan $P                            # review the job list; sends nothing
+ns3-campaign dispatch $P [--arm A]              # cells up to the cap (12); state in .campaign/<generation>/
+ns3-campaign status $P --brief                  # only labels not yet green; counts
+ns3-campaign collect $P --out results/cells     # rejects a cell whose ##PROV## is not its pin
+ns3-campaign collect $P --out results/cells --redispatch   # ... and re-queues those labels
+ns3-campaign verdicts $P --dir results/cells    # bench_parse --ab per arm x cell x protocol
 ```
 
-- **Arms on different images get one log each** (#867): `dispatch`, `status`
-  and `collect` take `--arm ARM`, since a log pins one image. A plan's
-  `legacy_images` map (version -> `ghcr.io/...@sha256:...`) makes `--no-image`
-  jobs run the image a published cell's `##PROV##` names
-  (benchmark-cell.yml's `legacy_image` input);
-  `campaigns/v2.7.x-image-control.yaml` is the example.
+- **A legacy arm goes through `tools/bench/campaign.py`.** `ns3-campaign`
+  refuses an arm with no image (and a plan with a plan-wide `legacy_images`).
+  An arm in the plan's `legacy_arms` (arm -> {version -> `ghcr.io/...@sha256:...`})
+  runs the in-job build in the image a published cell's `##PROV##` names; only
+  `campaign.py` dispatches it, one log per arm, and it refuses a plan without
+  `source_sha`. `campaigns/v2.7.x-image-control.yaml` (#867) is the example:
+  ```bash
+  python3 tools/bench/campaign.py dispatch $P --arm old --cap 12 --log old.tsv
+  python3 tools/bench/campaign.py status   $P --arm old --log old.tsv --brief
+  python3 tools/bench/campaign.py collect  $P --arm old --log old.tsv --out results/cells
+  ```
+  Both tools count every `benchmark-cell.yml` run against the cap, so two legs
+  together hold at most `cap` runners.
 - **The cap leaves PR CI its runners.** v2.2.0's phase 1 dispatched 36 jobs at
   once and PR CI queued for hours. Never hand-dispatch a campaign.
-- **`dispatch` is resumable.** It skips labels already in the log and exits
+- **`dispatch` is resumable.** It skips labels already logged and exits
   at the cap. Re-run it from a scheduled check-in every 60–90 min; an agent's
-  background tasks die at 2 h, and a campaign takes about 10 h.
+  background tasks die at 2 h, and a campaign takes about 10 h. A resumed
+  dispatch refuses a different commit or image than the one it logged.
 - **A check-in is `dispatch` then `status --brief`** — two calls, a few
   lines of output. Read full `status` only when a label needs its run id.
 - **`collect` refuses a stub.** A run killed at its time limit uploads an
   artifact with only `##PROV##`; collect reports it and skips the cell. Re-run
   the label, or, if the maintainer accepts fewer seeds, write the cell by hand
   and say so in its header (scale-500-olsr-v240, n=19).
+- **Artifacts are kept 7 days** on the image path: collect within the week.
 - **`collect --from DIR`** reads `DIR/<label>/<results file>`, for an
   environment where `gh api` cannot follow the artifact's blob redirect.
   There, get each artifact's signed URL with
@@ -133,11 +161,12 @@ The cross-session procedure (formerly buried in issue #91's session notes):
    flags partitioned fields, channel saturation, accidental single-hop,
    too-short sim time (see below).
 1. **Dispatch** `benchmark-cell.yml` (one cell) or a campaign plan via
-   `campaign.py` (a sweep is a set of cells), on `main` or a branch ref.
+   `ns3-campaign` (a sweep is a set of cells), from `main`: the plan's
+   `source_sha` decides what runs, not the dispatch ref.
 2. **Wait** — a real cell can exceed an hour (job timeout 360 min).
    Poll `mcp__github__actions_get` occasionally or schedule a check-in; do
    not spin.
-3. **Fetch cheap.** The artifact (`campaign.py collect`, or the bot PR from
+3. **Fetch cheap.** The artifact (`ns3-campaign collect`, or the bot PR from
    `open_pr=true`); otherwise the log tail above. Save each run verbatim, one
    file per run. Older `results/campaign/*.csv` sweeps came from the retired
    scenario-matrix workflow and stay readable by `sweep_summary.py`.
