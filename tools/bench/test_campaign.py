@@ -115,13 +115,14 @@ class FakeGh:
 IMAGE = "ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:" + "b" * 64
 
 
-def dispatch(log, fake, cap=None, image=None, no_image=True, build_image=False):
+def dispatch(log, fake, cap=None, image=None, no_image=True, build_image=False,
+             arm=None, plan=None):
     cp.gh = fake
     cp.time.sleep = lambda _s: None
     a = argparse.Namespace(log=log, cap=cap, wait=False, image=image,
                            no_image=no_image, build_image=build_image,
-                           ns3_version="3.48")
-    plan = dict(PLAN, program=cp.PROGRAM)
+                           ns3_version="3.48", arm=arm)
+    plan = dict(plan or PLAN, program=cp.PROGRAM)
     with contextlib.redirect_stderr(io.StringIO()) as err, \
             contextlib.redirect_stdout(io.StringIO()):
         try:
@@ -423,6 +424,133 @@ def _v220_plan():
     expect(arms == {"recheck": 1, "attrib-repair200": 6, "repair200": 23,
                     "sinr": 23, "hello500": 23, "reconv1s": 23},
            "v220-arms", arms)
+
+
+LEGACY = "ghcr.io/danieljoppi/ns3@sha256:" + "d" * 64
+
+
+@case("dispatch --arm: only that arm's jobs, each arm in its own log")
+def _dispatch_arm():
+    with tempfile.TemporaryDirectory() as d:
+        fake = FakeGh()
+        err = dispatch(os.path.join(d, "quiet.tsv"), fake, cap=10, arm="quiet")
+        labels = list(cp.read_log(os.path.join(d, "quiet.tsv")))
+        expect(labels == ["#image", "quiet/sat", "quiet/vanet-s1", "quiet/vanet-s5"],
+               "arm-labels", labels)
+        expect("all 3 job(s) dispatched" in err, "arm-count", err)
+        # The other arm, on its own image and log, is untouched by the first.
+        err = dispatch(os.path.join(d, "control.tsv"), fake, cap=10, arm="control",
+                       image=IMAGE, no_image=False)
+        body = json.loads(fake.dispatched[-1])
+        expect(len(fake.dispatched) == 7 and body["inputs"]["image"] == IMAGE,
+               "arm-image", fake.dispatched)
+        err = dispatch(os.path.join(d, "x.tsv"), fake, arm="nope")
+        expect("no such arm" in err and len(fake.dispatched) == 7, "arm-unknown", err)
+
+
+@case("legacy_images: each legacy job runs its version's image by digest")
+def _legacy_images():
+    plan = dict(PLAN, legacy_images={"3.42": LEGACY})
+    with tempfile.TemporaryDirectory() as d:
+        fake = FakeGh()
+        dispatch(os.path.join(d, "old.tsv"), fake, cap=10, arm="control", plan=plan)
+        got = [json.loads(b)["inputs"].get("legacy_image") for b in fake.dispatched]
+        expect(got == [LEGACY] * 4, "legacy-image-input", got)
+        # A campaign image wins: no legacy_image beside it.
+        fake = FakeGh()
+        dispatch(os.path.join(d, "dev.tsv"), fake, cap=1, arm="control", plan=plan,
+                 image=IMAGE, no_image=False)
+        body = json.loads(fake.dispatched[0])["inputs"]
+        expect("legacy_image" not in body and body["image"] == IMAGE,
+               "legacy-image-vs-image", body)
+        # A version the map lacks is refused, not run in ns3:<version>.
+        fake = FakeGh()
+        err = dispatch(os.path.join(d, "miss.tsv"), fake, cap=10, arm="control",
+                       plan=dict(PLAN, legacy_images={"3.48": LEGACY}))
+        expect("no image for version 3.42" in err and not fake.dispatched,
+               "legacy-image-missing", err)
+    # load_plan refuses a tag: a control image is pinned by digest.
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "p.yaml")
+        with open(path, "w") as f:
+            f.write("generation: g\narms: {a: ''}\ncells: {}\njobs: []\n"
+                    "legacy_images: {3.42-opt: 'ghcr.io/danieljoppi/ns3:3.42-opt'}\n")
+        try:
+            cp.load_plan(path)
+            expect(False, "legacy-image-tag", "a tag was accepted")
+        except SystemExit as e:
+            expect("sha256" in str(e), "legacy-image-tag", e)
+
+
+@case("status and collect --arm: the other arm's labels are not reported")
+def _status_collect_arm():
+    cp.gh = lambda *args, **_k: json.dumps({"conclusion": "success",
+                                            "status": "completed"})
+    with tempfile.TemporaryDirectory() as d:
+        src, out, log = (os.path.join(d, x) for x in ("src", "out", "runs.tsv"))
+        with open(log, "w") as f:
+            f.write("quiet/vanet-s1\t11\nquiet/vanet-s5\t12\nquiet/sat\t13\n")
+        a = argparse.Namespace(log=log, brief=False, arm="quiet")
+        with contextlib.redirect_stderr(io.StringIO()) as err, \
+                contextlib.redirect_stdout(io.StringIO()):
+            cp.cmd_status(PLAN, a)
+        expect(err.getvalue().strip() == "3 success", "status-arm", err.getvalue())
+        for label, n in (("quiet/vanet-s1", 1), ("quiet/vanet-s5", 5), ("quiet/sat", 1)):
+            write_run(src, label, f"##RUN## {n} anthocnet 40\n##PROV## commit=a\n")
+        a = argparse.Namespace(log=log, out=out, src=src, cache=None, arm="quiet")
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            cp.cmd_collect(PLAN, a)
+        expect("SKIP" not in err.getvalue() and "wrote 2 file(s)" in err.getvalue(),
+               "collect-arm", err.getvalue())
+
+
+@case("verdicts: one bench_parse --ab per protocol the cell runs")
+def _verdicts():
+    calls = []
+
+    def run(cmd, **_k):
+        calls.append(cmd[cmd.index("--proto") + 1])
+        return argparse.Namespace(stdout=f"    paired 95% CI (n=2): dPDR {calls[-1]}\n")
+
+    plan = dict(PLAN, program=cp.PROGRAM, jobs=[
+        {"arms": ["control", "quiet"], "cells": "*",
+         "inputs": {"protocols": "anthocnet,aodv,oracle"}}])
+    real = cp.subprocess.run
+    cp.subprocess.run = run
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            for cell in ("grid", "vanet"):
+                for arm in ("control", "quiet"):
+                    open(os.path.join(d, cp.out_name(plan, cell, arm)), "w").close()
+            a = argparse.Namespace(dir=d, arm=None)
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                cp.cmd_verdicts(plan, a)
+    finally:
+        cp.subprocess.run = real
+    lines = out.getvalue().splitlines()
+    expect(calls == ["anthocnet", "aodv", "oracle"] * 2, "verdicts-protos", calls)
+    expect(lines[1] == "quiet\tgrid\taodv\tpaired 95% CI (n=2): dPDR aodv"
+           and "quiet\tsat\t-\t(missing" in lines[3], "verdicts-lines", lines)
+
+
+@case("the #867 control plan: both images, every family, seed for seed")
+def _ctl867_plan():
+    plan = cp.load_plan(os.path.join(HERE, "campaigns", "v2.7.x-image-control.yaml"))
+    js = cp.jobs(plan)
+    by_arm = {}
+    for label, _c, arm, wf, inp in js:
+        harness, args, version = cp.legacy_command(wf, inp, plan["program"])
+        by_arm.setdefault(arm, {})[label.split("/", 1)[1]] = (harness, args, version)
+        expect(cp.legacy_image(plan, version).startswith("ghcr.io/danieljoppi/ns3@sha256:"),
+               "ctl867-legacy-image", (label, version))
+    expect(sorted(by_arm) == ["dev", "old"] and len(by_arm["old"]) == 23
+           and by_arm["old"] == by_arm["dev"], "ctl867-legs",
+           {k: len(v) for k, v in by_arm.items()})
+    for cell, spec in plan["cells"].items():
+        expect(os.path.exists(os.path.join(HERE, "..", "..", "results", "cells",
+                                           spec["source"])), "ctl867-source", cell)
+    expect("vanet-sparse" in plan["cells"] and "vanet-main" not in plan["cells"],
+           "ctl867-vanet", list(plan["cells"]))
 
 
 def main():
