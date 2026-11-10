@@ -72,13 +72,21 @@ Types: `feat` `fix` `docs` `style` `refactor` `perf` `test` `build` `ci`
 `BREAKING CHANGE:` footer (or a `!` after the type) bumps the minor while
 pre-1.0.
 
-Releases are cut by running the **Release** workflow (manual dispatch):
-[Commitizen](https://commitizen-tools.github.io/commitizen/) computes the next
-version from the commit history, updates `VERSION` / `CITATION.cff` / the CMake
-version + `CHANGELOG.md`, tags it, and publishes the install bundle. Don't bump
-the version by hand. Run it once with `mode: dryrun` first. That run bumps,
-builds, attests and verifies on the runner, and pushes nothing. Then run it
-with `mode: bump`. (The `major_version_zero` gate in `.cz.toml` was flipped to
+Releases are cut with the **Release** workflow, in two steps, because `main`
+takes no direct push (#789, #882). Don't bump the version by hand.
+
+1. Run it once with `mode: dryrun`. That run bumps, builds, attests and
+   verifies on the runner, and pushes nothing.
+2. Run it with `mode: bump`.
+   [Commitizen](https://commitizen-tools.github.io/commitizen/) computes the
+   next version from the commit history and updates `VERSION` / `.cz.toml` /
+   `CITATION.cff` / the CMake version + `CHANGELOG.md`. The workflow then opens
+   the PR `chore(release): bump version A to B` from `bot/release`. It tags
+   nothing.
+3. Merge that PR when `CI gate` is green. The merge starts the workflow again:
+   it builds, attests and verifies the merged commit, tags it `v<version>`
+   and publishes the install bundle. If `main` moved before the merge,
+   dispatch `mode: bump` again first, so the changelog covers it. (The `major_version_zero` gate in `.cz.toml` was flipped to
 `false` at v1.0.0, so from 1.0 on a breaking `feat!`/`fix!` bumps the **major**.)
 
 ### Post-release: Zenodo DOI (manual — the release's second step)
@@ -245,19 +253,10 @@ are made as its bot user. With neither, they fall back to the workflow's
 reopens it. If `main` moves while a bot PR waits, the next run rebuilds it, or
 use the PR's *Update branch*.
 
-**The release is the exception.** `release.yml` pushes its `bump:` commit and
-tag straight to `main`, because the tag must point at a commit on `main` and
-the bundle is built and attested from that commit before anything is pushed.
-That push needs an actor on the ruleset's bypass list: the bot app (#705), or
-the owner of `ORG_BOT_TOKEN` through their role. The workflow's `GITHUB_TOKEN`
-cannot be one. The token is only ever held by the `publish` job, which runs no
-repository code: the `release` job builds, attests and verifies with read-only
-credentials and hands over the bump commit as a git bundle, and `publish`
-pushes it only if `tools/release/check-bump.sh` finds one commit on the
-dispatched one that changes nothing but Commitizen's version lines (and adds
-to `CHANGELOG.md`). Without a bypass actor the push step fails before the tag or
-the release go out, so nothing is left half-published; a dry run pushes
-nothing and needs none.
+**The release goes through a PR too** (#882): `mode: bump` opens the bump PR
+from `bot/release`, and merging it is the release. The tag is pushed after the
+merge, onto the merged commit; tags and the `ns3-module` branch are outside
+the ruleset, so nothing in the release needs a bypass actor.
 
 ### Automated: SonarQube Cloud and Codecov
 
@@ -406,6 +405,11 @@ registered. **Do not invent one.** Steps:
 ## Pull requests
 
 - Branch from `main`; keep PRs focused.
+- **Every change is a PR to `main`**, opened as soon as the branch is pushed,
+  so all work is tracked. AntHocNet follows the org rule
+  ([`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#pull-requests))
+  as of the maintainer decision of 2026-11-10; this replaces the earlier
+  agent instruction "do not open a pull request unless explicitly asked".
 - Make sure CI is green. New tunables get NS-3 `TypeId`
   attributes; update `CONTEXT.md` / `docs/porting-notes.md` if behaviour or the
   wire format changed.

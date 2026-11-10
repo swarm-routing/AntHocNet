@@ -113,14 +113,21 @@ results.
 - Validate the **core** half locally first (`make test`); only the adapter/build
   half needs CI.
 - Heavier, manual workflows: `benchmark-cell` (one harness cell, any
-  harness; campaigns dispatch it through `tools/bench/campaign.py`; it replaced
+  harness, on one commit pinned by its `source_sha` input whatever the
+  dispatch ref, #905; with `image`, a thin caller of swarm-routing/.github's
+  `reusable-benchmark-cell.yml`, the campaign-image path every new number
+  takes; without, the legacy in-job build in a frozen ns-3 image, for replay
+  traces and a control's legacy arm; campaigns dispatch it through
+  `ns3-campaign` from swarm-routing/ns3-tools, legacy arms through
+  `tools/bench/campaign.py`; it replaced
   `paper-benchmark` / `scenario-matrix` / `satellite-benchmark`, removed in
   v2.5.0, #746),
   `release.yml` (Commitizen bump + install-bundle; its images job publishes
   `anthocnet-ns3:<tag>-{optimized,debug}` through swarm-routing/.github's
   `reusable-ns3-image.yml`, FROM a pinned ns3-dev digest; this repo builds no
   ns-3 images of its own, `images.yml` was retired in #866), `campaign-image.yml` (one campaign
-  image per commit; `campaign.py dispatch --build-image` runs it). Automatic: `charts.yml` (re-renders charts from
+  image per commit; dispatch it with `commit=<40 hex>` and put the digest in
+  the plan). Automatic: `charts.yml` (re-renders charts from
   committed data), `core-bench.yml` (core ns/op: PR vs base as a warning, history
   on main through a `bot/core-bench` PR; `make bench-core` locally), `links.yml` (weekly external link check; a
   red week opens a `[docs]` issue), `quality.yml` (SonarQube Cloud + Codecov,
@@ -308,7 +315,7 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 | Run / read benchmarks | `docs/benchmarks.md` (index → `docs/benchmarks/{metrics,methodology}.md`, `scenarios/<name>.md`, `sweeps/<name>.md`), `ns3/tools/run-scenarios.py` + `make-charts.py` + `update-benchmarks.py`; family/cross-family + sweep charts from committed data: `ns3/tools/family-charts.py` (re-rendered by `charts.yml`, which proposes them in a `bot/charts` PR; no workflow pushes to `main`, CONTRIBUTING "Branch protection"), `anthocnet-compare --diag` |
 | Inspect protocol internals | NS-3 `Tx`/`Rx`/`RouteChanged` trace sources; core counters via `IRouterObserver` |
 | Run the benchmark campaign loop (dispatch → fetch → parse) | `benchmark-results` skill (SKILL.md documents the whole procedure) |
-| Run a campaign (cells × arms, throttled so PR CI keeps runners) | `tools/bench/campaign.py` + a plan in `tools/bench/campaigns/` (#662): `plan`, `dispatch`, `status`, `collect`, `verdicts` |
+| Run a campaign (cells × arms, throttled so PR CI keeps runners) | `ns3-campaign` (swarm-routing/ns3-tools) + a plan in `tools/bench/campaigns/` that pins `repo`, `source_sha` and `image` (or `pins.<arm>`) (#662, #905): `plan`, `dispatch`, `status`, `collect [--redispatch]`, `verdicts`; every cell runs `source_sha` through `benchmark-cell.yml`. An arm in the plan's `legacy_arms` (the in-job build in a frozen ns-3 image, #867) goes through `tools/bench/campaign.py dispatch --arm A --log A.tsv`, which also requires `source_sha`. The `benchmark-results` skill has the procedure |
 | Run the comparison harness, or add a protocol (arm) to it | [`docs/comparison-harness.md`](docs/comparison-harness.md) — running `routing-compare` (alias `anthocnet-compare`), markers, readers, the `adaptive` `RoutingBase` hooks, registering an arm, the three gates. The harness is the `routing-bench` module (`ns3/routing-bench/`, its README); each arm module registers through `helper/<module>-bench-arms.cc`. The design (arm contract, hook order, explicit registration, compatibility promise): [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md) (epic #764) |
 | Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`tools/bench/bench_parse.py`) |
 | Build, test or screenshot the learn site | the `learn-site` skill in `swarm-routing/swarm-routing.github.io` (parity, smoke, README figures) |
@@ -320,6 +327,6 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 | Understand why skills are script-first (and add a new analysis loop) | [ADR-0014](docs/adr/0014-agent-skills-are-script-first.md) — raw data stays out of LLM context; extend a skill script, don't eyeball |
 | Work on satellite / ISL topologies | [ADR-0015](docs/adr/0015-satellite-substrate-lives-in-the-image.md) — **there is no separate satellite build**: one binary, scenario differences live in examples and flags (`isl-grid` static, `leo-walker` moving). [ADR-0022](docs/adr/0022-satellite-substrate-is-stock-ns3-leo.md) — the substrate is stock ns-3.48's LEO model, so moving-constellation work is 3.48-only. Track: [#192](https://github.com/swarm-routing/AntHocNet/issues/192) |
 | **Understand why satellite ≠ MANET** (before assuming a MANET intuition transfers) | [`docs/network-regimes.md`](docs/network-regimes.md) — the inversion in one line: MANET hides the *topology* and gives you the traffic; a constellation gives you the topology and hides the *traffic*. Diagrams, and a difference table where every row traces to a defect, parameter or control in this repo |
-| Cut a release | run the `Release` workflow (Commitizen); see `CONTRIBUTING.md`. **Post-release, record the version DOI** — Zenodo mints it async a few minutes after publish; read it from the public API (`curl -sL https://zenodo.org/api/records/20981980/versions/latest \| python3 -c "import json,sys; d=json.load(sys.stdin); print(d['metadata']['version'], d['doi'])"`; address it through a *version* record — the concept ID 20981979 returns 404 there — and check the version printed is the one you released), or ask the maintainer if `zenodo.org` is proxy-blocked (403, as it was until 2026-09). Never invent one. Then append a row to the DOI table in `CONTRIBUTING.md` via a `docs:` PR — the README badge and `CITATION.cff` stay on the concept DOI (#116) |
+| Cut a release | run the `Release` workflow (Commitizen) with `mode: bump`; it opens the bump PR, and merging that PR tags and publishes (#882); see `CONTRIBUTING.md`. **Post-release, record the version DOI** — Zenodo mints it async a few minutes after publish; read it from the public API (`curl -sL https://zenodo.org/api/records/20981980/versions/latest \| python3 -c "import json,sys; d=json.load(sys.stdin); print(d['metadata']['version'], d['doi'])"`; address it through a *version* record — the concept ID 20981979 returns 404 there — and check the version printed is the one you released), or ask the maintainer if `zenodo.org` is proxy-blocked (403, as it was until 2026-09). Never invent one. Then append a row to the DOI table in `CONTRIBUTING.md` via a `docs:` PR — the README badge and `CITATION.cff` stay on the concept DOI (#116) |
 | Tune defaults | `core/include/anthocnet/core/config.h` |
 | **Look up a parameter's default, its provenance, or how to calibrate it** | [`docs/configuration.md`](docs/configuration.md) — all 38 `Config` fields with a `source` column ([1] §/thesis/repo choice/**unknown**), the ns-3 attribute for each, the sweep→A/B→noise loop, and the checklist for adding a parameter. The `unknown` rows in §3.2 are the next #88/#169 candidates |
