@@ -9,7 +9,9 @@
 #
 # What ships: the code (core/, ns3/, tools/), the docs, and the top-level files a
 # user or contributor reads. What does not: agent-only material (.claude/ skills,
-# AGENTS.md, CLAUDE.md), CI config, build output.
+# AGENTS.md, CLAUDE.md), CI config (.github/, and the service configs at the root:
+# .codecov.yml, sonar-project.properties, .coderabbit.yaml; #868), build output.
+# The top-level list below is an allow-list, so a root file ships only if named.
 set -euo pipefail
 VER=${1:?usage: assemble-bundle.sh VERSION OUTDIR}
 OUT=${2:?usage: assemble-bundle.sh VERSION OUTDIR}

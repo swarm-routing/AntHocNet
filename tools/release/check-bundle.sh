@@ -3,6 +3,7 @@
 # Release-package gate (#604). Assembles the bundle exactly as release.yml does
 # and fails if it ships something it must not, or misses something it must:
 #   - agent-only material: .claude/, AGENTS.md, CLAUDE.md
+#   - CI configuration: .github/, .codecov.yml, sonar-project.properties, .coderabbit.yaml (#868)
 #   - caches and build output: __pycache__, *.pyc, build/ dirs
 #   - a shipped script that reaches into .claude/ (it would break in the package)
 #   - the tools the shipped harness imports (tools/bench/*.py)
@@ -16,7 +17,7 @@ bundle=$(tools/release/assemble-bundle.sh 0.0.0-check "$tmp") || { echo "FAIL: a
 fail=0
 bad() { echo "FAIL: $*"; fail=1; }
 cd "$bundle"
-for p in .claude AGENTS.md CLAUDE.md .github; do
+for p in .claude AGENTS.md CLAUDE.md .github .codecov.yml sonar-project.properties .coderabbit.yaml; do
   [ -e "$p" ] && bad "bundle ships $p"
 done
 junk=$(find . \( -name __pycache__ -o -name '*.pyc' -o -type d -name build \) -print | head -5)
@@ -49,10 +50,12 @@ done
 # The index tree with the working tree's .gitattributes: in CI that is HEAD;
 # locally it includes staged changes.
 arch=$(git archive --worktree-attributes --format=tar "$(git write-tree)" | tar -t)
-for p in .claude/ AGENTS.md CLAUDE.md .github/; do
-  printf '%s\n' "$arch" | grep -q "^$p" && bad "git archive ships $p (add export-ignore)"
+for p in .claude/ AGENTS.md CLAUDE.md .github/ .codecov.yml sonar-project.properties .coderabbit.yaml; do
+  # A here-string, not a pipe: with pipefail, grep -q exiting on an early match
+  # can SIGPIPE the writer and turn a hit into a miss.
+  grep -q "^$p" <<<"$arch" && bad "git archive ships $p (add export-ignore)"
 done
 if [ "$fail" = 0 ]; then
-  echo "ok: bundle $(find "$bundle" -type f | wc -l) files, no agent files, no caches, tools/bench present; git archive clean"
+  echo "ok: bundle $(find "$bundle" -type f | wc -l) files, no agent or CI config files, no caches, tools/bench present; git archive clean"
 fi
 exit "$fail"

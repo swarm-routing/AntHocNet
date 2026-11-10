@@ -10,4 +10,7 @@ docs/benchmarks/*.png linguist-generated=true
 /.claude export-ignore
 /AGENTS.md export-ignore
 /CLAUDE.md export-ignore
+# CI service configuration (#868): Codecov, SonarCloud, CodeRabbit.
+/.codecov.yml export-ignore
+/sonar-project.properties export-ignore
 /.coderabbit.yaml export-ignore
