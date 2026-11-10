@@ -88,7 +88,7 @@ jobs:
     name: module/arm/marker allowlist consistency
     runs-on: ubuntu-24.04
     # #435: the module lists (ci-ns3.yml's mods=, benchmark-cell.yml's
-    # --enable-modules, Dockerfile.ns3) and the protocol-arm awk alternation
+    # --enable-modules, the retired Dockerfile.ns3) and the protocol-arm awk alternation
     # (check-determinism.sh filter_rows) are hand-maintained copies that fail
     # SILENTLY when one is missed — four of the ten were, in one day, the
     # last of which broke every v1.5.0 ns-3 release image. Pure text against

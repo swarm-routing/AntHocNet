@@ -2,7 +2,7 @@
 # Devcontainer post-create (#334): make the image's ns-3 tree carry *this*
 # checkout's AntHocNet module, then build it.
 #
-# The base image (ghcr.io/danieljoppi/anthocnet-ns3, see docker/Dockerfile.ns3)
+# The base image (ghcr.io/danieljoppi/anthocnet-ns3, frozen; recipe retired in #866)
 # already has ns-3 configured and fully built at /opt/ns-3, with an AntHocNet
 # module baked in from whatever commit the image was published at. That copy is
 # not the branch you just opened, so this script reinstalls the module from the
