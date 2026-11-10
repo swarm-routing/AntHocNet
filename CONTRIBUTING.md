@@ -406,6 +406,11 @@ registered. **Do not invent one.** Steps:
 ## Pull requests
 
 - Branch from `main`; keep PRs focused.
+- **Every change is a PR to `main`**, opened as soon as the branch is pushed,
+  so all work is tracked. AntHocNet follows the org rule
+  ([`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#pull-requests))
+  as of the maintainer decision of 2026-11-10; this replaces the earlier
+  agent instruction "do not open a pull request unless explicitly asked".
 - Make sure CI is green. New tunables get NS-3 `TypeId`
   attributes; update `CONTEXT.md` / `docs/porting-notes.md` if behaviour or the
   wire format changed.
