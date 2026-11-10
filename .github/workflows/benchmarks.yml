@@ -22,9 +22,15 @@ name: Benchmarks
 # nightly run below already re-measures whenever something benchmark-relevant
 # changed, so the push runs bought nothing but runner time. A daily run bounds
 # how stale the published table can get at 24 h, whatever the merge cadence.
+#
+# PAUSED (#866, maintainer decision 2026-11-10): the schedule is off until the
+# control campaign #867 has measured the move to the campaign image (gcc-11 /
+# ns-3.42 / default profile -> gcc-13 / ns-3.48 / release). Until then the
+# table keeps its last pre-move numbers; a manual dispatch still runs it.
+# Re-enable by restoring the schedule below once #867's result is recorded.
 on:
-  schedule:
-    - cron: '17 4 * * *'
+  # schedule:
+  #   - cron: '17 4 * * *'
   workflow_dispatch:
 
 # Read-only by default; each job that writes declares its own scopes

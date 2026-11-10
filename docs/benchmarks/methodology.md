@@ -158,9 +158,11 @@ the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
 The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48): compare a
 post-move number with a published one only after the control campaign
 [#867](https://github.com/swarm-routing/AntHocNet/issues/867). The nightly refresh of
-[`../benchmarks.md`](../benchmarks.md) needs no dispatch (`benchmarks.yml`,
-when the default branch's code changed), and its publish step is gated on the
-validation anchors below. Before trusting or comparing dispatched numbers, run
+[`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
+branch's code changed) is **paused until #867** has recorded that control: its
+schedule is off, so the table keeps its last pre-move numbers, and a manual
+dispatch still runs it. Its publish step is gated on the validation anchors
+below. Before trusting or comparing dispatched numbers, run
 the validation loop in
 [`configuration.md` §5](../configuration.md#5-how-to-calibrate-a-parameter)
 (`scenario_check.py` preflight/results, `bench_parse.py --ab`).
@@ -1260,7 +1262,7 @@ biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routi
 **The optimized image is for numbers, never for CI.** CI (`ci.yml`) keeps
 running in `default`/`debug` images on purpose: those assertions have caught
 real bugs, and a green run with assertions compiled out is a weaker statement.
-Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866) run in a
+Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866; its schedule is paused until #867) run in a
 campaign image, which is built `FROM` an `ns3-dev:<ver>-optimized` digest;
 protocol metrics are bit-identical across the two profiles (#124), only the
 cost differs.
