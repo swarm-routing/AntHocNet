@@ -42,8 +42,13 @@ on:
 permissions:
   contents: read
 
+# One run per commit at a time, never cancelled. Not one group for the whole
+# workflow: with cancel-in-progress false a group keeps one pending run, so a
+# later dispatch or push would replace a merged bump's pending release and
+# leave that version unpublished. Distinct commits release distinct versions
+# (the tag checks below refuse a version tagged elsewhere).
 concurrency:
-  group: release
+  group: release-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -108,6 +113,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+      pull-requests: read  # which PR a pushed release commit came from
       id-token: write      # keyless Sigstore signing of the attestations (#614)
       attestations: write  # store build provenance + SBOM attestations (#614)
     outputs:
@@ -116,6 +122,22 @@ jobs:
       sha256: ${{ steps.handover.outputs.sha256 }}
       mod_sha256: ${{ steps.handover.outputs.mod_sha256 }}
     steps:
+      # The title alone is not enough: any squash-merged PR that changes
+      # VERSION could carry it. A pushed release must be the merge of the
+      # Commitizen PR the propose job opened, from this repository's
+      # bot/release branch.
+      - name: The pushed commit is the merged bump PR (push only)
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          from=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+            --jq '[.[] | select(.merged_at != null) | "\(.head.repo.full_name):\(.head.ref)"] | .[0] // empty')
+          if [ "$from" != "${GITHUB_REPOSITORY}:bot/release" ]; then
+            echo "FAIL: ${GITHUB_SHA} is not the merge of a bot/release PR (came from '${from:-no PR}'); not releasing"
+            exit 1
+          fi
+          echo "Release commit from ${from}."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history + tags for cz to compute the bump
@@ -159,8 +181,13 @@ jobs:
             ver="$(tr -d '[:space:]' < VERSION)"
           else
             ver="$(tr -d '[:space:]' < VERSION)"
-            if git rev-parse -q --verify "refs/tags/v${ver}" >/dev/null; then
-              echo "FAIL: v${ver} is already tagged; nothing to release"; exit 1
+            # A tag on this commit is a re-run after a failed publish: build again
+            # and let publish resume. A tag elsewhere means the version is taken.
+            if tagged=$(git rev-parse -q --verify "refs/tags/v${ver}^{commit}"); then
+              if [ "$tagged" != "$GITHUB_SHA" ]; then
+                echo "FAIL: v${ver} is already tagged on ${tagged}, not ${GITHUB_SHA}"; exit 1
+              fi
+              echo "v${ver} already tags ${GITHUB_SHA}: a re-run, publish resumes."
             fi
           fi
           echo "VER=${ver}" >> "$GITHUB_ENV"
@@ -315,6 +342,18 @@ jobs:
         env:
           PUSH_TOKEN: ${{ github.token }}
         run: |
+          # Idempotent, so a re-run after a later step failed resumes: a tag
+          # already on this commit is kept; one on another commit fails.
+          # The peeled line (^{}) of an annotated tag sorts last; a lightweight
+          # tag has only its own line.
+          tagged=$(git ls-remote origin "refs/tags/${TAG}" "refs/tags/${TAG}^{}" | tail -n 1 | cut -f1)
+          if [ -n "$tagged" ]; then
+            if [ "$tagged" != "$GITHUB_SHA" ]; then
+              echo "FAIL: ${TAG} already tags ${tagged}, not ${GITHUB_SHA}"; exit 1
+            fi
+            echo "${TAG} already tags ${GITHUB_SHA}; resuming."
+            exit 0
+          fi
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "${TAG}" -m "${TAG}" "$GITHUB_SHA"
