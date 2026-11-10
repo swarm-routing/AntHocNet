@@ -22,13 +22,15 @@
 # `ref` must not move during the campaign: the dev leg runs the commit its
 # image was built from (the image's revision label), the old leg builds `ref`.
 #
-# CTL867 IMAGE (PLACEHOLDER, filled in phase 2 of #867 once built):
-#   ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:<to be filled in>
+# CTL867 IMAGE: built by campaign-image.yml run 42847354947 from
+# b531d5d40c199b159527257119f872e3da7eeb5b (main after #889, the commit the
+# ctl867 tag names) on ns3-dev:3.48-optimized:
+#   ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:ee930d8c6592b012a4ec321f0f255945f66cbf505e5850ab7fea683f1e2aba68
 #
-#   git tag ctl867 <main commit> && git push origin ctl867
+#   git tag ctl867 b531d5d40c199b159527257119f872e3da7eeb5b && git push origin ctl867
 #   P=tools/bench/campaigns/v2.7.x-image-control.yaml
 #   python3 tools/bench/campaign.py plan     $P
-#   python3 tools/bench/campaign.py dispatch $P --arm dev --image <CTL867 IMAGE> --log ctl867-dev.tsv
+#   python3 tools/bench/campaign.py dispatch $P --arm dev --image ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:ee930d8c6592b012a4ec321f0f255945f66cbf505e5850ab7fea683f1e2aba68 --log ctl867-dev.tsv
 #   python3 tools/bench/campaign.py dispatch $P --arm old --no-image --log ctl867-old.tsv
 #     (both resumable; re-run each until every label is logged: the cap is
 #      shared, so the two legs together hold at most `cap` runners)
