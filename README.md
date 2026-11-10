@@ -111,9 +111,9 @@ live/inert per network regime — is diagrammed in
 
 ### Run a simulation with zero setup (Codespaces / VS Code devcontainer)
 
-One click gives you a container with ns-3.42 already built ([`.devcontainer/`](.devcontainer/),
-on the pinned [GHCR image](docker/README.md)); it installs this checkout's AntHocNet module and
-builds it for you. Locally: clone, then VS Code → *Dev Containers: Reopen in Container*. When the
+One click gives you a container with ns-3.48 already built ([`.devcontainer/`](.devcontainer/),
+on the org's [`ns3-dev`](https://github.com/swarm-routing/ns3-containers) `3.48-debug` image,
+pinned by digest); it installs this checkout's AntHocNet module and builds it for you. Locally: clone, then VS Code → *Dev Containers: Reopen in Container*. When the
 setup log finishes:
 
 ```bash
