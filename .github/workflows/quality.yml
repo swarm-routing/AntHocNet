@@ -54,15 +54,16 @@ jobs:
         with:
           fetch-depth: 0  # Sonar reads git blame for new-code detection
           persist-credentials: false
-      - name: Install gcovr (pinned) and unzip
+      - name: Install gcovr (pinned), unzip and gnupg
         # The same hash-pinned gcovr as ci-core.yml (requirements/gcovr.txt),
         # in a venv: the image's Python is externally managed and has no pip.
-        # unzip is what the Sonar action extracts its scanner with.
+        # The Sonar action extracts its scanner with unzip and checks the
+        # download's signature with gpg.
         timeout-minutes: 10
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           apt-get update -qq
-          apt-get install -y -qq --no-install-recommends python3-venv unzip
+          apt-get install -y -qq --no-install-recommends python3-venv unzip gnupg
           python3 -m venv /opt/gcovr
           /opt/gcovr/bin/pip install -q --require-hashes -r requirements/gcovr.txt
           echo /opt/gcovr/bin >> "$GITHUB_PATH"
