@@ -182,6 +182,9 @@ jobs:
           EOF
       - name: SonarQube Cloud scan
         if: steps.sonar-guard.outputs.run == 'true'
+        # Report-only: a scanner or SonarQube Cloud failure must not keep the
+        # coverage report from reaching Codecov (or turn this workflow red).
+        continue-on-error: true
         uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
