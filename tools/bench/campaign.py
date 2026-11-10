@@ -20,6 +20,7 @@ be re-run from a scheduled check-in until every label is logged.
 Usage:
     campaign.py plan     PLAN                   # list the jobs; dispatches nothing
     campaign.py dispatch PLAN --log RUNS.tsv [--cap 12] [--wait]
+                (--build-image [--ns3-version 3.48] | --image REF | --no-image)
     campaign.py status   PLAN --log RUNS.tsv
     campaign.py collect  PLAN --log RUNS.tsv --out results/cells [--from DIR]
     campaign.py verdicts PLAN --dir results/cells [--arm ARM]
@@ -34,6 +35,17 @@ two plans can share a label). Where that cannot follow the blob redirect, fetch 
 another way and pass --from DIR, holding DIR/<label>/<results file>: the
 rescue-artifacts workflow's bundle_run_ids input gathers every run's artifact
 into one `rescue-bundle` (<run id>/...), one download for the whole campaign.
+
+Every cell of a campaign runs one binary (#866, swarm-routing/.github#107):
+`dispatch --build-image` resolves the plan's ref to a commit, dispatches
+campaign-image.yml for it (ns3-dev:<--ns3-version>-optimized, resolved to a
+digest there; 3.48 while the AODV livelock #843 is open) and waits for the
+image digest; `--image ghcr.io/...@sha256:...` names one already built. The
+digest is the first line of the log (`#image<TAB><ref>`), so a resumed
+dispatch reuses it and refuses a different one, and it is passed to every
+benchmark-cell.yml dispatch as its `image` input: the cells pull it by digest
+and build nothing. `--no-image` is the legacy path (each cell installs and
+builds the module in ns3:<version>), to replay a published cell only.
 
 `verdicts` runs bench_parse.py --ab --proto anthocnet on every arm's file
 against the control file of the same cell, and prints one line per cell.
@@ -77,6 +89,7 @@ each job's image and command line.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -89,6 +102,11 @@ REPO = os.environ.get("AHN_REPO", "swarm-routing/AntHocNet")
 # the harness command line that workflow built (legacy_command), so the
 # committed v2.2.0-v2.4.0 plans re-run unchanged.
 WORKFLOW = "benchmark-cell.yml"
+# Builds one campaign image per (commit, ns3-dev digest) (#866).
+IMAGE_WORKFLOW = "campaign-image.yml"
+IMAGE_KEY = "#image"          # the log line holding the campaign's image
+NO_IMAGE = "-"                # ... or saying it runs the legacy path
+IMAGE_RE = re.compile(r"ghcr\.io/[a-z0-9._-]+/[a-z0-9._/-]+@sha256:[0-9a-f]{64}")
 RESULTS = ("results.txt", "paper-results.txt", "satellite-results.txt")
 
 # The retired workflows' input defaults, for inputs a plan leaves out.
@@ -247,15 +265,86 @@ def cmd_plan(plan, _a):
           file=sys.stderr)
 
 
+def wait_new_run(wf, before, what):
+    """The id of the run a dispatch just created (the API returns none)."""
+    for _ in range(30):
+        time.sleep(4)
+        rid = newest_dispatch(wf)
+        if rid and rid != before:
+            return rid
+    sys.exit(f"{what}: dispatched, but no new run appeared")
+
+
+def build_image(plan, version):
+    """Dispatch campaign-image.yml for the plan's ref; wait; its image@digest."""
+    commit = gh(f"repos/{REPO}/commits/{plan['ref']}", "--jq", ".sha").strip()
+    before = newest_dispatch(IMAGE_WORKFLOW)
+    body = {"ref": plan["ref"], "inputs": {"ns3-version": version, "commit": commit}}
+    gh("-X", "POST", f"repos/{REPO}/actions/workflows/{IMAGE_WORKFLOW}/dispatches",
+       "--input", "-", stdin=json.dumps(body))
+    rid = wait_new_run(IMAGE_WORKFLOW, before, "campaign image")
+    print(f"campaign image: building {commit[:7]} on ns3-dev:{version}-optimized, "
+          f"run {rid}", file=sys.stderr)
+    for _ in range(180):  # 90 min: the reusable build's own timeout
+        r = json.loads(gh(f"repos/{REPO}/actions/runs/{rid}"))
+        if r["status"] == "completed":
+            break
+        time.sleep(30)
+    else:
+        sys.exit(f"campaign image run {rid} still not finished; re-run with "
+                 "--image once it has")
+    if r["conclusion"] != "success":
+        sys.exit(f"campaign image run {rid}: {r['conclusion']}; no cell dispatched")
+    with tempfile.TemporaryDirectory() as d:
+        try:
+            fetch(rid, d, name="campaign-image")
+        except RuntimeError as e:
+            sys.exit(f"campaign image run {rid} succeeded, but its image.txt could "
+                     f"not be fetched ({e}); read the digest from the run's summary "
+                     "and re-run with --image ghcr.io/...@sha256:...")
+        with open(os.path.join(d, "image.txt")) as f:
+            ref = f.readline().strip()
+    if not IMAGE_RE.fullmatch(ref):
+        sys.exit(f"campaign image run {rid} gave no image digest ({ref!r})")
+    return ref
+
+
+def campaign_image(plan, a):
+    """The image every cell runs in ("" = legacy), pinned once in the log."""
+    logged = read_log(a.log).get(IMAGE_KEY)
+    given = a.image or (NO_IMAGE if a.no_image else None)
+    if a.image and not IMAGE_RE.fullmatch(a.image):
+        sys.exit(f"--image must be ghcr.io/<owner>/<name>@sha256:<64 hex> (got {a.image!r})")
+    if logged and given and given != logged:
+        sys.exit(f"{a.log} pins this campaign to {logged}; refusing {given} "
+                 "(one campaign, one binary)")
+    chosen = logged or given
+    if not chosen and a.build_image:
+        chosen = build_image(plan, a.ns3_version)
+    if not chosen:
+        sys.exit("dispatch needs the campaign's image: --build-image, --image "
+                 "REF, or --no-image (legacy in-job build, to replay old cells)")
+    if not logged:
+        with open(a.log, "a") as f:
+            f.write(f"{IMAGE_KEY}\t{chosen}\n")
+    if chosen != NO_IMAGE:
+        versions = sorted({legacy_command(wf, inp, plan["program"])[2]
+                           for _l, _c, _a, wf, inp in jobs(plan)})
+        print(f"every cell runs in {chosen} (the plan's version inputs "
+              f"{', '.join(versions)} are not used)", file=sys.stderr)
+    return "" if chosen == NO_IMAGE else chosen
+
+
 def cmd_dispatch(plan, a):
     cap = a.cap or plan["cap"]
+    image = campaign_image(plan, a)
     done = read_log(a.log)
     todo = [j for j in jobs(plan) if j[0] not in done]
     for label, _c, _arm, wf, inp in todo:
         harness, args, version = legacy_command(wf, inp, plan.get("program", PROGRAM))
         while active_runs() >= cap:
             if not a.wait:
-                print(f"cap {cap} reached; {len(read_log(a.log))} of "
+                print(f"cap {cap} reached; {len(read_log(a.log)) - 1} of "
                       f"{len(jobs(plan))} dispatched, run again later",
                       file=sys.stderr)
                 return
@@ -263,20 +352,16 @@ def cmd_dispatch(plan, a):
         before = newest_dispatch(WORKFLOW)
         body = {"ref": plan["ref"],
                 "inputs": {"harness": harness, "args": args, "version": version}}
+        if image:
+            body["inputs"]["image"] = image
         gh("-X", "POST", f"repos/{REPO}/actions/workflows/{WORKFLOW}/dispatches",
            "--input", "-", stdin=json.dumps(body))
         # The dispatch API returns no run id: poll for the newest dispatched
         # run until it changes. Runs are dispatched one at a time, so the new
         # one is ours.
-        rid = ""
-        for _ in range(30):
-            time.sleep(4)
-            rid = newest_dispatch(WORKFLOW)
-            if rid and rid != before:
-                break
-        else:
-            sys.exit(f"{label}: dispatched, but no new run appeared; find its "
-                     f"id and append '{label}<TAB><id>' to {a.log}")
+        rid = wait_new_run(WORKFLOW, before,
+                           f"{label} (find its id and append '{label}<TAB><id>' "
+                           f"to {a.log})")
         with open(a.log, "a") as f:
             f.write(f"{label}\t{rid}\n")
         print(f"{label}\t{rid}")
@@ -309,11 +394,13 @@ def results_text(directory):
     return None
 
 
-def fetch(rid, dest):
-    """Download run `rid`'s artifact into dest with gh api."""
+def fetch(rid, dest, name=None):
+    """Download run `rid`'s artifact (the first, or the one named) into dest."""
     arts = json.loads(gh(f"repos/{REPO}/actions/runs/{rid}/artifacts"))["artifacts"]
+    if name:
+        arts = [x for x in arts if x["name"] == name]
     if not arts:
-        raise RuntimeError(f"run {rid} has no artifact")
+        raise RuntimeError(f"run {rid} has no artifact{' ' + name if name else ''}")
     data = gh(f"repos/{REPO}/actions/artifacts/{arts[0]['id']}/zip", binary=True)
     with tempfile.NamedTemporaryFile(suffix=".zip") as z:
         z.write(data)
@@ -415,6 +502,14 @@ def main(argv=None):
             s.add_argument("--cap", type=int)
             s.add_argument("--wait", action="store_true",
                            help="sleep at the cap instead of exiting")
+            img = s.add_mutually_exclusive_group()
+            img.add_argument("--build-image", action="store_true",
+                             help="build the campaign image (campaign-image.yml) first")
+            img.add_argument("--image", help="a campaign image by digest")
+            img.add_argument("--no-image", action="store_true",
+                             help="legacy: each cell builds the module in ns3:<version>")
+            s.add_argument("--ns3-version", default="3.48",
+                           help="ns3-dev version for --build-image (3.48 while #843 is open)")
         if name == "collect":
             s.add_argument("--out", required=True)
             s.add_argument("--from", dest="src")

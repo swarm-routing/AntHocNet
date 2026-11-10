@@ -87,14 +87,17 @@ results.
   [`swarm-routing/ns3-containers`](https://github.com/swarm-routing/ns3-containers) and moved to each new
   ns-3 release (ns-3 maintains only its latest; org CONTRIBUTING invariant 7). Older releases
   (3.36–3.48) run **on demand**: `ci.yml` `workflow_dispatch` with `ns3-versions` (e.g.
-  `["3.36","3.42"]`) and optionally `ns3-gate-version`; 3.36 uses this repo's own `ns3:3.36`
-  image (see `docker/README.md`). **Temporary exception (#843, option A):** ns-3.49's stock AODV
+  `["3.36","3.42"]`) and optionally `ns3-gate-version`; 3.36 uses this repo's own frozen
+  `ghcr.io/swarm-routing/ns3:3.36` image (see `docker/README.md`). **Temporary exception (#843, option A):** ns-3.49's stock AODV
   and the vendored AOMDV livelock, and nearly every gate, the package checks and the kits run
   an AODV-family arm, so those run on `ns3-dev:3.48` (the `gate-version` leg) until a fixed
   ns-3 release reaches `latest`; the `latest` leg keeps the build, unit tests and the
   AntHocNet-only smokes. Revert the pin (`ci.yml`, `ci-ns3.yml`, `ci-web.yml` comments name
-  it) when #843 closes. Published numbers never use `latest`: the campaign workflows
-  keep this repo's own pinned images. Iterate on failures from the job logs —
+  it) when #843 closes. Published numbers pin an ns3-dev digest and a
+  campaign-image digest, never a rolling tag (#866): `campaign-image.yml` builds
+  one image per (commit, ns3-dev digest), every `benchmark-cell` pulls it by
+  digest and records both in `##PROV##`; compare post-move numbers with
+  published ones only after the control campaign #867. Iterate on failures from the job logs —
   cross-version API drift is the usual cause (e.g. ns-3.36's non-`const`
   `Histogram` accessors, `RouteInput` by-value vs const-ref, scoped TestSuite
   enums). The `AHN_*`/`ANTHOCNET_NS3_*` macros in the NS-3 headers + CMake
@@ -113,8 +116,11 @@ results.
   harness; campaigns dispatch it through `tools/bench/campaign.py`; it replaced
   `paper-benchmark` / `scenario-matrix` / `satellite-benchmark`, removed in
   v2.5.0, #746),
-  `release.yml` (Commitizen bump + install-bundle), `images.yml`
-  (republish simulator images). Automatic: `charts.yml` (re-renders charts from
+  `release.yml` (Commitizen bump + install-bundle; its images job publishes
+  `anthocnet-ns3:<tag>-{optimized,debug}` through swarm-routing/.github's
+  `reusable-ns3-image.yml`, FROM a pinned ns3-dev digest; this repo builds no
+  ns-3 images of its own, `images.yml` was retired in #866), `campaign-image.yml` (one campaign
+  image per commit; `campaign.py dispatch --build-image` runs it). Automatic: `charts.yml` (re-renders charts from
   committed data), `core-bench.yml` (core ns/op: PR vs base as a warning, history
   on main through a `bot/core-bench` PR; `make bench-core` locally), `links.yml` (weekly external link check; a
   red week opens a `[docs]` issue), `quality.yml` (SonarQube Cloud + Codecov,

@@ -60,7 +60,7 @@ ns-3 module tarball carry SLSA build provenance. It is signed keylessly
 (Sigstore) with the identity of `release.yml` in this repository, and it is
 stored in GitHub's attestation store. With the [GitHub CLI](https://cli.github.com/)
 (`--signer-workflow` accepts only an attestation signed by `release.yml`, not
-one from another workflow of this repository, such as `images.yml`):
+one from another workflow, such as the image builds):
 
 ```bash
 gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
@@ -96,8 +96,30 @@ gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
   --predicate-type https://spdx.dev/Document/v2.3
 ```
 
-**Container images.** `ghcr.io/danieljoppi/anthocnet-ns3` and
-`ghcr.io/danieljoppi/ns3` are signed with cosign (keyless) by digest, so
+**Container images.** From #866 a release publishes
+`ghcr.io/swarm-routing/anthocnet-ns3:<tag>-optimized` and `:<tag>-debug`, and
+each campaign `ghcr.io/swarm-routing/anthocnet-ns3-campaign:<commit7>-<base7>-optimized`.
+They are built by swarm-routing/.github's shared `reusable-ns3-image.yml`
+`FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest, and signed with cosign
+(keyless) by digest, with build provenance and a CycloneDX SBOM in the
+registry. The signing identity is that shared workflow; this repository is in
+the certificate's workflow-repository extension (log in first with
+`docker login ghcr.io` if the package is not public; `gh attestation verify`
+on an `oci://` image needs registry credentials):
+
+```bash
+cosign verify ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+  --certificate-identity-regexp '^https://github\.com/swarm-routing/\.github/\.github/workflows/reusable-ns3-image\.yml@refs/heads/main$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-github-workflow-repository swarm-routing/AntHocNet
+gh attestation verify oci://ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized --owner swarm-routing \
+  --signer-workflow swarm-routing/.github/.github/workflows/reusable-ns3-image.yml
+```
+
+The images this repository built itself until #866 (`images.yml`, retired)
+stay pullable and are never rebuilt: `ghcr.io/danieljoppi/anthocnet-ns3` and
+`ghcr.io/danieljoppi/ns3`, and their post-transfer copies under
+`ghcr.io/swarm-routing/`. They are signed with cosign (keyless) by digest, so
 every tag of an image is covered. The AntHocNet image also carries build
 provenance in the registry.
 

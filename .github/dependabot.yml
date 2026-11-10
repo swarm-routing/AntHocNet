@@ -4,7 +4,9 @@
 #   - github-actions: workflow `uses:` lines are pinned to full commit SHAs
 #     (tags can be repointed); Dependabot bumps the SHA and the trailing
 #     `# vX.Y.Z` comment together.
-#   - docker: the image lives under docker/ (Dockerfile.ns3).
+#   - docker: none. This repo builds no image since #866 (release and campaign
+#     images come from swarm-routing/.github's reusable-ns3-image.yml, FROM a
+#     pinned ns3-dev digest resolved at build time).
 #   - pip: the Python tool pins live in requirements/: one `<tool>.in` pin
 #     each, compiled to a hash-pinned `<tool>.txt` that every install uses
 #     with --require-hashes (#787; requirements/README.md).
@@ -18,11 +20,6 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: monthly
-
-  - package-ecosystem: docker
-    directory: /docker
     schedule:
       interval: monthly
 

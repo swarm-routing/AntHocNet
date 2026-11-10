@@ -351,8 +351,9 @@ jobs:
             adds the ARA, Termite, Q-routing and BeeAdHoc arms. Unpack either or both into
             `ns-3/contrib`. Both are covered by the same provenance attestation.
 
-            Pre-built simulator images are on GHCR (see `docker/README.md`),
-            including release-pinned tags `anthocnet-ns3:<sim-version>-${{ env.TAG }}`.
+            **Container images** (see `docker/README.md`): `ghcr.io/swarm-routing/anthocnet-ns3:${{ env.TAG }}-optimized`
+            and `:${{ env.TAG }}-debug`, ns-3 with every module of this release built and tested,
+            `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest (label `io.github.swarm-routing.ns3-dev.digest`).
 
             **Verify your download.** The SHA-256 digest is published twice — in
             this body and as the `anthocnet-${{ env.VER }}.zip.sha256` asset:
@@ -376,18 +377,49 @@ jobs:
             The images are signed with cosign (keyless). See
             [SECURITY.md](https://github.com/${{ github.repository }}/blob/${{ env.TAG }}/SECURITY.md#verifying-a-release).
 
-  # Publish immutable, release-pinned container images (e.g.
-  # anthocnet-ns3:3.42-v0.3.0) once the tag exists. Reuses the Images workflow
-  # via workflow_call — a direct job dependency, so the tag the publish job just
-  # pushed is picked up without relying on a tag event.
+  # Release images on ns3-containers (#866, swarm-routing/.github#107):
+  # ghcr.io/swarm-routing/anthocnet-ns3:<tag>-{optimized,debug}, each FROM the
+  # digest of ns3-dev:<version>-<profile>, built with swarm-routing/.github's
+  # reusable-ns3-image.yml (test.py suites on the built image, then push, cosign
+  # signature, provenance + CycloneDX SBOM, signature verified). No ns-3 is
+  # built here any more; images.yml and docker/Dockerfile.ns3 are retired.
+  #
+  # The reusable workflow checks out the commit this run was dispatched at,
+  # which precedes the bump commit; the stage moves to the release tag the
+  # publish job just pushed (a public repo: an anonymous fetch), so the image's
+  # revision label is the tagged commit. A dry run pushes no tag: it builds and
+  # tests both images from the dispatched commit and pushes nothing.
+  #
+  # ns-3 3.48, not `latest`: the release ships the AODV-family arms (aomdv, the
+  # harness's stock aodv), which livelock on ns-3.49 (#843). Move to `latest`
+  # when #843 closes.
+  #
+  # A direct job dependency (workflow_call), not a tag `push` trigger: a tag
+  # pushed with the release job's GITHUB_TOKEN starts no other workflow.
   images:
+    # After the publish job pushed the tag; in a dry run (no publish) right
+    # after the release job, building and testing without a push.
     needs: [release, publish]
-    if: ${{ inputs.mode != 'dryrun' }}
-    uses: ./.github/workflows/images.yml
+    if: ${{ !cancelled() && needs.release.result == 'success' && (inputs.mode == 'dryrun' || needs.publish.result == 'success') }}
     permissions:
       contents: read
-      packages: write
-      id-token: write      # cosign keyless signing + provenance (#614)
-      attestations: write
+      packages: write       # push (not used by a dry run)
+      id-token: write       # cosign keyless signature
+      attestations: write   # build provenance and the SBOM
+    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@main
     with:
-      release: ${{ needs.release.outputs.tag }}
+      stage: >-
+        ${{ inputs.mode != 'dryrun' && format('git fetch -q --depth 1 origin tag {0} && git checkout -q {0} &&', needs.release.outputs.tag) || '' }}
+        mkdir -p .stage/contrib && touch .stage/CMakeLists.txt &&
+        make -s install-ns3 NS3DIR="$PWD/.stage" BASELINES=1
+      modules: >-
+        routing-bench=.stage/contrib/routing-bench oracle=.stage/contrib/oracle
+        aomdv=.stage/contrib/aomdv gpsr=.stage/contrib/gpsr
+        adaptive=.stage/contrib/adaptive anthocnet=.stage/contrib/anthocnet
+      # The suites ci-ns3.yml runs (gpsr has none).
+      test-suites: anthocnet oracle adaptive routing-bench
+      ns3-version: '3.48'
+      profiles: '["optimized", "debug"]'
+      image: anthocnet-ns3
+      tag: ${{ needs.release.outputs.tag }}
+      push: ${{ inputs.mode != 'dryrun' }}
