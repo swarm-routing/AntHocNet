@@ -116,6 +116,28 @@ jobs:
           json.dump(out, open("build/compile_commands.json", "w"), indent=1)
           print(f"{len(out)} entries")
           EOF
+      - name: DEBUG gcovr recursion traceback (temporary)
+        continue-on-error: true
+        run: |
+          python3 - --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
+            --filter 'ns3/anthocnet/model/' --filter 'core/src/' -j 1 --json /tmp/dbg.json <<'EOF' 2>&1 | grep -v '^\s*$' | head -c 60000
+          import sys, traceback
+          import gcovr.formats.gcov.read as r
+          orig = r.process_gcov_text_data
+          seen = []
+          def wrapped(*a, **k):
+              try:
+                  return orig(*a, **k)
+              except RecursionError:
+                  if not seen:
+                      seen.append(1)
+                      tb = traceback.format_exc().splitlines()
+                      print("\n".join(tb[:40] + ["..."] + tb[-60:]))
+                  raise
+          r.process_gcov_text_data = wrapped
+          from gcovr.__main__ import main
+          sys.exit(main(sys.argv[1:]))
+          EOF
       - name: Coverage report (core + module)
         # Filters match real paths, so the module's symlinked sources count;
         # the tracefiles are then renamed to checkout-relative paths, so a
