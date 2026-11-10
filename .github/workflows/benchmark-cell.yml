@@ -47,7 +47,12 @@ name: Benchmark cell
 #   installs, configures and builds the module in the job, as before.
 #   Published cells name ghcr.io/danieljoppi/ns3:<version>, the same recipe
 #   built before the org transfer; those tags are frozen
-#   (swarm-routing/.github#110) and no workflow pulls them.
+#   (swarm-routing/.github#110).
+# - `legacy_image` (a control, #867): the legacy path, but in the image given
+#   by digest instead of ns3:<version>, so a control can re-run a published
+#   cell in the image its ##PROV## names (ghcr.io/danieljoppi/ns3@sha256:...).
+#   ##PROV## image= then names that digest. campaign.py passes it from a
+#   plan's `legacy_images` map.
 on:
   workflow_dispatch:
     inputs:
@@ -62,6 +67,9 @@ on:
       version:
         description: 'Legacy path only (no image): ghcr.io/swarm-routing/ns3:<version>, e.g. 3.42-opt; 3.48 for leo-walker'
         default: '3.42-opt'
+      legacy_image:
+        description: 'Legacy path only (#867): run in this image instead of ns3:<version>, pinned by digest (ghcr.io/<owner>/<name>@sha256:...); empty = ns3:<version>'
+        default: ''
       image:
         description: 'Campaign image by digest (campaign-image.yml): ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:...; empty = the legacy in-job build'
         default: ''
@@ -99,6 +107,19 @@ jobs:
       base_tag: ${{ steps.labels.outputs.base_tag }}
       modules: ${{ steps.labels.outputs.modules }}
     steps:
+      - name: Check the legacy image
+        if: ${{ inputs.legacy_image != '' }}
+        env:
+          IMAGE: ${{ inputs.image }}
+          LEGACY_IMAGE: ${{ inputs.legacy_image }}
+        run: |
+          set -euo pipefail
+          [ -z "$IMAGE" ] \
+            || { echo "::error::legacy_image is the legacy path; it cannot be combined with image"; exit 1; }
+          # A control's image is pinned by digest, never by a tag (#867).
+          [[ "$LEGACY_IMAGE" =~ ^ghcr\.io/[a-z0-9._-]+/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::legacy_image must be ghcr.io/<owner>/<name>@sha256:<64 hex> (got '$LEGACY_IMAGE')"; exit 1; }
+          echo "legacy path in $LEGACY_IMAGE"
       - name: Read the campaign image's labels
         id: labels
         if: ${{ inputs.image != '' }}
@@ -150,7 +171,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 360   # the hosted-runner ceiling (#121)
     container:
-      image: ${{ inputs.image || format('ghcr.io/swarm-routing/ns3:{0}', inputs.version) }}
+      image: ${{ inputs.image || inputs.legacy_image || format('ghcr.io/swarm-routing/ns3:{0}', inputs.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -281,6 +302,7 @@ jobs:
           ARGS: ${{ inputs.args }}
           VERSION_TAG: ${{ inputs.version }}
           IMAGE: ${{ inputs.image }}
+          LEGACY_IMAGE: ${{ inputs.legacy_image }}
           IMAGE_COMMIT: ${{ needs.inspect.outputs.commit }}
           BASE_DIGEST: ${{ needs.inspect.outputs.base_digest }}
           BASE_TAG: ${{ needs.inspect.outputs.base_tag }}
@@ -297,7 +319,7 @@ jobs:
             prov="##PROV## commit=$IMAGE_COMMIT ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=$IMAGE profile=$NS3_PROFILE harness=$HARNESS"
             prov="$prov base=${BASE_TAG%:*}@$BASE_DIGEST base_tag=$BASE_TAG build_profile=$NS3_BUILD_PROFILE modules=$MODULES"
           else
-            prov="##PROV## commit=$GITHUB_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=ghcr.io/swarm-routing/ns3:$VERSION_TAG profile=$NS3_PROFILE harness=$HARNESS"
+            prov="##PROV## commit=$GITHUB_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=${LEGACY_IMAGE:-ghcr.io/swarm-routing/ns3:$VERSION_TAG} profile=$NS3_PROFILE harness=$HARNESS"
           fi
           echo "AHN_PROV=$prov" >> "$GITHUB_ENV"
           if [ -f "$GITHUB_WORKSPACE/results.txt" ]; then
@@ -429,6 +451,7 @@ jobs:
           ARGS: ${{ inputs.args }}
           VERSION: ${{ inputs.version }}
           IMAGE: ${{ inputs.image }}
+          LEGACY_IMAGE: ${{ inputs.legacy_image }}
         run: |
           dir="$RUNNER_TEMP/cell"
           name="${CELL:-replay-${REPLAY}}"
@@ -467,7 +490,7 @@ jobs:
           check=$(cat "$dir/replay-check.txt" 2>/dev/null || echo "no replay recorded")
           body=$(printf '%s\n' \
             "Adds ${added} from [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})." \
-            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}\` at ${measured} (workflow ${GITHUB_SHA})." \
+            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-${LEGACY_IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}}\` at ${measured} (workflow ${GITHUB_SHA})." \
             "" "**scenario_check results:**" '```' "$verdict" '```' \
             "" "**check-viz-trace (#641):**" '```' "$check" '```' \
             "" "$(if [ "$APP_TOKEN" = true ]; then echo "Opened by benchmark-cell.yml (#612) with the app token (#705); CI runs on this PR."; else echo "Opened by benchmark-cell.yml (#612). CI does not run on a workflow-opened PR (no app token configured, #705); close and reopen it to run checks."; fi)")

@@ -593,7 +593,7 @@ def main():
 
     if args.ab:
         # (off, on) pairs: delta is on-vs-off within each pair.
-        print("\nA/B deltas (on vs off, anthocnet):")
+        print(f"\nA/B deltas (on vs off, {p}):")
         signs = []
         npairs = 0
         for i in range(0, len(cells) - 1, 2):

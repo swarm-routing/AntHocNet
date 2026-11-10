@@ -98,9 +98,15 @@ python3 $C plan $P                            # review the job list; sends nothi
 python3 $C dispatch $P --log runs.tsv --build-image   # campaign image once (#866), then cells up to the cap (12)
 python3 $C status $P --log runs.tsv --brief   # only labels not yet green; counts
 python3 $C collect $P --log runs.tsv --out results/cells [--from DIR]
-python3 $C verdicts $P --dir results/cells    # bench_parse --ab per arm x cell
+python3 $C verdicts $P --dir results/cells    # bench_parse --ab per arm x cell x protocol
 ```
 
+- **Arms on different images get one log each** (#867): `dispatch`, `status`
+  and `collect` take `--arm ARM`, since a log pins one image. A plan's
+  `legacy_images` map (version -> `ghcr.io/...@sha256:...`) makes `--no-image`
+  jobs run the image a published cell's `##PROV##` names
+  (benchmark-cell.yml's `legacy_image` input);
+  `campaigns/v2.7.x-image-control.yaml` is the example.
 - **The cap leaves PR CI its runners.** v2.2.0's phase 1 dispatched 36 jobs at
   once and PR CI queued for hours. Never hand-dispatch a campaign.
 - **`dispatch` is resumable.** It skips labels already in the log and exits
