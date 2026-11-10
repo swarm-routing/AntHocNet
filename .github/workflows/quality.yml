@@ -121,20 +121,30 @@ jobs:
         run: |
           python3 - --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
             --filter 'ns3/anthocnet/model/' --filter 'core/src/' -j 1 --json /tmp/dbg.json <<'EOF' 2>&1 | grep -v '^\s*$' | head -c 60000
-          import sys, traceback
+          import sys, traceback, functools, inspect, platform
           import gcovr.formats.gcov.read as r
-          orig = r.process_gcov_text_data
+          import gcovr.filter as fl
+          import gcovr.utils as ut
+          print("python", platform.python_version(), "recursionlimit", sys.getrecursionlimit())
           seen = []
-          def wrapped(*a, **k):
-              try:
-                  return orig(*a, **k)
-              except RecursionError:
-                  if not seen:
-                      seen.append(1)
-                      tb = traceback.format_exc().splitlines()
-                      print("\n".join(tb[:40] + ["..."] + tb[-60:]))
-                  raise
-          r.process_gcov_text_data = wrapped
+          def wrap(f):
+              @functools.wraps(f)
+              def w(*a, **k):
+                  try:
+                      return f(*a, **k)
+                  except RecursionError:
+                      if not seen:
+                          seen.append(1)
+                          tb = traceback.format_exc().splitlines()
+                          print("\n".join(tb[:60] + ["..."] + tb[-60:]))
+                      raise
+              return w
+          for mod in (r, fl, ut):
+              for n, f in list(vars(mod).items()):
+                  if inspect.isfunction(f) and (mod is r or f.__module__ == mod.__name__):
+                      setattr(mod, n, wrap(f))
+          for n in ("run_with_args", "identify_and_cache_capabilities"):
+              setattr(r.GcovProgram, n, wrap(getattr(r.GcovProgram, n)))
           from gcovr.__main__ import main
           sys.exit(main(sys.argv[1:]))
           EOF
