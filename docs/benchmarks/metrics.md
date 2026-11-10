@@ -758,9 +758,26 @@ numbers):
 ### Measuring commit (`##PROV##`, #365)
 
 ```
-##PROV## commit=<sha> ref=<branch> run_id=<id> attempt=<n> image=<ghcr tag> \
-         profile=<default|release> harness=<anthocnet-compare|isl-grid|leo-walker>
+##PROV## commit=<sha> ref=<branch> run_id=<id> attempt=<n> image=<ghcr tag | image@digest> \
+         profile=<default|release> harness=<anthocnet-compare|isl-grid|leo-walker> \
+         [image_digest=sha256:… base_digest=sha256:… base=<ns3-dev tag it resolved> \
+          build_profile=<optimized|…> modules=<a,b,…> deps=<name=owner/repo@sha,…|none> \
+          workflow_commit=<sha>]
 ```
+
+The bracketed fields (#866) are appended when the cell ran in a campaign image
+(`benchmark-cell.yml`'s `image` input, built by `campaign-image.yml`), read
+from the image's labels: `image=` is then the image by digest and
+`image_digest=` its digest alone; `base_digest=` is the
+`ghcr.io/swarm-routing/ns3-dev` digest it was built `FROM` and `base=` the tag
+that digest was resolved from at build time; `modules=` the contrib modules
+built into it, all at `commit=` (this repo's), and `deps=` any modules from
+other repositories with their commits; `build_profile=` is ns3-dev's profile
+name (`optimized` is ns-3's `release`, the `profile=` field);
+`workflow_commit=` is the commit of the dispatched workflow file. The marker
+is append-only: the first seven fields keep their position and meaning, and a
+reader keys on names, never on position. Cells from before #866 name a tag
+(`ghcr.io/danieljoppi/ns3:3.42-opt` for most campaigns) and keep it.
 
 The other half of provenance: `##CONFIG##` says *how* the run was configured,
 `##PROV##` says *which version of the code* was configured that way. A number
@@ -787,10 +804,12 @@ Two limits:
 - **`key=value`, not positional**, for the same reason as `##CONFIG##`: a
   misread field here would misattribute a whole campaign, and no `# stddev`
   cross-check exists to catch it.
-- **It records the commit the *workflow* checked out**, which is the commit the
-  binary was built from in every workflow here because each builds from its own
-  checkout. A future workflow that ran a pre-built binary would make the line
-  a lie; if one is ever added, it has to stamp the binary's provenance instead.
+- **`commit=` is the commit the binary was built from.** On the legacy path
+  the job builds from its own checkout, so it is the commit the workflow
+  checked out. A campaign image is a pre-built binary: there `commit=` is the
+  image's `org.opencontainers.image.revision` label, the job checks out that
+  same commit (so `scenario_check` and the fixtures match the binary), and the
+  image digest pins the binary itself.
 
 Runs from before this marker existed (everything up to `v1.3.0`) have no
 `##PROV##` line. Their provenance is the release pin documented in

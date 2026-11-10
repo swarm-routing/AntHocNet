@@ -179,34 +179,22 @@ calibration loop (sweep one knob → A/B → noise verdict) are in
 
 ### Container images
 
-Prefer not to install a simulator yourself? Pre-built images are published to
-GHCR (`ghcr.io/danieljoppi/…`) — for **each supported version**, a plain simulator
-and the same simulator with AntHocNet built in (so you can compare against a
-clean baseline):
+Prefer not to install a simulator yourself? Each release publishes
+`ghcr.io/swarm-routing/anthocnet-ns3:<release>-optimized` and `-debug`: ns-3 with
+every module of the release built and tested, built `FROM` a pinned digest of the
+org's ns-3 image [`ghcr.io/swarm-routing/ns3-dev`](https://github.com/swarm-routing/ns3-containers)
+(which is also the clean baseline: plain ns-3 with AODV/OLSR/DSDV/…). Tags never
+move.
 
 ```bash
-docker run --rm ghcr.io/danieljoppi/anthocnet-ns3:3.42 ./ns3 run anthocnet-example
+docker run --rm ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+  ./ns3 run --no-build anthocnet-example
 ```
 
-Each image has three tag tiers: `:<sim-version>` (e.g. `:3.42`, latest build for
-that simulator version), `:<sim-version>-<release>` (e.g. `:3.42-v0.3.0`,
-**immutable** — pin this for reproducible / citable runs), and `:latest` (newest
-simulator version + latest AntHocNet). The `:<sim-version>` and `:latest` tiers
-track the default branch; the `-<release>` tier is fixed to a release.
-
-**AntHocNet images** — the simulator with our protocol built in:
-
-| Image | Versions | Contents |
-|-------|----------|----------|
-| `ghcr.io/danieljoppi/anthocnet-ns3` | `3.36`, `3.41`, `3.42`, `3.47`, `3.48` | ns-3 + the AntHocNet module |
-
-**Plain images** — a clean simulator (no AntHocNet) for baseline comparisons:
-
-| Image | Versions | Contents |
-|-------|----------|----------|
-| `ghcr.io/danieljoppi/ns3` | `3.36`, `3.41`, `3.42`, `3.47`, `3.48` | plain ns-3 with the comparison protocols (AODV/OLSR/DSDV/…) |
-
-Build them yourself or see the full matrix in [docker/README.md](docker/README.md).
+The images this repository built itself until #866 (`ghcr.io/danieljoppi/anthocnet-ns3`,
+`ghcr.io/danieljoppi/ns3` for 3.36–3.48, release-pinned `:<ver>-<release>` tags)
+stay pullable and frozen. Details, campaign images and profiles:
+[docker/README.md](docker/README.md).
 The NS-2 images built through v1.9.0 stay pullable; see
 [docs/ns2-support.md](docs/ns2-support.md).
 
