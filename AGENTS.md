@@ -100,10 +100,11 @@ results.
   committed data), `core-bench.yml` (core ns/op: PR vs base as a warning, history
   on main; `make bench-core` locally), `links.yml` (weekly external link check; a
   red week opens a `[docs]` issue), no Pages deploy here: [`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io) builds the game, docs and API from this repo at the commit in its `protocols.lock` and serves them at `/AntHocNet/`, `/AntHocNet/docs/`, `/AntHocNet/api/` (#850), `ns3-dev.yml`
-  (nightly build against ns-3-dev; a red night opens a `[ci]` issue), `claude-review.yml`
-  (AI review of every PR against this file's golden rules; comments only, never
-  approves, not a required check, #811; a second AI reviewer, CodeRabbit, runs as
-  a GitHub App). Releases are version-bumped by Commitizen from
+  (nightly build against ns-3-dev; a red night opens a `[ci]` issue). The AI
+  reviewer is CodeRabbit, a GitHub App configured by `.coderabbit.yaml` (the org's
+  settings plus this file's golden rules): it reviews each PR once when it opens,
+  comments only, never approves, and is not a required check (#811, #838; the
+  Claude Code Action review was removed by maintainer decision, #864). Releases are version-bumped by Commitizen from
   Conventional-Commit history; **PR titles must be Conventional Commits** (CI
   enforces it — see `CONTRIBUTING.md`).
 
