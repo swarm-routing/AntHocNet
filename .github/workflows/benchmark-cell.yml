@@ -18,12 +18,14 @@ name: Benchmark cell
 # into these inputs. rescue-artifacts.yml is recovery, not a dispatch shape,
 # and stays.
 #
-# The bot PR is opened with a GitHub App installation token when the
-# repository has one configured (#705): variable AHN_BOT_APP_ID and secret
-# AHN_BOT_APP_KEY, for an app with contents: write and pull-requests: write
-# on this repository. Pushes and PRs made with an app token start the normal
+# The bot PR is opened with a GitHub App installation token, first that
+# works: the org App (secrets BOT_APP_ID / BOT_APP_PRIVATE_KEY, org secrets
+# for every repository, swarm-routing/.github#21), else this repository's own
+# app (#705: variable AHN_BOT_APP_ID and secret AHN_BOT_APP_KEY, contents:
+# write and pull-requests: write on this repository); the commit is made as
+# that App's bot user. Pushes and PRs made with an app token start the normal
 # PR workflows, so the cell PR gets CI (lint, the replay check) and can
-# auto-merge (#616). Without them the job falls back to the workflow's own
+# auto-merge (#616). Without either the job falls back to the workflow's own
 # token, with two consequences:
 # - it needs the repository setting "Allow GitHub Actions to create and
 #   approve pull requests"; without it the branch is still pushed, and the
@@ -207,18 +209,59 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    env:
+      # `if:` cannot read secrets; whether the org App is configured can.
+      ORG_APP: ${{ secrets.BOT_APP_ID != '' && secrets.BOT_APP_PRIVATE_KEY != '' }}
     steps:
-      # #705: an app token, when configured, so the PR's push starts CI.
-      - name: GitHub App token
-        id: app
-        if: ${{ vars.AHN_BOT_APP_ID != '' }}
+      # #705: an app token, when configured, so the PR's push starts CI: the
+      # org App first (swarm-routing/.github#21), then this repository's app.
+      # One that cannot make its token is a warning, and the next is tried.
+      - name: Org GitHub App token
+        id: org
+        if: ${{ env.ORG_APP == 'true' }}
+        continue-on-error: true
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          owner: swarm-routing
+          # only this repository, only what the PR needs (the App's own grant caps it)
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Repository GitHub App token
+        id: ahn
+        if: ${{ steps.org.outputs.token == '' && vars.AHN_BOT_APP_ID != '' }}
+        continue-on-error: true
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.AHN_BOT_APP_ID }}
           private-key: ${{ secrets.AHN_BOT_APP_KEY }}
-      - name: Token notice
-        if: ${{ steps.app.outputs.token == '' }}
-        run: echo "::notice::No AHN_BOT_APP_ID/AHN_BOT_APP_KEY configured (#705); the PR is opened with GITHUB_TOKEN and CI will not run on it."
+      - name: Pick the token
+        id: app
+        env:
+          ORG_TOKEN: ${{ steps.org.outputs.token }}
+          ORG_SLUG: ${{ steps.org.outputs.app-slug }}
+          AHN_TOKEN: ${{ steps.ahn.outputs.token }}
+          AHN_SLUG: ${{ steps.ahn.outputs.app-slug }}
+          ORG_FAILED: ${{ steps.org.outcome == 'failure' }}
+          AHN_FAILED: ${{ steps.ahn.outcome == 'failure' }}
+        run: |
+          if [ "$ORG_FAILED" = true ]; then echo "::warning::bot token: the org GitHub App token could not be made; trying the next token"; fi
+          if [ "$AHN_FAILED" = true ]; then echo "::warning::bot token: the AHN_BOT_APP_ID token could not be made; trying the next token"; fi
+          if [ -n "$ORG_TOKEN" ]; then token="$ORG_TOKEN" slug="$ORG_SLUG" what="org GitHub App"
+          elif [ -n "$AHN_TOKEN" ]; then token="$AHN_TOKEN" slug="$AHN_SLUG" what="repository GitHub App"
+          else
+            echo "::notice::No bot app token (BOT_APP_ID/BOT_APP_PRIVATE_KEY or AHN_BOT_APP_ID/AHN_BOT_APP_KEY, #705); the PR is opened with GITHUB_TOKEN and CI will not run on it."
+            exit 0
+          fi
+          login="${slug}[bot]"
+          id=$(GH_TOKEN="$token" gh api "users/${slug}%5Bbot%5D" --jq .id) || id=
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+          if [ -n "$id" ]; then
+            printf 'git-name=%s\ngit-email=%s\n' "$login" "${id}+${login}@users.noreply.github.com" >> "$GITHUB_OUTPUT"
+          fi
+          echo "::notice::bot token: $what $login"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           token: ${{ steps.app.outputs.token || github.token }}
@@ -230,6 +273,8 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
           APP_TOKEN: ${{ steps.app.outputs.token != '' }}
+          GIT_NAME: ${{ steps.app.outputs.git-name || 'github-actions[bot]' }}
+          GIT_EMAIL: ${{ steps.app.outputs.git-email || '41898282+github-actions[bot]@users.noreply.github.com' }}
           CELL: ${{ inputs.cell }}
           REPLAY: ${{ inputs.replay }}
           TITLE: ${{ inputs.title }}
@@ -240,8 +285,8 @@ jobs:
           dir="$RUNNER_TEMP/cell"
           name="${CELL:-replay-${REPLAY}}"
           branch="bench/${name}-${GITHUB_RUN_ID}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "$GIT_NAME"
+          git config user.email "$GIT_EMAIL"
           git switch -c "$branch"
           added=""
           if [ -n "$CELL" ]; then

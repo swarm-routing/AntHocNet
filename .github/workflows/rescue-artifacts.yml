@@ -112,6 +112,8 @@ jobs:
           body: 'Rescued `scenarios.csv` of run(s) ${{ github.event.inputs.merge_run_ids }} into `results/campaign/` (#229).'
           paths: results/campaign
           labels: benchmark
+          org-app-id: ${{ secrets.BOT_APP_ID }}
+          org-app-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
           app-id: ${{ vars.AHN_BOT_APP_ID }}
           app-key: ${{ secrets.AHN_BOT_APP_KEY }}
           token: ${{ secrets.ORG_BOT_TOKEN }}

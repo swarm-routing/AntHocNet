@@ -71,9 +71,12 @@ jobs:
         uses: ./.github/actions/python-tools
         with:
           packages: mkdocs-material
+      - name: Install doxygen
+        # Its own step so an apt hang fails here in minutes (#840).
+        timeout-minutes: 10
+        run: sudo apt-get install -y --no-install-recommends doxygen >/dev/null
       - name: Assemble the whole site, as swarm-routing.github.io's pages.yml does (#626, #850)
         run: |
-          sudo apt-get install -y --no-install-recommends doxygen >/dev/null
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           web/build-pages.sh web/build-site
       - name: Crawl the built site (links, assets, anchors, top bar)
@@ -106,6 +109,17 @@ jobs:
         # Every number docs/teaching/answer-keys.md states, re-measured on the
         # WASM core at the sheet's seed, with the claim each key makes.
         run: node web/test/labs.mjs web/build-site
+      - name: Install the browser smoke's tools and Chromium
+        # `--with-deps` runs apt-get: on 2026-10-31 it hung 38 min here and
+        # the job sat until its timeout (#840). Its own step, so a hang fails
+        # in minutes.
+        timeout-minutes: 10
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw"
+          cp web/test/browser-tools/package.json web/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
+          cd "$RUNNER_TEMP/pw"
+          npm ci --no-audit --no-fund
+          npx --no-install playwright-core install --with-deps chromium
       - name: Learn-site browser smoke (#548)
         # Every world runs with no console error, a backward ant and a delivery;
         # all worlds share the protocol defaults (ADR-0019); mission 2 plays to
@@ -115,14 +129,9 @@ jobs:
         # docs page and the Workshop on a phone (390 px, no sideways scroll).
         # playwright-core / axe-core pinned by web/test/browser-tools'
         # package-lock.json, installed with `npm ci` (integrity-checked, #787);
-        # Chromium from Playwright's own CDN.
-        run: |
-          mkdir -p "$RUNNER_TEMP/pw"
-          cp web/test/browser-tools/package.json web/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
-          cd "$RUNNER_TEMP/pw"
-          npm ci --no-audit --no-fund
-          npx --no-install playwright-core install --with-deps chromium
-          node "$GITHUB_WORKSPACE/web/test/smoke.mjs" "$GITHUB_WORKSPACE/web/build-site"
+        # Chromium from Playwright's own CDN; installed in the step before.
+        working-directory: ${{ runner.temp }}/pw
+        run: node "$GITHUB_WORKSPACE/web/test/smoke.mjs" "$GITHUB_WORKSPACE/web/build-site"
 
   # The learn site's "Export to ns-3" kits (#640), as the pages job exported
   # them, run in the ns-3 image: every world's kit must deliver. Wi-Fi worlds
