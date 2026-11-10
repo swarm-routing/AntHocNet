@@ -760,24 +760,26 @@ numbers):
 ```
 ##PROV## commit=<sha> ref=<branch> run_id=<id> attempt=<n> image=<ghcr tag | image@digest> \
          profile=<default|release> harness=<anthocnet-compare|isl-grid|leo-walker> \
-         [image_digest=sha256:… base_digest=sha256:… base=<ns3-dev tag it resolved> \
-          build_profile=<optimized|…> modules=<a,b,…> deps=<name=owner/repo@sha,…|none> \
-          workflow_commit=<sha>]
+         [base=<ns3-dev repo>@sha256:… base_tag=<the tag it was resolved from> \
+          build_profile=<optimized|…> modules=<name>@<sha40>,…]
 ```
 
 The bracketed fields (#866) are appended when the cell ran in a campaign image
 (`benchmark-cell.yml`'s `image` input, built by `campaign-image.yml`), read
-from the image's labels: `image=` is then the image by digest and
-`image_digest=` its digest alone; `base_digest=` is the
-`ghcr.io/swarm-routing/ns3-dev` digest it was built `FROM` and `base=` the tag
-that digest was resolved from at build time; `modules=` the contrib modules
-built into it, all at `commit=` (this repo's), and `deps=` any modules from
-other repositories with their commits; `build_profile=` is ns3-dev's profile
-name (`optimized` is ns-3's `release`, the `profile=` field);
-`workflow_commit=` is the commit of the dispatched workflow file. The marker
-is append-only: the first seven fields keep their position and meaning, and a
-reader keys on names, never on position. Cells from before #866 name a tag
-(`ghcr.io/danieljoppi/ns3:3.42-opt` for most campaigns) and keep it.
+from the image's labels, in the spelling swarm-routing/benchmarks'
+`tools/validate_run.py` checks a run manifest against: `image=` is then the
+campaign image by digest (`<ref>@sha256:…`); `base=` the
+`ghcr.io/swarm-routing/ns3-dev` image it was built `FROM`, by digest, and
+`base_tag=` the tag that digest was resolved from at build time;
+`modules=` every contrib module built into it with its commit
+(`<name>@<sha40>`: this repo's at `commit=`, a dependency at its own);
+`build_profile=` is ns3-dev's profile name (`optimized` is ns-3's `release`,
+the `profile=` field). No other 40-hex value or digest appears on the line:
+the validator reads every one as a module commit or a manifest digest. The
+marker is append-only: the first seven fields keep their position and
+meaning, and a reader keys on names, never on position. Cells from before
+#866 name a tag (`ghcr.io/danieljoppi/ns3:3.42-opt` for most campaigns) and
+keep it.
 
 The other half of provenance: `##CONFIG##` says *how* the run was configured,
 `##PROV##` says *which version of the code* was configured that way. A number

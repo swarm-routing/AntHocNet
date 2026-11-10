@@ -96,7 +96,6 @@ jobs:
       base_digest: ${{ steps.labels.outputs.base_digest }}
       base_tag: ${{ steps.labels.outputs.base_tag }}
       modules: ${{ steps.labels.outputs.modules }}
-      deps: ${{ steps.labels.outputs.deps }}
     steps:
       - name: Read the campaign image's labels
         id: labels
@@ -127,11 +126,19 @@ jobs:
           src = need("org.opencontainers.image.source", r"\S+")
           if src != os.environ["SOURCE"]:
               sys.exit(f"::error::the image was built from {src}, not {os.environ['SOURCE']}")
-          print("commit=" + need("org.opencontainers.image.revision", r"[0-9a-f]{40}"))
+          rev = need("org.opencontainers.image.revision", r"[0-9a-f]{40}")
+          print("commit=" + rev)
           print("base_digest=" + need("io.github.swarm-routing.ns3-dev.digest", r"sha256:[0-9a-f]{64}"))
           print("base_tag=" + need("io.github.swarm-routing.ns3-dev.tag", r"\S+"))
-          print("modules=" + ",".join(need("io.github.swarm-routing.modules", r"[\w -]+").split()))
-          print("deps=" + (lab.get("io.github.swarm-routing.dependencies") or "none"))
+          # Every module with its commit, as swarm-routing/benchmarks'
+          # validator reads it: name@<40 hex>. This repo's modules are at the
+          # image's revision; a dependency (name=owner/repo@commit) at its own.
+          deps = {}
+          for d in filter(None, (lab.get("io.github.swarm-routing.dependencies") or "").split(",")):
+              name, rest = d.split("=", 1)
+              deps[name] = rest.rsplit("@", 1)[1]
+          mods = need("io.github.swarm-routing.modules", r"[\w -]+").split()
+          print("modules=" + ",".join(f"{m}@{deps.get(m, rev)}" for m in mods))
           PY
           cat "$GITHUB_OUTPUT"
 
@@ -276,15 +283,17 @@ jobs:
           BASE_DIGEST: ${{ needs.inspect.outputs.base_digest }}
           BASE_TAG: ${{ needs.inspect.outputs.base_tag }}
           MODULES: ${{ needs.inspect.outputs.modules }}
-          DEPS: ${{ needs.inspect.outputs.deps }}
         run: |
           # Append-only (methodology "Measuring commit"): the first seven
-          # fields keep their meaning; a campaign image adds its digests and
-          # the commit of every module in it (commit= is the image's own
-          # revision, which is also what this job checked out).
+          # fields keep their meaning; a campaign image adds base= (the ns3-dev
+          # image by digest) and modules=<name>@<commit>,... (every module in
+          # it), the spelling swarm-routing/benchmarks' validate_run.py reads;
+          # image= is the campaign image by digest. commit= is the image's own
+          # revision, which is also what this job checked out. No other
+          # 40-hex value may appear: the validator takes any as a module commit.
           if [ -n "$IMAGE" ]; then
             prov="##PROV## commit=$IMAGE_COMMIT ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=$IMAGE profile=$NS3_PROFILE harness=$HARNESS"
-            prov="$prov image_digest=${IMAGE#*@} base_digest=$BASE_DIGEST base=$BASE_TAG build_profile=$NS3_BUILD_PROFILE modules=$MODULES deps=$DEPS workflow_commit=$GITHUB_SHA"
+            prov="$prov base=${BASE_TAG%:*}@$BASE_DIGEST base_tag=$BASE_TAG build_profile=$NS3_BUILD_PROFILE modules=$MODULES"
           else
             prov="##PROV## commit=$GITHUB_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=ghcr.io/swarm-routing/ns3:$VERSION_TAG profile=$NS3_PROFILE harness=$HARNESS"
           fi
