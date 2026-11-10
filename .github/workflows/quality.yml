@@ -120,12 +120,12 @@ jobs:
         continue-on-error: true
         run: |
           python3 - --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
-            --filter 'ns3/anthocnet/model/' --filter 'core/src/' -j 1 --json /tmp/dbg.json <<'EOF' 2>&1 | grep -v '^\s*$' | head -c 60000
+            --filter 'ns3/anthocnet/model/' --filter 'core/src/' -j 1 --json /tmp/dbg.json > /tmp/dbg.log 2>&1 <<'EOF' || true
           import sys, traceback, functools, inspect, platform
           import gcovr.formats.gcov.read as r
           import gcovr.filter as fl
           import gcovr.utils as ut
-          print("python", platform.python_version(), "recursionlimit", sys.getrecursionlimit())
+          open("/tmp/tb.txt", "a").write(f"python {platform.python_version()} limit {sys.getrecursionlimit()}\n")
           seen = []
           def wrap(f):
               @functools.wraps(f)
@@ -136,7 +136,7 @@ jobs:
                       if not seen:
                           seen.append(1)
                           tb = traceback.format_exc().splitlines()
-                          print("\n".join(tb[:60] + ["..."] + tb[-60:]))
+                          open("/tmp/tb.txt", "a").write("\n".join(tb[:60] + ["..."] + tb[-60:]) + "\n")
                       raise
               return w
           for mod in (r, fl, ut):
@@ -148,6 +148,7 @@ jobs:
           from gcovr.__main__ import main
           sys.exit(main(sys.argv[1:]))
           EOF
+          cat /tmp/tb.txt; head -c 3000 /tmp/dbg.log
       - name: Coverage report (core + module)
         # Filters match real paths, so the module's symlinked sources count;
         # the tracefiles are then renamed to checkout-relative paths, so a
