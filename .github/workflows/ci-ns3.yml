@@ -86,6 +86,7 @@ jobs:
           restore-keys: ccache-ns3-3.36-gcc11-
       - name: Install ccache
         if: matrix.version == '3.36'
+        timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
           apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
@@ -493,6 +494,7 @@ jobs:
           key: ccache-ns3-asan-${{ inputs.gate-version }}-gcc13-${{ github.sha }}
           restore-keys: ccache-ns3-asan-${{ inputs.gate-version }}-gcc13-
       - name: Install ccache
+        timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
           apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
