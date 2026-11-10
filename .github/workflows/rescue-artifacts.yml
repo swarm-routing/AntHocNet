@@ -39,12 +39,17 @@ jobs:
   rescue:
     name: rescue campaign result artifacts
     runs-on: ubuntu-24.04
+    # contents + pull-requests: write only to open the rescue PR with the
+    # workflow token when no bot token is configured (#789, #705).
     permissions:
       contents: write
+      pull-requests: write
       actions: read
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Download per-merge benchmark artifacts and stage CSVs (#229)
         if: github.event.inputs.merge_run_ids != ''
         shell: bash
@@ -94,14 +99,19 @@ jobs:
           name: rescue-bundle
           path: rescue-bundle/
           retention-days: 7
-      - name: Commit rescued results
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results/campaign
-          if git diff --cached --quiet; then
-            echo "nothing new to commit"
-          else
-            git commit -m "benchmarks: rescue per-merge results from expiring artifacts (#229) [skip ci]"
-            git push origin "HEAD:${{ github.ref_name }}"
-          fi
+      # The rescued CSVs reach the dispatched branch through a PR (main takes
+      # no direct push, #789), one branch per run so two rescues never
+      # replace each other.
+      - name: Open the rescue PR
+        if: github.event.inputs.merge_run_ids != ''
+        uses: ./.github/actions/bot-pr
+        with:
+          branch: bot/rescue-${{ github.run_id }}
+          base: ${{ github.ref_name }}
+          title: 'chore(results): rescue per-merge results from expiring artifacts'
+          body: 'Rescued `scenarios.csv` of run(s) ${{ github.event.inputs.merge_run_ids }} into `results/campaign/` (#229).'
+          paths: results/campaign
+          labels: benchmark
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          app-key: ${{ secrets.AHN_BOT_APP_KEY }}
+          token: ${{ secrets.ORG_BOT_TOKEN }}

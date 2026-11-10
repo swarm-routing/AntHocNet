@@ -34,9 +34,27 @@ jobs:
     outputs:
       tag: ${{ steps.compute.outputs.tag }}
     steps:
+      # main is protected by a ruleset (PR required, `CI gate` required, #789),
+      # and the bump commit is pushed to it directly: the tag must point at a
+      # commit on main, and the bundle is built from that commit before
+      # anything is pushed. So the push needs an actor on the ruleset's bypass
+      # list. The workflow's GITHUB_TOKEN cannot be one; the push uses, first
+      # that exists, the bot app's token (#705: add the app as a bypass actor)
+      # or ORG_BOT_TOKEN (its owner's role on the bypass list). With neither,
+      # the push step fails before the tag or the release go out, and nothing
+      # is left to clean up. A dry run pushes nothing and needs neither.
+      - name: GitHub App token (bypass actor, #789)
+        id: app
+        if: ${{ inputs.mode != 'dryrun' && vars.AHN_BOT_APP_ID != '' }}
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          private-key: ${{ secrets.AHN_BOT_APP_KEY }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history + tags for cz to compute the bump
+          # The push credentials (see above); a dry run keeps the workflow token.
+          token: ${{ steps.app.outputs.token || (inputs.mode != 'dryrun' && secrets.ORG_BOT_TOKEN) || github.token }}
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:

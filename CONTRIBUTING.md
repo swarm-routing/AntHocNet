@@ -190,9 +190,58 @@ exists.
 `Scorecard` workflow once by hand (Actions → Scorecard → *Run workflow*).
 
 Checks this repo will not score full marks on, by design, so nobody chases
-them: `Code-Review` and `Contributors` (a solo project, #789). `Signed-Releases`
-ramps up one release at a time over a five-release window (see *Provenance*
-below).
+them. `Signed-Releases` ramps up one release at a time over a five-release
+window (see *Provenance* below). Two are **accepted findings** (#789): a low
+score there is a known state, not a regression to open an issue about.
+
+- **`Code-Review` (0): accepted.** It counts changesets approved by someone
+  other than their author. AntHocNet has one maintainer, and GitHub does not
+  let an author approve their own PR, so every merge is unreviewed by a second
+  human. The AI reviewers (`claude-review.yml`, CodeRabbit) comment but never
+  approve, and a bot that auto-approves would game the check rather than meet
+  it, so none is added. What changes it: a second maintainer or a regular
+  outside reviewer approving PRs.
+- **`Contributors` (3): accepted.** It counts the organisations among recent
+  contributors; a solo project has one. What changes it: contributors from
+  other organisations landing changes.
+
+### Branch protection: a ruleset on `main` (#789)
+
+A repository ruleset protects `main`: a pull request is required (no
+approvals, as a solo project), the `CI gate` check must pass, the branch must
+be up to date with `main`, merges are squash-only, and force-pushes and
+deletion are blocked. That is what Scorecard's `Branch-Protection` reads; its
+higher tiers need required reviews, which a solo project cannot meet.
+
+Nothing pushes to `main` directly, the workflows included. The ones that
+write generated files open a PR from a fixed bot branch through
+[`.github/actions/bot-pr`](.github/actions/bot-pr/action.yml), rebuilt on
+`main`'s tip and force-pushed on each run, so the PR is up to date and holds
+the latest output:
+
+| Workflow | Bot branch | What it proposes |
+|---|---|---|
+| `charts.yml` | `bot/charts` | charts re-rendered from committed data |
+| `core-bench.yml` | `bot/core-bench` | a `results/core-bench/history.csv` row and `core-speed.png` (rows waiting in an open PR are kept) |
+| `benchmarks.yml` | `bot/benchmarks` | the regenerated taxonomy table, pages and chart |
+| `rescue-artifacts.yml` | `bot/rescue-<run id>` | rescued per-merge CSVs |
+| `benchmark-cell.yml` | `bench/<cell>-<run id>` | a benchmark cell (#612) |
+
+The PRs are opened with the bot app's token (`AHN_BOT_APP_ID` /
+`AHN_BOT_APP_KEY`, #705) or, without it, `ORG_BOT_TOKEN`, so CI runs on them
+and `CI gate` can report. With neither, they fall back to the workflow's
+`GITHUB_TOKEN`: GitHub runs no CI on such a PR, so a maintainer closes and
+reopens it. If `main` moves while a bot PR waits, the next run rebuilds it, or
+use the PR's *Update branch*.
+
+**The release is the exception.** `release.yml` pushes its `bump:` commit and
+tag straight to `main`, because the tag must point at a commit on `main` and
+the bundle is built and attested from that commit before anything is pushed.
+That push needs an actor on the ruleset's bypass list: the bot app (#705), or
+the owner of `ORG_BOT_TOKEN` through their role. The workflow's `GITHUB_TOKEN`
+cannot be one. Without a bypass actor the push step fails before the tag or
+the release go out, so nothing is left half-published; a dry run pushes
+nothing and needs none.
 
 ### Automated: SonarQube Cloud and Codecov
 
