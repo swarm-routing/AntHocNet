@@ -9,7 +9,7 @@
 #   - it changes only VERSION, .cz.toml, CITATION.cff, core/CMakeLists.txt
 #     (each changed line is the version line, or CITATION.cff's
 #     date-released line, line for line) and CHANGELOG.md (lines added only;
-#     Markdown, never run).
+#     Markdown, never run), all as text: a change git sees as binary fails.
 #
 # Usage: check-bump.sh BASE BUMP     (in a repository holding both commits)
 #        check-bump.sh --self-test
@@ -37,6 +37,12 @@ check() {
         return 1
     fi
     while IFS= read -r f; do
+        # git counts no lines in a binary diff (a NUL byte is enough), so a
+        # binary change would slip past the line checks below: reject it.
+        if [ "$(git diff --numstat "$base" "$bump" -- "$f" | cut -f1)" = "-" ]; then
+            echo "FAIL [bump]: $f changes as binary"
+            return 1
+        fi
         if [ "$f" = CHANGELOG.md ]; then
             removed=$(git diff --numstat "$base" "$bump" -- CHANGELOG.md | cut -f2)
             [ "$removed" = 0 ] || { echo "FAIL [bump]: CHANGELOG.md removes lines"; return 1; }
@@ -94,6 +100,8 @@ self_test() {
     bump "a new file" 1 'echo x > new.sh'
     bump "a CHANGELOG deletion" 1 'printf "## v2.6.1\n" > CHANGELOG.md'
     bump "VERSION made a symlink" 1 'rm VERSION && ln -s ci.yml VERSION'
+    bump "a NUL byte in core/CMakeLists.txt" 1 'printf "#\\000\\nexecute_process(COMMAND x)\\n" >> core/CMakeLists.txt'
+    bump "a NUL byte in CHANGELOG.md" 1 'printf "\\000" >> CHANGELOG.md'
     "${g[@]}" reset -q --hard "$base"
     expect "baseline" 0 "$base"
     # Two commits, and a merge whose first parent is base.
