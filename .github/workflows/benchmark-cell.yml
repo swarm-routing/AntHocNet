@@ -383,11 +383,15 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           added=""
+          # The commit the numbers were measured at: a campaign image's
+          # revision (##PROV## commit=), else this run's checkout.
+          measured=$(grep -o '^##PROV## commit=[0-9a-f]\{40\}' "$dir/results.txt" 2>/dev/null | tail -n 1 | cut -d= -f2 || true)
+          measured=${measured:-$GITHUB_SHA}
           if [ -n "$CELL" ]; then
             # The cell format the pages cite: a one-line header, then the
             # harness output (its ##CONFIG##/##RUN## rows), then ##ARGS##/##PROV##.
             dest="results/cells/${CELL}.txt"
-            { echo "# ${TITLE:-$CELL} @${GITHUB_SHA:0:8} run ${GITHUB_RUN_ID} (benchmark-cell.yml, #612)"
+            { echo "# ${TITLE:-$CELL} @${measured:0:8} run ${GITHUB_RUN_ID} (benchmark-cell.yml, #612)"
               cat "$dir/results.txt"; } > "$dest"
             git add "$dest"; added="\`${dest}\`"
           fi
@@ -409,7 +413,7 @@ jobs:
           check=$(cat "$dir/replay-check.txt" 2>/dev/null || echo "no replay recorded")
           body=$(printf '%s\n' \
             "Adds ${added} from [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})." \
-            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}\` at ${GITHUB_SHA}." \
+            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}\` at ${measured} (workflow ${GITHUB_SHA})." \
             "" "**scenario_check results:**" '```' "$verdict" '```' \
             "" "**check-viz-trace (#641):**" '```' "$check" '```' \
             "" "$(if [ "$APP_TOKEN" = true ]; then echo "Opened by benchmark-cell.yml (#612) with the app token (#705); CI runs on this PR."; else echo "Opened by benchmark-cell.yml (#612). CI does not run on a workflow-opened PR (no app token configured, #705); close and reopen it to run checks."; fi)")

@@ -296,7 +296,12 @@ def build_image(plan, version):
     if r["conclusion"] != "success":
         sys.exit(f"campaign image run {rid}: {r['conclusion']}; no cell dispatched")
     with tempfile.TemporaryDirectory() as d:
-        fetch(rid, d, name="campaign-image")
+        try:
+            fetch(rid, d, name="campaign-image")
+        except RuntimeError as e:
+            sys.exit(f"campaign image run {rid} succeeded, but its image.txt could "
+                     f"not be fetched ({e}); read the digest from the run's summary "
+                     "and re-run with --image ghcr.io/...@sha256:...")
         with open(os.path.join(d, "image.txt")) as f:
             ref = f.readline().strip()
     if not IMAGE_RE.fullmatch(ref):

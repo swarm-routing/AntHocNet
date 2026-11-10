@@ -1,6 +1,6 @@
 # Container images
 
-This repository builds no ns-3 of its own (#866, org decision
+This repository builds no ns-3 images of its own (#866, org decision
 [swarm-routing/.github#107](https://github.com/swarm-routing/.github/issues/107)).
 Every image that carries AntHocNet is built `FROM` an image of
 [`swarm-routing/ns3-containers`](https://github.com/swarm-routing/ns3-containers)

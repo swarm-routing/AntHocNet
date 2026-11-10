@@ -179,7 +179,8 @@ calibration loop (sweep one knob → A/B → noise verdict) are in
 
 ### Container images
 
-Prefer not to install a simulator yourself? Each release publishes
+Prefer not to install a simulator yourself? From the first release after
+#866 (v2.6.1 and earlier have only the older images below), each release publishes
 `ghcr.io/swarm-routing/anthocnet-ns3:<release>-optimized` and `-debug`: ns-3 with
 every module of the release built and tested, built `FROM` a pinned digest of the
 org's ns-3 image [`ghcr.io/swarm-routing/ns3-dev`](https://github.com/swarm-routing/ns3-containers)

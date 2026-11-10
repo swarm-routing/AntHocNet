@@ -103,7 +103,9 @@ They are built by swarm-routing/.github's shared `reusable-ns3-image.yml`
 `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest, and signed with cosign
 (keyless) by digest, with build provenance and a CycloneDX SBOM in the
 registry. The signing identity is that shared workflow; this repository is in
-the certificate's workflow-repository extension:
+the certificate's workflow-repository extension (log in first with
+`docker login ghcr.io` if the package is not public; `gh attestation verify`
+on an `oci://` image needs registry credentials):
 
 ```bash
 cosign verify ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \

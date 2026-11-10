@@ -146,7 +146,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 - The **codec decode path is fuzzed** (libFuzzer, 60 s, `codec-fuzz` job).
 - Container images: each release publishes `ghcr.io/swarm-routing/anthocnet-ns3:<tag>-{optimized,debug}`
   `FROM` a pinned `ns3-dev` digest, and each campaign builds one image per commit
-  (`campaign-image.yml`); this repo builds no ns-3 of its own since #866 (`docker/README.md`).
+  (`campaign-image.yml`); this repo builds no ns-3 images of its own since #866 (`docker/README.md`).
 - **Observability**: the core exposes ant/route counters + an optional
   `IRouterObserver`; the NS-3 module surfaces `Tx`/`Rx`/`RouteChanged` trace
   sources, read by `anthocnet-compare --diag` (item 15).
