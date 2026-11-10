@@ -1,37 +1,111 @@
 name: Release
 
-# Manual, Commitizen-driven release. You trigger it; Commitizen computes the
-# next SemVer from the Conventional-Commit history since the last tag (feat ->
-# minor, fix -> patch, breaking -> minor while 0.x), rewrites the version in
-# VERSION / CITATION.cff / core CMake, regenerates CHANGELOG.md, commits + tags,
-# then this same job builds the lean install bundle, checksums it, and publishes
-# the GitHub Release. Bump + release live in one job on purpose: a tag pushed
-# with the default GITHUB_TOKEN does NOT trigger other workflows, so we don't
-# rely on the tag event (and need no PAT). Once the repo is linked to Zenodo,
-# each published release is archived + gets a DOI; add it to CITATION.cff
-# afterwards.
+# Commitizen-driven release in two steps, because main takes no direct push
+# (a ruleset: PR required, `CI gate` required, no bypass actors; #789, #882).
+#
+# 1. Dispatch mode=bump. Commitizen computes the next SemVer from the
+#    Conventional-Commit history since the last tag (feat -> minor, fix ->
+#    patch, breaking -> major), rewrites the version in VERSION / .cz.toml /
+#    CITATION.cff / core CMake and regenerates CHANGELOG.md. The `propose` job
+#    puts that on the bot branch `bot/release` and opens (or updates) the PR
+#    `chore(release): bump version A to B` (.github/actions/bot-pr), with the
+#    bot token so CI runs on it. Nothing is tagged or published.
+# 2. Merge that PR. Its squash commit on main (VERSION changed, title
+#    `chore(release): bump version ...`) starts this workflow on `push`: the
+#    `release` job builds the lean install bundle from the merged commit,
+#    checksums, attests and verifies it, and the `publish` job tags that
+#    commit v<VERSION> and publishes the GitHub Release. Tags are outside the
+#    branch ruleset, so the workflow token pushes the tag.
+#
+# mode=dryrun bumps, builds, attests and verifies on the runner, then stops:
+# nothing is pushed, proposed or published (#614). mode=baseline releases
+# the current VERSION at main's head as-is (once, for v0.1.0).
+#
+# The tag pushed with the workflow token starts no other workflow, so the
+# images job is a direct dependency, not a tag trigger. Once the repo is
+# linked to Zenodo, each published release is archived + gets a DOI; add it to
+# CITATION.cff afterwards.
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "bump = cz computes next version from commits; baseline = release the current VERSION as-is (use once, for v0.1.0); dryrun = bump, build, attest and verify on the runner, then stop: nothing is pushed or published (#614)"
+        description: "bump = open the bump PR (merging it releases); baseline = release the current VERSION as-is (use once, for v0.1.0); dryrun = bump, build, attest and verify on the runner, then stop: nothing is pushed or published (#614)"
         type: choice
         options: [bump, baseline, dryrun]
         default: bump
+  push:
+    branches: [main]
+    paths: [VERSION]
 
 # Read-only by default; each job that writes declares its own scopes
 # below (Scorecard Token-Permissions, #785).
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
+  # Step 1: the bump as a PR (#882).
+  propose:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'bump' }}
     runs-on: ubuntu-24.04
-    # Builds, attests and verifies; pushes and publishes nothing (the publish
-    # job below does, #789). It runs repository code (make test, the bundle
-    # scripts), so it never holds a write token: no credential in the git
-    # config, and the push token is minted in the publish job, which runs no
-    # repository code.
+    # contents + pull-requests: write only to open the PR with the workflow
+    # token when no bot token is configured (#705); CI then needs a close and
+    # reopen of the PR.
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0   # full history + tags for cz to compute the bump
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.x'
+      - name: Install commitizen
+        timeout-minutes: 10
+        run: pip install --require-hashes -r requirements/commitizen.txt
+      - name: Bump (files only)
+        id: bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          old="$(tr -d '[:space:]' < VERSION)"
+          # cz rewrites `version:` in CITATION.cff but not the release date, so
+          # stamp today's date first (the merge day can differ; the PR can be
+          # refreshed by dispatching bump again).
+          sed -i -E "s/^date-released:.*/date-released: \"$(date -u +%Y-%m-%d)\"/" CITATION.cff
+          cz bump --yes --changelog
+          ver="$(tr -d '[:space:]' < VERSION)"
+          # Keep the files, drop cz's commit and tag: the tag goes on the merged
+          # commit (publish job), and bot-pr makes the commit.
+          git tag -d "v${ver}"
+          git reset -q --soft HEAD~1
+          echo "title=chore(release): bump version ${old} to ${ver}" >> "$GITHUB_OUTPUT"
+          echo "ver=${ver}" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/bot-pr
+        with:
+          branch: bot/release
+          title: ${{ steps.bump.outputs.title }}
+          body: "Commitizen's bump to v${{ steps.bump.outputs.ver }} from the commits since the last tag (`CHANGELOG.md` has the notes). **Merging this PR releases v${{ steps.bump.outputs.ver }}:** release.yml runs on the merge, builds, attests and verifies the merged commit, tags it and publishes the GitHub Release (#882). If main moves before the merge, dispatch mode=bump again to refresh the changelog."
+          paths: VERSION .cz.toml CITATION.cff CHANGELOG.md core/CMakeLists.txt
+          labels: packaging
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          app-key: ${{ secrets.AHN_BOT_APP_KEY }}
+          token: ${{ secrets.ORG_BOT_TOKEN }}
+
+  # Step 2: build, attest and verify the release commit (the merged bump, the
+  # baseline head, or a dry run's local bump); push and publish nothing (the
+  # publish job does). It runs repository code (make test, the bundle
+  # scripts), so it holds no write token.
+  release:
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.mode != 'bump') ||
+          (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release): bump version ')) }}
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write      # keyless Sigstore signing of the attestations (#614)
@@ -73,19 +147,21 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Compute version (bump or baseline)
+      - name: Compute version (merged bump, baseline or dry-run bump)
         id: compute
+        env:
+          MODE: ${{ inputs.mode }}
         run: |
-          if [ "${{ inputs.mode }}" = "baseline" ]; then
-            ver="$(tr -d '[:space:]' < VERSION)"
-            git tag -a "v${ver}" -m "v${ver}"
-          else
-            # cz rewrites `version:` in CITATION.cff but not the release date, so
-            # stamp today's date first: cz then `git add`s the whole file and the
-            # bump commit (and its tag) carry the correct date-released.
+          if [ "$MODE" = "dryrun" ]; then
+            # As step 1 would, on the runner only.
             sed -i -E "s/^date-released:.*/date-released: \"$(date -u +%Y-%m-%d)\"/" CITATION.cff
             cz bump --yes --changelog
             ver="$(tr -d '[:space:]' < VERSION)"
+          else
+            ver="$(tr -d '[:space:]' < VERSION)"
+            if git rev-parse -q --verify "refs/tags/v${ver}" >/dev/null; then
+              echo "FAIL: v${ver} is already tagged; nothing to release"; exit 1
+            fi
           fi
           echo "VER=${ver}" >> "$GITHUB_ENV"
           echo "TAG=v${ver}" >> "$GITHUB_ENV"
@@ -202,14 +278,7 @@ jobs:
       - name: Hand the release over to the publish job
         id: handover
         if: ${{ inputs.mode != 'dryrun' }}
-        # The bump commit and its tag travel as a git bundle with the files to
-        # publish; the publish job checks what the bundle holds before pushing.
         run: |
-          if [ "$(git rev-parse HEAD)" = "$GITHUB_SHA" ]; then
-            git bundle create dist/release.bundle "refs/tags/${TAG}"     # baseline: the tag only
-          else
-            git bundle create dist/release.bundle "refs/tags/${TAG}" --not "$GITHUB_SHA"
-          fi
           { echo "ver=${VER}"; echo "sha256=${SHA256}"; echo "mod_sha256=${MOD_SHA256}"; } >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ inputs.mode != 'dryrun' }}
@@ -218,28 +287,17 @@ jobs:
           path: dist/
           retention-days: 1
 
-  # Pushes the bump commit and tag, the ns3-module branch, and publishes the
-  # GitHub Release (#789). main is protected by a ruleset (PR required, `CI
-  # gate` required), and the bump commit is pushed to it directly: the tag
-  # must point at a commit on main, and the bundle was built and attested from
-  # that commit before anything is pushed. So the push needs an actor on the
-  # ruleset's bypass list. The workflow's GITHUB_TOKEN cannot be one; the push
-  # uses, first that exists, the bot app's token (#705: add the app as a
-  # bypass actor) or ORG_BOT_TOKEN (its owner's role on the bypass list).
-  # With neither, the push fails before the tag or the release go out, and
-  # nothing is left to clean up. A dry run never reaches this job.
-  #
-  # This job runs no code from the build: it checks out the dispatched commit
-  # (the code main already holds) and, before pushing, checks with
-  # tools/release/check-bump.sh that the bundle holds one commit on it that
-  # changes only Commitizen's version lines and adds to CHANGELOG.md, so a
-  # tampered build cannot use the bypass token to push anything else.
+  # Tags the release commit, updates the ns3-module branch and publishes the
+  # GitHub Release. It runs no code from the build: it checks out the commit
+  # this run is for (the merged bump, or main's head for a baseline) and
+  # takes only the built files. Tags and ns3-module are outside main's
+  # ruleset, so the workflow token pushes both; nothing here pushes to main.
   publish:
     needs: release
     if: ${{ inputs.mode != 'dryrun' }}
     runs-on: ubuntu-24.04
     permissions:
-      contents: write      # the ns3-module push and the GitHub Release
+      contents: write      # the tag, the ns3-module push and the GitHub Release
     env:
       TAG: ${{ needs.release.outputs.tag }}
       VER: ${{ needs.release.outputs.ver }}
@@ -253,38 +311,16 @@ jobs:
         with:
           name: release-dist
           path: dist
-      - name: Check the bump commit
-        # tools/release/check-bump.sh from the dispatched commit (this
-        # checkout), not from the build: one commit on GITHUB_SHA, version
-        # lines only (#789).
-        run: |
-          git fetch -q dist/release.bundle "refs/tags/${TAG}:refs/tags/${TAG}"
-          bump=$(git rev-parse "refs/tags/${TAG}^{commit}")
-          tools/release/check-bump.sh "$GITHUB_SHA" "$bump"
-          echo "BUMP=$bump" >> "$GITHUB_ENV"
-      - name: Is a bot app configured? (#705)
-        id: bot
+      - name: Tag the release commit
         env:
-          APP_ID: ${{ vars.AHN_BOT_APP_ID }}
-          APP_KEY: ${{ secrets.AHN_BOT_APP_KEY }}
+          PUSH_TOKEN: ${{ github.token }}
         run: |
-          if [ -n "$APP_ID" ] && [ -n "$APP_KEY" ]; then echo "app=true" >> "$GITHUB_OUTPUT"; fi
-      - name: GitHub App token (bypass actor, #789)
-        id: app
-        if: ${{ steps.bot.outputs.app == 'true' }}
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ vars.AHN_BOT_APP_ID }}
-          private-key: ${{ secrets.AHN_BOT_APP_KEY }}
-      - name: Push commit + tag
-        env:
-          PUSH_TOKEN: ${{ steps.app.outputs.token || secrets.ORG_BOT_TOKEN || github.token }}
-        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "${TAG}" "$GITHUB_SHA"
           auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
           echo "::add-mask::$auth"
-          push() { git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push "$@"; }
-          push origin "${BUMP}:refs/heads/main"
-          push origin "refs/tags/${TAG}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "refs/tags/${TAG}"
 
       - name: Update the generated ns3-module branch (#606)
         # The tarball's contents as an orphan commit on `ns3-module`, replaced
@@ -296,8 +332,6 @@ jobs:
         env:
           PUSH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           tmp=$(mktemp -d)
           tar -xzf "dist/anthocnet-ns3-modules-${VER}.tar.gz" -C "$tmp"
           GIT_INDEX_FILE="$(mktemp -u)"
@@ -382,7 +416,6 @@ jobs:
   # pushed is picked up without relying on a tag event.
   images:
     needs: [release, publish]
-    if: ${{ inputs.mode != 'dryrun' }}
     uses: ./.github/workflows/images.yml
     permissions:
       contents: read
