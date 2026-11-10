@@ -239,7 +239,11 @@ tag straight to `main`, because the tag must point at a commit on `main` and
 the bundle is built and attested from that commit before anything is pushed.
 That push needs an actor on the ruleset's bypass list: the bot app (#705), or
 the owner of `ORG_BOT_TOKEN` through their role. The workflow's `GITHUB_TOKEN`
-cannot be one. Without a bypass actor the push step fails before the tag or
+cannot be one. The token is only ever held by the `publish` job, which runs no
+repository code: the `release` job builds, attests and verifies with read-only
+credentials and hands over the bump commit as a git bundle, and `publish`
+pushes it only if it is one commit on the dispatched one changing nothing but
+the files Commitizen writes. Without a bypass actor the push step fails before the tag or
 the release go out, so nothing is left half-published; a dry run pushes
 nothing and needs none.
 
