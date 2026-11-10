@@ -125,6 +125,8 @@ jobs:
           body: Core speed (`bench_core`, ns/op) measured at ${{ github.sha }}, appended to `results/core-bench/history.csv`, and `docs/benchmarks/charts/core-speed.png` redrawn (#620).
           paths: results/core-bench/history.csv docs/benchmarks/charts/core-speed.png
           labels: benchmark
+          org-app-id: ${{ secrets.BOT_APP_ID }}
+          org-app-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
           app-id: ${{ vars.AHN_BOT_APP_ID }}
           app-key: ${{ secrets.AHN_BOT_APP_KEY }}
           token: ${{ secrets.ORG_BOT_TOKEN }}

@@ -9,14 +9,20 @@
 # main, as the ruleset requires. If main moves while it waits, the next run
 # (or the PR page's "Update branch") brings it up to date.
 #
-# Token, first that exists (#705):
-# - a GitHub App installation token (AHN_BOT_APP_ID / AHN_BOT_APP_KEY);
+# Token, first that works (#705; the org App: swarm-routing/.github#21):
+# - the org GitHub App's installation token (secrets BOT_APP_ID /
+#   BOT_APP_PRIVATE_KEY, org secrets for every repository), as
+#   swarm-routing/.github's .github/actions/bot-token makes it;
+# - this repository's own GitHub App (AHN_BOT_APP_ID / AHN_BOT_APP_KEY);
 # - a personal access token passed as `token` (ORG_BOT_TOKEN, as org-bot's);
 # - the workflow's GITHUB_TOKEN. CI does not run on a PR that token opens or
 #   pushes, so the required `CI gate` never reports and the PR cannot merge
 #   until a maintainer closes and reopens it. It also needs the repository
 #   setting "Allow GitHub Actions to create and approve pull requests";
 #   without it the branch is still pushed and the job summary links it.
+# An App whose token cannot be made is a warning, and the next one is tried.
+# The job log says which token was used; with an App token the commit is made
+# as that App's bot user, else as github-actions[bot].
 #
 # The caller checks out with `persist-credentials: false`: no write token sits
 # in the git config while the job runs the repository's code, and the push
@@ -45,11 +51,17 @@ inputs:
   labels:
     description: comma-separated labels for a new PR (a missing label is a warning)
     default: ''
+  org-app-id:
+    description: the org GitHub App's ID or Client ID (secrets.BOT_APP_ID), empty when it is not configured
+    default: ''
+  org-app-key:
+    description: the org GitHub App's private key (secrets.BOT_APP_PRIVATE_KEY)
+    default: ''
   app-id:
-    description: GitHub App id (vars.AHN_BOT_APP_ID), empty when none is configured
+    description: this repository's GitHub App id (vars.AHN_BOT_APP_ID), empty when none is configured
     default: ''
   app-key:
-    description: GitHub App private key (secrets.AHN_BOT_APP_KEY)
+    description: this repository's GitHub App private key (secrets.AHN_BOT_APP_KEY)
     default: ''
   token:
     description: a personal access token to use when no app is configured (secrets.ORG_BOT_TOKEN)
@@ -61,19 +73,72 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: GitHub App token
+    - name: Org GitHub App token
+      id: org
+      if: ${{ inputs.org-app-id != '' && inputs.org-app-key != '' }}
+      continue-on-error: true
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      with:
+        client-id: ${{ inputs.org-app-id }}
+        private-key: ${{ inputs.org-app-key }}
+        owner: swarm-routing
+    - name: Repository GitHub App token
       id: app
-      if: ${{ inputs.app-id != '' && inputs.app-key != '' }}
+      if: ${{ steps.org.outputs.token == '' && inputs.app-id != '' && inputs.app-key != '' }}
+      continue-on-error: true
       uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       with:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.app-key }}
+    - name: Pick the token
+      id: pick
+      shell: bash
+      env:
+        ORG_CONFIGURED: ${{ inputs.org-app-id != '' && inputs.org-app-key != '' }}
+        APP_CONFIGURED: ${{ inputs.app-id != '' && inputs.app-key != '' }}
+        ORG_TOKEN: ${{ steps.org.outputs.token }}
+        ORG_SLUG: ${{ steps.org.outputs.app-slug }}
+        APP_TOKEN: ${{ steps.app.outputs.token }}
+        APP_SLUG: ${{ steps.app.outputs.app-slug }}
+        PAT: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        if [ -z "$ORG_TOKEN" ]; then
+          if [ "$ORG_CONFIGURED" = true ]; then
+            echo "::warning::bot token: the org GitHub App token could not be made (see the step above); trying the next token"
+          else
+            echo "bot token: the org GitHub App is not configured (BOT_APP_ID / BOT_APP_PRIVATE_KEY unset)"
+          fi
+        fi
+        if [ -z "$ORG_TOKEN" ] && [ -z "$APP_TOKEN" ] && [ "$APP_CONFIGURED" = true ]; then
+          echo "::warning::bot token: the repository GitHub App token could not be made (see the step above); trying the next token"
+        fi
+        token="${ORG_TOKEN:-$APP_TOKEN}"
+        if [ -n "$token" ]; then
+          if [ -n "$ORG_TOKEN" ]; then slug="$ORG_SLUG" what="org GitHub App"; else slug="$APP_SLUG" what="repository GitHub App"; fi
+          login="${slug}[bot]"
+          id=$(GH_TOKEN="$token" gh api "users/${slug}%5Bbot%5D" --jq .id) || id=
+          printf 'token=%s\nkind=app\n' "$token" >> "$GITHUB_OUTPUT"
+          # both or neither: without the bot's user id, commit as github-actions[bot]
+          if [ -n "$id" ]; then
+            printf 'git-name=%s\ngit-email=%s\n' "$login" "${id}+${login}@users.noreply.github.com" >> "$GITHUB_OUTPUT"
+          fi
+          echo "::notice::bot token: $what $login"
+        elif [ -n "$PAT" ]; then
+          printf 'token=%s\nkind=pat\n' "$PAT" >> "$GITHUB_OUTPUT"
+          echo "::notice::bot token: ORG_BOT_TOKEN"
+        else
+          echo "kind=workflow" >> "$GITHUB_OUTPUT"
+          echo "::notice::bot token: the workflow's GITHUB_TOKEN (no bot token configured; CI will not run on the PR)"
+        fi
     - name: Commit on the bot branch and open or update the PR
       id: pr
       shell: bash
       env:
-        GH_TOKEN: ${{ steps.app.outputs.token || inputs.token || github.token }}
-        KIND: ${{ steps.app.outputs.token != '' && 'app' || (inputs.token != '' && 'pat' || 'workflow') }}
+        GH_TOKEN: ${{ steps.pick.outputs.token || github.token }}
+        KIND: ${{ steps.pick.outputs.kind }}
+        GIT_NAME: ${{ steps.pick.outputs.git-name || 'github-actions[bot]' }}
+        GIT_EMAIL: ${{ steps.pick.outputs.git-email || '41898282+github-actions[bot]@users.noreply.github.com' }}
         BRANCH: ${{ inputs.branch }}
         BASE: ${{ inputs.base }}
         TITLE: ${{ inputs.title }}
@@ -84,8 +149,8 @@ runs:
         set -euo pipefail
         repo="$GITHUB_REPOSITORY"
         open=$(gh api "repos/$repo/pulls?state=open&base=$BASE&head=${GITHUB_REPOSITORY_OWNER}:$BRANCH" --jq '.[0].number // empty')
-        git config user.name  "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name  "$GIT_NAME"
+        git config user.email "$GIT_EMAIL"
         auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
         echo "::add-mask::$auth"
         # Hooks off: nothing the job's earlier steps left in .git/hooks runs
