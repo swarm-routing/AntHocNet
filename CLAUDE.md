@@ -22,6 +22,10 @@ handoff is asked for, open a GitHub issue from the *Handoff* template (label
 the newest open `handoff` issue, and close it when the work it hands off is
 done ([ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
 
+**Every change is a PR to `main`, squash-merged.** Open the PR as soon as the
+branch is pushed, so all work is tracked; the squash title is the commit on
+`main`.
+
 ## Working defaults
 
 Condensed from [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills).

@@ -70,6 +70,12 @@ outputs:
   pr:
     description: the PR number (empty when nothing changed or the PR could not be opened)
     value: ${{ steps.pr.outputs.pr }}
+  result:
+    description: >-
+      opened, updated, unchanged (nothing to propose; not an error) or
+      not-opened (the branch is pushed but GitHub refused the PR: a warning
+      here, so a caller that needs the PR fails on it)
+    value: ${{ steps.pr.outputs.result }}
 runs:
   using: composite
   steps:
@@ -190,7 +196,7 @@ runs:
             gh api -X PATCH "repos/$repo/pulls/$open" -f state=closed >/dev/null
             echo "::notice::closed #$open: $BASE already matches this run"
           fi
-          echo "pr=" >> "$GITHUB_OUTPUT"
+          echo "pr=" >> "$GITHUB_OUTPUT"; echo "result=unchanged" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         git commit -q -m "$TITLE"
@@ -204,7 +210,7 @@ runs:
           "$BODY" "$ci" "$GITHUB_WORKFLOW" "$GITHUB_RUN_ID" "$GITHUB_SERVER_URL" "$repo" "$GITHUB_RUN_ID" "$BRANCH" > "$RUNNER_TEMP/bot-pr-body.md"
         if [ -n "$open" ]; then
           gh api -X PATCH "repos/$repo/pulls/$open" -f title="$TITLE" -F body=@"$RUNNER_TEMP/bot-pr-body.md" >/dev/null
-          echo "Updated #$open"; echo "pr=$open" >> "$GITHUB_OUTPUT"
+          echo "Updated #$open"; echo "pr=$open" >> "$GITHUB_OUTPUT"; echo "result=updated" >> "$GITHUB_OUTPUT"
           echo "Updated PR #$open" >> "$GITHUB_STEP_SUMMARY"
           exit 0
         fi
@@ -213,7 +219,7 @@ runs:
           url="$GITHUB_SERVER_URL/$repo/compare/$BASE...$BRANCH?expand=1"
           echo "::warning::could not open the PR (is 'Allow GitHub Actions to create pull requests' off?). The branch is pushed: $url"
           echo "Branch pushed; open the PR here: $url" >> "$GITHUB_STEP_SUMMARY"
-          echo "pr=" >> "$GITHUB_OUTPUT"
+          echo "pr=" >> "$GITHUB_OUTPUT"; echo "result=not-opened" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         IFS=',' read -ra names <<< "$LABELS"
@@ -221,5 +227,5 @@ runs:
           [ -n "$l" ] || continue
           gh api "repos/$repo/issues/$pr/labels" -f "labels[]=$l" >/dev/null || echo "::warning::could not add label $l to #$pr"
         done
-        echo "Opened #$pr"; echo "pr=$pr" >> "$GITHUB_OUTPUT"
+        echo "Opened #$pr"; echo "pr=$pr" >> "$GITHUB_OUTPUT"; echo "result=opened" >> "$GITHUB_OUTPUT"
         echo "Opened PR #$pr" >> "$GITHUB_STEP_SUMMARY"

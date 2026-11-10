@@ -18,8 +18,9 @@ name: Campaign image
 # Tags never move: a (commit, base digest) pair that already has an image is
 # reused (skip-existing), so dispatching this twice with the same inputs pushes
 # nothing the second time. The digest is the job output `image` and the
-# one-line artifact `campaign-image` (image.txt), which `tools/bench/campaign.py
-# dispatch --build-image` reads before it dispatches the cells.
+# one-line artifact `campaign-image` (image.txt); a campaign plan pins it as
+# `image` (or `pins.<arm>.image`) beside `source_sha` = this commit, and
+# `ns3-campaign` passes both to every benchmark-cell.yml cell (#905).
 #
 # Version rule: AODV-family arms (aodv, aomdv, the harness's stock arms)
 # livelock on ns-3.49 (#843, swarm-routing/ns3-containers#35), so the default
@@ -136,7 +137,7 @@ jobs:
             echo "### Campaign image"
             echo "\`$IMAGE\` (${GITHUB_REPOSITORY}@${COMMIT}, ns3-dev ${VERSION}-optimized)"
             echo
-            echo "Dispatch cells with it: \`tools/bench/campaign.py dispatch PLAN --log RUNS.tsv --image $IMAGE\`"
+            echo "Pin it in the campaign plan: \`source_sha: ${COMMIT}\`, \`image: $IMAGE\`; then \`ns3-campaign dispatch PLAN\`"
           } >> "$GITHUB_STEP_SUMMARY"
           echo "campaign image: $IMAGE"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

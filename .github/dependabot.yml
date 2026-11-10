@@ -3,7 +3,9 @@
 # Scope decisions:
 #   - github-actions: workflow `uses:` lines are pinned to full commit SHAs
 #     (tags can be repointed); Dependabot bumps the SHA and the trailing
-#     `# vX.Y.Z` comment together.
+#     `# vX.Y.Z` comment together. `github/codeql-action/*` (init, analyze,
+#     upload-sarif) bump in one grouped PR: init and analyze must run the same
+#     version, so a PR bumping one alone can never go green (#906).
 #   - docker: none. This repo builds no image since #866 (release and campaign
 #     images come from swarm-routing/.github's reusable-ns3-image.yml, FROM a
 #     pinned ns3-dev digest resolved at build time).
@@ -22,6 +24,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
 
   - package-ecosystem: pip
     directory: /requirements
