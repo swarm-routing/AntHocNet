@@ -250,6 +250,7 @@ ISL_RUN = re.compile(r"^\s*##RUN##\s+(\d+)\s+([a-z][\w-]*)"
 DIAG_LINE = re.compile(r"^\s*#\s+(paths|energy|drops|reorder)\s+([a-z][\w-]*)\s+(.+)$")
 # #365: the workflow-emitted provenance line, last in the compact block.
 #   ##PROV## commit=<sha> ref=.. run_id=.. attempt=.. image=.. profile=..
+#            [base=<ref>@sha256:.. base_tag=.. build_profile=.. modules=<name>@<sha40>,..]  (campaign image, #866)
 # Only the commit is matched here — it is the field whose absence makes a cell
 # unreproducible, and the rest are context a human reads off the same line.
 PROV_LINE = re.compile(r"^\s*##PROV##\s+commit=([0-9a-fA-F]{7,40})\b")

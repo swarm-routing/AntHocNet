@@ -17,7 +17,9 @@
 #   - check-determinism.sh's filter_rows() -> arm dropped from BOTH sides of
 #     the diff, gate said PASS having compared nothing
 #   - docker/Dockerfile.ns3 --enable-modules -> every v1.5.0 ns-3 release
-#     image failed to publish
+#     image failed to publish (the recipe is retired since #866: release and
+#     campaign images are built by `make install-ns3` + ns3-build-contrib,
+#     which build every installed module, so there is no list to keep)
 # Every one of those sites carries a "keep this in step" comment; a comment
 # is a request for vigilance, this gate is the mechanism (#435).
 #
@@ -65,8 +67,7 @@ fi
 # Stock ns-3 modules the compare harness links beyond the vendored ones and
 # their dependencies: mesh, for the hwmp arm (#708). ns-3 skips an example
 # whose module is not enabled, so a list without it loses the whole harness.
-# Required in every module-build list (it is stock, so the Dockerfile's
-# stock-base list may carry it too).
+# Required in every module-build list.
 required="$modules
 mesh"
 
@@ -107,64 +108,12 @@ EOF
 
 check_module_list .github/workflows/ci-ns3.yml \
     "^[[:space:]]*mods='" 2 "ci-ns3.yml mods= (ns3-build + ns3-asan)"
-check_module_list .github/workflows/benchmarks.yml \
-    "--enable-modules='" 1 "benchmarks.yml --enable-modules"
 check_module_list .github/workflows/benchmark-cell.yml \
     "--enable-modules='" 1 "benchmark-cell.yml --enable-modules"
 # The devcontainer mirrors ci-ns3.yml's ns3-build recipe (#334) — an eleventh
 # hand-maintained copy, found while writing this gate (#435).
 check_module_list .devcontainer/post-create.sh \
     "^[[:space:]]*mods='" 1 "post-create.sh mods= (devcontainer)"
-
-# docker/Dockerfile.ns3 carries TWO --enable-modules lines and only one is an
-# allowlist for this gate:
-#   - the `anthocnet` stage list must name every vendored module (missing
-#     `oracle` here is what broke every v1.5.0 ns-3 release image, #435);
-#   - the `base` stage list is a DELIBERATE exception: it is the stock-ns-3
-#     build the manet-baselines control (#24) runs on, and must NOT include
-#     any vendored module — no AntHocNet code in the control binary.
-df=docker/Dockerfile.ns3
-if need_file "$df"; then
-    dflines=$(grep -E -e "--enable-modules='" "$df" || true)
-    dfn=$(count_lines "$dflines")
-    if [ "$dfn" -ne 2 ]; then
-        echo "FAIL [allowlists]: Dockerfile.ns3 — expected exactly 2 --enable-modules lines"
-        echo "  (stock base build for #24 + module build), found $dfn. If a stage was"
-        echo "  added/moved, update check-allowlists.sh (#435)."
-        fail=1
-    else
-        optline=$(printf '%s\n' "$dflines" | grep 'anthocnet' || true)
-        stockline=$(printf '%s\n' "$dflines" | grep -v 'anthocnet' || true)
-        if [ "$(count_lines "$optline")" -ne 1 ] || [ "$(count_lines "$stockline")" -ne 1 ]; then
-            echo "FAIL [allowlists]: Dockerfile.ns3 — expected one module-build list (with"
-            echo "  anthocnet) and one stock-base list (without, the #24 control). Found:"
-            printf '%s\n' "$dflines" | sed 's/^/    /'
-            fail=1
-        else
-            optlist=$(printf '%s\n' "$optline" | sed "s/.*'\([^']*\)'.*/\1/")
-            stocklist=$(printf '%s\n' "$stockline" | sed "s/.*'\([^']*\)'.*/\1/")
-            for m in $required; do
-                case ";$optlist;" in
-                    *";$m;"*) ;;
-                    *)
-                        echo "FAIL [allowlists]: module '$m' missing from Dockerfile.ns3 module-build"
-                        echo "  --enable-modules (this is the #435 release-image break): $optlist"
-                        fail=1
-                        ;;
-                esac
-                case ";$stocklist;" in
-                    *";mesh;"*) ;;
-                    *";$m;"*)
-                        echo "FAIL [allowlists]: vendored module '$m' found in Dockerfile.ns3's STOCK base"
-                        echo "  --enable-modules — that build is the #24 manet-baselines control and must"
-                        echo "  stay free of AntHocNet/vendored code: $stocklist"
-                        fail=1
-                        ;;
-                esac
-            done
-        fi
-    fi
-fi
 
 # --- check class 2: (retired) protocol-arm awk alternations -----------------
 # check-determinism.sh reads its arm filter from the harness's --PrintHelp

@@ -71,7 +71,9 @@ index: the headline cross-scenario summary, plus a link to every detail page.
 
 The summary below and the per-scenario pages it links to are regenerated and
 committed automatically by the nightly `benchmarks` workflow whenever the code
-on the default branch changed (it runs the discrete named scenarios across all baselines and renders
+on the default branch changed (paused until the toolchain control campaign
+[#867](https://github.com/swarm-routing/AntHocNet/issues/867); until then the
+numbers below are the last ones measured on the pre-#866 image) (it runs the discrete named scenarios across all baselines and renders
 [`benchmarks/discrete-summary.png`](benchmarks/)), so they track the current
 code. The heavier parameter sweeps are produced on demand by the manual
 **Scenario matrix + charts** workflow.

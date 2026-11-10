@@ -32,6 +32,22 @@ name: Benchmark cell
 #   job summary links it;
 # - CI does not run on a PR a workflow token opens; close and reopen it if a
 #   check is wanted. The job prints a notice saying so.
+#
+# Two ways to run a cell (#866, swarm-routing/.github#107):
+# - `image` (a campaign): the digest of a campaign image campaign-image.yml
+#   built, ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:... The job
+#   runs in that image, checks out the commit the image was built from (its
+#   org.opencontainers.image.revision label) and runs the harness with
+#   `./ns3 run --no-build`: no cell rebuilds the module, so every cell of a
+#   campaign runs one binary. ##PROV## names the image digest, the ns3-dev
+#   base digest and the modules' commits, read from the image's labels.
+# - no `image` (legacy, to replay a published cell): the job runs in this
+#   repo's historical ghcr.io/swarm-routing/ns3:<version> image (3.36, 3.41,
+#   3.42, 3.42-opt, 3.47, 3.48; frozen since images.yml was retired) and
+#   installs, configures and builds the module in the job, as before.
+#   Published cells name ghcr.io/danieljoppi/ns3:<version>, the same recipe
+#   built before the org transfer; those tags are frozen
+#   (swarm-routing/.github#110) and no workflow pulls them.
 on:
   workflow_dispatch:
     inputs:
@@ -44,8 +60,11 @@ on:
         description: 'The harness flags, verbatim (e.g. --scenario=paper --runs=20 --protocols=anthocnet,aodv,olsr,dsdv,oracle --diag)'
         required: true
       version:
-        description: 'ns-3 image tag (3.42-opt for campaigns; 3.48 for leo-walker)'
+        description: 'Legacy path only (no image): ghcr.io/swarm-routing/ns3:<version>, e.g. 3.42-opt; 3.48 for leo-walker'
         default: '3.42-opt'
+      image:
+        description: 'Campaign image by digest (campaign-image.yml): ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:...; empty = the legacy in-job build'
+        default: ''
       cell:
         description: 'Cell name: the PR adds results/cells/<cell>.txt (required with open_pr)'
         default: ''
@@ -68,17 +87,80 @@ permissions:
   packages: read
 
 jobs:
+  # The campaign image's labels, read on the host (a container cannot see its
+  # own labels): its commit, base digest and modules, for the checkout and
+  # ##PROV##. Nothing to do on the legacy path.
+  inspect:
+    name: image labels
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15    # registry calls only; a stalled pull must not hold the cell
+    outputs:
+      commit: ${{ steps.labels.outputs.commit }}
+      base_digest: ${{ steps.labels.outputs.base_digest }}
+      base_tag: ${{ steps.labels.outputs.base_tag }}
+      modules: ${{ steps.labels.outputs.modules }}
+    steps:
+      - name: Read the campaign image's labels
+        id: labels
+        if: ${{ inputs.image != '' }}
+        env:
+          IMAGE: ${{ inputs.image }}
+          OWNER: ${{ github.repository_owner }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # A campaign image is pinned by digest, never by a tag.
+          [[ "$IMAGE" =~ ^ghcr\.io/${OWNER,,}/[a-z0-9._-]+@sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::image must be ghcr.io/${OWNER,,}/<name>@sha256:<64 hex> (got '$IMAGE')"; exit 1; }
+          echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin > /dev/null
+          docker buildx imagetools inspect "$IMAGE" --format '{{json .Image}}' > "$RUNNER_TEMP/image.json"
+          python3 - "$RUNNER_TEMP/image.json" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, re, sys
+          img = json.load(open(sys.argv[1]))
+          if "config" not in img:  # an index: one config per platform
+              img = img.get("linux/amd64") or next(iter(img.values()))
+          lab = img["config"].get("Labels") or {}
+          def need(key, pattern):
+              v = lab.get(key, "")
+              if not re.fullmatch(pattern, v):
+                  sys.exit(f"::error::label {key}={v!r} is missing or malformed: not a campaign image?")
+              return v
+          src = need("org.opencontainers.image.source", r"\S+")
+          if src != os.environ["SOURCE"]:
+              sys.exit(f"::error::the image was built from {src}, not {os.environ['SOURCE']}")
+          rev = need("org.opencontainers.image.revision", r"[0-9a-f]{40}")
+          print("commit=" + rev)
+          print("base_digest=" + need("io.github.swarm-routing.ns3-dev.digest", r"sha256:[0-9a-f]{64}"))
+          print("base_tag=" + need("io.github.swarm-routing.ns3-dev.tag", r"\S+"))
+          # Every module with its commit, as swarm-routing/benchmarks'
+          # validator reads it: name@<40 hex>. This repo's modules are at the
+          # image's revision; a dependency (name=owner/repo@commit) at its own.
+          deps = {}
+          for d in filter(None, (lab.get("io.github.swarm-routing.dependencies") or "").split(",")):
+              name, rest = d.split("=", 1)
+              deps[name] = rest.rsplit("@", 1)[1]
+          mods = need("io.github.swarm-routing.modules", r"[\w -]+").split()
+          print("modules=" + ",".join(f"{m}@{deps.get(m, rev)}" for m in mods))
+          PY
+          cat "$GITHUB_OUTPUT"
+
   run:
     name: ${{ inputs.harness }} ${{ inputs.cell }}
+    needs: inspect
     runs-on: ubuntu-24.04
     timeout-minutes: 360   # the hosted-runner ceiling (#121)
     container:
-      image: ghcr.io/danieljoppi/ns3:${{ inputs.version }}
+      image: ${{ inputs.image || format('ghcr.io/swarm-routing/ns3:{0}', inputs.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # A campaign image: the tools and fixtures of the commit its modules
+          # were built from, so the binary and scenario_check agree.
+          ref: ${{ needs.inspect.outputs.commit || github.sha }}
       - name: Check the inputs
         env:
           CELL: ${{ inputs.cell }}
@@ -94,23 +176,66 @@ jobs:
             echo "open_pr needs a cell and/or a replay name"; exit 1
           fi
       - name: Install AntHocNet module
+        if: ${{ inputs.image == '' }}
         run: make install-ns3 NS3DIR=/opt/ns-3
       - name: Resolve ns-3 build profile (#123)
-        # State the image's profile
-        # explicitly, so the reconfigure never downgrades an -opt image.
+        # State the image's profile explicitly, so the legacy reconfigure
+        # never downgrades an optimized image, and a campaign image's profile
+        # is in the log and in ##PROV##.
+        shell: bash
         env:
           VERSION_TAG: ${{ inputs.version }}
+          IMAGE: ${{ inputs.image }}
         run: |
-          profile="${NS3_PROFILE:-}"
-          if [ -z "$profile" ]; then
+          set -euo pipefail
+          env_file=/opt/ns-3/.swarm-configure.env
+          devprof=""
+          if [ -f "$env_file" ]; then
+            # An ns3-dev image (swarm-routing/ns3-containers) records the
+            # configure flags it was built with; BUILD_PROFILE=optimized is
+            # ns-3's `-d release` there (never ns-3's own `optimized`).
+            # shellcheck disable=SC1090
+            . "$env_file"
+            devprof=${BUILD_PROFILE:-}
+            flag=${NS3_PROFILE_FLAGS:-}
+            profile=$(printf '%s\n' "$flag" | sed -n 's/.*-d \([a-z]*\).*/\1/p')
+            [ -n "$profile" ] || { echo "::error::no -d <profile> in NS3_PROFILE_FLAGS='$flag' ($env_file)"; exit 1; }
+            src="$env_file: BUILD_PROFILE=${BUILD_PROFILE:-} NS3_PROFILE_FLAGS='$flag'"
+          elif [ -n "${NS3_PROFILE:-}" ]; then
+            # This repo's historical images (docker/Dockerfile.ns3, retired).
+            profile=$NS3_PROFILE; src="NS3_PROFILE=$NS3_PROFILE (image environment)"
+          else
             case "$VERSION_TAG" in *-opt) profile=release ;; *) profile=default ;; esac
+            src="tag suffix of ns3:$VERSION_TAG"
           fi
-          flag=""
-          [ "$profile" = "default" ] || flag="-d $profile"
-          echo "ns-3 build profile: $profile"
-          echo "NS3_PROFILE=$profile" >> "$GITHUB_ENV"
-          echo "NS3_PROFILE_FLAG=$flag" >> "$GITHUB_ENV"
+          if [ -z "${flag+x}" ]; then
+            flag=""
+            [ "$profile" = "default" ] || flag="-d $profile"
+          fi
+          if [ -n "$IMAGE" ] && [ "$profile" != "release" ]; then
+            echo "::warning::campaign image built in ns-3 profile '$profile', not release (optimized)"
+          fi
+          echo "ns-3 build profile: $profile (from $src)"
+          {
+            echo "NS3_PROFILE=$profile"
+            echo "NS3_PROFILE_FLAG=$flag"
+            echo "NS3_BUILD_PROFILE=$devprof"
+          } >> "$GITHUB_ENV"
+      - name: Check the campaign image (no in-job build)
+        if: ${{ inputs.image != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /opt/ns-3
+          for m in anthocnet routing-bench; do
+            [ -e "contrib/$m" ] || { echo "::error::contrib/$m is not in the image"; exit 1; }
+          done
+          shown=$(./ns3 show profile)
+          echo "$shown"
+          grep -qi "build profile: $NS3_PROFILE" <<<"$shown" \
+            || { echo "::error::the built tree's profile is not '$NS3_PROFILE'"; exit 1; }
       - name: Configure and build
+        if: ${{ inputs.image == '' }}
         run: |
           cd /opt/ns-3
           # $NS3_PROFILE_FLAG unquoted on purpose: empty must expand to nothing.
@@ -127,6 +252,7 @@ jobs:
           HARNESS: ${{ inputs.harness }}
           ARGS: ${{ inputs.args }}
           REPLAY: ${{ inputs.replay }}
+          IMAGE: ${{ inputs.image }}
         run: |
           cd /opt/ns-3
           set -o pipefail
@@ -140,8 +266,12 @@ jobs:
           # #256: cap the address space below the
           # runner's, so an over-large cell dies by bad_alloc and keeps its logs.
           ulimit -v 13631488 || true
-          echo "running: $HARNESS $ARGS"
-          $timewrap ./ns3 run "$HARNESS $ARGS" 2>"$GITHUB_WORKSPACE/ns3-stderr.log" \
+          # A campaign image is already built: never rebuild in a cell.
+          nobuild=""
+          [ -n "$IMAGE" ] && nobuild="--no-build"
+          echo "running: $HARNESS $ARGS${nobuild:+ ($nobuild)}"
+          # $timewrap and $nobuild unquoted on purpose: empty must expand to nothing.
+          $timewrap ./ns3 run $nobuild "$HARNESS $ARGS" 2>"$GITHUB_WORKSPACE/ns3-stderr.log" \
             | tee "$GITHUB_WORKSPACE/results.txt" \
             || { echo "--- ns-3 run FAILED; stderr tail ---"; tail -n 60 "$GITHUB_WORKSPACE/ns3-stderr.log"; exit 1; }
       - name: Stamp provenance into the results file (#674)
@@ -150,8 +280,26 @@ jobs:
         env:
           HARNESS: ${{ inputs.harness }}
           ARGS: ${{ inputs.args }}
+          VERSION_TAG: ${{ inputs.version }}
+          IMAGE: ${{ inputs.image }}
+          IMAGE_COMMIT: ${{ needs.inspect.outputs.commit }}
+          BASE_DIGEST: ${{ needs.inspect.outputs.base_digest }}
+          BASE_TAG: ${{ needs.inspect.outputs.base_tag }}
+          MODULES: ${{ needs.inspect.outputs.modules }}
         run: |
-          prov="##PROV## commit=$GITHUB_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=ghcr.io/danieljoppi/ns3:${{ inputs.version }} profile=$NS3_PROFILE harness=$HARNESS"
+          # Append-only (methodology "Measuring commit"): the first seven
+          # fields keep their meaning; a campaign image adds base= (the ns3-dev
+          # image by digest) and modules=<name>@<commit>,... (every module in
+          # it), the spelling swarm-routing/benchmarks' validate_run.py reads;
+          # image= is the campaign image by digest. commit= is the image's own
+          # revision, which is also what this job checked out. No other
+          # 40-hex value may appear: the validator takes any as a module commit.
+          if [ -n "$IMAGE" ]; then
+            prov="##PROV## commit=$IMAGE_COMMIT ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=$IMAGE profile=$NS3_PROFILE harness=$HARNESS"
+            prov="$prov base=${BASE_TAG%:*}@$BASE_DIGEST base_tag=$BASE_TAG build_profile=$NS3_BUILD_PROFILE modules=$MODULES"
+          else
+            prov="##PROV## commit=$GITHUB_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=ghcr.io/swarm-routing/ns3:$VERSION_TAG profile=$NS3_PROFILE harness=$HARNESS"
+          fi
           echo "AHN_PROV=$prov" >> "$GITHUB_ENV"
           if [ -f "$GITHUB_WORKSPACE/results.txt" ]; then
             echo "##ARGS## $HARNESS $ARGS" >> "$GITHUB_WORKSPACE/results.txt"
@@ -281,6 +429,7 @@ jobs:
           HARNESS: ${{ inputs.harness }}
           ARGS: ${{ inputs.args }}
           VERSION: ${{ inputs.version }}
+          IMAGE: ${{ inputs.image }}
         run: |
           dir="$RUNNER_TEMP/cell"
           name="${CELL:-replay-${REPLAY}}"
@@ -289,11 +438,15 @@ jobs:
           git config user.email "$GIT_EMAIL"
           git switch -c "$branch"
           added=""
+          # The commit the numbers were measured at: a campaign image's
+          # revision (##PROV## commit=), else this run's checkout.
+          measured=$(grep -o '^##PROV## commit=[0-9a-f]\{40\}' "$dir/results.txt" 2>/dev/null | tail -n 1 | cut -d= -f2 || true)
+          measured=${measured:-$GITHUB_SHA}
           if [ -n "$CELL" ]; then
             # The cell format the pages cite: a one-line header, then the
             # harness output (its ##CONFIG##/##RUN## rows), then ##ARGS##/##PROV##.
             dest="results/cells/${CELL}.txt"
-            { echo "# ${TITLE:-$CELL} @${GITHUB_SHA:0:8} run ${GITHUB_RUN_ID} (benchmark-cell.yml, #612)"
+            { echo "# ${TITLE:-$CELL} @${measured:0:8} run ${GITHUB_RUN_ID} (benchmark-cell.yml, #612)"
               cat "$dir/results.txt"; } > "$dest"
             git add "$dest"; added="\`${dest}\`"
           fi
@@ -315,7 +468,7 @@ jobs:
           check=$(cat "$dir/replay-check.txt" 2>/dev/null || echo "no replay recorded")
           body=$(printf '%s\n' \
             "Adds ${added} from [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})." \
-            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`ns3:${VERSION}\` at ${GITHUB_SHA}." \
+            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}\` at ${measured} (workflow ${GITHUB_SHA})." \
             "" "**scenario_check results:**" '```' "$verdict" '```' \
             "" "**check-viz-trace (#641):**" '```' "$check" '```' \
             "" "$(if [ "$APP_TOKEN" = true ]; then echo "Opened by benchmark-cell.yml (#612) with the app token (#705); CI runs on this PR."; else echo "Opened by benchmark-cell.yml (#612). CI does not run on a workflow-opened PR (no app token configured, #705); close and reopen it to run checks."; fi)")
