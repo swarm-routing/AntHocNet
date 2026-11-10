@@ -101,6 +101,7 @@ jobs:
   inspect:
     name: image labels
     runs-on: ubuntu-24.04
+    timeout-minutes: 15    # registry calls only; a stalled pull must not hold the cell
     outputs:
       commit: ${{ steps.labels.outputs.commit }}
       base_digest: ${{ steps.labels.outputs.base_digest }}
@@ -217,10 +218,10 @@ jobs:
             # shellcheck disable=SC1090
             . "$env_file"
             devprof=${BUILD_PROFILE:-}
-            flag=$NS3_PROFILE_FLAGS
+            flag=${NS3_PROFILE_FLAGS:-}
             profile=$(printf '%s\n' "$flag" | sed -n 's/.*-d \([a-z]*\).*/\1/p')
             [ -n "$profile" ] || { echo "::error::no -d <profile> in NS3_PROFILE_FLAGS='$flag' ($env_file)"; exit 1; }
-            src="$env_file: BUILD_PROFILE=$BUILD_PROFILE NS3_PROFILE_FLAGS='$flag'"
+            src="$env_file: BUILD_PROFILE=${BUILD_PROFILE:-} NS3_PROFILE_FLAGS='$flag'"
           elif [ -n "${NS3_PROFILE:-}" ]; then
             # This repo's historical images (docker/Dockerfile.ns3, retired).
             profile=$NS3_PROFILE; src="NS3_PROFILE=$NS3_PROFILE (image environment)"
