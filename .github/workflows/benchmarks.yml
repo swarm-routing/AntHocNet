@@ -82,10 +82,10 @@ jobs:
             echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           # Everything that can move a number: the protocol, the ns-3 module +
-          # harness + tools, the image recipe, the build entry point, and this
-          # workflow. (The ns-3 base image is only republished on merges, which
-          # change these paths too.)
-          if git diff --quiet "$measured" HEAD -- core ns3 docker Makefile .github/workflows/benchmarks.yml; then
+          # harness + tools, the build entry point, the campaign image's recipe
+          # and this workflow. (A new ns3-dev digest alone does not re-run the
+          # table: the image of an unchanged commit is reused, skip-existing.)
+          if git diff --quiet "$measured" HEAD -- core ns3 Makefile .github/workflows/benchmarks.yml .github/workflows/campaign-image.yml; then
             echo "Nothing benchmark-relevant changed since ${measured:0:7}; skipping."
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
@@ -93,33 +93,48 @@ jobs:
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi
 
-  benchmark:
+  # The table runs on the campaign image of this commit (#866): the modules
+  # built once FROM a pinned ns3-dev:3.48-optimized digest (3.48 while the
+  # ns-3.49 AODV livelock #843 is open; the taxonomy runs AODV), reused when
+  # it already exists. The job builds nothing, and the numbers are measured in
+  # ns-3's release profile, as every campaign's (bit-identical metrics, #124).
+  # Moved from this repo's ns3:3.42 (gcc-11, default profile): before a table
+  # measured here is compared with an older one, read the control campaign
+  # #867.
+  image:
     needs: changed
+    if: needs.changed.outputs.run == 'true'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/campaign-image.yml
+    with:
+      ns3-version: '3.48'
+
+  benchmark:
+    needs: [changed, image]
     if: needs.changed.outputs.run == 'true'
     runs-on: ubuntu-24.04
     # Needed to push the regenerated table + charts back to the branch; packages to
-    # pull the pre-built ns-3 image.
+    # pull the campaign image.
     permissions:
       contents: write
       packages: read
-    # Build against the pre-built plain ns-3 image (same as ci.yml) instead of
-    # compiling ns-3 from source, so the job has budget to run the whole
-    # taxonomy instead of a single scenario.
     container:
-      image: ghcr.io/danieljoppi/ns3:3.42
+      image: ${{ needs.image.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install AntHocNet module
-        run: make install-ns3 NS3DIR=/opt/ns-3
-      - name: Configure + build
+      - name: The campaign image (built, release profile)
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}
         run: |
-          cd /opt/ns-3
-          ./ns3 configure --enable-examples \
-            --enable-modules='anthocnet;aomdv;gpsr;oracle;adaptive;routing-bench;wifi;mobility;applications;csma;aodv;olsr;dsdv;flow-monitor;point-to-point;mesh'
-          ./ns3 build
+          echo "image: $IMAGE"
+          cd /opt/ns-3 && ./ns3 show profile
       - name: Install matplotlib
         run: apt-get update && apt-get install -y python3-matplotlib
       - name: Validation-anchor gate (blocks publish; #59)
