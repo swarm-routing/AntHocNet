@@ -10,7 +10,10 @@ name: Core speed
 #
 # On main: run once, append the numbers to results/core-bench/history.csv with
 # the commit and the runner's CPU model (only comparable within one model),
-# redraw docs/benchmarks/charts/core-speed.png, and commit both.
+# redraw docs/benchmarks/charts/core-speed.png, and open or update the PR from
+# bot/core-bench with both (.github/actions/bot-pr; main takes no direct push,
+# #789). While that PR is open, the next run appends to its history, so no
+# measured row is lost before a merge.
 on:
   push:
     branches: [main]
@@ -38,14 +41,17 @@ jobs:
   bench:
     name: Core speed benchmarks
     runs-on: ubuntu-24.04
-    # contents: write only to push the history and chart back to main.
+    # contents + pull-requests: write only to open the history PR with the
+    # workflow token when no bot token is configured (#789, #705).
     permissions:
       contents: write
+      pull-requests: write
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
@@ -94,21 +100,31 @@ jobs:
           packages: matplotlib
       - name: Record and chart (main only)
         if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Rows still waiting in an open bot/core-bench PR are kept: start
+          # from that branch's history, not main's (only this job writes it).
+          open=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&head=${GITHUB_REPOSITORY_OWNER}:bot/core-bench" --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            git fetch -q origin bot/core-bench
+            git checkout FETCH_HEAD -- results/core-bench/history.csv
+            echo "Appending to the history of open PR #$open."
+          fi
           "$RUNNER_TEMP/head/bench_core" --csv | tee "$RUNNER_TEMP/run.csv"
           cpu=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')
           python3 tools/bench/core_bench.py record "$RUNNER_TEMP/run.csv" \
             --commit "$GITHUB_SHA" --date "$(date -u +%F)" --cpu "$cpu"
           python3 tools/bench/core_bench.py chart
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results/core-bench/history.csv docs/benchmarks/charts/core-speed.png
-          git commit -m "docs: record core speed benchmarks [skip ci]"
-          # charts.yml and benchmarks.yml also push to main; they touch other
-          # files, so rebase onto whatever landed meanwhile and retry.
-          for i in 1 2 3 4; do
-            git push && exit 0
-            sleep $((i * 5))
-            git pull --rebase
-          done
-          exit 1
+      - name: Open or update the core-speed PR (main only)
+        if: github.event_name != 'pull_request'
+        uses: ./.github/actions/bot-pr
+        with:
+          branch: bot/core-bench
+          title: 'chore(core-bench): record core speed benchmarks'
+          body: Core speed (`bench_core`, ns/op) measured at ${{ github.sha }}, appended to `results/core-bench/history.csv`, and `docs/benchmarks/charts/core-speed.png` redrawn (#620).
+          paths: results/core-bench/history.csv docs/benchmarks/charts/core-speed.png
+          labels: benchmark
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          app-key: ${{ secrets.AHN_BOT_APP_KEY }}
+          token: ${{ secrets.ORG_BOT_TOKEN }}

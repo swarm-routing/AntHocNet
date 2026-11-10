@@ -1,0 +1,156 @@
+# Bot changes reach main through a pull request (#789). main is protected by a
+# ruleset (PR required, `CI gate` required, no force-push), so the workflows
+# that used to commit straight to main (charts.yml, core-bench.yml,
+# benchmarks.yml, rescue-artifacts.yml) commit on a bot branch instead, and
+# this action opens the PR, or updates the one already open from that branch.
+# The same shape as swarm-routing/.github's org-bot: one fixed branch per job,
+# rebuilt on the base's current tip and force-pushed (the branch is the bot's
+# own), so an open PR always holds the latest render and is up to date with
+# main, as the ruleset requires. If main moves while it waits, the next run
+# (or the PR page's "Update branch") brings it up to date.
+#
+# Token, first that exists (#705):
+# - a GitHub App installation token (AHN_BOT_APP_ID / AHN_BOT_APP_KEY);
+# - a personal access token passed as `token` (ORG_BOT_TOKEN, as org-bot's);
+# - the workflow's GITHUB_TOKEN. CI does not run on a PR that token opens or
+#   pushes, so the required `CI gate` never reports and the PR cannot merge
+#   until a maintainer closes and reopens it. It also needs the repository
+#   setting "Allow GitHub Actions to create and approve pull requests";
+#   without it the branch is still pushed and the job summary links it.
+#
+# The caller checks out with `persist-credentials: false`: no write token sits
+# in the git config while the job runs the repository's code, and the push
+# here sends the one header it sets. The caller's job needs `contents: write`
+# and `pull-requests: write` for the GITHUB_TOKEN fallback.
+#
+# REST only (gh api), no GraphQL.
+name: Bot pull request
+description: Commit the given paths on a fixed bot branch and open or update its PR.
+inputs:
+  branch:
+    description: the bot branch, e.g. bot/charts (force-pushed on every run)
+    required: true
+  title:
+    description: PR title and commit message, a lowercase Conventional Commit (no [skip ci], or CI gate never reports)
+    required: true
+  body:
+    description: PR body (Markdown)
+    required: true
+  paths:
+    description: space-separated pathspecs to commit (git add)
+    required: true
+  base:
+    description: the branch the PR targets
+    default: main
+  labels:
+    description: comma-separated labels for a new PR (a missing label is a warning)
+    default: ''
+  app-id:
+    description: GitHub App id (vars.AHN_BOT_APP_ID), empty when none is configured
+    default: ''
+  app-key:
+    description: GitHub App private key (secrets.AHN_BOT_APP_KEY)
+    default: ''
+  token:
+    description: a personal access token to use when no app is configured (secrets.ORG_BOT_TOKEN)
+    default: ''
+outputs:
+  pr:
+    description: the PR number (empty when nothing changed or the PR could not be opened)
+    value: ${{ steps.pr.outputs.pr }}
+runs:
+  using: composite
+  steps:
+    - name: GitHub App token
+      id: app
+      if: ${{ inputs.app-id != '' && inputs.app-key != '' }}
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.app-key }}
+    - name: Commit on the bot branch and open or update the PR
+      id: pr
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.app.outputs.token || inputs.token || github.token }}
+        KIND: ${{ steps.app.outputs.token != '' && 'app' || (inputs.token != '' && 'pat' || 'workflow') }}
+        BRANCH: ${{ inputs.branch }}
+        BASE: ${{ inputs.base }}
+        TITLE: ${{ inputs.title }}
+        BODY: ${{ inputs.body }}
+        PATHS: ${{ inputs.paths }}
+        LABELS: ${{ inputs.labels }}
+      run: |
+        set -euo pipefail
+        repo="$GITHUB_REPOSITORY"
+        open=$(gh api "repos/$repo/pulls?state=open&base=$BASE&head=${GITHUB_REPOSITORY_OWNER}:$BRANCH" --jq '.[0].number // empty')
+        git config user.name  "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+        echo "::add-mask::$auth"
+        # Hooks off: nothing the job's earlier steps left in .git/hooks runs
+        # with the token.
+        authgit() { git -c core.hooksPath=/dev/null -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" "$@"; }
+        # The files this run produced, against the commit it checked out.
+        start=$(git rev-parse HEAD)
+        # PATHS is a list of git pathspecs: git matches the globs, so a
+        # deleted file is staged too (the shell's glob would skip it).
+        set -f
+        # shellcheck disable=SC2086
+        git add -A -- $PATHS
+        set +f
+        git commit -q --allow-empty -m "render"
+        render=$(git rev-parse HEAD)
+        mapfile -t files < <(git diff --name-only "$start" "$render")
+        # The branch is rebuilt on today's tip of the base, not on the commit
+        # this run checked out: the ruleset requires a PR to be up to date
+        # with main before it merges, so the bot never leaves its PR behind.
+        authgit fetch -q origin "$BASE"
+        git switch -q -C "$BRANCH" FETCH_HEAD
+        for f in "${files[@]}"; do
+          if git cat-file -e "$render:$f" 2>/dev/null; then
+            git checkout -q "$render" -- "$f"
+          else
+            git rm -q --ignore-unmatch -- "$f"
+          fi
+        done
+        if git diff --cached --quiet; then
+          echo "Nothing changed against $BASE; no PR."
+          if [ -n "$open" ]; then
+            # The open PR holds an older render that $BASE has since overtaken.
+            gh api -X PATCH "repos/$repo/pulls/$open" -f state=closed >/dev/null
+            echo "::notice::closed #$open: $BASE already matches this run"
+          fi
+          echo "pr=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        git commit -q -m "$TITLE"
+        authgit push -q --force origin "HEAD:refs/heads/$BRANCH"
+        case "$KIND" in
+          app|pat) ci="CI runs on this PR (opened with the bot token, #705)." ;;
+          *) ci="CI does not run on a PR the workflow token opens (no bot token configured, #705): close and reopen it so \`CI gate\` reports." ;;
+        esac
+        # shellcheck disable=SC2016  # the backticks are Markdown
+        printf '%s\n\n%s\n\nOpened by [%s run %s](%s/%s/actions/runs/%s) on branch `%s` (#789); the next run replaces this branch.\n' \
+          "$BODY" "$ci" "$GITHUB_WORKFLOW" "$GITHUB_RUN_ID" "$GITHUB_SERVER_URL" "$repo" "$GITHUB_RUN_ID" "$BRANCH" > "$RUNNER_TEMP/bot-pr-body.md"
+        if [ -n "$open" ]; then
+          gh api -X PATCH "repos/$repo/pulls/$open" -f title="$TITLE" -F body=@"$RUNNER_TEMP/bot-pr-body.md" >/dev/null
+          echo "Updated #$open"; echo "pr=$open" >> "$GITHUB_OUTPUT"
+          echo "Updated PR #$open" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        if ! pr=$(gh api "repos/$repo/pulls" -f title="$TITLE" -f head="$BRANCH" -f base="$BASE" \
+                    -F body=@"$RUNNER_TEMP/bot-pr-body.md" --jq .number); then
+          url="$GITHUB_SERVER_URL/$repo/compare/$BASE...$BRANCH?expand=1"
+          echo "::warning::could not open the PR (is 'Allow GitHub Actions to create pull requests' off?). The branch is pushed: $url"
+          echo "Branch pushed; open the PR here: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "pr=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        IFS=',' read -ra names <<< "$LABELS"
+        for l in "${names[@]}"; do
+          [ -n "$l" ] || continue
+          gh api "repos/$repo/issues/$pr/labels" -f "labels[]=$l" >/dev/null || echo "::warning::could not add label $l to #$pr"
+        done
+        echo "Opened #$pr"; echo "pr=$pr" >> "$GITHUB_OUTPUT"
+        echo "Opened PR #$pr" >> "$GITHUB_STEP_SUMMARY"

@@ -51,6 +51,10 @@ jobs:
         # The v2.0.0 bundle shipped tools that imported .claude/ scripts it
         # excluded; this is the gate that would have caught it. ~1 s.
         run: tools/release/check-bundle.sh
+      - name: Release bump gate self-test (#789)
+        # check-bump.sh decides whether release.yml's publish job may push the
+        # bump commit to main with a ruleset-bypass token.
+        run: tools/release/check-bump.sh --self-test
       - name: Statistics self-test (#293)
         # stats_util.py computes the 95% CIs and paired tests every published
         # number will carry; bench_parse.py's column-mapping check decides
