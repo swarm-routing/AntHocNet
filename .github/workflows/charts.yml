@@ -11,8 +11,10 @@ name: Charts
 # not this workflow's: it is measured, not committed, and benchmarks.yml
 # renders it from the run it just made.
 #
-# On main: re-render and commit the result (only when a PNG actually changed;
-# rendering is deterministic, so an unchanged input is no commit). On a PR:
+# On main: re-render and, when a PNG actually changed (rendering is
+# deterministic, so an unchanged input is no change), open or update the PR
+# from bot/charts (.github/actions/bot-pr; main takes no direct push, #789).
+# On a PR:
 # render as a check, so a broken chart script or an unparsable cell fails
 # before merge, and upload the PNGs for the reviewer.
 #
@@ -59,12 +61,16 @@ jobs:
   render:
     name: Render charts from committed data
     runs-on: ubuntu-24.04
-    # contents: write only to push the refreshed PNGs back to main.
+    # contents + pull-requests: write only to open the chart PR with the
+    # workflow token when no bot token is configured (#789, #705).
     permissions:
       contents: write
+      pull-requests: write
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
@@ -87,22 +93,15 @@ jobs:
             docs/benchmarks/charts/*.png
             docs/benchmarks/sweep-*.png
           retention-days: 7
-      - name: Commit refreshed charts (main only, if changed)
+      - name: Open or update the chart PR (main only, if changed)
         if: github.event_name != 'pull_request'
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/benchmarks/charts docs/benchmarks/sweep-*.png
-          if git diff --cached --quiet; then
-            echo "Charts unchanged; nothing to commit."
-            exit 0
-          fi
-          git commit -m "docs: refresh charts from committed data [skip ci]"
-          # benchmarks.yml also pushes to main; rebase onto whatever landed
-          # meanwhile (the two touch disjoint files) and retry a few times.
-          for i in 1 2 3 4; do
-            git push && exit 0
-            sleep $((i * 5))
-            git pull --rebase
-          done
-          exit 1
+        uses: ./.github/actions/bot-pr
+        with:
+          branch: bot/charts
+          title: 'chore(charts): re-render charts from committed data'
+          body: Charts re-rendered by `ns3/tools/family-charts.py` from the committed data in `results/cells/` and `results/campaign/` at ${{ github.sha }}.
+          paths: docs/benchmarks/charts docs/benchmarks/sweep-*.png
+          labels: documentation,benchmark
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          app-key: ${{ secrets.AHN_BOT_APP_KEY }}
+          token: ${{ secrets.ORG_BOT_TOKEN }}

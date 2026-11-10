@@ -27,16 +27,25 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-24.04
+    # Builds, attests and verifies; pushes and publishes nothing (the publish
+    # job below does, #789). It runs repository code (make test, the bundle
+    # scripts), so it never holds a write token: no credential in the git
+    # config, and the push token is minted in the publish job, which runs no
+    # repository code.
     permissions:
-      contents: write      # push the bump commit/tag and create the release
+      contents: read
       id-token: write      # keyless Sigstore signing of the attestations (#614)
       attestations: write  # store build provenance + SBOM attestations (#614)
     outputs:
       tag: ${{ steps.compute.outputs.tag }}
+      ver: ${{ steps.handover.outputs.ver }}
+      sha256: ${{ steps.handover.outputs.sha256 }}
+      mod_sha256: ${{ steps.handover.outputs.mod_sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history + tags for cz to compute the bump
+          persist-credentials: false
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -190,34 +199,119 @@ jobs:
           spdx=$(jq -r '.spdxVersion | sub("^SPDX-"; "")' "dist/anthocnet-${VER}.spdx.json")   # e.g. 2.3
           gh attestation verify "dist/anthocnet-${VER}.zip" --repo "$GITHUB_REPOSITORY" --predicate-type "https://spdx.dev/Document/v${spdx}"
 
-      - name: Push commit + tag
+      - name: Hand the release over to the publish job
+        id: handover
         if: ${{ inputs.mode != 'dryrun' }}
-        # After the bundle is built, attested and verified (#614): if any of
-        # that fails, nothing has been pushed, so there is no tagged-but-
-        # unreleased version to clean up by hand.
+        # The bump commit and its tag travel as a git bundle with the files to
+        # publish; the publish job checks what the bundle holds before pushing.
         run: |
-          git push origin HEAD:main
-          git push origin "${TAG}"
+          if [ "$(git rev-parse HEAD)" = "$GITHUB_SHA" ]; then
+            git bundle create dist/release.bundle "refs/tags/${TAG}"     # baseline: the tag only
+          else
+            git bundle create dist/release.bundle "refs/tags/${TAG}" --not "$GITHUB_SHA"
+          fi
+          { echo "ver=${VER}"; echo "sha256=${SHA256}"; echo "mod_sha256=${MOD_SHA256}"; } >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ inputs.mode != 'dryrun' }}
+        with:
+          name: release-dist
+          path: dist/
+          retention-days: 1
+
+  # Pushes the bump commit and tag, the ns3-module branch, and publishes the
+  # GitHub Release (#789). main is protected by a ruleset (PR required, `CI
+  # gate` required), and the bump commit is pushed to it directly: the tag
+  # must point at a commit on main, and the bundle was built and attested from
+  # that commit before anything is pushed. So the push needs an actor on the
+  # ruleset's bypass list. The workflow's GITHUB_TOKEN cannot be one; the push
+  # uses, first that exists, the bot app's token (#705: add the app as a
+  # bypass actor) or ORG_BOT_TOKEN (its owner's role on the bypass list).
+  # With neither, the push fails before the tag or the release go out, and
+  # nothing is left to clean up. A dry run never reaches this job.
+  #
+  # This job runs no code from the build: it checks out the dispatched commit
+  # (the code main already holds) and, before pushing, checks with
+  # tools/release/check-bump.sh that the bundle holds one commit on it that
+  # changes only Commitizen's version lines and adds to CHANGELOG.md, so a
+  # tampered build cannot use the bypass token to push anything else.
+  publish:
+    needs: release
+    if: ${{ inputs.mode != 'dryrun' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write      # the ns3-module push and the GitHub Release
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+      VER: ${{ needs.release.outputs.ver }}
+      SHA256: ${{ needs.release.outputs.sha256 }}
+      MOD_SHA256: ${{ needs.release.outputs.mod_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist
+      - name: Check the bump commit
+        # tools/release/check-bump.sh from the dispatched commit (this
+        # checkout), not from the build: one commit on GITHUB_SHA, version
+        # lines only (#789).
+        run: |
+          git fetch -q dist/release.bundle "refs/tags/${TAG}:refs/tags/${TAG}"
+          bump=$(git rev-parse "refs/tags/${TAG}^{commit}")
+          tools/release/check-bump.sh "$GITHUB_SHA" "$bump"
+          echo "BUMP=$bump" >> "$GITHUB_ENV"
+      - name: Is a bot app configured? (#705)
+        id: bot
+        env:
+          APP_ID: ${{ vars.AHN_BOT_APP_ID }}
+          APP_KEY: ${{ secrets.AHN_BOT_APP_KEY }}
+        run: |
+          if [ -n "$APP_ID" ] && [ -n "$APP_KEY" ]; then echo "app=true" >> "$GITHUB_OUTPUT"; fi
+      - name: GitHub App token (bypass actor, #789)
+        id: app
+        if: ${{ steps.bot.outputs.app == 'true' }}
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          private-key: ${{ secrets.AHN_BOT_APP_KEY }}
+      - name: Push commit + tag
+        env:
+          PUSH_TOKEN: ${{ steps.app.outputs.token || secrets.ORG_BOT_TOKEN || github.token }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          push() { git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push "$@"; }
+          push origin "${BUMP}:refs/heads/main"
+          push origin "refs/tags/${TAG}"
 
       - name: Update the generated ns3-module branch (#606)
-        if: ${{ inputs.mode != 'dryrun' }}
         # The tarball's contents as an orphan commit on `ns3-module`, replaced
         # on every release, for users who prefer git over a download:
         #   git clone -b ns3-module --depth 1 <repo> m && cp -r m/* ns-3/contrib/
         # Built in a scratch index so the workspace and its history are not
-        # touched; pushed with the checkout's own credentials.
+        # touched; pushed with the workflow token (ns3-module is not under the
+        # ruleset).
+        env:
+          PUSH_TOKEN: ${{ github.token }}
         run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           tmp=$(mktemp -d)
           tar -xzf "dist/anthocnet-ns3-modules-${VER}.tar.gz" -C "$tmp"
-          export GIT_INDEX_FILE="$(mktemp -u)"
+          GIT_INDEX_FILE="$(mktemp -u)"
+          export GIT_INDEX_FILE
           git read-tree --empty
           git --work-tree="$tmp" add -A
           tree=$(git write-tree)
           commit=$(git commit-tree "$tree" -m "AntHocNet ${TAG}: drop-in ns-3 modules (generated by release.yml; do not edit)")
-          git push --force origin "${commit}:refs/heads/ns3-module"
+          auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" \
+            push --force origin "${commit}:refs/heads/ns3-module"
 
       - name: Publish release
-        if: ${{ inputs.mode != 'dryrun' }}
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ env.TAG }}
@@ -284,10 +378,10 @@ jobs:
 
   # Publish immutable, release-pinned container images (e.g.
   # anthocnet-ns3:3.42-v0.3.0) once the tag exists. Reuses the Images workflow
-  # via workflow_call — a direct job dependency, so the tag the release job just
-  # pushed with GITHUB_TOKEN is picked up without a PAT.
+  # via workflow_call — a direct job dependency, so the tag the publish job just
+  # pushed is picked up without relying on a tag event.
   images:
-    needs: release
+    needs: [release, publish]
     if: ${{ inputs.mode != 'dryrun' }}
     uses: ./.github/workflows/images.yml
     permissions:
