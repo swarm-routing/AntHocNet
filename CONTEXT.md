@@ -150,7 +150,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 - **Observability**: the core exposes ant/route counters + an optional
   `IRouterObserver`; the NS-3 module surfaces `Tx`/`Rx`/`RouteChanged` trace
   sources, read by `anthocnet-compare --diag` (item 15).
-- **Benchmarks run on every merge**: a classified scenario taxonomy across all
+- **Benchmarks run nightly**: a classified scenario taxonomy across all
   baselines (AODV/OLSR/DSDV) with the table + a chart auto-committed to
   `docs/benchmarks*`; the paper's area/pause/scale sweeps were the manual
   `scenario-matrix` workflow (items 07/08), and are campaign plans on

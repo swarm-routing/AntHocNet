@@ -1,43 +1,20 @@
 name: PR title
 
 # We squash-merge, so the PR title becomes the commit on main and is what
-# Commitizen reads to compute the next version. Enforce the Conventional
-# Commits format (https://www.conventionalcommits.org) on PR titles so the
-# release bump is always computable.
+# Commitizen reads to compute the next version. The title must be a lowercase
+# Conventional Commit (CONTRIBUTING.md): the org's reusable check does it, with
+# the same type list as CONTRIBUTING.md here, and skips Dependabot (#864).
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
-permissions:
-  pull-requests: read
+permissions: {}
 
 jobs:
   lint-title:
-    # Skip Dependabot: it titles PRs `build(deps): Bump …` with a capital B,
-    # which fails the lowercase subjectPattern below, and it has no option to
-    # lowercase it. The type prefix — the only part Commitizen reads for the
-    # version bump — is already valid. A job skipped by `if:` still satisfies a
-    # required status check.
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Allowed types (Conventional Commits + a couple we use).
-          types: |
-            feat
-            fix
-            docs
-            style
-            refactor
-            perf
-            test
-            build
-            ci
-            chore
-            revert
-          requireScope: false
-          subjectPattern: ^(?![A-Z]).+$
-          subjectPatternError: "The subject must start lowercase, e.g. 'feat: add the DSR baseline'."
+    # `edited` also fires when only the description changes, e.g. when
+    # CodeRabbit writes its summary into it a minute after the PR opens; that
+    # ran the check a second time on the same commit and title (#864). Check
+    # an edit only when it changed the title.
+    if: github.event.action != 'edited' || github.event.changes.title != null
+    uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@main

@@ -45,7 +45,7 @@ learned and secure protocols, and the game campaign ([learn-campaign.md](learn-c
 
 | Page | What it is |
 |---|---|
-| [benchmarks.md](benchmarks.md) | Results index: per-merge taxonomy table + links to every scenario/sweep page. |
+| [benchmarks.md](benchmarks.md) | Results index: nightly taxonomy table + links to every scenario/sweep page. |
 | [benchmarks/metrics.md](benchmarks/metrics.md) | What PDR, delay99, NRL etc. mean, and their caveats. |
 | [comparison-harness.md](comparison-harness.md) | The comparison harness (`anthocnet-compare`) for users: running it, its marker lines, the readers, adding a protocol (the `adaptive` base class, wiring), the three gates, packaging and citing. |
 | [benchmarks/methodology.md](benchmarks/methodology.md) | Reproduce commands (local and CI dispatch), build profiles, validation anchors, determinism gate, and what each baseline arm is for. |

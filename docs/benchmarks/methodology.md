@@ -42,7 +42,7 @@ as the image's `/opt/ns-3` or a tree after `make install-ns3`.
   not say so.
 
 Two kinds of figure cannot be re-rendered:
-- `discrete-summary.png` is drawn from a per-merge workflow artifact, so its
+- `discrete-summary.png` is drawn from a nightly workflow artifact, so its
   entry is re-run only (`benchmarks.yml`);
 - the `*-v1.3.0` sweep charts are frozen snapshots kept for the record.
 
@@ -157,9 +157,9 @@ cells name `ghcr.io/danieljoppi/ns3:<version>`, the same recipe built before
 the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
 The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48): compare a
 post-move number with a published one only after the control campaign
-[#867](https://github.com/swarm-routing/AntHocNet/issues/867). The per-merge refresh of
+[#867](https://github.com/swarm-routing/AntHocNet/issues/867). The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) needs no dispatch (`benchmarks.yml`,
-every merge to the default branch), and its publish step is gated on the
+when the default branch's code changed), and its publish step is gated on the
 validation anchors below. Before trusting or comparing dispatched numbers, run
 the validation loop in
 [`configuration.md` §5](../configuration.md#5-how-to-calibrate-a-parameter)
@@ -1081,7 +1081,7 @@ hellos in a row evicted a live neighbour, about 93 k spurious evictions per
   confirmed `ReconvHoldCap = 200 ms` on the fixed timer.
 - **Unchanged by policy:** the sweep pages keep their `v1.3.0` pin and the
   [TCP arm](tcp.md) keeps its `0b42c89` / 1 s vintage; each is re-measured only
-  when a claim needs its shape at the current defaults. The per-merge scenario
+  when a claim needs its shape at the current defaults. The nightly scenario
   pages regenerate themselves and stamp their own commit.
 
 ### #510: OLSR's PDR before `f480d0ae` omits source-refused sends
@@ -1107,7 +1107,7 @@ offered-load percentiles and the drop book.
 | where | status |
 |---|---|
 | [grid](grid.md), [FANET](scenarios/fanet.md), [satellite](satellite/isl-grid.md) | **restated** from 20-seed OLSR-only re-runs on the fix |
-| scenario taxonomy (per-merge refresh) | **regenerated** automatically after #511; e.g. dense-small OLSR 56.2 → 22.0 % |
+| scenario taxonomy (nightly refresh) | **regenerated** automatically after #511; e.g. dense-small OLSR 56.2 → 22.0 % |
 | [area](sweeps/area.md) / [pause](sweeps/pause.md) / [scale](sweeps/scale.md) sweeps (pinned `v1.3.0`) | **annotated** with a per-point offered-based estimate: −4.1…−11.2 / −0.3…−10.6 / 0…−1.7 pp |
 | [static mesh](static-mesh.md) | annotated: 100.00 → ≈ 99.95 %, no ordering change |
 | [tcp](tcp.md) | headline is goodput, which is unaffected; the UDP-ordering sentence is restated |
@@ -1167,7 +1167,7 @@ offered-load fraction `scenario_check preflight` prints, and paper parity
 **Quoting rule.** Pages measured before the fix stay as dated records, under
 the same policy as #496 and #510. Quote their orderings and paired deltas
 within a cell, not their absolute values as "at the stated load". The
-per-merge scenario taxonomy re-measures itself on the next refresh. The
+nightly scenario taxonomy re-measures itself on the next refresh. The
 restated pages are re-measured on the fix in follow-ups, each carrying an
 `--offTime=1` paired arm where the attribution matters.
 
@@ -1229,11 +1229,12 @@ per-run commits now would mean guessing from timestamps, and a guessed
 provenance that reads like a measured one is exactly the failure this section
 exists to prevent.
 
-The per-merge scenario pages are a third case: `benchmarks.yml` regenerates them
-on every merge and stamps the measuring commit into the generated block itself
+The scenario pages are a third case: `benchmarks.yml` regenerates them
+nightly and stamps the measuring commit into the generated block itself
 (`update-benchmarks.py --commit`), so those tables name their own SHA. This also
 makes staleness visible — when the refresh is starved (eight merges on
-2026-07-26 produced none, each push cancelling the run in flight), the stamped
+2026-07-26 produced none, each push cancelling the run in flight, back when it
+also ran on every push), the stamped
 commit visibly lags `main` instead of the page silently claiming to track it.
 
 ### What this does not cover
@@ -1259,7 +1260,7 @@ biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routi
 **The optimized image is for numbers, never for CI.** CI (`ci.yml`) keeps
 running in `default`/`debug` images on purpose: those assertions have caught
 real bugs, and a green run with assertions compiled out is a weaker statement.
-Campaigns and the per-merge taxonomy (`benchmarks.yml`, since #866) run in a
+Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866) run in a
 campaign image, which is built `FROM` an `ns3-dev:<ver>-optimized` digest;
 protocol metrics are bit-identical across the two profiles (#124), only the
 cost differs.
@@ -1415,7 +1416,7 @@ flowchart TB
         L3["<b>test_scenario_check.py</b><br/>every gate rule: one must-fire +<br/>one must-not-fire case"]
     end
 
-    subgraph BENCH["benchmarks.yml — merge to default branch"]
+    subgraph BENCH["benchmarks.yml — nightly, when the code changed"]
         B1["<b>Validation-anchor gate (blocks publish, #59)</b><br/>check-anchors.sh single-hop<br/>+ broch-low-mobility (aodv PDR ≥ 85.0)"]
         B2["run the taxonomy → tables + charts"]
         B3["auto-commit docs/benchmarks*"]

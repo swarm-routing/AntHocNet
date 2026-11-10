@@ -10,3 +10,4 @@ docs/benchmarks/*.png linguist-generated=true
 /.claude export-ignore
 /AGENTS.md export-ignore
 /CLAUDE.md export-ignore
+/.coderabbit.yaml export-ignore

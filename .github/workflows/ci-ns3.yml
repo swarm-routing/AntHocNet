@@ -40,6 +40,11 @@ jobs:
   ns3-build:
     name: NS-3 module build + test
     runs-on: ubuntu-24.04
+    # Timeouts on this file's jobs (#840, #864): about twice the longest green
+    # run on main and PRs (2026-11), at least 10 min (an image pull alone can
+    # take minutes), so a hang fails fast instead of holding a runner for 6 h.
+    # Here: the 3.48 gate leg, 30 min at most.
+    timeout-minutes: 60
     # Build against a pre-built ns-3 image rather than compiling ns-3 from
     # scratch: the stock tree is already built, so CI only compiles the
     # AntHocNet module delta. Images: ghcr.io/swarm-routing/ns3-dev:<ver>
@@ -404,6 +409,7 @@ jobs:
   ns3-asan:
     name: NS-3 module under ASan + LSan
     runs-on: ubuntu-24.04
+    timeout-minutes: 40  # longest green run: 20 min
     # Sanitize the adapter surface (pending-packet queue, timer cancel paths,
     # header <-> AntMessage conversion): rebuild the AntHocNet module and its
     # ns-3 dependencies with AddressSanitizer + LeakSanitizer, then re-run the
@@ -514,6 +520,7 @@ jobs:
   ns3-core-only:
     name: NS-3 module alone (BASELINES=0)
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 1.2 min
     container:
       image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
@@ -555,6 +562,7 @@ jobs:
   routing-bench-alone:
     name: routing-bench alone (stock ns-3 only)
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 1.2 min
     container:
       image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
@@ -611,6 +619,7 @@ jobs:
   packages:
     name: package ${{ matrix.packages }} (ns-${{ matrix.version }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 3.3 min
     container:
       image: ${{ matrix.version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:

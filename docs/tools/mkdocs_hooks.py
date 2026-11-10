@@ -153,7 +153,8 @@ def on_post_build(config) -> None:
 # CHANGELOG.md is the record (release.yml's `cz bump --changelog` writes it on
 # every release); the site renders it as one page per release under
 # docs/releases/, generated at build time so it can never drift from the file.
-# A release lands on the site when release.yml finishes (pages.yml redeploys).
+# A release lands on the site when swarm-routing.github.io bumps its
+# protocols.lock to the release commit and its pages.yml redeploys (#850).
 from mkdocs.structure.files import File as _File
 
 _REPO = "https://github.com/swarm-routing/AntHocNet"

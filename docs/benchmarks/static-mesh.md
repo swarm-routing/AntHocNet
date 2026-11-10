@@ -45,7 +45,7 @@ put the static mesh first on the list because it costs nothing: the
 [`sparse-static`](scenarios/sparse-static.md) cell of the taxonomy **is** this
 network. This page adds no harness work. What it adds:
 
-- 20 seeds at current defaults, because the per-merge scenario page runs at
+- 20 seeds at current defaults, because the nightly scenario page runs at
   the 10-run floor with 120 s runs;
 - the exact oracle as an upper bound (on the disk channel it is `approx=0`, a
   proven bound);

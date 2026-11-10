@@ -4,15 +4,15 @@
 
 [← Benchmark index](../../benchmarks.md) · [Metrics](../metrics.md) · [Methodology](../methodology.md)
 
-> **Provenance — regenerated on every merge.** Unlike the
+> **Provenance — regenerated nightly.** Unlike the
 > [sweep pages](../sweeps/area.md), this table is **not** pinned to a release:
-> `benchmarks.yml` re-runs the discrete taxonomy on every merge to the default
-> branch and rewrites the generated block below, so these numbers track the
+> `benchmarks.yml` re-runs the discrete taxonomy nightly whenever `main`'s
+> code changed and rewrites the generated block below, so these numbers track the
 > **current tip of `main`** and already include the pheromone-weighting change
 > ([#327](https://github.com/swarm-routing/AntHocNet/issues/327)) and the
 > per-seed RNG stream assignment
 > ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)). They are a
-> per-merge regression signal at the 10-run publication floor
+> nightly regression signal at the 10-run publication floor
 > ([#318](https://github.com/swarm-routing/AntHocNet/issues/318)); the
 > release-pinned, 20-seed numbers live on the sweep and headline pages. See
 > [Provenance](../methodology.md#provenance-which-version-a-number-was-measured-at)
@@ -21,7 +21,7 @@
 ## What it stresses
 
 The fast CI regime; AntHocNet's hard case. A small, dense, barely-mobile field
-that runs cheaply enough for the per-merge `benchmarks` workflow, so it is the
+that runs cheaply enough for the nightly `benchmarks` workflow, so it is the
 scenario that gives the quick regression signal.
 
 ## Configuration
@@ -32,7 +32,7 @@ scenario that gives the quick regression signal.
 
 Defined as `DISCRETE["dense-small"]` in
 [`ns3/tools/run-scenarios.py`](../../../ns3/tools/run-scenarios.py)
-(`nNodes=16 area=250 speed=5 pause=1 flows=4 range=0`). The per-merge
+(`nNodes=16 area=250 speed=5 pause=1 flows=4 range=0`). The nightly
 `benchmarks` workflow runs the taxonomy with `--quick`.
 
 ## Results
