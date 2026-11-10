@@ -234,9 +234,13 @@ the latest output:
 | `rescue-artifacts.yml` | `bot/rescue-<run id>` | rescued per-merge CSVs |
 | `benchmark-cell.yml` | `bench/<cell>-<run id>` | a benchmark cell (#612) |
 
-The PRs are opened with the bot app's token (`AHN_BOT_APP_ID` /
-`AHN_BOT_APP_KEY`, #705) or, without it, `ORG_BOT_TOKEN`, so CI runs on them
-and `CI gate` can report. With neither, they fall back to the workflow's
+The PRs are opened with the first token that works: the org GitHub App
+(org secrets `BOT_APP_ID` / `BOT_APP_PRIVATE_KEY`, swarm-routing/.github#21),
+this repository's bot app (`AHN_BOT_APP_ID` / `AHN_BOT_APP_KEY`, #705), then
+`ORG_BOT_TOKEN` (`benchmark-cell.yml` takes the two apps only), so CI runs on
+them and `CI gate` can report. An app whose token cannot be made is a warning
+and the next is tried; the job log names the token used, and an app's commits
+are made as its bot user. With neither, they fall back to the workflow's
 `GITHUB_TOKEN`: GitHub runs no CI on such a PR, so a maintainer closes and
 reopens it. If `main` moves while a bot PR waits, the next run rebuilds it, or
 use the PR's *Update branch*.
