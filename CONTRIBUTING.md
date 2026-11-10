@@ -191,8 +191,15 @@ exists.
 
 Checks this repo will not score full marks on, by design, so nobody chases
 them. `Signed-Releases` ramps up one release at a time over a five-release
-window (see *Provenance* below). Two are **accepted findings** (#789): a low
-score there is a known state, not a regression to open an issue about.
+window (see *Provenance* below). `Pinned-Dependencies` stays at 9: every
+action, base image, pip and npm install is pinned by SHA, digest or hash
+(#338, #787), except the org's reusable workflows
+(`swarm-routing/.github/.github/workflows/*.yml`), which this repo calls at
+`@main`. That is the org's contract for them (each caller pins `@main` and
+gets fixes without a PR; `swarm-routing/.github` keeps every input backward
+compatible), so Scorecard flags each such `uses:` line and it stays. Two are
+**accepted findings** (#789): a low score there is a known state, not a
+regression to open an issue about.
 
 - **`Code-Review` (0): accepted.** It counts changesets approved by someone
   other than their author. AntHocNet has one maintainer, and GitHub does not
