@@ -170,10 +170,22 @@ The proposal follows the control's verdicts, family by family:
 - **Read 1 holds for every family.** The published v2.4.0 cells reproduce byte
   for byte on their recorded images at `b531d5d`. A published number stays
   valid as a number of its recorded image.
-- **Families where every protocol read `PAIRED-NOISE`** (satellite ISL grid,
-  LEO shell, SAGIN):
-  - a post-move number may be compared with the published one directly;
-  - the LEO and SAGIN rows were identical on both images.
+- **The rule covers only the campaign image the control measured**
+  (`anthocnet-ns3-campaign@sha256:ee930d8c…`, on
+  `ns3-dev:3.48-optimized@sha256:5585a93c…`). A later image, base or toolchain
+  gets its own control before its numbers are compared with published ones.
+- **`PAIRED-NOISE` is not equivalence.** It says that no tested interval (dPDR,
+  d_d99, d_NRL) excludes zero, not that the image effect is small enough for a
+  given claim, and it says nothing about the metrics it does not test.
+- **LEO shell and SAGIN:** every `##RUN##`/`##ROUTE##`/`##COMMON##` row was
+  byte-identical on both images, so a post-move number from this image may be
+  compared with the published one directly, for every metric those rows carry.
+- **Satellite ISL grid:** every protocol read `PAIRED-NOISE`, but AntHocNet's
+  rows differ in three fields (mean delay, NRL and the field after NRL). A
+  post-move number may be compared directly only for PDR, `delay99` and NRL,
+  and only where the claim's margin exceeds the control's paired CIs. Any
+  other metric, or a tighter margin, re-runs the published side on the
+  post-move image first.
 - **Families with any verdict other than `PAIRED-NOISE`** (MANET grid, static
   Wi-Fi mesh, FANET, VANET, disaster):
   - a post-move number is **not** compared with a published one;
