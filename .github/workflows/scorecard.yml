@@ -50,6 +50,10 @@ jobs:
       contents: read           # checkout
       actions: read            # read workflow definitions for the workflow checks
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       # Every action is SHA-pinned with the tag in a trailing comment, matching
       # the repo-wide pinning done in #338 — doubly so here, in a job that holds
       # `security-events: write` and an OIDC token.
