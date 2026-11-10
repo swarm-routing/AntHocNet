@@ -192,7 +192,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      id-token: write  # tokenless upload through OIDC when CODECOV_TOKEN is unset
+      id-token: write  # Codecov authenticates the upload through GitHub OIDC
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -204,8 +204,6 @@ jobs:
         with:
           files: coverage.xml
           disable_search: true
+          # A fork PR gets no id-token, so its upload fails without failing the job.
           fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-          # OIDC without a token, except on fork PRs (no id-token there):
-          # those upload tokenless, which Codecov accepts for public repos.
-          use_oidc: ${{ secrets.CODECOV_TOKEN == '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+          use_oidc: true

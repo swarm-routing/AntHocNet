@@ -211,13 +211,13 @@ maintainer adds them to branch protection.
 
 What the maintainer sets up once:
 
-- the `SONAR_TOKEN` repository secret (SonarQube Cloud → *My Account* →
-  *Security*), and **Automatic Analysis off** for the project (*Administration*
-  → *Analysis Method*). Until both hold the Sonar step skips itself, with a
-  notice or a warning that says which;
-- optionally a `CODECOV_TOKEN` secret. Without one the upload authenticates
-  through GitHub OIDC (fork PRs upload tokenless, as Codecov allows for public
-  repositories); a failed upload never fails the job.
+- the `SONAR_TOKEN` secret (an org secret), and **Automatic Analysis off** for
+  the project (*Administration* → *Analysis Method*). Until both hold the Sonar
+  step skips itself, with a notice or a warning that says which.
+
+Codecov needs no secret: the upload authenticates through GitHub OIDC only. A
+fork PR gets no OIDC token, so its upload fails, and a failed upload never
+fails the job.
 
 ### Release integrity: SHA-256 checksums
 
