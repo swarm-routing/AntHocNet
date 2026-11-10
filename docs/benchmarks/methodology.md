@@ -159,11 +159,36 @@ naming this repo's historical `ghcr.io/swarm-routing/ns3:<version>` image
 (`3.42-opt` was the campaign pin) and an in-job module build. The published
 cells name `ghcr.io/danieljoppi/ns3:<version>`, the same recipe built before
 the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
-The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48): compare a
-post-move number with a published one only after the control campaign
-[#867](https://github.com/swarm-routing/AntHocNet/issues/867). The nightly refresh of
+The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48), and the
+control campaign [#867](https://github.com/swarm-routing/AntHocNet/issues/867)
+measured what that does ([results](v2.7.x-image-control.md)).
+
+**Cross-image rule.** **Proposed, awaiting the maintainer (#867).** Until the
+maintainer accepts it, compare no post-move number with a published one.
+The proposal follows the control's verdicts, family by family:
+
+- **Read 1 holds for every family.** The published v2.4.0 cells reproduce byte
+  for byte on their recorded images at `b531d5d`. A published number stays
+  valid as a number of its recorded image.
+- **Families where every protocol read `PAIRED-NOISE`** (satellite ISL grid,
+  LEO shell, SAGIN):
+  - a post-move number may be compared with the published one directly;
+  - the LEO and SAGIN rows were identical on both images.
+- **Families with any verdict other than `PAIRED-NOISE`** (MANET grid, static
+  Wi-Fi mesh, FANET, VANET, disaster):
+  - a post-move number is **not** compared with a published one;
+  - a claim that needs both re-runs the published side on the post-move image
+    (paired, same `source_sha`, ≥ 20 seeds) and compares the two post-move
+    numbers. A change in a delay tail (`delay99`) or NRL can come from the
+    image alone ([read 2](v2.7.x-image-control.md#read-2-dev-vs-old-paired-by-seed)).
+- **Comparisons within one image digest** (A/B arms, controls, sweeps in one
+  campaign) are unaffected.
+- A family or cell the control did not cover gets its own paired control
+  before it is compared across the move.
+
+The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
-branch's code changed) is **paused until #867** has recorded that control: its
+branch's code changed) is **paused until the maintainer decides #867's rule**: its
 schedule is off, so the table keeps its last pre-move numbers, and a manual
 dispatch still runs it. Its publish step is gated on the validation anchors
 below. Before trusting or comparing dispatched numbers, run

@@ -1,0 +1,129 @@
+# ctl867 campaign sat-failcell-ctl867-dev: 1 run(s): 42869374269 (dev/sat-failcell); ref main; source_sha b531d5d40c199b159527257119f872e3da7eeb5b
+##RUN## 1 anthocnet 100.00 10.15 11.00 46.69 1.10 1.82 0.00
+# diag anthocnet seed=1 ctrlTx=62866 antTx[1=14400,2=206,4=4565,16=4,] antRx[1=56701,2=232,4=4834,16=12,]
+# failcell anthocnet seed=1 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1270
+##RUN## 2 anthocnet 100.00 10.16 11.00 46.64 1.09 1.81 0.00
+# diag anthocnet seed=2 ctrlTx=62314 antTx[1=14395,2=233,4=4260,16=4,] antRx[1=56681,2=264,4=4448,16=12,]
+# failcell anthocnet seed=2 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1384
+##RUN## 3 anthocnet 100.00 10.16 11.00 46.82 1.09 1.81 0.00
+# diag anthocnet seed=3 ctrlTx=62584 antTx[1=14392,2=233,4=4385,16=4,] antRx[1=56668,2=264,4=4618,16=12,]
+# failcell anthocnet seed=3 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1378
+##RUN## 4 anthocnet 100.00 10.17 11.00 46.64 1.09 1.81 0.00
+# diag anthocnet seed=4 ctrlTx=62424 antTx[1=14397,2=233,4=4215,16=4,] antRx[1=56688,2=264,4=4441,16=12,]
+# failcell anthocnet seed=4 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1562
+##RUN## 5 anthocnet 100.00 10.16 11.00 46.76 1.09 1.81 0.00
+# diag anthocnet seed=5 ctrlTx=62439 antTx[1=14398,2=210,4=4304,16=4,] antRx[1=56690,2=238,4=4531,16=12,]
+# failcell anthocnet seed=5 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1138
+##RUN## 6 anthocnet 100.00 10.16 11.00 46.77 1.10 1.82 0.00
+# diag anthocnet seed=6 ctrlTx=62930 antTx[1=14401,2=233,4=4539,16=4,] antRx[1=56703,2=264,4=4812,16=12,]
+# failcell anthocnet seed=6 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1176
+##RUN## 7 anthocnet 100.00 10.17 11.00 46.74 1.10 1.81 0.00
+# diag anthocnet seed=7 ctrlTx=62635 antTx[1=14401,2=256,4=4391,16=4,] antRx[1=56704,2=290,4=4606,16=12,]
+# failcell anthocnet seed=7 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1475
+##RUN## 8 anthocnet 100.00 10.18 11.00 46.72 1.10 1.82 0.00
+# diag anthocnet seed=8 ctrlTx=62892 antTx[1=14396,2=210,4=4578,16=4,] antRx[1=56685,2=238,4=4842,16=12,]
+# failcell anthocnet seed=8 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1205
+##RUN## 9 anthocnet 100.00 10.16 11.00 46.79 1.09 1.81 0.00
+# diag anthocnet seed=9 ctrlTx=62445 antTx[1=14402,2=210,4=4222,16=4,] antRx[1=56708,2=238,4=4461,16=12,]
+# failcell anthocnet seed=9 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1590
+##RUN## 10 anthocnet 100.00 10.17 11.00 46.63 1.10 1.82 0.00
+# diag anthocnet seed=10 ctrlTx=62607 antTx[1=14398,2=232,4=4303,16=4,] antRx[1=56692,2=262,4=4550,16=12,]
+# failcell anthocnet seed=10 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1361
+##RUN## 11 anthocnet 100.00 10.16 11.00 46.66 1.11 1.82 0.00
+# diag anthocnet seed=11 ctrlTx=63144 antTx[1=14401,2=233,4=4619,16=4,] antRx[1=56703,2=264,4=4923,16=12,]
+# failcell anthocnet seed=11 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1478
+##RUN## 12 anthocnet 100.00 10.17 11.00 46.80 1.10 1.82 0.00
+# diag anthocnet seed=12 ctrlTx=62906 antTx[1=14408,2=233,4=4458,16=4,] antRx[1=56728,2=264,4=4736,16=12,]
+# failcell anthocnet seed=12 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1205
+##RUN## 13 anthocnet 100.00 10.16 11.00 46.73 1.10 1.81 0.00
+# diag anthocnet seed=13 ctrlTx=62637 antTx[1=14400,2=233,4=4364,16=4,] antRx[1=56701,2=264,4=4607,16=12,]
+# failcell anthocnet seed=13 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1213
+##RUN## 14 anthocnet 100.00 10.15 11.00 46.75 1.10 1.82 0.00
+# diag anthocnet seed=14 ctrlTx=63003 antTx[1=14404,2=207,4=4594,16=4,] antRx[1=56714,2=234,4=4888,16=12,]
+# failcell anthocnet seed=14 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1216
+##RUN## 15 anthocnet 100.00 10.16 11.00 46.71 1.09 1.81 0.00
+# diag anthocnet seed=15 ctrlTx=62539 antTx[1=14403,2=210,4=4372,16=4,] antRx[1=56711,2=238,4=4598,16=12,]
+# failcell anthocnet seed=15 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1614
+##RUN## 16 anthocnet 100.00 10.15 11.00 46.70 1.10 1.82 0.00
+# diag anthocnet seed=16 ctrlTx=63023 antTx[1=14401,2=206,4=4637,16=4,] antRx[1=56704,2=232,4=4925,16=12,]
+# failcell anthocnet seed=16 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1123
+##RUN## 17 anthocnet 100.00 10.15 11.00 46.84 1.09 1.81 0.00
+# diag anthocnet seed=17 ctrlTx=62669 antTx[1=14403,2=233,4=4401,16=4,] antRx[1=56711,2=264,4=4639,16=12,]
+# failcell anthocnet seed=17 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1222
+##RUN## 18 anthocnet 100.00 10.18 11.00 46.73 1.10 1.82 0.00
+# diag anthocnet seed=18 ctrlTx=63011 antTx[1=14397,2=255,4=4526,16=4,] antRx[1=56689,2=288,4=4800,16=12,]
+# failcell anthocnet seed=18 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1687
+##RUN## 19 anthocnet 100.00 10.15 11.00 46.70 1.10 1.81 0.00
+# diag anthocnet seed=19 ctrlTx=62555 antTx[1=14402,2=184,4=4323,16=4,] antRx[1=56708,2=208,4=4580,16=12,]
+# failcell anthocnet seed=19 breakAt=450.0000 tDetect=0.0000 tReconverge=0.0803
+##RUN## 20 anthocnet 100.00 10.17 11.00 46.70 1.10 1.82 0.00
+# diag anthocnet seed=20 ctrlTx=62701 antTx[1=14407,2=255,4=4311,16=4,] antRx[1=56728,2=288,4=4558,16=12,]
+# failcell anthocnet seed=20 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1064
+##ORACLE## 1 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 1 oracle 100.00 10.15 11.00 46.69 0.00 0.00 0.00
+# failcell oracle seed=1 breakAt=450.0000 tDetect=nan tReconverge=0.1067
+##ORACLE## 2 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 2 oracle 100.00 10.15 11.00 46.64 0.00 0.00 0.00
+# failcell oracle seed=2 breakAt=450.0000 tDetect=nan tReconverge=0.1248
+##ORACLE## 3 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 3 oracle 100.00 10.15 11.00 46.82 0.00 0.00 0.00
+# failcell oracle seed=3 breakAt=450.0000 tDetect=nan tReconverge=0.1150
+##ORACLE## 4 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 4 oracle 100.00 10.15 11.00 46.64 0.00 0.00 0.00
+# failcell oracle seed=4 breakAt=450.0000 tDetect=nan tReconverge=0.1244
+##ORACLE## 5 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 5 oracle 100.00 10.15 11.00 46.76 0.00 0.00 0.00
+# failcell oracle seed=5 breakAt=450.0000 tDetect=nan tReconverge=0.1036
+##ORACLE## 6 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 6 oracle 100.00 10.15 11.00 46.77 0.00 0.00 0.00
+# failcell oracle seed=6 breakAt=450.0000 tDetect=nan tReconverge=0.1176
+##ORACLE## 7 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 7 oracle 100.00 10.15 11.00 46.74 0.00 0.00 0.00
+# failcell oracle seed=7 breakAt=450.0000 tDetect=nan tReconverge=0.1234
+##ORACLE## 8 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 8 oracle 100.00 10.15 11.00 46.72 0.00 0.00 0.00
+# failcell oracle seed=8 breakAt=450.0000 tDetect=nan tReconverge=0.1205
+##ORACLE## 9 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 9 oracle 100.00 10.15 11.00 46.79 0.00 0.00 0.00
+# failcell oracle seed=9 breakAt=450.0000 tDetect=nan tReconverge=0.1183
+##ORACLE## 10 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 10 oracle 100.00 10.15 11.00 46.63 0.00 0.00 0.00
+# failcell oracle seed=10 breakAt=450.0000 tDetect=nan tReconverge=0.1206
+##ORACLE## 11 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 11 oracle 100.00 10.15 11.00 46.66 0.00 0.00 0.00
+# failcell oracle seed=11 breakAt=450.0000 tDetect=nan tReconverge=0.1072
+##ORACLE## 12 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 12 oracle 100.00 10.15 11.00 46.80 0.00 0.00 0.00
+# failcell oracle seed=12 breakAt=450.0000 tDetect=nan tReconverge=0.1205
+##ORACLE## 13 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 13 oracle 100.00 10.15 11.00 46.73 0.00 0.00 0.00
+# failcell oracle seed=13 breakAt=450.0000 tDetect=nan tReconverge=0.1157
+##ORACLE## 14 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 14 oracle 100.00 10.15 11.00 46.75 0.00 0.00 0.00
+# failcell oracle seed=14 breakAt=450.0000 tDetect=nan tReconverge=0.1216
+##ORACLE## 15 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 15 oracle 100.00 10.15 11.00 46.71 0.00 0.00 0.00
+# failcell oracle seed=15 breakAt=450.0000 tDetect=nan tReconverge=0.1216
+##ORACLE## 16 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 16 oracle 100.00 10.15 11.00 46.70 0.00 0.00 0.00
+# failcell oracle seed=16 breakAt=450.0000 tDetect=nan tReconverge=0.1123
+##ORACLE## 17 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 17 oracle 100.00 10.15 11.00 46.84 0.00 0.00 0.00
+# failcell oracle seed=17 breakAt=450.0000 tDetect=nan tReconverge=0.1191
+##ORACLE## 18 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 18 oracle 100.00 10.15 11.00 46.73 0.00 0.00 0.00
+# failcell oracle seed=18 breakAt=450.0000 tDetect=nan tReconverge=0.1280
+##ORACLE## 19 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 19 oracle 100.00 10.15 11.00 46.70 0.00 0.00 0.00
+# failcell oracle seed=19 breakAt=450.0000 tDetect=nan tReconverge=0.0803
+##ORACLE## 20 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 20 oracle 100.00 10.15 11.00 46.70 0.00 0.00 0.00
+# failcell oracle seed=20 breakAt=450.0000 tDetect=nan tReconverge=0.0691
++Grid torus 4x4 = 16 satellites, 32 ISLs (mean degree 4.00) @ 5.00 ms 10Mbps, 8 flows, 900.00 s, mean of 20 run(s)
+
+protocol          PDR%  delay(ms)  delay99(ms)  thrput(kbps)     NRL   NRLbytes  jitter(ms)
+-------------------------------------------------------------------------------------------
+anthocnet        100.0       10.2         11.0         46.73    1.10       1.81        0.00
+oracle           100.0       10.2         11.0         46.73    0.00       0.00        0.00
+##ARGS## isl-grid --rows=4 --cols=4 --torus=true --islDelayMs=5 --islRate=10Mbps --time=900 --runs=20 --flows=8 --cbrBps=4096 --diag --protocols=anthocnet,oracle --breakLink=0,0,3,0 --breakAt=450
+##PROV## commit=b531d5d40c199b159527257119f872e3da7eeb5b ref=main run_id=42869374269 attempt=1 image=ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:ee930d8c6592b012a4ec321f0f255945f66cbf505e5850ab7fea683f1e2aba68 profile=release harness=isl-grid base=ghcr.io/swarm-routing/ns3-dev:3.48-optimized-fb7596b@sha256:5585a93c5cea1980592539e2d26a4e111e0ff4b0cc63b3dfd6ea5de459d80d3f base_tag=ghcr.io/swarm-routing/ns3-dev:3.48-optimized build_profile=optimized modules=routing-bench@b531d5d40c199b159527257119f872e3da7eeb5b,oracle@b531d5d40c199b159527257119f872e3da7eeb5b,aomdv@b531d5d40c199b159527257119f872e3da7eeb5b,gpsr@b531d5d40c199b159527257119f872e3da7eeb5b,adaptive@b531d5d40c199b159527257119f872e3da7eeb5b,anthocnet@b531d5d40c199b159527257119f872e3da7eeb5b
