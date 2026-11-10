@@ -53,10 +53,11 @@ check() {
         # Only regular-file content changes, line for line (no mode or type change).
         [ "$(git ls-tree "$bump" -- "$f" | cut -d' ' -f1)" = 100644 ] \
             || { echo "FAIL [bump]: $f is not a regular file"; return 1; }
-        removed=$(git diff -U0 "$base" "$bump" -- "$f" | grep -c '^-[^-]' || true)
-        added=$(git diff -U0 "$base" "$bump" -- "$f" | grep -c '^+[^+]' || true)
+        IFS=$'\t' read -r added removed _ < <(git diff --numstat "$base" "$bump" -- "$f")
         [ "$removed" = "$added" ] || { echo "FAIL [bump]: $f adds or removes lines"; return 1; }
-        if git diff -U0 "$base" "$bump" -- "$f" | grep -E '^[-+][^-+]' | cut -c2- | grep -vqE "$re"; then
+        # Every +/- line after the first hunk header is content (one file),
+        # whatever it starts with; each must be the file's version line.
+        if git diff -U0 "$base" "$bump" -- "$f" | sed -n '/^@@/,$p' | grep -E '^[-+]' | cut -c2- | grep -vqE "$re"; then
             echo "FAIL [bump]: $f changes a line that is not its version line"
             return 1
         fi
@@ -101,6 +102,7 @@ self_test() {
     bump "a CHANGELOG deletion" 1 'printf "## v2.6.1\n" > CHANGELOG.md'
     bump "VERSION made a symlink" 1 'rm VERSION && ln -s ci.yml VERSION'
     bump "a NUL byte in core/CMakeLists.txt" 1 'printf "#\\000\\nexecute_process(COMMAND x)\\n" >> core/CMakeLists.txt'
+    bump "a changed line starting with -" 1 'echo "--x" >> VERSION; sed -i "1d" CITATION.cff'
     bump "a NUL byte in CHANGELOG.md" 1 'printf "\\000" >> CHANGELOG.md'
     "${g[@]}" reset -q --hard "$base"
     expect "baseline" 0 "$base"
