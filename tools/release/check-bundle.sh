@@ -51,7 +51,9 @@ done
 # locally it includes staged changes.
 arch=$(git archive --worktree-attributes --format=tar "$(git write-tree)" | tar -t)
 for p in .claude/ AGENTS.md CLAUDE.md .github/ .codecov.yml sonar-project.properties .coderabbit.yaml; do
-  printf '%s\n' "$arch" | grep -q "^$p" && bad "git archive ships $p (add export-ignore)"
+  # A here-string, not a pipe: with pipefail, grep -q exiting on an early match
+  # can SIGPIPE the writer and turn a hit into a miss.
+  grep -q "^$p" <<<"$arch" && bad "git archive ships $p (add export-ignore)"
 done
 if [ "$fail" = 0 ]; then
   echo "ok: bundle $(find "$bundle" -type f | wc -l) files, no agent or CI config files, no caches, tools/bench present; git archive clean"
