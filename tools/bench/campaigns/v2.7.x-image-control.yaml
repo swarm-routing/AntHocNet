@@ -1,0 +1,94 @@
+# #867: the cross-image control (accepted 2026-11-10, issuecomment-6767220395).
+# The same AntHocNet commit runs every cell on both images, seed for seed:
+#   old (control): the legacy in-job build, in the image the published v2.4.0
+#                  cell's ##PROV## names (`legacy_images`, by digest);
+#   dev:           the ns3-dev campaign image `ctl867`, built from main on
+#                  ns-3 3.48 (the CI pin while #843 is open), by digest.
+# One cell per family, 20 seeds each. Cell inputs are copied unchanged from
+# the plans that produced the published v2.4.0 cells (v2.4.0.yaml,
+# v2.4.0-disaster.yaml, v2.4.0-sagin.yaml), seed blocks included, so the
+# command lines match the published ones flag for flag (routing-compare in
+# place of its alias anthocnet-compare, byte-identical per pc769). VANET is
+# vanet-sparse (40 cars), not vanet-main: about 1,050 runner-minutes per leg.
+# No comparator anchors.
+#
+# Two reads:
+#   1. old vs published (harness_control.py, the `source` keys): byte-identical
+#      ##RUN##/##ROUTE##/##COMMON## rows prove the old leg stands in for the
+#      published numbers, and so that the legacy image is the right one.
+#   2. dev vs old (campaign.py verdicts: bench_parse.py --ab for every
+#      protocol of every cell): the per-metric deltas and the noise verdict.
+#
+# `ref` must not move during the campaign: the dev leg runs the commit its
+# image was built from (the image's revision label), the old leg builds `ref`.
+#
+# CTL867 IMAGE (PLACEHOLDER, filled in phase 2 of #867 once built):
+#   ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:<to be filled in>
+#
+#   git tag ctl867 <main commit> && git push origin ctl867
+#   P=tools/bench/campaigns/v2.7.x-image-control.yaml
+#   python3 tools/bench/campaign.py plan     $P
+#   python3 tools/bench/campaign.py dispatch $P --arm dev --image <CTL867 IMAGE> --log ctl867-dev.tsv
+#   python3 tools/bench/campaign.py dispatch $P --arm old --no-image --log ctl867-old.tsv
+#     (both resumable; re-run each until every label is logged: the cap is
+#      shared, so the two legs together hold at most `cap` runners)
+#   python3 tools/bench/campaign.py collect  $P --arm old --log ctl867-old.tsv --out results/cells
+#   python3 tools/bench/campaign.py collect  $P --arm dev --log ctl867-dev.tsv --out results/cells
+#   python3 tools/bench/harness_control.py   $P            # read 1
+#   python3 tools/bench/campaign.py verdicts $P --dir results/cells   # read 2
+generation: ctl867
+ref: ctl867
+program: routing-compare
+cap: 12
+control: old
+
+arms:
+  old: ""
+  dev: ""
+
+# The images the published cells' ##PROV## names, by the digest the frozen
+# tag resolves to today (swarm-routing/.github#110). Both were pushed
+# 2026-11-03, after the v2.4.0 runs, so they are not provably the bytes those
+# runs pulled; read 1 is what shows they are equivalent.
+legacy_images:
+  3.42-opt: ghcr.io/danieljoppi/ns3@sha256:af6b50155528164de33764f059a2736d31bf4cca1c4778009c93fb6620ddc95e
+  "3.48": ghcr.io/danieljoppi/ns3@sha256:8b5a0e308dd4bbb55b3124cfff18f24746ba598646f90f24d38a6e4bfdf06c65
+
+x-grid: &grid {scenario: paper, version: 3.42-opt, nNodes: 50, time: 900, runs: 10, areaX: 1500, areaY: 300, speed: 20, range: 300, transport: udp, harness: compare}
+x-fanet: &fanet {scenario: fanet, version: 3.42-opt, nNodes: 30, time: 900, runs: 20, areaX: 1000, areaY: 1000, pause: 0, speed: 30, propagation: range, mobility: gaussmarkov, transport: udp, harness: compare}
+x-vanet: &vanet {scenario: vanet, version: 3.42-opt, time: 900, areaX: 800, areaY: 800, pause: 0, speed: 20, range: 300, propagation: urban, mobility: manhattan, transport: udp, harness: compare}
+x-disaster: &disaster {scenario: disaster, version: 3.42-opt, nNodes: 47, time: 900, runs: 10, areaX: 1000, areaY: 500, speed: 20, pause: 30, range: 300, propagation: urban, mobility: trace, transport: udp, harness: compare, extraArgs: "--traceFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.ns2 --flowsFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.flows --buildings=120,170,320,330;680,170,880,330"}
+x-isl: &isl {harness: isl-grid, version: 3.42-opt, torus: "true", islDelayMs: 5, islRate: 10Mbps, time: 900, runs: 20, cbrBps: 4096}
+x-leo: &leo {harness: leo-walker, version: "3.48", time: 300, runs: 20, flows: 4, cbrBps: 2048, islRate: 10Mbps}
+x-w16: &w16 "--planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01"
+x-w16s: &w16s "--planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --sagin"
+
+cells:
+  # MANET grid (v2.4.0.yaml)
+  grid-rwp-tworay: {source: grid-rwp-tworay-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *grid, mobility: rwp, propagation: tworay, pause: 30, protocols: "anthocnet,aodv,olsr,dsdv,aomdv,oracle"}, blocks: [1, 11]}
+  # static Wi-Fi mesh (v2.4.0.yaml)
+  static-mesh: {source: static-mesh-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *grid, runs: 5, mobility: rwp, propagation: range, pause: 900, extraArgs: "--standard=80211a --rateManager=constant6 --ns3::dot11s::PeerLink::MaxBeaconLoss=20", protocols: "anthocnet,olsr,hwmp,oracle"}, blocks: [1, 6, 11, 16]}
+  # FANET (v2.4.0.yaml)
+  fanet-main: {source: fanet-main-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *fanet, range: 350, protocols: "anthocnet,aodv,olsr,gpsr3d,oracle"}}
+  # VANET (v2.4.0.yaml): vanet-sparse, not vanet-main (the 2026-11-10 decision)
+  vanet-sparse: {source: vanet-sparse-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *vanet, nNodes: 40, runs: 10, protocols: "anthocnet,aodv,gpsr,gpcr,oracle"}, blocks: [1, 11]}
+  # disaster (v2.4.0-disaster.yaml)
+  disaster-main: {source: disaster-main-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *disaster, protocols: "anthocnet,aodv,olsr,oracle"}, blocks: [1, 11]}
+  # satellite ISL grid (v2.4.0.yaml)
+  sat-failcell: {source: sat-failcell-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *isl, rows: 4, cols: 4, flows: 8, extraArgs: "--breakLink=0,0,3,0 --breakAt=450", protocols: "anthocnet,oracle"}}
+  # LEO shell (v2.4.0.yaml): one invocation per protocol, as published
+  leo-walker16-anthocnet: {source: leo-walker16-anthocnet-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: anthocnet, extraArgs: *w16}}
+  leo-walker16-opspf: {source: leo-walker16-opspf-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: opspf, extraArgs: *w16}}
+  leo-walker16-geo-greedy: {source: leo-walker16-geo-greedy-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: geo-greedy, extraArgs: *w16}}
+  leo-walker16-oracle: {source: leo-walker16-oracle-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: oracle, extraArgs: *w16}}
+  leo-walker16-oracle-delay: {source: leo-walker16-oracle-delay-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: oracle-delay, extraArgs: *w16}}
+  # SAGIN (v2.4.0-sagin.yaml)
+  sagin-walker16-anthocnet: {source: sagin-walker16-anthocnet-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: anthocnet, extraArgs: *w16s}}
+  sagin-walker16-opspf: {source: sagin-walker16-opspf-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: opspf, extraArgs: *w16s}}
+  sagin-walker16-gpsr3d: {source: sagin-walker16-gpsr3d-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: gpsr3d, extraArgs: *w16s}}
+  sagin-walker16-geo-greedy: {source: sagin-walker16-geo-greedy-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: geo-greedy, extraArgs: *w16s}}
+  sagin-walker16-oracle: {source: sagin-walker16-oracle-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: oracle, extraArgs: *w16s}}
+  sagin-walker16-oracle-delay: {source: sagin-walker16-oracle-delay-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *leo, protocols: oracle-delay, extraArgs: *w16s}}
+
+jobs:
+  - {arms: [old, dev], cells: "*"}

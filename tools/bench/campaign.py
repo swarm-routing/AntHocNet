@@ -19,11 +19,15 @@ be re-run from a scheduled check-in until every label is logged.
 
 Usage:
     campaign.py plan     PLAN                   # list the jobs; dispatches nothing
-    campaign.py dispatch PLAN --log RUNS.tsv [--cap 12] [--wait]
+    campaign.py dispatch PLAN --log RUNS.tsv [--arm ARM] [--cap 12] [--wait]
                 (--build-image [--ns3-version 3.48] | --image REF | --no-image)
-    campaign.py status   PLAN --log RUNS.tsv
-    campaign.py collect  PLAN --log RUNS.tsv --out results/cells [--from DIR]
+    campaign.py status   PLAN --log RUNS.tsv [--arm ARM]
+    campaign.py collect  PLAN --log RUNS.tsv --out results/cells [--from DIR] [--arm ARM]
     campaign.py verdicts PLAN --dir results/cells [--arm ARM]
+
+`--arm ARM` limits dispatch, status and collect to that arm's jobs. A log pins
+one image, so a campaign whose arms run on different images (a cross-image
+control, #867) dispatches, tracks and collects each arm with its own log.
 
 `collect` writes one file per (cell, arm), `<cell>-<generation>.txt` for the
 control arm and `<cell>-<generation>-<arm>.txt` for the others, with a `#`
@@ -46,9 +50,15 @@ dispatch reuses it and refuses a different one, and it is passed to every
 benchmark-cell.yml dispatch as its `image` input: the cells pull it by digest
 and build nothing. `--no-image` is the legacy path (each cell installs and
 builds the module in ns3:<version>), to replay a published cell only.
+A plan's `legacy_images` map (version -> image by digest) replaces
+ns3:<version> on that path: each job passes its version's image as
+benchmark-cell.yml's `legacy_image` input, so a control re-runs a published
+cell in the image its ##PROV## names (#867). With the map set, a legacy job
+whose version it lacks is refused.
 
-`verdicts` runs bench_parse.py --ab --proto anthocnet on every arm's file
-against the control file of the same cell, and prints one line per cell.
+`verdicts` runs bench_parse.py --ab --proto P on every arm's file against the
+control file of the same cell, for every protocol P the cell's command line
+names (--protocols=), and prints one line per (arm, cell, protocol).
 
 Plan format:
 
@@ -58,6 +68,8 @@ Plan format:
                                   # cell runs (default anthocnet-compare, #769)
     cap: 12
     control: control              # the arm whose files carry no arm suffix
+    legacy_images:                # optional: --no-image runs these, by version
+      3.42-opt: ghcr.io/danieljoppi/ns3@sha256:...
     arms:
       control: ""
       quiet: "--ns3::anthocnet::RoutingProtocol::QuietMode=true"
@@ -190,7 +202,30 @@ def load_plan(path):
     plan.setdefault("program", PROGRAM)
     plan.setdefault("cap", 12)
     plan.setdefault("control", "control")
+    plan["legacy_images"] = {str(k): v for k, v in
+                             (plan.get("legacy_images") or {}).items()}
+    for version, ref in plan["legacy_images"].items():
+        if not IMAGE_RE.fullmatch(str(ref)):
+            sys.exit(f"{path}: legacy_images {version}: {ref!r} is not "
+                     "ghcr.io/<owner>/<name>@sha256:<64 hex>")
     return plan
+
+
+def legacy_image(plan, version):
+    """The image a legacy job of this version runs in ("" = ns3:<version>)."""
+    images = plan.get("legacy_images") or {}
+    if images and version not in images:
+        sys.exit(f"legacy_images has no image for version {version}; add it, "
+                 "so no cell of the control falls back to ns3:<version>")
+    return images.get(version, "")
+
+
+def selected(plan, a):
+    """jobs(plan), limited to --arm when it is given."""
+    arm = getattr(a, "arm", None)
+    if arm and arm not in plan["arms"]:
+        sys.exit(f"--arm {arm}: the plan has no such arm")
+    return [j for j in jobs(plan) if not arm or j[2] == arm]
 
 
 def jobs(plan):
@@ -260,7 +295,8 @@ def newest_dispatch(wf):
 def cmd_plan(plan, _a):
     for label, _c, _arm, wf, inp in jobs(plan):
         harness, args, version = legacy_command(wf, inp, plan.get("program", PROGRAM))
-        print(f"{label}\tns3:{version}\t{harness} {args}")
+        image = (plan.get("legacy_images") or {}).get(version) or f"ns3:{version}"
+        print(f"{label}\t{image}\t{harness} {args}")
     print(f"{len(jobs(plan))} job(s), cap {plan['cap']}, ref {plan['ref']}",
           file=sys.stderr)
 
@@ -309,7 +345,7 @@ def build_image(plan, version):
     return ref
 
 
-def campaign_image(plan, a):
+def campaign_image(plan, a, todo):
     """The image every cell runs in ("" = legacy), pinned once in the log."""
     logged = read_log(a.log).get(IMAGE_KEY)
     given = a.image or (NO_IMAGE if a.no_image else None)
@@ -329,7 +365,7 @@ def campaign_image(plan, a):
             f.write(f"{IMAGE_KEY}\t{chosen}\n")
     if chosen != NO_IMAGE:
         versions = sorted({legacy_command(wf, inp, plan["program"])[2]
-                           for _l, _c, _a, wf, inp in jobs(plan)})
+                           for _l, _c, _a, wf, inp in todo})
         print(f"every cell runs in {chosen} (the plan's version inputs "
               f"{', '.join(versions)} are not used)", file=sys.stderr)
     return "" if chosen == NO_IMAGE else chosen
@@ -337,15 +373,17 @@ def campaign_image(plan, a):
 
 def cmd_dispatch(plan, a):
     cap = a.cap or plan["cap"]
-    image = campaign_image(plan, a)
+    mine = selected(plan, a)
+    image = campaign_image(plan, a, mine)
     done = read_log(a.log)
-    todo = [j for j in jobs(plan) if j[0] not in done]
+    todo = [j for j in mine if j[0] not in done]
     for label, _c, _arm, wf, inp in todo:
         harness, args, version = legacy_command(wf, inp, plan.get("program", PROGRAM))
+        legacy = "" if image else legacy_image(plan, version)
         while active_runs() >= cap:
             if not a.wait:
                 print(f"cap {cap} reached; {len(read_log(a.log)) - 1} of "
-                      f"{len(jobs(plan))} dispatched, run again later",
+                      f"{len(mine)} dispatched, run again later",
                       file=sys.stderr)
                 return
             time.sleep(120)
@@ -354,6 +392,8 @@ def cmd_dispatch(plan, a):
                 "inputs": {"harness": harness, "args": args, "version": version}}
         if image:
             body["inputs"]["image"] = image
+        elif legacy:
+            body["inputs"]["legacy_image"] = legacy
         gh("-X", "POST", f"repos/{REPO}/actions/workflows/{WORKFLOW}/dispatches",
            "--input", "-", stdin=json.dumps(body))
         # The dispatch API returns no run id: poll for the newest dispatched
@@ -365,13 +405,13 @@ def cmd_dispatch(plan, a):
         with open(a.log, "a") as f:
             f.write(f"{label}\t{rid}\n")
         print(f"{label}\t{rid}")
-    print(f"all {len(jobs(plan))} job(s) dispatched", file=sys.stderr)
+    print(f"all {len(mine)} job(s) dispatched", file=sys.stderr)
 
 
 def cmd_status(plan, a):
     log = read_log(a.log)
     counts = {}
-    for label, *_ in jobs(plan):
+    for label, *_ in selected(plan, a):
         rid = log.get(label)
         if not rid:
             state = "not-dispatched"
@@ -417,7 +457,7 @@ def out_name(plan, cell, arm):
 def cmd_collect(plan, a):
     log = read_log(a.log)
     groups = {}
-    for label, cell, arm, _wf, _inp in jobs(plan):
+    for label, cell, arm, _wf, _inp in selected(plan, a):
         groups.setdefault((cell, arm), []).append(label)
     os.makedirs(a.out, exist_ok=True)
     written = skipped = 0
@@ -466,6 +506,20 @@ def cmd_collect(plan, a):
     print(f"wrote {written} file(s), skipped {skipped}", file=sys.stderr)
 
 
+def cell_protocols(plan, cell, arm):
+    """The protocols an arm's jobs of a cell run, in command-line order."""
+    out = []
+    for _l, c, job_arm, wf, inp in jobs(plan):
+        if (c, job_arm) != (cell, arm):
+            continue
+        args = legacy_command(wf, inp, plan["program"])[1]
+        named = re.findall(r"--protocols=(\S+)", args)
+        for p in (named[-1].split(",") if named else ["anthocnet"]):
+            if p not in out:
+                out.append(p)
+    return out
+
+
 def cmd_verdicts(plan, a):
     parser = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "bench_parse.py")
@@ -476,15 +530,17 @@ def cmd_verdicts(plan, a):
         base = os.path.join(a.dir, out_name(plan, cell, plan["control"]))
         test = os.path.join(a.dir, out_name(plan, cell, arm))
         if not (os.path.exists(base) and os.path.exists(test)):
-            print(f"{arm}\t{cell}\t(missing {os.path.basename(base)} or "
+            print(f"{arm}\t{cell}\t-\t(missing {os.path.basename(base)} or "
                   f"{os.path.basename(test)})")
             continue
-        out = subprocess.run([sys.executable, parser, "--ab", "--proto",
-                              "anthocnet", base, test],
-                             capture_output=True, text=True, check=False).stdout
-        line = next((ln.strip() for ln in out.splitlines()
-                     if ln.strip().startswith("paired 95% CI")), None)
-        print(f"{arm}\t{cell}\t{line or '(no paired result; see bench_parse.py)'}")
+        for proto in cell_protocols(plan, cell, arm):
+            out = subprocess.run([sys.executable, parser, "--ab", "--proto",
+                                  proto, base, test],
+                                 capture_output=True, text=True, check=False).stdout
+            line = next((ln.strip() for ln in out.splitlines()
+                         if ln.strip().startswith("paired 95% CI")), None)
+            print(f"{arm}\t{cell}\t{proto}\t"
+                  f"{line or '(no paired result; see bench_parse.py)'}")
 
 
 def main(argv=None):
@@ -495,6 +551,8 @@ def main(argv=None):
         s.add_argument("plan")
         if name in ("dispatch", "status", "collect"):
             s.add_argument("--log", required=True)
+            s.add_argument("--arm", help="only this arm's jobs (one log per arm "
+                           "when the arms run on different images)")
         if name == "status":
             s.add_argument("--brief", action="store_true",
                            help="list only the labels not yet successful")
