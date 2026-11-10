@@ -1851,7 +1851,7 @@ charts render as error bars, and the human table prints as `# stddev` lines.
 
 **Caveat — the scenario and sweep pages are two different vintages.** Two
 protocol defaults were corrected on 2026-07-25. The **scenario** pages are
-regenerated on every merge and already include both; the **sweep** pages come
+regenerated nightly and already include both; the **sweep** pages come
 from the manual campaign workflow and do not:
 
 - [#88](https://github.com/swarm-routing/AntHocNet/issues/88) (PR #167, merged):

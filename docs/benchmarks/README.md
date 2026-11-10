@@ -56,8 +56,8 @@ running it twice produces no second diff.
 
 In CI:
 
-- **Benchmarks** (`.github/workflows/benchmarks.yml`, every merge to the default
-  branch) runs the *discrete* scenarios with `--quick` and commits the refreshed
+- **Benchmarks** (`.github/workflows/benchmarks.yml`, nightly when the default
+  branch's code changed, or on demand) runs the *discrete* scenarios with `--quick` and commits the refreshed
   index summary, scenario pages and `discrete-summary.png`.
 - **Benchmark cell** (`.github/workflows/benchmark-cell.yml`, manual, dispatched
   by `tools/bench/campaign.py`) runs the heavier campaigns and sweeps one cell

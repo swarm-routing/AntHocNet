@@ -3,7 +3,8 @@
 # Copyright (C) 2026 Daniel Henrique Joppi
 """Crawl the assembled Pages site and fail on anything a visitor would hit.
 
-Runs on web/build-pages.sh's output, the exact tree pages.yml deploys:
+Runs on web/build-pages.sh's output, the tree swarm-routing.github.io's
+pages.yml deploys under /AntHocNet/ (#850):
   * every internal link and asset (href/src) resolves to a file in the site;
   * every #anchor to a docs or game page exists in the target page;
   * every page of the game, the docs and the API carries the one top bar
