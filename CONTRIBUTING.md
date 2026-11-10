@@ -215,9 +215,10 @@ What the maintainer sets up once:
   the project (*Administration* → *Analysis Method*). Until both hold the Sonar
   step skips itself, with a notice or a warning that says which.
 
-Codecov needs no secret: the upload authenticates through GitHub OIDC only. A
-fork PR gets no OIDC token, so its upload fails, and a failed upload never
-fails the job.
+Codecov needs no secret: the upload authenticates through GitHub OIDC. A fork
+PR gets no OIDC token; the pinned Codecov action then falls back to a tokenless
+upload, which Codecov accepts from forks of public repositories. Either way, a
+failed upload never fails the job.
 
 ### Release integrity: SHA-256 checksums
 
