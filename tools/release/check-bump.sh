@@ -102,7 +102,7 @@ self_test() {
     bump "a CHANGELOG deletion" 1 'printf "## v2.6.1\n" > CHANGELOG.md'
     bump "VERSION made a symlink" 1 'rm VERSION && ln -s ci.yml VERSION'
     bump "a NUL byte in core/CMakeLists.txt" 1 'printf "#\\000\\nexecute_process(COMMAND x)\\n" >> core/CMakeLists.txt'
-    bump "a changed line starting with -" 1 'echo "--x" >> VERSION; sed -i "1d" CITATION.cff'
+    bump "a changed line starting with -" 1 'sed -i "s/^version: .*/-x/" CITATION.cff'
     bump "a NUL byte in CHANGELOG.md" 1 'printf "\\000" >> CHANGELOG.md'
     "${g[@]}" reset -q --hard "$base"
     expect "baseline" 0 "$base"
