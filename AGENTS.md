@@ -103,6 +103,10 @@ results.
   ns-3 module under ASan/LSan (suppressions: `tools/checks/lsan.supp`). It is
   `continue-on-error` while suppression calibration accumulates — read its log
   even when it shows green.
+- The ns-3 gates run as 8 parallel `gates <group>` jobs (`disaster`,
+  `arm-delivery`, `seeds`, `partition`, `fanet`, `vanet`, `satellite`, `misc`)
+  that restore the one build of the `gate-version` leg (#876): a red gate names
+  its group, so read that job's log.
 - Validate the **core** half locally first (`make test`); only the adapter/build
   half needs CI.
 - Heavier, manual workflows: `benchmark-cell` (one harness cell, any
@@ -253,15 +257,21 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
   cannot, it ships as a written infeasibility verdict (see #563).
   The `.github/ISSUE_TEMPLATE/` forms preset the type label for issues filed
   from the GitHub UI.
-- Do not open a pull request unless explicitly asked.
 
 ## Git workflow
 
 - Branch from `main` (`claude/<short-topic>`), one focused change per PR.
+- **Always open a PR to `main`** once the branch is pushed — every change is
+  tracked through one (org rule; maintainer decision 2026-11-10).
 - **PR titles are Conventional Commits** (`feat:`/`fix:`/`docs:`/…) — CI enforces
   it, and since PRs are squash-merged the title is the commit on `main` and
   drives the next version bump. See `CONTRIBUTING.md`.
 - Push with `git push -u origin <branch>`; open a PR; merge when CI is green.
+- `main` takes no direct push, bots and releases included: they open PRs from
+  `bot/<name>` branches (#879, #884; `CONTRIBUTING.md` "Branch protection").
+  When a PR falls behind `main`, update it
+  (`gh api -X PUT repos/swarm-routing/AntHocNet/pulls/<n>/update-branch`) and
+  merge PRs one at a time; never force-push a branch someone else pushed.
 
 ## Where to look
 
