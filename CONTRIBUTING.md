@@ -242,8 +242,9 @@ the owner of `ORG_BOT_TOKEN` through their role. The workflow's `GITHUB_TOKEN`
 cannot be one. The token is only ever held by the `publish` job, which runs no
 repository code: the `release` job builds, attests and verifies with read-only
 credentials and hands over the bump commit as a git bundle, and `publish`
-pushes it only if it is one commit on the dispatched one changing nothing but
-the files Commitizen writes. Without a bypass actor the push step fails before the tag or
+pushes it only if `tools/release/check-bump.sh` finds one commit on the
+dispatched one that changes nothing but Commitizen's version lines (and adds
+to `CHANGELOG.md`). Without a bypass actor the push step fails before the tag or
 the release go out, so nothing is left half-published; a dry run pushes
 nothing and needs none.
 

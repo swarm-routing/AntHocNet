@@ -229,10 +229,11 @@ jobs:
   # With neither, the push fails before the tag or the release go out, and
   # nothing is left to clean up. A dry run never reaches this job.
   #
-  # This job runs no repository code: it checks out only to have the git
-  # objects, and before pushing it checks that the bundle holds one commit on
-  # top of the dispatched one that changes only the files Commitizen writes,
-  # so a tampered build cannot use the bypass token to push anything else.
+  # This job runs no code from the build: it checks out the dispatched commit
+  # (the code main already holds) and, before pushing, checks with
+  # tools/release/check-bump.sh that the bundle holds one commit on it that
+  # changes only Commitizen's version lines and adds to CHANGELOG.md, so a
+  # tampered build cannot use the bypass token to push anything else.
   publish:
     needs: release
     if: ${{ inputs.mode != 'dryrun' }}
@@ -253,14 +254,13 @@ jobs:
           name: release-dist
           path: dist
       - name: Check the bump commit
+        # tools/release/check-bump.sh from the dispatched commit (this
+        # checkout), not from the build: one commit on GITHUB_SHA, version
+        # lines only (#789).
         run: |
           git fetch -q dist/release.bundle "refs/tags/${TAG}:refs/tags/${TAG}"
           bump=$(git rev-parse "refs/tags/${TAG}^{commit}")
-          if [ "$bump" != "$GITHUB_SHA" ]; then
-            test "$(git rev-parse "${bump}^")" = "$GITHUB_SHA" || { echo "FAIL: ${TAG} is not one commit on ${GITHUB_SHA}"; exit 1; }
-            bad=$(git diff --name-only "$GITHUB_SHA" "$bump" | grep -vxE 'VERSION|CITATION\.cff|CHANGELOG\.md|\.cz\.toml|core/CMakeLists\.txt' || true)
-            test -z "$bad" || { echo "FAIL: the bump commit changes more than the version files:"; echo "$bad"; exit 1; }
-          fi
+          tools/release/check-bump.sh "$GITHUB_SHA" "$bump"
           echo "BUMP=$bump" >> "$GITHUB_ENV"
       - name: Is a bot app configured? (#705)
         id: bot
