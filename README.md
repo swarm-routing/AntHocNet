@@ -2,6 +2,12 @@
 
 [![CI](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml/badge.svg)](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml)
 [![Core coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fswarm-routing.github.io%2FAntHocNet%2Fbadges%2Fcoverage.json)](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=swarm-routing_AntHocNet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=swarm-routing_AntHocNet&metric=bugs)](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=swarm-routing_AntHocNet&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=swarm-routing_AntHocNet&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+[![codecov](https://codecov.io/gh/swarm-routing/AntHocNet/graph/badge.svg)](https://codecov.io/gh/swarm-routing/AntHocNet)
+[![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/swarm-routing/AntHocNet?utm_source=oss&utm_medium=github&utm_campaign=swarm-routing%2FAntHocNet&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/swarm-routing/AntHocNet/badge)](https://scorecard.dev/viewer/?uri=github.com/swarm-routing/AntHocNet)
 [![Release](https://img.shields.io/github/v/release/swarm-routing/AntHocNet?sort=semver&cacheSeconds=1800)](https://github.com/swarm-routing/AntHocNet/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20981979.svg)](https://doi.org/10.5281/zenodo.20981979) 

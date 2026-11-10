@@ -1,0 +1,214 @@
+name: Quality
+
+# SonarQube Cloud analysis and Codecov coverage of AntHocNet's own C++: the
+# core, the ns-3 module and the routing-bench harness (sonar-project.properties
+# lists them; ns3/baselines/ is out). Report-only: ci.yml's `CI gate` does not
+# wait for this workflow, and neither service's status is a required check, so
+# an outage at either one never blocks a merge.
+#
+# One container job measures coverage across both builds and runs the scanner
+# there, because Sonar's C++ analysis needs the ns-3 headers the compile
+# commands name. The core is built as ci-core.yml's core-coverage job builds it
+# (ANTHOCNET_COVERAGE); the module is built by the image's ns3-build-contrib
+# with --coverage on anthocnet and routing-bench only, and their test.py suites
+# run as in ci-ns3.yml. The other gates (smokes, anchors, ASan) stay in ci.yml.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    # Prose-only PRs change no measured line.
+    paths-ignore: ['docs/**', 'paper/**', 'results/**', '**.md']
+  workflow_dispatch:
+
+# A force-push to a PR branch obsoletes the in-flight run; main-branch runs
+# are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: coverage (core + ns-3 module) and SonarQube Cloud
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read       # pull the ns3-dev image from GHCR
+      pull-requests: read  # Sonar's pull-request analysis
+    # The release ns-3 supports, debug profile (asserts on). The #843 3.48 pin
+    # does not apply: these suites are the unit tests ci-ns3.yml already runs
+    # on the `latest` leg; nothing here runs an AODV-family gate.
+    container:
+      image: ghcr.io/swarm-routing/ns3-dev:latest-debug
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0  # Sonar reads git blame for new-code detection
+          persist-credentials: false
+      - name: Install gcovr (pinned), unzip and gnupg
+        # The same hash-pinned gcovr as ci-core.yml (requirements/gcovr.txt),
+        # in a venv: the image's Python is externally managed and has no pip.
+        # The Sonar action extracts its scanner with unzip and checks the
+        # download's signature with gpg.
+        timeout-minutes: 10
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3-venv unzip gnupg
+          python3 -m venv /opt/gcovr
+          /opt/gcovr/bin/pip install -q --require-hashes -r requirements/gcovr.txt
+          echo /opt/gcovr/bin >> "$GITHUB_PATH"
+      - name: Build and test the core with gcov
+        run: |
+          cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug \
+            -DANTHOCNET_COVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build core/build-coverage -j"$(nproc)"
+          cd core/build-coverage && ctest --output-on-failure
+      - name: Build the ns-3 module with gcov and run its suites
+        # Each module is a directory of symlinks into this checkout, laid out
+        # as `make install-ns3` copies it (contrib/anthocnet carries core/),
+        # so every compiled file resolves back to its path here. The baselines
+        # are built (anthocnet's examples link them) but not instrumented.
+        run: |
+          ws=$GITHUB_WORKSPACE stage=/tmp/ahn-modules
+          for m in anthocnet oracle; do
+            src=$ws/ns3/anthocnet; [ $m = oracle ] && src=$ws/ns3/baselines/oracle
+            mkdir -p "$stage/$m/core"
+            for e in "$src"/*; do ln -s "$e" "$stage/$m/"; done
+            ln -s "$ws/core/include" "$ws/core/src" "$stage/$m/core/"
+          done
+          ns3-build-contrib --coverage --quality-modules 'anthocnet;routing-bench' \
+            --suite anthocnet --suite routing-bench \
+            "$ws/ns3/baselines/gpsr" "$ws/ns3/baselines/aomdv" "$stage/oracle" \
+            "$ws/ns3/baselines/adaptive" "$ws/ns3/routing-bench" "$stage/anthocnet"
+      - name: Merge the compilation databases
+        # Sonar's CFamily analysis reads build/compile_commands.json: the core
+        # build's entries and the ns-3 tree's, kept only for files that resolve
+        # into this checkout, rewritten to their real paths, one per file.
+        run: |
+          mkdir -p build
+          python3 - core/build-coverage/compile_commands.json \
+            /opt/ns-3/cmake-cache/compile_commands.json <<'EOF'
+          import json, os, sys
+          root = os.path.realpath(os.environ["GITHUB_WORKSPACE"]) + os.sep
+          out, seen = [], set()
+          for db in sys.argv[1:]:
+              for e in json.load(open(db)):
+                  path = os.path.join(e["directory"], e["file"])
+                  real = os.path.realpath(path)
+                  if not real.startswith(root) or real in seen:
+                      continue
+                  seen.add(real)
+                  if "command" in e:
+                      e["command"] = e["command"].replace(path, real)
+                  if "arguments" in e:
+                      e["arguments"] = [real if a == path else a for a in e["arguments"]]
+                  e["file"] = real
+                  out.append(e)
+          json.dump(out, open("build/compile_commands.json", "w"), indent=1)
+          print(f"{len(out)} entries")
+          EOF
+      - name: Coverage report (core + module)
+        # Filters match real paths (relative to the working directory), so the
+        # module's symlinked sources count. Each build is read with a --root
+        # that contains its compiled paths (gcovr 8.8 recurses without end on
+        # a file outside --root); the tracefiles are then renamed to
+        # checkout-relative real paths, so a core file compiled in both builds
+        # is merged into one entry.
+        run: |
+          filters=(--filter 'core/src/' --filter 'core/include/'
+                   --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/'
+                   --filter 'ns3/routing-bench/model/' --filter 'ns3/routing-bench/helper/')
+          gcovr --root . core/build-coverage "${filters[@]}" --json /tmp/cov-core.json
+          gcovr --root /opt/ns-3 /opt/ns-3/cmake-cache "${filters[@]}" --json /tmp/cov-ns3.json
+          python3 - /tmp/cov-core.json=. /tmp/cov-ns3.json=/opt/ns-3 <<'EOF'
+          import json, os, sys
+          for arg in sys.argv[1:]:
+              t, root = arg.split("=", 1)
+              d = json.load(open(t))
+              for f in d["files"]:
+                  f["file"] = os.path.relpath(os.path.realpath(os.path.join(root, f["file"])))
+              json.dump(d, open(t, "w"))
+          EOF
+          gcovr --root . --add-tracefile /tmp/cov-core.json --add-tracefile /tmp/cov-ns3.json \
+            "${filters[@]}" --txt --print-summary \
+            --xml coverage.xml --sonarqube coverage-sonar.xml | tee /tmp/summary.txt
+          { echo '### Coverage (core + ns-3 module)'; echo '```'; grep -E '^(lines|functions|branches):' /tmp/summary.txt; echo '```'; } \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload coverage.xml for Codecov
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage
+          path: coverage.xml
+          retention-days: 7
+      - name: Is SonarQube Cloud analysis possible?
+        # Skipped without the token (fork PRs) and while the project still has
+        # Automatic Analysis on: SonarQube Cloud refuses a CI analysis then.
+        id: sonar-guard
+        env:
+          HAS_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != true ]; then
+            echo "::notice::SONAR_TOKEN is not available (fork PR or unset): SonarQube Cloud analysis skipped"
+            echo run=false >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          python3 - <<'EOF'
+          import json, os, urllib.request
+          url = "https://sonarcloud.io/api/navigation/component?component=swarm-routing_AntHocNet"
+          run = "false"
+          try:
+              with urllib.request.urlopen(url, timeout=30) as r:
+                  auto = json.load(r).get("autoscanEnabled")
+          except Exception as e:  # network error, unknown project
+              print(f"::warning::cannot read the SonarQube Cloud project ({e}): analysis skipped")
+          else:
+              if auto:
+                  print("::warning::Automatic Analysis is on for swarm-routing_AntHocNet in SonarQube Cloud; "
+                        "switch the project to CI-based analysis (Administration > Analysis Method) "
+                        "so this job can import coverage")
+              else:
+                  run = "true"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"run={run}\n")
+          EOF
+      - name: SonarQube Cloud scan
+        if: steps.sonar-guard.outputs.run == 'true'
+        # Report-only: a scanner or SonarQube Cloud failure must not keep the
+        # coverage report from reaching Codecov (or turn this workflow red).
+        continue-on-error: true
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  codecov:
+    name: upload to Codecov
+    needs: coverage
+    if: always() && needs.coverage.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write  # Codecov authenticates the upload through GitHub OIDC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          files: coverage.xml
+          disable_search: true
+          # A fork PR gets no id-token, so its upload fails without failing the job.
+          fail_ci_if_error: false
+          use_oidc: true
