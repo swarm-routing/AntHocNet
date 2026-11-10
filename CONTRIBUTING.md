@@ -192,7 +192,13 @@ exists.
 Checks this repo will not score full marks on, by design, so nobody chases
 them: `Code-Review` and `Contributors` (a solo project, #789). `Signed-Releases`
 ramps up one release at a time over a five-release window (see *Provenance*
-below).
+below). `Pinned-Dependencies` stays at 9: every action, base image, pip and
+npm install is pinned by SHA, digest or hash (#338, #787), except the org's
+reusable workflows (`swarm-routing/.github/.github/workflows/*.yml`), which
+this repo calls at `@main`. That is the org's contract for them (each caller
+pins `@main` and gets fixes without a PR; `swarm-routing/.github` keeps every
+input backward compatible), so Scorecard flags each such `uses:` line and it
+stays.
 
 ### Automated: SonarQube Cloud and Codecov
 
