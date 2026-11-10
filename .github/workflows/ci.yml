@@ -34,7 +34,11 @@ permissions:
 jobs:
   # Docs-only PRs skip the heavy jobs (#607). Pushes to main and manual runs
   # always run everything; a PR is "docs-only" when every changed file is
-  # prose, docs, the paper or an issue template. The single `CI gate` job at
+  # prose, docs, the paper, an issue template, committed benchmark data
+  # (results/, scenarios.csv: benchmark-cell's own data PRs), the agent files
+  # (.claude/: procedures, never shipped, golden rule 10) or repo metadata no
+  # gated job reads (LICENSE-MIT, .lycheeignore, .coderabbit.yaml, CODEOWNERS,
+  # FUNDING.yml, dependabot.yml) (#864). The single `CI gate` job at
   # the end is the one check to require: it passes when every job it waits on
   # passed or was skipped, so skipped jobs never block a merge.
   changes:
@@ -57,15 +61,20 @@ jobs:
           printf 'changed:\n%s\n' "$files"
           code=false
           if [ -z "$files" ] || printf '%s\n' "$files" \
-              | grep -qvE '^(docs/|paper/|\.github/ISSUE_TEMPLATE/)|\.md$|^mkdocs\.yml$|^LICENSE$|^CITATION\.cff$'; then
+              | grep -qvE '^(docs/|paper/|results/|\.claude/|\.github/ISSUE_TEMPLATE/)|\.md$|^mkdocs\.yml$|^LICENSE(-MIT)?$|^CITATION\.cff$|^scenarios\.csv$|^\.(lycheeignore|coderabbit\.yaml)$|^\.github/(CODEOWNERS|FUNDING\.yml|dependabot\.yml)$'; then
             code=true
           fi
-          # The Pages site is built from docs, the game, the shell, the core
-          # (compiled to WASM: a protocol change must still deliver in every
-          # world) and these workflows: a docs-only PR still gets the page
-          # tests (the pages job below).
+          # The published site is built in swarm-routing/swarm-routing.github.io
+          # from this repo at a pinned commit (#850). The pages job (ci-web.yml)
+          # checks this repo's docs and API under that site's shell, with the
+          # game on this core: the docs (mkdocs, its hooks render CHANGELOG.md),
+          # the API (Doxygen over api/, core/ headers, the ns-3 entry headers,
+          # VERSION), the core compiled to WASM (a protocol change must still
+          # deliver in every world), the ns-3 replay traces the game plays
+          # (results/replay/), the scripts and actions the job runs, and the two
+          # workflows that define it. A docs-only PR still gets the page tests.
           site=false
-          if printf '%s\n' "$files" | grep -qE '^(docs/|api/|core/|tools/checks/|mkdocs\.yml$|README\.md$|CHANGELOG\.md$|\.github/workflows/|\.github/actions/)'; then
+          if printf '%s\n' "$files" | grep -qE '^(docs/|api/|core/|ns3/anthocnet/helper/|ns3/anthocnet/model/anthocnet-(routing-protocol|adapters|packet)\.h$|results/replay/|requirements/mkdocs-material\.(in|txt)$|tools/checks/(fetch-site-web\.sh|check-site\.py)$|mkdocs\.yml$|CHANGELOG\.md$|VERSION$|\.github/workflows/(ci|ci-web)\.yml$|\.github/actions/(setup-emsdk|python-tools)/)'; then
             site=true
           fi
           echo "code=$code site=$site"

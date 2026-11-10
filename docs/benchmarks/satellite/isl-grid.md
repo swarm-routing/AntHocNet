@@ -964,7 +964,7 @@ deterministic point-to-point links — those stay low-run and are read as
    are exactly this. Record the verdict + run IDs on the driving issue
    (ADR-0013).
 
-This suite has no per-merge refresh (the MANET quick taxonomy keeps that
+This suite has no nightly refresh (the MANET quick taxonomy keeps that
 job). Do not quote the CI smoke numbers — they are delivery gates at tiny
 scale, not measurements.
 

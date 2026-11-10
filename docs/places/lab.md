@@ -5,7 +5,7 @@ network type, how every number is made, and the raw data behind it
 (`results/` in the repository).
 
 <div class="ahn-cards" markdown>
-[**Results index** <span>The per-merge scenario table and links to every results page.</span>](../benchmarks.md)
+[**Results index** <span>The nightly scenario table and links to every results page.</span>](../benchmarks.md)
 [**Ad hoc (MANET)** <span>The mobility × channel grid, with the oracle control.</span>](../benchmarks/grid.md)
 [**Static Wi-Fi mesh** <span>Routers on poles; where OLSR's overhead wins.</span>](../benchmarks/static-mesh.md)
 [**Vehicles (VANET)** <span>Cars on a street grid, buildings at every corner.</span>](../benchmarks/scenarios/vanet.md)

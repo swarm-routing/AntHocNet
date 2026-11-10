@@ -32,7 +32,7 @@ on:
 permissions: read-all
 
 # One analysis at a time per ref. A superseded run is *not* cancelled
-# (cancel-in-progress: false, as in pages.yml): the badge and the public API
+# (cancel-in-progress: false): the badge and the public API
 # record come from whichever run completes, and a cancelled publish is worse
 # than a duplicated one. There is no pull_request trigger here, so the
 # cancel-on-force-push case that ci.yml/lint.yml optimise for cannot arise.

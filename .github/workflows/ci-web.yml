@@ -71,7 +71,7 @@ jobs:
         uses: ./.github/actions/python-tools
         with:
           packages: mkdocs-material
-      - name: Assemble the whole site, as pages.yml does (#626)
+      - name: Assemble the whole site, as swarm-routing.github.io's pages.yml does (#626, #850)
         run: |
           sudo apt-get install -y --no-install-recommends doxygen >/dev/null
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"

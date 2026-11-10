@@ -57,7 +57,7 @@ are f = 1.0 (50 nodes, 1500×500 m), 1.4 (98, 2100×700), 1.8 (162, 2700×900) a
 
 ## How it is produced
 
-Sweeps are **too heavy for the per-merge `benchmarks` workflow**, which runs
+Sweeps are **too heavy for the nightly `benchmarks` workflow**, which runs
 only the discrete scenarios. They came from the manual **Scenario matrix +
 charts** workflow (`scenario-matrix.yml`, removed in v2.5.0, #746), which
 uploaded the classified CSV; the table below is filled in by pointing

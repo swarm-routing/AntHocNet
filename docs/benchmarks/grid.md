@@ -440,7 +440,7 @@ collection of unrelated models:
 ## How it is produced
 
 Six manual `paper-benchmark.yml` dispatches, one per cell — **not** the
-per-merge `benchmarks` workflow and not `scenario-matrix.yml`. Each cell runs
+nightly `benchmarks` workflow and not `scenario-matrix.yml`. Each cell runs
 the paper base scenario (50 nodes, 1500 × 300 m, 900 s, 20 CBR flows) at
 **20 seeds**, with all four protocols on identical realisations inside that
 cell. Phase 3 repeated the same six dispatches with the oracle control added as

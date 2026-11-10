@@ -94,8 +94,9 @@ jobs:
           name: core-coverage-report
           path: coverage/
           retention-days: 14
-      # The README badge's number is published by pages.yml (#333), which
-      # recomputes it with this job's build, filters and gcovr pin.
+      # The README badge's number is published by swarm-routing.github.io's
+      # pages.yml (#333, #850), which recomputes it with this job's build,
+      # filters and gcovr pin, on the core pinned in its protocols.lock.
   codec-fuzz:
     name: codec fuzz (libFuzzer, 60s)
     runs-on: ubuntu-24.04

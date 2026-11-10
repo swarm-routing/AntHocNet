@@ -155,7 +155,7 @@ Details in [ns3/README.md](ns3/README.md).
 The NS-3 module also ships `anthocnet-compare`, which benchmarks AntHocNet
 against AODV / OLSR / DSDV on an identical scenario (delivery ratio, delay,
 throughput via FlowMonitor) — see [ns3/README.md](ns3/README.md#compare-against-aodv--olsr--dsdv).
-Current results, regenerated on every merge to the default branch, are in
+Current results, regenerated nightly from the default branch, are in
 [docs/benchmarks.md](docs/benchmarks.md); the commands to reproduce a run, and
 the validation anchors to check first, are in
 [docs/benchmarks/methodology.md](docs/benchmarks/methodology.md).

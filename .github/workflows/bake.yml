@@ -7,11 +7,16 @@ name: Bake
 # The recipe's URL points at this commit's drop-in module tarball, served on
 # localhost, so a change to the tarball or the recipe is tested before it
 # ships. Bake builds ns-3 from scratch with its default configuration (all
-# modules, examples and tests), so this is weekly and on changes to the
-# packaging, not a check on every PR.
+# modules, examples and tests), so this runs on changes to the packaging and on
+# demand, not on every PR.
+#
+# No schedule (#864): automatic runs follow the release ns-3 supports (org
+# CONTRIBUTING invariant 7), and bake cannot build it. Its newest release
+# component is ns-3.44, at bake's master head, which is the BAKE_SHA pinned
+# below (checked 2026-11-10). A weekly ns-3.42 build was an automatic run on an
+# old release. Bring the schedule back on the supported release once bake
+# ships its components.
 on:
-  schedule:
-    - cron: '41 5 * * 1'
   workflow_dispatch:
   pull_request:
     paths: ['packaging/bake/**', 'tools/release/module-tarball.sh', '.github/workflows/bake.yml']
