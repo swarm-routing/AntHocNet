@@ -194,6 +194,32 @@ them: `Code-Review` and `Contributors` (a solo project, #789). `Signed-Releases`
 ramps up one release at a time over a five-release window (see *Provenance*
 below).
 
+### Automated: SonarQube Cloud and Codecov
+
+[`.github/workflows/quality.yml`](.github/workflows/quality.yml) runs on every
+push to `main` and every PR that changes more than prose. It measures coverage
+of AntHocNet's own C++ (the core, the ns-3 module and the routing-bench harness;
+not `ns3/baselines/`) under the core's unit tests and the module's `test.py`
+suites, uploads it to [Codecov](https://codecov.io/gh/swarm-routing/AntHocNet)
+([`.codecov.yml`](.codecov.yml): project status within 1% of the base, 80% on
+the patch), and runs a [SonarQube Cloud](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
+analysis with that coverage ([`sonar-project.properties`](sonar-project.properties)).
+
+Like Scorecard it is a **report, not a gate**: ci.yml's `CI gate` does not wait
+for it, and the Codecov and SonarQube statuses stay informational unless the
+maintainer adds them to branch protection.
+
+What the maintainer sets up once:
+
+- the `SONAR_TOKEN` secret (an org secret), and **Automatic Analysis off** for
+  the project (*Administration* → *Analysis Method*). Until both hold the Sonar
+  step skips itself, with a notice or a warning that says which.
+
+Codecov needs no secret: the upload authenticates through GitHub OIDC. A fork
+PR gets no OIDC token; the pinned Codecov action then falls back to a tokenless
+upload, which Codecov accepts from forks of public repositories. Either way, a
+failed upload never fails the job.
+
 ### Release integrity: SHA-256 checksums
 
 Every release publishes `anthocnet-<version>.zip.sha256` alongside the bundle,
