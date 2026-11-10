@@ -122,7 +122,7 @@ python3 ns3/tools/update-benchmarks.py scenarios.csv docs/benchmarks.md
 
 ### Reproducing via CI (manual dispatch)
 
-No local simulator is needed — the campaign workflow runs inside the
+No local simulator is needed — the campaign workflow runs inside
 published GHCR images (Actions → workflow → *Run workflow*):
 
 - **Benchmark cell** ([`benchmark-cell.yml`](../../.github/workflows/benchmark-cell.yml))
@@ -140,13 +140,29 @@ published GHCR images (Actions → workflow → *Run workflow*):
   committed CSVs those produced stay readable by `sweep_summary.py` and
   [`pool_runs.py`](../../tools/bench/pool_runs.py).
 
-It takes a `version` input naming the ns-3 image tag: `3.42` is the campaign
-pin, `3.42-opt` the optimized profile (see build profiles below), and a
-release-suffixed tag (e.g. `3.42-v1.1.0`) is **immutable** — pin one for a
-citable run and record the run ID with the numbers. The nightly refresh of
-[`../benchmarks.md`](../benchmarks.md) needs no dispatch (`benchmarks.yml`,
-when the default branch's code changed), and its publish step is gated on the
-validation anchors below. Before trusting or comparing dispatched numbers, run
+**Published numbers pin an ns3-dev digest and a campaign-image digest, never
+a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
+image once: `campaign-image.yml` builds the AntHocNet modules of one commit
+`FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized` (3.48
+while the ns-3.49 AODV livelock #843 is open), tests them and pushes
+`anthocnet-ns3-campaign:<commit7>-<base7>-optimized`; `campaign.py dispatch
+--build-image` runs it and passes the digest to every cell as
+`benchmark-cell.yml`'s `image` input. Each cell then runs in that image by
+digest, builds nothing (`./ns3 run --no-build`), and its `##PROV##` line names
+the image digest, the base digest and the modules' commits. Without `image`, a
+cell takes the older path, kept to replay published cells: a `version` input
+naming this repo's historical `ghcr.io/swarm-routing/ns3:<version>` image
+(`3.42-opt` was the campaign pin) and an in-job module build. The published
+cells name `ghcr.io/danieljoppi/ns3:<version>`, the same recipe built before
+the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
+The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48): compare a
+post-move number with a published one only after the control campaign
+[#867](https://github.com/swarm-routing/AntHocNet/issues/867). The nightly refresh of
+[`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
+branch's code changed) is **paused until #867** has recorded that control: its
+schedule is off, so the table keeps its last pre-move numbers, and a manual
+dispatch still runs it. Its publish step is gated on the validation anchors
+below. Before trusting or comparing dispatched numbers, run
 the validation loop in
 [`configuration.md` §5](../configuration.md#5-how-to-calibrate-a-parameter)
 (`scenario_check.py` preflight/results, `bench_parse.py --ab`).
@@ -221,7 +237,7 @@ whole job of these three arms.
 **Provenance: stock ns-3, deliberately untouched.** `src/aodv`, `src/olsr` and
 `src/dsdv` come from the prebuilt simulator image; nothing in this repository
 vendors, patches or wraps them. That is a reproducibility choice: nobody has to
-trust *our* port of a baseline, and anyone with the same image tag gets the same
+trust *our* port of a baseline, and anyone with the same image digest gets the same
 baseline code.
 
 **Quality risk.** Two kinds, and the second is the larger one.
@@ -1197,7 +1213,8 @@ the boundary is worth stating plainly rather than blurring.
 
 **From #365 onward: the run says so itself.** The campaign workflows emit a
 [`##PROV##`](metrics.md#measuring-commit-prov-365) line carrying
-`commit=`, `run_id=`, `attempt=`, the image tag and the build profile —
+`commit=`, `run_id=`, `attempt=`, the image and the build profile (from
+#866, a campaign image's digest, its ns3-dev base digest and its modules) —
 `benchmark-cell.yml` stamps it into the results file (as the retired
 `paper-benchmark.yml`, `satellite-benchmark.yml` and `scenario-matrix.yml`
 did before v2.5.0). The mapping therefore
@@ -1239,23 +1256,21 @@ biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routi
 
 | profile | `./ns3 configure` | what it compiles | published as |
 |---|---|---|---|
-| `default` | no `-d` flag (ns-3's own fallback) | `NS3_ASSERT=ON`, `NS3_LOG=ON`, `-O2 -g` | `ns3:<ver>`, `anthocnet-ns3:<ver>`, `:latest` |
-| `release` | `-d release` | `NS3_ASSERT=OFF`, `NS3_LOG=OFF`, `-O3`, **no** `-march=native` | `ns3:<ver>-opt` (ns-3.42 only) |
+| `default` | no `-d` flag (ns-3's own fallback) | `NS3_ASSERT=ON`, `NS3_LOG=ON`, `-O2 -g` | `ns3-dev:<ver>` (`-d default`), `ns3-dev:<ver>-debug` (`-d debug`); historically `ns3:<ver>`, `anthocnet-ns3:<ver>` |
+| `release` | `-d release` | `NS3_ASSERT=OFF`, `NS3_LOG=OFF`, `-O3`, **no** `-march=native` | `ns3-dev:<ver>-optimized`, `anthocnet-ns3:<release>-optimized`, every campaign image; historically `ns3:<ver>-opt` (ns-3.42 only) |
 
-**The `-opt` image is additional, never a replacement.** CI (`ci.yml`, and
-the nightly `benchmarks.yml` that regenerates the published tables) keeps pulling
-the default-profile images on purpose: those assertions have caught real bugs,
-and a green run with assertions compiled out is a weaker statement. Only the two
-*manual* campaign workflow, `benchmark-cell.yml`, accepts an `-opt` tag, via
-its `version` input (e.g. `3.42-opt`).
-
-Only ns-3.42 gets an `-opt` tag: it is the version campaigns pin, and each extra
-profile is a second full ns-3 compile in `images.yml`.
+**The optimized image is for numbers, never for CI.** CI (`ci.yml`) keeps
+running in `default`/`debug` images on purpose: those assertions have caught
+real bugs, and a green run with assertions compiled out is a weaker statement.
+Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866; its schedule is paused until #867) run in a
+campaign image, which is built `FROM` an `ns3-dev:<ver>-optimized` digest;
+protocol metrics are bit-identical across the two profiles (#124), only the
+cost differs.
 
 ### Why the campaign workflows resolve the profile explicitly
 
-Both campaign workflows install the AntHocNet module into the image's `/opt/ns-3`
-and **re-run `./ns3 configure`** in the job. That reconfigure is where an
+The legacy cell path installs the AntHocNet module into the image's `/opt/ns-3`
+and **re-runs `./ns3 configure`** in the job. That reconfigure is where an
 optimized image could quietly stop being optimized. ns-3's `ns3` script only
 leaves `-DCMAKE_BUILD_TYPE` off the CMake command line — and so inherits the
 cached profile — while it finds the tree already configured; on any path where it
@@ -1264,22 +1279,32 @@ does not (`project_configured()` false), it falls back to `build_profile =
 six-hour campaign on, and the failure is silent: the run simply costs 2-10x more
 and nothing in the CSV says why.
 
-So the workflows resolve the profile in a dedicated step and pass it explicitly:
+So `benchmark-cell.yml` resolves the profile in a dedicated step, in this
+order, and logs where it came from (`ns-3 build profile: release (from …)`):
 
-1. **`NS3_PROFILE` from the image environment** is the source of truth.
-   `docker/Dockerfile.ns3` bakes it in (`default` or `release`), so it travels
-   with the image through renames, the Docker Hub mirror and release-pinned tags.
-2. **Tag suffix as fallback** — `*-opt` → `release` — for images published
+1. **`/opt/ns-3/.swarm-configure.env`** of an ns3-dev image (and so of every
+   campaign image built on one): the configure flags the image was built
+   with, `NS3_PROFILE_FLAGS` (`-d release` for `BUILD_PROFILE=optimized`). The
+   profile is the `-d` value; the flags are passed on verbatim.
+2. **`NS3_PROFILE` from the image environment**, which the retired
+   `docker/Dockerfile.ns3` baked into this repo's historical images
+   (`default` or `release`).
+3. **Tag suffix as fallback** — `*-opt` → `release` — for images published
    before #123, which carry no such variable.
-3. The resolved profile becomes `-d <profile>`, or **the empty string for
-   `default`**, so the default path runs the byte-identical configure line it ran
-   before #123.
+
+On the legacy path the resolved profile becomes `-d <profile>`, or **the empty
+string for `default`**, so the default path runs the byte-identical configure
+line it ran before #123. A campaign image is not reconfigured at all: the step
+checks that `./ns3 show profile` of the built tree matches the resolved profile
+and warns if a campaign image is not `release`. `##PROV##` records `profile=`
+(ns-3's name, `release`) and, for an ns3-dev base, `build_profile=` (its name,
+`optimized`).
 
 Each job then logs `./ns3 show profile`, so a run's cost (the `##PERF##`
 wall-clock line from [#131](https://github.com/swarm-routing/AntHocNet/issues/131))
 is always attributable to a profile after the fact.
 
-### Caveats when reading `-opt` numbers
+### Caveats when reading optimized (`-opt`) numbers
 
 - **Protocol metrics should be unchanged.** The adapter's four `NS_ASSERT`s are
   null-pointer checks with no side effects, and `anthocnet-compare`'s `--diag` /
@@ -1291,14 +1316,16 @@ is always attributable to a profile after the fact.
   `NS3_ASSERT=OFF`, `NS3_LOG=OFF`, `NS3_WARNINGS_AS_ERRORS=OFF`) with exactly one
   difference: `optimized` also sets `NS3_NATIVE_OPTIMIZATIONS=ON`, adding
   `-march=native -mtune=native`. That is unsafe here — the stock-module libraries
-  inside `ns3:<ver>-opt` would be tuned for whichever runner *built* the image,
+  inside an optimized image would be tuned for whichever runner *built* it,
   while campaigns run on a microarchitecturally mixed hosted fleet, so a job could
   die mid-campaign with `Illegal instruction`. Native tuning also buys very little
   for a pointer-chasing discrete-event simulator. ns-3 exposes no
   `--disable-native-optimizations` flag (it is not in the `ns3` script's
   override list, and unknown `configure` arguments are rejected), so `-d release`
-  is *the* way to express "optimized without `-march=native`". The `-opt` tag name
-  is kept: it means "the campaign image", not the literal ns-3 profile name.
+  is *the* way to express "optimized without `-march=native`". ns3-dev's
+  `optimized` tag (like the historical `-opt`) names "the campaign image", not
+  the literal ns-3 profile: it is built with `-d release`
+  (swarm-routing/ns3-containers rule 11).
 - **Never compare wall-clock across profiles as a protocol result.** Cost
   comparisons are only meaningful profile-to-profile on the same scenario; the
   sanctioned A/B speed measurement is its own ticket.

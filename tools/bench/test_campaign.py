@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import tempfile
+import zipfile
 
 
 def _load(name):
@@ -72,13 +73,31 @@ PLAN = {
 class FakeGh:
     """Stands in for campaign.gh: answers the few endpoints the tool calls."""
 
-    def __init__(self, active=0):
+    def __init__(self, active=0, image_conclusion="success"):
         self.active = active
         self.dispatched = []
+        self.image_dispatched = []
         self.next_id = 100
+        self.image_conclusion = image_conclusion
 
     def __call__(self, *args, stdin=None, binary=False):
         url = args[0] if args[0] != "-X" else args[2]
+        if "/commits/" in url:
+            return "a" * 40 + "\n"
+        if url.endswith("campaign-image.yml/dispatches"):
+            self.image_dispatched.append(stdin)
+            self.next_id += 1
+            return ""
+        if url.endswith(f"/runs/{self.next_id}") and self.image_dispatched:
+            return json.dumps({"status": "completed",
+                               "conclusion": self.image_conclusion})
+        if url.endswith("/artifacts"):
+            return json.dumps({"artifacts": [{"id": 7, "name": "campaign-image"}]})
+        if url.endswith("/artifacts/7/zip"):
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, "w") as z:
+                z.writestr("image.txt", IMAGE + "\n")
+            return buf.getvalue()
         if "status=" in url:
             # All active runs count once, as benchmark-cell's queued runs.
             hit = "benchmark-cell" in url and "status=queued" in url
@@ -93,13 +112,22 @@ class FakeGh:
         raise AssertionError(f"unexpected gh call {args}")
 
 
-def dispatch(log, fake, cap=None):
+IMAGE = "ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:" + "b" * 64
+
+
+def dispatch(log, fake, cap=None, image=None, no_image=True, build_image=False):
     cp.gh = fake
     cp.time.sleep = lambda _s: None
-    a = argparse.Namespace(log=log, cap=cap, wait=False)
+    a = argparse.Namespace(log=log, cap=cap, wait=False, image=image,
+                           no_image=no_image, build_image=build_image,
+                           ns3_version="3.48")
+    plan = dict(PLAN, program=cp.PROGRAM)
     with contextlib.redirect_stderr(io.StringIO()) as err, \
             contextlib.redirect_stdout(io.StringIO()):
-        cp.cmd_dispatch(PLAN, a)
+        try:
+            cp.cmd_dispatch(plan, a)
+        except SystemExit as e:
+            print(e, file=sys.stderr)
     return err.getvalue()
 
 
@@ -148,9 +176,63 @@ def _dispatch_cap():
         with open(log) as f:
             text = f.read()
         labels = [ln.split("\t")[0] for ln in text.splitlines()]
-        expect(labels == ["control/grid", "control/sat", "control/vanet-s1",
+        expect(labels == ["#image", "control/grid", "control/sat", "control/vanet-s1",
                           "control/vanet-s5"], "dispatch-resume", labels)
-        expect(len(set(text.split())) == 8, "dispatch-run-ids", text)
+        expect(len(set(text.split())) == 10, "dispatch-run-ids", text)
+
+
+@case("dispatch: a campaign image is pinned in the log and reaches every cell")
+def _dispatch_image():
+    with tempfile.TemporaryDirectory() as d:
+        log = os.path.join(d, "runs.tsv")
+        fake = FakeGh()
+        dispatch(log, fake, cap=1, image=IMAGE, no_image=False)
+        body = json.loads(fake.dispatched[0])
+        expect(body["inputs"].get("image") == IMAGE, "image-input", body)
+        expect(cp.read_log(log).get("#image") == IMAGE, "image-logged", cp.read_log(log))
+        # Resumed with no flag: the logged image, never a second binary.
+        fake.active = 0
+        dispatch(log, fake, cap=1, no_image=False)
+        expect(json.loads(fake.dispatched[1])["inputs"]["image"] == IMAGE,
+               "image-resumed", fake.dispatched[1])
+        other = IMAGE[:-1] + "c"
+        err = dispatch(log, fake, cap=1, image=other, no_image=False)
+        expect("refusing" in err and len(fake.dispatched) == 2, "image-mismatch", err)
+        err = dispatch(log, fake, cap=1, no_image=True)
+        expect("refusing" in err, "image-vs-legacy", err)
+
+
+@case("dispatch: no image choice, or a tag instead of a digest, is refused")
+def _dispatch_image_required():
+    with tempfile.TemporaryDirectory() as d:
+        fake = FakeGh()
+        err = dispatch(os.path.join(d, "a.tsv"), fake, no_image=False)
+        expect("--build-image" in err and not fake.dispatched, "image-required", err)
+        err = dispatch(os.path.join(d, "b.tsv"), fake, no_image=False,
+                       image="ghcr.io/swarm-routing/anthocnet-ns3-campaign:latest")
+        expect("sha256" in err and not fake.dispatched, "image-digest-only", err)
+
+
+@case("dispatch --build-image: builds the plan's commit, then uses its digest")
+def _dispatch_build_image():
+    with tempfile.TemporaryDirectory() as d:
+        log = os.path.join(d, "runs.tsv")
+        fake = FakeGh()
+        dispatch(log, fake, cap=1, no_image=False, build_image=True)
+        req = json.loads(fake.image_dispatched[0])
+        expect(req == {"ref": "main", "inputs": {"ns3-version": "3.48",
+                                                 "commit": "a" * 40}},
+               "build-request", req)
+        expect(json.loads(fake.dispatched[0])["inputs"]["image"] == IMAGE,
+               "build-digest", fake.dispatched)
+        # A second call reuses the logged digest; nothing is rebuilt.
+        fake.active = 0
+        dispatch(log, fake, cap=1, no_image=False, build_image=True)
+        expect(len(fake.image_dispatched) == 1, "build-once", fake.image_dispatched)
+    with tempfile.TemporaryDirectory() as d:
+        fake = FakeGh(image_conclusion="failure")
+        err = dispatch(os.path.join(d, "r.tsv"), fake, no_image=False, build_image=True)
+        expect("failure" in err and not fake.dispatched, "build-failed", err)
 
 
 @case("dispatch: the plan's ref and the job's inputs reach the API")

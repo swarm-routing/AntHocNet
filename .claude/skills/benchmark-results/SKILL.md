@@ -95,7 +95,7 @@ the PR that pre-registers the campaign.
 ```bash
 C=tools/bench/campaign.py; P=tools/bench/campaigns/v2.3.0.yaml
 python3 $C plan $P                            # review the job list; sends nothing
-python3 $C dispatch $P --log runs.tsv         # up to the cap (12), then exits
+python3 $C dispatch $P --log runs.tsv --build-image   # campaign image once (#866), then cells up to the cap (12)
 python3 $C status $P --log runs.tsv --brief   # only labels not yet green; counts
 python3 $C collect $P --log runs.tsv --out results/cells [--from DIR]
 python3 $C verdicts $P --dir results/cells    # bench_parse --ab per arm x cell
