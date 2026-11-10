@@ -3,7 +3,7 @@
 //
 // Nothing is built from scratch here: we start from the GHCR image that already
 // carries a configured, built ns-3 tree at /opt/ns-3 (see docker/README.md and
-// docker/Dockerfile.ns3). post-create.sh then reinstalls the AntHocNet module
+// the retired docker/Dockerfile.ns3, #866). post-create.sh then reinstalls the AntHocNet module
 // *from this checkout* over the image's baked-in copy and rebuilds it, so the
 // tree matches the branch you opened rather than the commit the image was built
 // from. That delta is the only compile that happens (~seconds-to-minutes, not

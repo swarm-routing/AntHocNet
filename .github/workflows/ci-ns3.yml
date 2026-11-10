@@ -11,8 +11,10 @@ name: CI / ns-3
 # gates, the satellite smoke and the release-tarball install run on the
 # `gate-version` leg. Older ns-3 releases run only on demand: ci.yml's manual
 # workflow_dispatch passes `versions` (e.g. ["3.36","3.42"]); their images are
-# frozen history (3.36: this repo's own ns3:3.36). Published numbers do not run
-# here: the campaign workflows keep this repo's own pinned images.
+# frozen history (3.36, which ns3-dev does not build: this repo's own
+# ghcr.io/swarm-routing/ns3:3.36, frozen since images.yml was retired, #866).
+# Published numbers do not run here: they pin an ns3-dev digest and a campaign
+# image digest (campaign-image.yml), never a rolling tag.
 #
 # TEMPORARY EXCEPTION (#843, swarm-routing/ns3-containers#35, option A): on
 # ns-3.49 stock AODV and the vendored AOMDV livelock, and the gates, packages
@@ -51,9 +53,9 @@ jobs:
     # plain configure below matches their flags, so no stock object is
     # recompiled (verified on 3.48 and 3.49: 0 stock objects,
     # swarm-routing/ns3-containers#9). 3.36, on demand only, keeps this repo's
-    # own image (images.yml, Ubuntu 22.04 / gcc-11).
+    # own frozen image (the retired images.yml, Ubuntu 22.04 / gcc-11).
     container:
-      image: ${{ matrix.version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
+      image: ${{ matrix.version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -86,6 +88,7 @@ jobs:
           restore-keys: ccache-ns3-3.36-gcc11-
       - name: Install ccache
         if: matrix.version == '3.36'
+        timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
           apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
@@ -472,7 +475,7 @@ jobs:
     # on main (#130).
     continue-on-error: true
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -493,6 +496,7 @@ jobs:
           key: ccache-ns3-asan-${{ inputs.gate-version }}-gcc13-${{ github.sha }}
           restore-keys: ccache-ns3-asan-${{ inputs.gate-version }}-gcc13-
       - name: Install ccache
+        timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
           apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
@@ -574,7 +578,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 1.2 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -616,7 +620,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 1.2 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -673,7 +677,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 3.3 min
     container:
-      image: ${{ matrix.version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
+      image: ${{ matrix.version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
