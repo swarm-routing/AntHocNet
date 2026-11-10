@@ -116,58 +116,26 @@ jobs:
           json.dump(out, open("build/compile_commands.json", "w"), indent=1)
           print(f"{len(out)} entries")
           EOF
-      - name: DEBUG gcovr recursion traceback (temporary)
-        continue-on-error: true
-        run: |
-          python3 - --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
-            --filter 'ns3/anthocnet/model/' --filter 'core/src/' -j 1 --json /tmp/dbg.json > /tmp/dbg.log 2>&1 <<'EOF' || true
-          import sys, traceback, functools, inspect, platform
-          import gcovr.formats.gcov.read as r
-          import gcovr.filter as fl
-          import gcovr.utils as ut
-          open("/tmp/tb.txt", "a").write(f"python {platform.python_version()} limit {sys.getrecursionlimit()}\n")
-          seen = []
-          def wrap(f):
-              @functools.wraps(f)
-              def w(*a, **k):
-                  try:
-                      return f(*a, **k)
-                  except RecursionError:
-                      if not seen:
-                          seen.append(1)
-                          tb = traceback.format_exc().splitlines()
-                          open("/tmp/tb.txt", "a").write("\n".join(tb[:60] + ["..."] + tb[-60:]) + "\n")
-                      raise
-              return w
-          for mod in (r, fl, ut):
-              for n, f in list(vars(mod).items()):
-                  if inspect.isfunction(f) and (mod is r or f.__module__ == mod.__name__):
-                      setattr(mod, n, wrap(f))
-          for n in ("run_with_args", "identify_and_cache_capabilities"):
-              setattr(r.GcovProgram, n, wrap(getattr(r.GcovProgram, n)))
-          from gcovr.__main__ import main
-          sys.exit(main(sys.argv[1:]))
-          EOF
-          cat /tmp/tb.txt; head -c 3000 /tmp/dbg.log
       - name: Coverage report (core + module)
-        # Filters match real paths, so the module's symlinked sources count;
-        # the tracefiles are then renamed to checkout-relative paths, so a
-        # core file compiled in both builds is merged into one entry.
+        # Filters match real paths (relative to the working directory), so the
+        # module's symlinked sources count. Each build is read with a --root
+        # that contains its compiled paths (gcovr 8.8 recurses without end on
+        # a file outside --root); the tracefiles are then renamed to
+        # checkout-relative real paths, so a core file compiled in both builds
+        # is merged into one entry.
         run: |
           filters=(--filter 'core/src/' --filter 'core/include/'
                    --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/'
                    --filter 'ns3/routing-bench/model/' --filter 'ns3/routing-bench/helper/')
           gcovr --root . core/build-coverage "${filters[@]}" --json /tmp/cov-core.json
-          # The test-suite objects measure nothing reported, and gcovr 8.8
-          # fails on anthocnet-test's ("maximum recursion depth exceeded").
-          gcovr --root . /opt/ns-3/cmake-cache --exclude-directories '.*-test\.dir' \
-            "${filters[@]}" --json /tmp/cov-ns3.json
-          python3 - /tmp/cov-core.json /tmp/cov-ns3.json <<'EOF'
+          gcovr --root /opt/ns-3 /opt/ns-3/cmake-cache "${filters[@]}" --json /tmp/cov-ns3.json
+          python3 - /tmp/cov-core.json=. /tmp/cov-ns3.json=/opt/ns-3 <<'EOF'
           import json, os, sys
-          for t in sys.argv[1:]:
+          for arg in sys.argv[1:]:
+              t, root = arg.split("=", 1)
               d = json.load(open(t))
               for f in d["files"]:
-                  f["file"] = os.path.relpath(os.path.realpath(f["file"]))
+                  f["file"] = os.path.relpath(os.path.realpath(os.path.join(root, f["file"])))
               json.dump(d, open(t, "w"))
           EOF
           gcovr --root . --add-tracefile /tmp/cov-core.json --add-tracefile /tmp/cov-ns3.json \
