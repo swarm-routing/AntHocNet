@@ -1,0 +1,145 @@
+name: Campaign image
+
+# One image per campaign (#866, swarm-routing/.github#107 option B): the
+# AntHocNet modules at one commit, built once on one pinned ns3-dev digest,
+# so every cell of the campaign pulls the same binary by digest and none of
+# them builds anything.
+#
+#   ghcr.io/swarm-routing/anthocnet-ns3-campaign:<commit7>-<base7>-optimized
+#
+# The build is swarm-routing/.github's reusable-ns3-image.yml: it resolves
+# ns3-dev:<ns3-version>-optimized to its digest once, builds FROM that digest
+# with ns3-build-contrib, runs the modules' test.py suites on the built image,
+# then pushes, signs (cosign keyless), attests provenance and a CycloneDX SBOM
+# and verifies the signature. The image records its base digest, this repo's
+# commit and the module list in its labels (io.github.swarm-routing.*), which
+# benchmark-cell.yml copies into every cell's ##PROV## line.
+#
+# Tags never move: a (commit, base digest) pair that already has an image is
+# reused (skip-existing), so dispatching this twice with the same inputs pushes
+# nothing the second time. The digest is the job output `image` and the
+# one-line artifact `campaign-image` (image.txt), which `tools/bench/campaign.py
+# dispatch --build-image` reads before it dispatches the cells.
+#
+# Version rule: AODV-family arms (aodv, aomdv, the harness's stock arms)
+# livelock on ns-3.49 (#843, swarm-routing/ns3-containers#35), so the default
+# is 3.48 until a fixed release reaches `latest`; a campaign without them may
+# pass `latest`. Either way the digest, not the tag, is what the cells run.
+on:
+  workflow_dispatch:
+    inputs:
+      ns3-version:
+        description: "ns3-dev version: 3.48 while #843 is open (AODV-family arms), `latest` otherwise"
+        type: string
+        default: '3.48'
+      commit:
+        description: "40-char commit to build; empty = the head of the dispatched ref"
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      ns3-version:
+        type: string
+        default: '3.48'
+      commit:
+        type: string
+        default: ''
+    outputs:
+      image:
+        description: "ghcr.io/<owner>/anthocnet-ns3-campaign@sha256:..."
+        value: ${{ jobs.record.outputs.image }}
+      commit:
+        description: "The 40-char commit built into the image"
+        value: ${{ jobs.resolve.outputs.commit }}
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    outputs:
+      commit: ${{ steps.c.outputs.commit }}
+      commit7: ${{ steps.c.outputs.commit7 }}
+    steps:
+      - id: c
+        env:
+          COMMIT_IN: ${{ inputs.commit }}
+          VERSION: ${{ inputs.ns3-version }}
+        run: |
+          set -euo pipefail
+          c=${COMMIT_IN:-$GITHUB_SHA}
+          [[ "$c" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::commit must be 40 hex characters (got '$c')"; exit 1; }
+          [[ "$VERSION" =~ ^(latest|[0-9]+\.[0-9]+(\.[0-9]+)?)$ ]] || { echo "::error::ns3-version must be latest or X.Y[.Z] (got '$VERSION')"; exit 1; }
+          echo "commit=$c" >> "$GITHUB_OUTPUT"
+          echo "commit7=${c:0:7}" >> "$GITHUB_OUTPUT"
+          echo "building ${GITHUB_REPOSITORY}@$c on ns3-dev:${VERSION}-optimized"
+
+  image:
+    needs: resolve
+    # Two dispatches of one (commit, version) must not both build and push:
+    # the second would move the tag. Serialised, the second finds the tag and
+    # reuses it.
+    concurrency:
+      group: campaign-image-${{ needs.resolve.outputs.commit }}-${{ inputs.ns3-version }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write       # push the image
+      id-token: write       # cosign keyless signature
+      attestations: write   # build provenance and the SBOM
+    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@main
+    with:
+      # The reusable workflow checks out the dispatched commit; the stage moves
+      # to the requested one first (a public repo: an anonymous fetch), then
+      # lays the modules out as `make install-ns3` does, with every arm
+      # (BASELINES=1). The image's revision label is the commit checked out
+      # here, so it is always the commit the modules were built from.
+      stage: >-
+        git fetch -q --depth 1 origin ${{ needs.resolve.outputs.commit }} &&
+        git checkout -q FETCH_HEAD &&
+        mkdir -p .stage/contrib && touch .stage/CMakeLists.txt &&
+        make -s install-ns3 NS3DIR="$PWD/.stage" BASELINES=1
+      modules: >-
+        routing-bench=.stage/contrib/routing-bench oracle=.stage/contrib/oracle
+        aomdv=.stage/contrib/aomdv gpsr=.stage/contrib/gpsr
+        adaptive=.stage/contrib/adaptive anthocnet=.stage/contrib/anthocnet
+      # The suites ci-ns3.yml runs (gpsr has none).
+      test-suites: anthocnet oracle adaptive routing-bench
+      ns3-version: ${{ inputs.ns3-version }}
+      profiles: '["optimized"]'
+      image: anthocnet-ns3-campaign
+      tag: ${{ needs.resolve.outputs.commit7 }}-{base7}
+      push: true
+      skip-existing: true
+
+  record:
+    needs: [resolve, image]
+    runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.r.outputs.image }}
+    steps:
+      - id: r
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}
+          COMMIT: ${{ needs.resolve.outputs.commit }}
+          VERSION: ${{ inputs.ns3-version }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE" =~ ^ghcr\.io/${OWNER,,}/anthocnet-ns3-campaign@sha256:[0-9a-f]{64}$ ]] \
+            || { echo "::error::no campaign image digest from the build (got '$IMAGE')"; exit 1; }
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "$IMAGE" > image.txt
+          {
+            echo "### Campaign image"
+            echo "\`$IMAGE\` (${GITHUB_REPOSITORY}@${COMMIT}, ns3-dev ${VERSION}-optimized)"
+            echo
+            echo "Dispatch cells with it: \`tools/bench/campaign.py dispatch PLAN --log RUNS.tsv --image $IMAGE\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "campaign image: $IMAGE"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: campaign-image
+          path: image.txt
+          retention-days: 7
