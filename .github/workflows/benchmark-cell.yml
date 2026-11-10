@@ -225,6 +225,10 @@ jobs:
           client-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
           owner: swarm-routing
+          # only this repository, only what the PR needs (the App's own grant caps it)
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Repository GitHub App token
         id: ahn
         if: ${{ steps.org.outputs.token == '' && vars.AHN_BOT_APP_ID != '' }}

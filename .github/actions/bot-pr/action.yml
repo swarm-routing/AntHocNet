@@ -82,6 +82,10 @@ runs:
         client-id: ${{ inputs.org-app-id }}
         private-key: ${{ inputs.org-app-key }}
         owner: swarm-routing
+        # only this repository, only what the PR needs (the App's own grant caps it)
+        repositories: ${{ github.event.repository.name }}
+        permission-contents: write
+        permission-pull-requests: write
     - name: Repository GitHub App token
       id: app
       if: ${{ steps.org.outputs.token == '' && inputs.app-id != '' && inputs.app-key != '' }}
