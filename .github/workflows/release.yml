@@ -34,27 +34,14 @@ jobs:
     outputs:
       tag: ${{ steps.compute.outputs.tag }}
     steps:
-      # main is protected by a ruleset (PR required, `CI gate` required, #789),
-      # and the bump commit is pushed to it directly: the tag must point at a
-      # commit on main, and the bundle is built from that commit before
-      # anything is pushed. So the push needs an actor on the ruleset's bypass
-      # list. The workflow's GITHUB_TOKEN cannot be one; the push uses, first
-      # that exists, the bot app's token (#705: add the app as a bypass actor)
-      # or ORG_BOT_TOKEN (its owner's role on the bypass list). With neither,
-      # the push step fails before the tag or the release go out, and nothing
-      # is left to clean up. A dry run pushes nothing and needs neither.
-      - name: GitHub App token (bypass actor, #789)
-        id: app
-        if: ${{ inputs.mode != 'dryrun' && vars.AHN_BOT_APP_ID != '' }}
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ vars.AHN_BOT_APP_ID }}
-          private-key: ${{ secrets.AHN_BOT_APP_KEY }}
+      # No credential is kept in the git config (persist-credentials: false):
+      # the build steps below run repository code (make test, the bundle
+      # scripts), and the push token can bypass main's ruleset (#789). The
+      # pushes at the end authenticate per command instead.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history + tags for cz to compute the bump
-          # The push credentials (see above); a dry run keeps the workflow token.
-          token: ${{ steps.app.outputs.token || (inputs.mode != 'dryrun' && secrets.ORG_BOT_TOKEN) || github.token }}
+          persist-credentials: false
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -208,14 +195,45 @@ jobs:
           spdx=$(jq -r '.spdxVersion | sub("^SPDX-"; "")' "dist/anthocnet-${VER}.spdx.json")   # e.g. 2.3
           gh attestation verify "dist/anthocnet-${VER}.zip" --repo "$GITHUB_REPOSITORY" --predicate-type "https://spdx.dev/Document/v${spdx}"
 
+      # main is protected by a ruleset (PR required, `CI gate` required, #789),
+      # and the bump commit is pushed to it directly: the tag must point at a
+      # commit on main, and the bundle is built from that commit before
+      # anything is pushed. So the push needs an actor on the ruleset's bypass
+      # list. The workflow's GITHUB_TOKEN cannot be one; the push uses, first
+      # that exists, the bot app's token (#705: add the app as a bypass actor)
+      # or ORG_BOT_TOKEN (its owner's role on the bypass list). With neither,
+      # the push fails before the tag or the release go out, and nothing is
+      # left to clean up. A dry run pushes nothing and needs neither. The
+      # token is minted here, after every step that runs repository code.
+      - name: Is a bot app configured? (#705)
+        id: bot
+        if: ${{ inputs.mode != 'dryrun' }}
+        env:
+          APP_ID: ${{ vars.AHN_BOT_APP_ID }}
+          APP_KEY: ${{ secrets.AHN_BOT_APP_KEY }}
+        run: |
+          if [ -n "$APP_ID" ] && [ -n "$APP_KEY" ]; then echo "app=true" >> "$GITHUB_OUTPUT"; fi
+      - name: GitHub App token (bypass actor, #789)
+        id: app
+        if: ${{ steps.bot.outputs.app == 'true' }}
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AHN_BOT_APP_ID }}
+          private-key: ${{ secrets.AHN_BOT_APP_KEY }}
       - name: Push commit + tag
         if: ${{ inputs.mode != 'dryrun' }}
         # After the bundle is built, attested and verified (#614): if any of
         # that fails, nothing has been pushed, so there is no tagged-but-
-        # unreleased version to clean up by hand.
+        # unreleased version to clean up by hand. Hooks are off: nothing the
+        # build left in .git/hooks runs with the token.
+        env:
+          PUSH_TOKEN: ${{ steps.app.outputs.token || secrets.ORG_BOT_TOKEN || github.token }}
         run: |
-          git push origin HEAD:main
-          git push origin "${TAG}"
+          auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          push() { git -c core.hooksPath=/dev/null -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push "$@"; }
+          push origin HEAD:main
+          push origin "${TAG}"
 
       - name: Update the generated ns3-module branch (#606)
         if: ${{ inputs.mode != 'dryrun' }}
@@ -223,7 +241,10 @@ jobs:
         # on every release, for users who prefer git over a download:
         #   git clone -b ns3-module --depth 1 <repo> m && cp -r m/* ns-3/contrib/
         # Built in a scratch index so the workspace and its history are not
-        # touched; pushed with the checkout's own credentials.
+        # touched; pushed with the workflow token (ns3-module is not under the
+        # ruleset).
+        env:
+          PUSH_TOKEN: ${{ github.token }}
         run: |
           tmp=$(mktemp -d)
           tar -xzf "dist/anthocnet-ns3-modules-${VER}.tar.gz" -C "$tmp"
@@ -232,7 +253,10 @@ jobs:
           git --work-tree="$tmp" add -A
           tree=$(git write-tree)
           commit=$(git commit-tree "$tree" -m "AntHocNet ${TAG}: drop-in ns-3 modules (generated by release.yml; do not edit)")
-          git push --force origin "${commit}:refs/heads/ns3-module"
+          auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git -c core.hooksPath=/dev/null -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" \
+            push --force origin "${commit}:refs/heads/ns3-module"
 
       - name: Publish release
         if: ${{ inputs.mode != 'dryrun' }}

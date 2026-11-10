@@ -88,7 +88,9 @@ runs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
         echo "::add-mask::$auth"
-        authgit() { git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" "$@"; }
+        # Hooks off: nothing the job's earlier steps left in .git/hooks runs
+        # with the token.
+        authgit() { git -c core.hooksPath=/dev/null -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" "$@"; }
         # The files this run produced, against the commit it checked out.
         start=$(git rev-parse HEAD)
         # PATHS is a list of git pathspecs: git matches the globs, so a
