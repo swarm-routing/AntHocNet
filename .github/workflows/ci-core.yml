@@ -14,18 +14,24 @@ jobs:
   core:
     name: core library + unit tests
     runs-on: ubuntu-24.04
+    # Job and apt-step timeouts (#840): an apt-get hang held these jobs for
+    # 35-45 min (2026-10-31); the jobs take 1-4 min when green.
+    timeout-minutes: 15  # longest green run: 2.2 min
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
+        timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
         run: sudo apt-get update && sudo apt-get install -y cmake g++
       - name: Build and test core
         run: make test
   core-sanitizers:
     name: core under ASan + UBSan
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # longest green run: 3.6 min (#840)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
+        timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
         run: sudo apt-get update && sudo apt-get install -y cmake g++
       - name: Build core with sanitizers and run tests
         run: |
@@ -36,6 +42,7 @@ jobs:
   core-coverage:
     name: core test coverage (gcov, report-only)
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # longest green run: 2.5 min (#840)
     # Which parts of core/ do the 18 ctest targets actually execute? The repo's
     # expensive failures (D2 evaporation, the #19 detector-D storm, the 8-bit
     # sequence wrap) were all behaviour in paths nothing exercised, so make that
@@ -60,6 +67,7 @@ jobs:
         with:
           packages: gcovr
       - name: Install toolchain
+        timeout-minutes: 10  # apt; longest green run: 1.9 min (#840)
         # gcovr is pinned so the reported baseline stays comparable across
         # merges — its per-version gcov parsing shifts the numbers. The pin
         # lives in requirements/ (hash-pinned, #787) so Dependabot can see it;

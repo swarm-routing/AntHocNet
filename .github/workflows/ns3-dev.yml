@@ -46,6 +46,7 @@ jobs:
           key: ccache-ns3-dev-${{ github.run_id }}
           restore-keys: ccache-ns3-dev-
       - name: Install toolchain
+        timeout-minutes: 10  # apt; longest green run: 36 s (#840)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends ccache ninja-build
