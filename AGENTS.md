@@ -97,7 +97,13 @@ results.
   campaign-image digest, never a rolling tag (#866): `campaign-image.yml` builds
   one image per (commit, ns3-dev digest), every `benchmark-cell` pulls it by
   digest and records both in `##PROV##`; compare post-move numbers with
-  published ones only after the control campaign #867. Iterate on failures from the job logs —
+  published ones only by the cross-image rule the control campaign #867
+  produced (accepted 2026-11-11, `docs/benchmarks/methodology.md`
+  "Cross-image rule"): same ns-3 release, different build: compare directly;
+  a different ns-3 release (3.42 → 3.48 moves grid, static mesh, FANET,
+  VANET, disaster and the ISL rows): re-run the published side on the new
+  release, paired, and compare the two; whether that move is upstream or a
+  regression is #923. Iterate on failures from the job logs —
   cross-version API drift is the usual cause (e.g. ns-3.36's non-`const`
   `Histogram` accessors, `RouteInput` by-value vs const-ref, scoped TestSuite
   enums). The `AHN_*`/`ANTHOCNET_NS3_*` macros in the NS-3 headers + CMake
@@ -282,9 +288,12 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 - Push with `git push -u origin <branch>`; open a PR; merge when CI is green.
 - `main` takes no direct push, bots and releases included: they open PRs from
   `bot/<name>` branches (#879, #884; `CONTRIBUTING.md` "Branch protection").
-  When a PR falls behind `main`, update it
-  (`gh api -X PUT repos/swarm-routing/AntHocNet/pulls/<n>/update-branch`) and
-  merge PRs one at a time; never force-push a branch someone else pushed.
+  `main` merges through a merge queue: enable auto-merge (squash) and the
+  queue tests each PR on the latest `main` and merges it; a direct merge
+  (`PUT pulls/<n>/merge`) is refused with HTTP 405, and a PR is not updated
+  by hand. Only the ruleset's checks (`CI gate` and the CodeQL scan) gate a merge (report-only checks
+  such as `codecov/patch` or `dco` never hold a PR). Never force-push a
+  branch someone else pushed.
 
 ## Where to look
 
