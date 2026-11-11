@@ -104,7 +104,9 @@ No workflow on `main` pushes to `ghcr.io/danieljoppi/`, and none pulls from it
 for new work. The one reader is the control campaign: a plan's
 `legacy_images` names a `danieljoppi` digest so a published cell can be re-run
 in the image its `##PROV##` names (`tools/bench/campaigns/v2.7.x-image-control*.yaml`,
-`benchmark-cell.yml` `legacy_image`). Only the account owner can change those
+`benchmark-cell.yml` `legacy_image`). For the v2.4.0 cells, the control-plan
+digests were pushed after those runs, so they are not proven to be the image
+bytes the original runs used. Only the account owner can change those
 packages (keep them public, delete nothing); the checklist is on #110.
 
 Numbers measured on the new images (gcc-13, ns-3.48) are compared with
