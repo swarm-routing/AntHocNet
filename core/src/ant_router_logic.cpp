@@ -52,6 +52,7 @@ void AntRouterLogic::learnNeighbor(NodeAddress neighbor) {
     txFailures_.erase(neighbor);         // a reception clears the tx-failure streak (#19)
     if (isNew) quiet_.clear();           // #571: a new neighbour may offer a new route
     if (isNew && observer_) observer_->onRouteChanged(neighbor, neighbor, true);
+    reportStateSize();
 }
 
 bool AntRouterLogic::neighborKinematics(NodeAddress neighbor, Kinematics& out) const {
@@ -77,9 +78,11 @@ void AntRouterLogic::loseNeighbor(NodeAddress neighbor) {
     neighborKinematics_.erase(neighbor);  // ADR-0025
     if (had) quiet_.clear();              // #571: a lost link wakes every route
     if (had && observer_) observer_->onRouteChanged(neighbor, neighbor, false);
+    reportStateSize();
 }
 
 std::vector<RouteDecision> AntRouterLogic::onMaintenanceTick() {
+    const StateReport report(*this);  // evaporation and evictions resize the table
     std::vector<RouteDecision> out;
     const double now = clock_.now();
 
@@ -167,7 +170,22 @@ RouteDecision AntRouterLogic::sendAnt(RouteAction action, NodeAddress nextHop, A
     if (observer_) {
         observer_->onAntSent(ant.type, ant.direction, action == RouteAction::Broadcast);
     }
+    reportControlSent(ant, action == RouteAction::Broadcast);
     return {action, nextHop, true, std::move(ant)};
+}
+
+void AntRouterLogic::reportControlSent(const AntMessage& ant, bool broadcast) const {
+    if (!observer_) return;
+    observer_->onControlSent(controlKind(ant.type, ant.direction), broadcast,
+                             static_cast<std::uint32_t>(codec::serializedSize(ant)));
+}
+
+void AntRouterLogic::reportStateSize() {
+    if (!observer_) return;
+    const auto entries = static_cast<std::uint32_t>(table_.numEntries());
+    if (entries == stateEntries_) return;  // report changes only
+    stateEntries_ = entries;
+    observer_->onStateSize(entries, entries * kStateEntryBytes);
 }
 
 namespace {
@@ -255,6 +273,7 @@ std::vector<RouteDecision> AntRouterLogic::reportNeighborLoss(NodeAddress n) {
 
 std::vector<RouteDecision> AntRouterLogic::reportTxFailure(NodeAddress next, NodeAddress dataDest) {
     if (next == kInvalidAddress) return {};
+    const StateReport report(*this);
 
     // Debounce (issue #19): a single retry-limit drop in a dense/contended
     // network is usually a collision, not a topology change. Evicting the
@@ -441,6 +460,7 @@ std::vector<AntMessage> AntRouterLogic::createProactiveAnts() {
         // through a RouteDecision here), so count them at the source.
         antsSent_[AntType::Proactive] += 1;
         if (observer_) observer_->onAntSent(AntType::Proactive, AntDirection::Up, false);
+        reportControlSent(ants.back(), false);
         ++it;
     }
     return ants;
@@ -582,7 +602,10 @@ AntMessage AntRouterLogic::createHelloAnt(std::size_t maxAdverts) {
 
     // Diffusion adverts are gated (ADR-0007); a hello with no adverts still
     // serves neighbour discovery / liveness.
-    if (!config_.enableProactive || !config_.enableDiffusion) return m;
+    if (!config_.enableProactive || !config_.enableDiffusion) {
+        reportControlSent(m, true);
+        return m;
+    }
 
     // Advertise this node's *best real pheromone* per destination so the
     // receiver can bootstrap a goodness-ordered virtual table (D3), skipping
@@ -607,6 +630,7 @@ AntMessage AntRouterLogic::createHelloAnt(std::size_t maxAdverts) {
                      });
     if (candidates.size() > maxAdverts) candidates.resize(maxAdverts);
     m.helloDests = std::move(candidates);
+    reportControlSent(m, true);
     return m;
 }
 
@@ -775,6 +799,7 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
 
 std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(AntMessage&& incoming,
                                                         NodeAddress prevHop) {
+    const StateReport report(*this);  // deposits, LinkFail pruning, new neighbours
     // Duplicate / loop detection. With multipath on (#96, [1] §3.1) a reactive
     // forward ant uses the per-generation acceptance filter: a later
     // same-generation ant is forwarded when both its hops and its travel time
@@ -809,7 +834,11 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(AntMessage&& incoming,
 
     // Count the non-duplicate reception (observability, item 15).
     antsReceived_[incoming.type] += 1;
-    if (observer_) observer_->onAntReceived(incoming.type, incoming.direction);
+    if (observer_) {
+        observer_->onAntReceived(incoming.type, incoming.direction);
+        observer_->onControlReceived(controlKind(incoming.type, incoming.direction),
+                                     static_cast<std::uint32_t>(codec::serializedSize(incoming)));
+    }
 
     // Link-layer neighbour detection from the previous hop.
     if (prevHop != kInvalidAddress) {
@@ -952,6 +981,7 @@ void AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop,
         // per destination per reactiveRetryInterval so a stream of packets to an
         // unreachable destination doesn't flood ants ([1] §4.2).
         out.push_back({RouteAction::Queue, dest, false, {}});
+        if (observer_) observer_->onDataDecision(dest, RouteAction::Queue);
         if (!config_.enableReactive) return;  // ablation gate: hold, never discover
         const double now = clock_.now();
         auto it = lastReactive_.find(dest);
@@ -973,6 +1003,7 @@ void AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop,
         }
         return;
     }
+    if (observer_) observer_->onDataDecision(dest, RouteAction::Unicast);
     out.push_back({RouteAction::Unicast, next, false, {}});
 }
 
