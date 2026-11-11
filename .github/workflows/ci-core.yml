@@ -26,7 +26,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
         timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
-        run: sudo apt-get update && sudo apt-get install -y cmake g++
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          sudo apt-get install -y cmake g++
       - name: Build and test core
         run: make test
   core-sanitizers:
@@ -42,7 +48,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
         timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
-        run: sudo apt-get update && sudo apt-get install -y cmake g++
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          sudo apt-get install -y cmake g++
       - name: Build core with sanitizers and run tests
         run: |
           cmake -S core -B core/build-san -DCMAKE_BUILD_TYPE=Debug \
@@ -88,7 +100,12 @@ jobs:
         # lives in requirements/ (hash-pinned, #787) so Dependabot can see it;
         # bump it there, noting the step change in the PR.
         run: |
-          sudo apt-get update && sudo apt-get install -y cmake g++
+          for i in 1 2 3; do
+            sudo apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          sudo apt-get install -y cmake g++
       - name: Build core with gcov instrumentation
         run: |
           cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug \
