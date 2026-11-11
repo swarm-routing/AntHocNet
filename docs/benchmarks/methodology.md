@@ -163,10 +163,12 @@ The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48), and the
 control campaign [#867](https://github.com/swarm-routing/AntHocNet/issues/867)
 measured what that does ([results](v2.7.x-image-control.md)).
 
-**Cross-image rule.** **Proposed, awaiting the maintainer (#867, #915).**
-Until the maintainer accepts it, compare no post-move number with a published
-one. The proposal follows the control and its follow-up
+**Cross-image rule.** **Accepted by the maintainer 2026-11-11 (#867, #915).**
+The rule follows the control and its follow-up
 ([#915](v2.7.x-image-control.md#follow-up-the-ns-3-release-not-the-image-build-915)).
+Whether the 3.42 → 3.48 differences are an expected upstream change or an
+ns-3 regression is under investigation in
+[#923](https://github.com/swarm-routing/AntHocNet/issues/923).
 The follow-up showed that the differences come from the ns-3 release
 (3.42 → 3.48), not from the image build. So the rule is about releases:
 
@@ -208,7 +210,8 @@ The follow-up showed that the differences come from the ns-3 release
 
 The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
-branch's code changed) is **paused until the maintainer decides #867's rule**: its
+branch's code changed) was **paused until the maintainer decided #867's rule**
+(accepted 2026-11-11) and stays paused until a change turns it back on: its
 schedule is off, so the table keeps its last pre-move numbers, and a manual
 dispatch still runs it. Its publish step is gated on the validation anchors
 below. Before trusting or comparing dispatched numbers, run
