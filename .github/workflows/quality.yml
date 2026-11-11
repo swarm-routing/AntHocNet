@@ -66,7 +66,11 @@ jobs:
         timeout-minutes: 10
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          apt-get update -qq
+          for i in 1 2 3; do
+            apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
           apt-get install -y -qq --no-install-recommends python3-venv unzip gnupg
           python3 -m venv /opt/gcovr
           /opt/gcovr/bin/pip install -q --require-hashes -r requirements/gcovr.txt
