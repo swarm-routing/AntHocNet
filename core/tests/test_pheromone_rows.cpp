@@ -34,7 +34,14 @@ private:
     std::uint64_t s_ = 918;
 };
 
-bool sameBits(double a, double b) { return std::memcmp(&a, &b, sizeof a) == 0; }
+// Bit-exact equality, stated as such: the rows must reproduce the maps' values
+// to the last bit, so the doubles are compared as their bit patterns.
+bool sameBits(double a, double b) {
+    std::uint64_t ba, bb;
+    std::memcpy(&ba, &a, sizeof ba);
+    std::memcpy(&bb, &b, sizeof bb);
+    return ba == bb;
+}
 
 const NodeAddress kDests[] = {1, 2, 3, 4, 5, 6, 7, 8, 100, 101, 102, 103};
 const NodeAddress kNbrs[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -203,7 +210,7 @@ int main() {
         CHECK(t.isEmptyRegular() && t.isEmptyVirtual());
         CHECK_EQ(t.regularDestinations().count(50), static_cast<std::size_t>(1));
         CHECK_EQ(t.regularDestinations().count(60), static_cast<std::size_t>(1));
-        CHECK_EQ(t.bestRegular(50), 0.0);
+        CHECK(sameBits(t.bestRegular(50), 0.0));
         // A removal empties a row too.
         t.setPheromoneRegular(70, 2, 0.5);
         CHECK_EQ(t.numRows(), static_cast<std::size_t>(1));
@@ -218,16 +225,16 @@ int main() {
         t.setPheromoneRegular(9, 1, 0.5);
         t.setPheromoneRegular(9, 2, 0.8);
         t.removeNeighbor(2);
-        CHECK_EQ(t.bestRegular(9), 0.5);
+        CHECK(sameBits(t.bestRegular(9), 0.5));
         CHECK_EQ(t.numEntriesRegular(), static_cast<std::size_t>(2));
         engine.evaporateAll(t, cfg.evaporationInterval);
         CHECK_NEAR(t.getPheromoneRegular(9, 1), 0.5 * cfg.alpha, 1e-12);
-        CHECK_EQ(t.getPheromoneRegular(9, 2), 0.8);  // not a neighbour: not aged
+        CHECK(sameBits(t.getPheromoneRegular(9, 2), 0.8));  // not a neighbour: not aged
         auto dist = t.nextHopDistribution(9, false, cfg.betaData);
         CHECK_EQ(dist.size(), static_cast<std::size_t>(1));
         CHECK_EQ(dist[0].first, 1);
         t.addNeighbor(2);
-        CHECK_EQ(t.bestRegular(9), 0.8);
+        CHECK(sameBits(t.bestRegular(9), 0.8));
     }
 
     // 4. forEachBestRegular == bestRegular per regular destination, in order;
