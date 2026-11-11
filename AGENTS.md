@@ -244,7 +244,7 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 - Namespace `anthocnet::core` for shared code.
 <!-- org-sync:begin conventions -->
 - Issues follow the org taxonomy ([CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues), from
-  [AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
+  [AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
   (`bug`/`enhancement`/`chore`/`documentation`/`verification`, plus `epic` for
   umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/`benchmark`/
   `observability`/`packaging`/`learn-site`/`literature`), one `model:*`
