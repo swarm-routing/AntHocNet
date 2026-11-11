@@ -228,6 +228,19 @@ be up to date with `main`, merges are squash-only, and force-pushes and
 deletion are blocked. That is what Scorecard's `Branch-Protection` reads; its
 higher tiers need required reviews, which a solo project cannot meet.
 
+PRs merge through a **merge queue** (#616): a green PR is added to the queue
+(the merge button, or `gh pr merge --squash` / auto-merge), GitHub builds a
+merge group on `main`'s tip, and the PR is squash-merged only once that group
+passes `CI gate` and its CodeQL scan. The queue's settings (squash, every PR of
+a group green, groups of up to 5, 120 minutes for the checks) come from
+`merge_queue = true` in [`.github/org-sync.toml`](.github/org-sync.toml),
+applied by `swarm-routing/.github`'s `tools/repo-settings`. `ci.yml` and
+`codeql.yml` run `on: merge_group` for it: a workflow that produces a required
+check and lacks that trigger leaves the queue waiting until it times out.
+`ci.yml`'s `changes` job filters a merge group like a PR, diffing against
+`github.event.merge_group.base_sha` (a merge group has no
+`pull_request.base.sha`), so a docs-only group still skips the heavy jobs.
+
 Nothing pushes to `main` directly, the workflows included. The ones that
 write generated files open a PR from a fixed bot branch through
 [`.github/actions/bot-pr`](.github/actions/bot-pr/action.yml), rebuilt on

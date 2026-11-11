@@ -22,6 +22,10 @@ name: CodeQL
 on:
   pull_request:
     branches: [main]
+  # The main ruleset's code_scanning rule also judges merge groups: with the
+  # merge queue on, a group needs its own CodeQL results (GitHub's
+  # code-scanning docs ask for this trigger when a merge queue is configured).
+  merge_group:
   push:
     branches: [main]
     paths:
