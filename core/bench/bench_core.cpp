@@ -30,7 +30,9 @@
 #include "anthocnet/core/ant_history.h"
 #include "anthocnet/core/ant_message.h"
 #include "anthocnet/core/ant_message_codec.h"
+#include "anthocnet/core/ant_router_logic.h"
 #include "anthocnet/core/config.h"
+#include "anthocnet/core/pheromone_engine.h"
 #include "anthocnet/core/pheromone_table.h"
 #include "anthocnet/core/ports.h"
 
@@ -54,6 +56,11 @@ public:
 
 private:
     std::uint64_t s_ = 0x9E3779B97F4A7C15ULL;
+};
+
+class FixedClock : public IClock {
+public:
+    Time now() const override { return 1.0; }
 };
 
 // Keeps the optimiser from deleting the work being timed.
@@ -210,6 +217,39 @@ int main(int argc, char** argv) {
                 ++seq;
             }
             g_sink = g_sink + fresh;
+        }));
+    }
+
+    // 5. Whole-table evaporation (#918): one maintenance-tick aging of a
+    //    table with 64 destinations x 16 neighbours, regular and virtual. The
+    //    elapsed time is tiny so the table neither empties nor changes shape
+    //    over the run: every operation ages the same 2048 entries.
+    {
+        XorShiftRng rng;
+        PheromoneTable t = makeTable(16, 64, rng);
+        const PheromoneEngine engine(cfg);
+        results.push_back(measure("evaporate_all", [&](std::uint64_t n) {
+            for (std::uint64_t i = 0; i < n; ++i) engine.evaporateAll(t, 1e-12);
+            g_sink = g_sink + t.numEntries();
+        }));
+    }
+
+    // 6. Hello build (#918): the diffusion adverts a node puts in every hello,
+    //    from the same 64-destination, 16-neighbour table (best pheromone per
+    //    destination, ranked, capped at maxHelloAdverts).
+    {
+        XorShiftRng rng;
+        FixedClock clock;
+        Config hc = cfg;
+        hc.enableProactive = true;
+        hc.enableDiffusion = true;
+        AntRouterLogic logic(1, hc, clock, rng);
+        logic.table() = makeTable(16, 64, rng);
+        results.push_back(measure("create_hello", [&](std::uint64_t n) {
+            std::uint64_t adverts = 0;
+            for (std::uint64_t i = 0; i < n; ++i)
+                adverts += logic.createHelloAnt().helloDests.size();
+            g_sink = g_sink + adverts;
         }));
     }
 

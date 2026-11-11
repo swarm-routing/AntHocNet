@@ -49,39 +49,51 @@ bool RequestQueue::Enqueue(QueueEntry& entry) {
     return true;
 }
 
+// #918: both below work in place, keeping the order of what stays and of what
+// leaves, and touch nothing when nothing leaves -- the usual case, since every
+// backward ant at every node flushes its origin. They used to rebuild the
+// whole queue by copy on every call.
 void RequestQueue::DequeueAll(Ipv4Address dst, std::vector<QueueEntry>& out) {
     Purge();
-    std::vector<QueueEntry> kept;
-    kept.reserve(m_queue.size());
-    for (QueueEntry& e : m_queue) {
-        if (Dst(e) == dst) {
-            out.push_back(e);
+    auto first = std::find_if(m_queue.begin(), m_queue.end(),
+                              [&dst](const QueueEntry& e) { return Dst(e) == dst; });
+    if (first == m_queue.end()) return;
+    auto kept = first;
+    for (auto it = first; it != m_queue.end(); ++it) {
+        if (Dst(*it) == dst) {
+            out.push_back(std::move(*it));
         } else {
-            kept.push_back(e);
+            *kept++ = std::move(*it);
         }
     }
-    m_queue.swap(kept);
+    m_queue.erase(kept, m_queue.end());
 }
 
 void RequestQueue::Purge() {
     const Time now = Simulator::Now();
-    std::vector<QueueEntry> kept;
-    kept.reserve(m_queue.size());
-    for (QueueEntry& e : m_queue) {
-        if (e.expire > now) {
-            kept.push_back(e);
+    auto first = std::find_if(m_queue.begin(), m_queue.end(),
+                              [&now](const QueueEntry& e) { return !(e.expire > now); });
+    if (first == m_queue.end()) return;
+    std::vector<QueueEntry> expired;
+    auto kept = first;
+    for (auto it = first; it != m_queue.end(); ++it) {
+        if (it->expire > now) {
+            *kept++ = std::move(*it);
         } else {
-            // Aged out at QueueTimeout (#21): attribute the lost hold to its
-            // reason before firing the error callback.
-            const uint8_t r = e.holdReason < kHoldReasons ? e.holdReason : HOLD_SETUP;
-            m_stats.droppedCount[r] += 1;
-            m_stats.droppedSumS[r] += (now - e.enqueueFirst).GetSeconds();
-            if (!e.ecb.IsNull()) {
-                e.ecb(e.packet, e.header, Socket::ERROR_NOROUTETOHOST);
-            }
+            expired.push_back(std::move(*it));
         }
     }
-    m_queue.swap(kept);
+    m_queue.erase(kept, m_queue.end());
+    // Aged out at QueueTimeout (#21): attribute the lost hold to its reason
+    // before firing the error callback, oldest first as before.
+    for (QueueEntry& e : expired) {
+        const uint8_t r = e.holdReason < kHoldReasons ? e.holdReason : HOLD_SETUP;
+        m_stats.droppedCount[r] += 1;
+        m_stats.droppedSumS[r] += (now - e.enqueueFirst).GetSeconds();
+        if (!e.ecb.IsNull()) {
+            e.ecb(e.packet, e.header, Socket::ERROR_NOROUTETOHOST);
+        }
+    }
 }
 
 std::vector<Ipv4Address> RequestQueue::PendingDestinations() {

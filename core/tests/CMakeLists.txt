@@ -3,6 +3,7 @@ set(ANTHOCNET_TESTS
   test_config_defaults
   test_pheromone_table
   test_pheromone_engine
+  test_pheromone_rows
   test_ant_history
   test_codec
   test_router_logic

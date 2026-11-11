@@ -58,51 +58,57 @@ struct Writer {
 #endif
 };
 
+// The decoder checks bounds once per section (#918), against the fixed header
+// and then each length-prefixed section, and reads the fields through an
+// unchecked cursor: one memcpy per field on a little-endian host, instead of a
+// bounds check and a byte loop per field. Same layout, same accepted frames.
 struct Reader {
     const std::uint8_t* p;
     std::size_t remaining;
-    bool ok = true;
 
-    bool need(std::size_t n) {
-        if (remaining < n) {
-            ok = false;
-            return false;
-        }
-        return true;
+    void skip(std::size_t n) {
+        p += n;
+        remaining -= n;
     }
-    std::uint8_t u8() {
-        if (!need(1)) return 0;
-        std::uint8_t v = *p++;
-        --remaining;
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    template <typename T>
+    T raw() {
+        T v;
+        std::memcpy(&v, p, sizeof(T));
+        skip(sizeof(T));
         return v;
     }
+    std::uint16_t u16() { return raw<std::uint16_t>(); }
+    std::uint32_t u32() { return raw<std::uint32_t>(); }
+    double dbl() { return raw<double>(); }
+#else
     std::uint16_t u16() {
-        if (!need(2)) return 0;
         std::uint16_t v =
             static_cast<std::uint16_t>(p[0]) | (static_cast<std::uint16_t>(p[1]) << 8);
-        p += 2;
-        remaining -= 2;
+        skip(2);
         return v;
     }
     std::uint32_t u32() {
-        if (!need(4)) return 0;
         std::uint32_t v = 0;
         for (int i = 0; i < 4; ++i) v |= static_cast<std::uint32_t>(p[i]) << (8 * i);
-        p += 4;
-        remaining -= 4;
+        skip(4);
         return v;
     }
-    std::int32_t i32() { return static_cast<std::int32_t>(u32()); }
     double dbl() {
-        if (!need(8)) return 0.0;
         std::uint64_t bits = 0;
         for (int i = 0; i < 8; ++i) bits |= static_cast<std::uint64_t>(p[i]) << (8 * i);
-        p += 8;
-        remaining -= 8;
+        skip(8);
         double v;
         std::memcpy(&v, &bits, sizeof(v));
         return v;
     }
+#endif
+    std::uint8_t u8() {
+        const std::uint8_t v = *p;
+        skip(1);
+        return v;
+    }
+    std::int32_t i32() { return static_cast<std::int32_t>(u32()); }
     float f32() {
         const std::uint32_t bits = u32();
         float v;
@@ -188,16 +194,15 @@ std::vector<std::uint8_t> serialize(const AntMessage& msg) {
 }
 
 bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
-    Reader r;
-    r.p = bytes;
-    r.remaining = len;
+    Reader r{bytes, len};
 
     // Trust boundary: reject foreign/stale frames and invalid enums in O(1)
     // before touching any length-prefixed section.
-    if (r.u8() != kWireVersion) return false;
+    if (r.remaining < kVersionSize || r.u8() != kWireVersion) return false;
+    if (r.remaining < kFixedSize + 2) return false;  // fixed fields + visited count
     const std::uint8_t typeByte = r.u8();
     const std::uint8_t dirByte = r.u8();
-    if (!r.ok || !validType(typeByte) || !validDirection(dirByte)) return false;
+    if (!validType(typeByte) || !validDirection(dirByte)) return false;
     msg.type = static_cast<AntType>(typeByte);
     msg.direction = static_cast<AntDirection>(dirByte);
     msg.src = r.i32();
@@ -207,9 +212,11 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     msg.lifeAnt = r.dbl();
     msg.broadcastBudget = static_cast<int>(r.i32());
 
+    // Each section: its count, then one check that the entries and the next
+    // section's count are all there.
     const std::uint16_t nVisited = r.u16();
-    if (!r.ok || nVisited > kMaxVisitedOnWire ||
-        r.remaining < static_cast<std::size_t>(nVisited) * kHopSize)
+    if (nVisited > kMaxVisitedOnWire ||
+        r.remaining < static_cast<std::size_t>(nVisited) * kHopSize + 2)
         return false;
     msg.visited.resize(nVisited);
     for (auto& h : msg.visited) {
@@ -218,8 +225,8 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     }
 
     const std::uint16_t nHistory = r.u16();
-    if (!r.ok || nHistory > kMaxHistoryOnWire ||
-        r.remaining < static_cast<std::size_t>(nHistory) * kHopSize)
+    if (nHistory > kMaxHistoryOnWire ||
+        r.remaining < static_cast<std::size_t>(nHistory) * kHopSize + 2)
         return false;
     msg.history.resize(nHistory);
     for (auto& h : msg.history) {
@@ -228,8 +235,7 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     }
 
     const std::uint16_t nHello = r.u16();
-    if (!r.ok || nHello > kMaxHelloOnWire ||
-        r.remaining < static_cast<std::size_t>(nHello) * kHelloSize)
+    if (nHello > kMaxHelloOnWire || r.remaining < static_cast<std::size_t>(nHello) * kHelloSize)
         return false;
     msg.helloDests.resize(nHello);
     for (auto& d : msg.helloDests) {
@@ -242,7 +248,7 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     // trailing bytes, or a section on any other ant type rejects the frame.
     msg.hasKinematics = false;
     msg.kinematics = Kinematics{};
-    if (r.ok && r.remaining > 0) {
+    if (r.remaining > 0) {
         if (msg.type != AntType::Hello || r.remaining != kKinematicsSize ||
             r.u8() != kKinematicsTag)
             return false;
@@ -255,7 +261,7 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
         msg.hasKinematics = true;
     }
 
-    return r.ok;
+    return true;
 }
 
 }  // namespace codec
