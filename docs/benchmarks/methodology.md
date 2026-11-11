@@ -163,40 +163,48 @@ The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48), and the
 control campaign [#867](https://github.com/swarm-routing/AntHocNet/issues/867)
 measured what that does ([results](v2.7.x-image-control.md)).
 
-**Cross-image rule.** **Proposed, awaiting the maintainer (#867).** Until the
-maintainer accepts it, compare no post-move number with a published one.
-The proposal follows the control's verdicts, family by family:
+**Cross-image rule.** **Proposed, awaiting the maintainer (#867, #915).**
+Until the maintainer accepts it, compare no post-move number with a published
+one. The proposal follows the control and its follow-up
+([#915](v2.7.x-image-control.md#follow-up-the-ns-3-release-not-the-image-build-915)).
+The follow-up showed that the differences come from the ns-3 release
+(3.42 → 3.48), not from the image build. So the rule is about releases:
 
 - **Read 1 holds for every family.** The published v2.4.0 cells reproduce byte
   for byte on their recorded images at `b531d5d`. A published number stays
-  valid as a number of its recorded image.
-- **The rule covers only the campaign image the control measured**
+  valid as a number of its recorded image and ns-3 release.
+- **Same ns-3 release, different build: compare directly, within the measured
+  pair.** On ns-3 3.48, the campaign image
   (`anthocnet-ns3-campaign@sha256:ee930d8c…`, on
-  `ns3-dev:3.48-optimized@sha256:5585a93c…`). A later image, base or toolchain
-  gets its own control before its numbers are compared with published ones.
+  `ns3-dev:3.48-optimized@sha256:5585a93c…`) and the legacy in-job build
+  (`danieljoppi/ns3@sha256:8b5a0e30…`, `profile=default`) gave
+  byte-identical `##RUN##`/`##ROUTE##`/`##COMMON##` rows in all eight
+  families. A number from one of them may be compared with a number from the
+  other for every metric those rows carry.
+  - A later image, base or toolchain on the same release has not been measured.
+    Before its numbers are compared across builds, it gets a byte-identity check:
+    one control cell per family, `harness_control.py`-style, against this
+    image's cells at the same `source_sha`.
+  - A full paired control is needed only if that check finds a difference.
+- **Different ns-3 release: re-run the published side.** A published number
+  from another ns-3 release is **not** compared with a post-move number in
+  any family the release moves. Between 3.42 and 3.48 that is grid, static
+  mesh, FANET, VANET and disaster, plus AntHocNet's ISL rows (three fields).
+  - A claim that needs both re-runs the published side on the post-move
+    release (paired, same `source_sha`, ≥ 20 seeds) and compares the two
+    post-move numbers.
+  - The 3.42 → 3.48 move alone shifts delay tails (`delay99`) and NRL
+    ([table (b)](v2.7.x-image-control.md#b-old348-vs-old-the-ns-3-release-alone-348-vs-342-both-legacy-builds)).
+  - The published LEO and SAGIN cells already ran on 3.48, so they compare
+    directly (the bullet above).
 - **`PAIRED-NOISE` is not equivalence.** It says that no tested interval (dPDR,
-  d_d99, d_NRL) excludes zero, not that the image effect is small enough for a
-  given claim, and it says nothing about the metrics it does not test.
-- **LEO shell and SAGIN:** every `##RUN##`/`##ROUTE##`/`##COMMON##` row was
-  byte-identical on both images, so a post-move number from this image may be
-  compared with the published one directly, for every metric those rows carry.
-- **Satellite ISL grid:** every protocol read `PAIRED-NOISE`, but AntHocNet's
-  rows differ in three fields (mean delay, NRL and the field after NRL). A
-  post-move number may be compared directly only for PDR, `delay99` and NRL,
-  and only where the claim's margin exceeds the control's paired CIs. Any
-  other metric, or a tighter margin, re-runs the published side on the
-  post-move image first.
-- **Families with any verdict other than `PAIRED-NOISE`** (MANET grid, static
-  Wi-Fi mesh, FANET, VANET, disaster):
-  - a post-move number is **not** compared with a published one;
-  - a claim that needs both re-runs the published side on the post-move image
-    (paired, same `source_sha`, ≥ 20 seeds) and compares the two post-move
-    numbers. A change in a delay tail (`delay99`) or NRL can come from the
-    image alone ([read 2](v2.7.x-image-control.md#read-2-dev-vs-old-paired-by-seed)).
+  d_d99, d_NRL) excludes zero, not that an effect is small enough for a given
+  claim, and it says nothing about the metrics it does not test. The
+  same-release clearance above rests on byte identity, not on `PAIRED-NOISE`.
 - **Comparisons within one image digest** (A/B arms, controls, sweeps in one
   campaign) are unaffected.
-- A family or cell the control did not cover gets its own paired control
-  before it is compared across the move.
+- A family or cell the control did not cover gets its own check before it is
+  compared across a build (byte identity) or a release (re-run).
 
 The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
