@@ -67,12 +67,16 @@ gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
   --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 gh attestation verify anthocnet-ns3-modules-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
   --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
-# from v2.7.0, the standalone packages (#770):
-gh attestation verify routing-bench-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
-  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
+# from v2.7.0, the standalone adaptive-arms package (#770):
 gh attestation verify adaptive-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
   --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 ```
+
+The comparison harness (`routing-bench-<ver>.tar.gz`) and the `ns3_tool`
+readers are swarm-routing/ns3-tools release assets, verified against that
+repository (its SECURITY.md). This repository uses the release named in
+`ns3-tools.lock`; `make install-ns3` checks both assets against the sha256
+recorded there before using them (ns3-tools#29).
 
 Releases published before the repository moved to the `swarm-routing`
 organisation (2026-11-03) were signed as

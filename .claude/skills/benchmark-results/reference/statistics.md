@@ -24,4 +24,4 @@ When a cell carries `##RUN##` per-seed rows, three things appear automatically:
 
 `sweep_summary.py`'s grid gains `±95` columns next to the PDR means (t-CI
 from the CSV's `pdr_sd`/`runs`; blank for pre-#28 CSVs). The shared math
-lives in `stats_util.py`; `test_stats.py` covers it (runs in `lint.yml`).
+lives in `stats_util` (swarm-routing/ns3-tools' `ns3_tool`, at the `ns3-tools.lock` pin); its `test_stats.py` runs in ns3-tools' CI.

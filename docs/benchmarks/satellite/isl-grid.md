@@ -957,7 +957,7 @@ deterministic point-to-point links — those stay low-run and are read as
    whose topology is the 2-node/1-link anchor. A FAIL is a harness bug: do
    not compare, publish, or quote the numbers.
 4. **Parse / A/B** with
-   `python3 tools/bench/bench_parse.py OFF ON` — both
+   `python3 tools/ns3_tools.py run bench_parse OFF ON` — both
    the text output and `--csv` rows are accepted; the
    [#244](https://github.com/swarm-routing/AntHocNet/issues/244) directed-arm
    and [#250](https://github.com/swarm-routing/AntHocNet/issues/250) comparisons

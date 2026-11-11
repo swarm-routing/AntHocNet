@@ -20,8 +20,15 @@ definitions are in [metrics.md](benchmarks/metrics.md).
 > the harness builds and runs without AntHocNet. `anthocnet-compare` is the
 > same program under its old name, kept at least through v3.x. The move
 > reproduced every committed MANET-family cell byte for byte
-> ([control](benchmarks/v2.6.0-harness-control.md)). Shipping it as
-> its own package is planned for v2.7.0 ([Packaging](#packaging-and-what-is-planned)).
+> ([control](benchmarks/v2.6.0-harness-control.md)).
+>
+> **Since v2.7.0 the harness and the readers live in
+> [swarm-routing/ns3-tools](https://github.com/swarm-routing/ns3-tools)**
+> ([ns3-tools#29](https://github.com/swarm-routing/ns3-tools/issues/29)):
+> `routing-bench` and the `ns3_tool` Python package (`bench_parse`,
+> `stats_util`, `native_view`, `comparator_view`, `pool_runs`,
+> `sweep_summary`). This repository builds and reads with the release that
+> [`ns3-tools.lock`](#the-ns3-tools-pin) pins and keeps no copy of either.
 
 ## What it measures
 
@@ -56,8 +63,10 @@ mobility and channel of each network family. Any flag overrides a preset.
 ## Running it
 
 With the modules installed into an ns-3 tree (`make install-ns3
-NS3DIR=/path/to/ns-3`, or the release's `anthocnet-ns3-modules-<ver>.tar.gz`
-unpacked into `contrib/`; `routing-bench` alone is enough for the stock arms):
+NS3DIR=/path/to/ns-3`, which fetches `routing-bench` at the
+[pin](#the-ns3-tools-pin), or the release's `anthocnet-ns3-modules-<ver>.tar.gz`
+unpacked into `contrib/`; `routing-bench` alone, ns3-tools'
+`routing-bench-<ver>.tar.gz`, is enough for the stock arms):
 
 ```bash
 cd /path/to/ns-3
@@ -92,22 +101,28 @@ markers as the interface: the tools below read them, never the human table.
 
 ## Reading the results
 
-Never compare numbers by eye. The scripts do the arithmetic and the noise call:
+Never compare numbers by eye. The scripts do the arithmetic and the noise call.
+The readers are ns3-tools' `ns3_tool` package; `tools/ns3_tools.py run MODULE`
+runs one at the pinned version (it fetches and checks the wheel first), and
+`pip install` of the same wheel gives the `ns3-bench-parse`, `ns3-native-view`,
+`ns3-comparator-view`, `ns3-pool-runs` and `ns3-sweep-summary` commands.
+`scenario_check.py` stays here: it carries this repository's own rules
+(listed on [ns3-tools#29](https://github.com/swarm-routing/ns3-tools/issues/29)).
 
 | tool | does |
 |---|---|
 | `tools/bench/scenario_check.py preflight …` | checks a configuration *before* dispatch: partitioned field, saturated channel, single-hop degeneracy |
 | `tools/bench/scenario_check.py results FILE` | plausibility checks on a result: PDR bounds, the drop book closing, delay99 ≥ mean |
-| `tools/bench/bench_parse.py --ab A B --proto X` | paired per-seed deltas of one arm between two files, with t and bootstrap CIs and a noise verdict |
-| `tools/bench/bench_parse.py --get FIELD --from run\|table\|csv\|paths --proto X -` | one field of one arm's result, read by name: a `##RUN##` metric, a summary-table metric, a `--csv` column by its header name, or a `# paths` key |
-| `tools/bench/comparator_view.py` | arm-versus-arm readings: anchors, and arms paired against committed control cells |
+| `tools/ns3_tools.py run bench_parse --ab A B --proto X` | paired per-seed deltas of one arm between two files, with t and bootstrap CIs and a noise verdict |
+| `tools/ns3_tools.py run bench_parse --get FIELD --from run\|table\|csv\|paths --proto X -` | one field of one arm's result, read by name: a `##RUN##` metric, a summary-table metric, a `--csv` column by its header name, or a `# paths` key |
+| `tools/ns3_tools.py run comparator_view` | arm-versus-arm readings: anchors, and arms paired against committed control cells |
 | `ns3-campaign plan/dispatch/collect` (swarm-routing/ns3-tools; `tools/bench/campaign.py` for legacy arms) | a set of cells × arms run on the `benchmark-cell` workflow on one pinned `source_sha`, throttled, then collected |
 
 The CI gates in `tools/checks/` read marker lines through the same reader,
-with `bench_parse.py --get`, never by awk column position (#791). A marker
+with `bench_parse --get`, never by awk column position (#791). A marker
 change the reader absorbs therefore cannot make a gate read the wrong number,
-and `tools/bench/test_bench_parse_query.py` checks the reader against the old
-awk expressions on every committed cell.
+and `tools/bench/test_bench_parse_query.py` checks the pinned reader against
+the old awk expressions on every committed cell.
 
 ## Adding a protocol
 
@@ -173,7 +188,7 @@ the smallest complete arm (about 270 lines), and install it with `AdaptiveHelper
 ### Registering an arm
 
 An arm is a class derived from `ns3::bench::Arm`
-([`routing-bench-arm.h`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/routing-bench/model/routing-bench-arm.h)),
+([`routing-bench-arm.h`](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/ns3/routing-bench/model/routing-bench-arm.h)),
 created fresh for every (seed, arm) run. Three hooks are required:
 
 - `Name()`, the `--protocols` token;
@@ -185,7 +200,7 @@ The optional hooks cover everything else the harness used to special-case:
 own devices (`hwmp`), post-stack wiring (`gpsr`), trace connections, refused
 sends added back to the offered load (`oracle`, `olsr`), extra diagnostics,
 self-checks and the replay. The stock arms in
-[`stock-arms.cc`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/routing-bench/helper/stock-arms.cc)
+[`stock-arms.cc`](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/ns3/routing-bench/helper/stock-arms.cc)
 and the module arms are the worked examples; Q-routing's is a dozen lines
 ([`adaptive-bench-arms.cc`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/baselines/adaptive/helper/adaptive-bench-arms.cc)).
 
@@ -229,24 +244,63 @@ two vendored arms once compiled, passed CI and forwarded nothing
 
 ## Packaging and what is planned
 
-**Today (v2.6.0):**
+**Today (v2.7.0):**
 
-- The release ships `anthocnet-ns3-modules-<ver>.tar.gz`, six ns-3 contrib
-  modules to unpack into `contrib/`: `routing-bench` (the harness and the
-  stock arms), `anthocnet`, and the comparison modules `aomdv`, `gpsr`,
-  `oracle` and `adaptive`. Keep `routing-bench` and drop the rest to run the
-  harness on the stock arms alone, or add your own arm module beside it.
-- The `adaptive` module also works on its own in any ns-3 ≥ 3.36 tree. Copy
-  `contrib/adaptive` alone and use `AdaptiveHelper` in your own program.
+- The harness and the readers are
+  [swarm-routing/ns3-tools](https://github.com/swarm-routing/ns3-tools)
+  releases: `routing-bench-<ver>.tar.gz` (the harness and the stock arms,
+  for `contrib/`) and the `ns3_tool` wheel (the readers, with the
+  versioned marker contract). Use them without AntHocNet.
+- This release ships `anthocnet-ns3-modules-<ver>.tar.gz`, six ns-3 contrib
+  modules to unpack into `contrib/`: `routing-bench` at the
+  [pin](#the-ns3-tools-pin), `anthocnet`, and the comparison modules `aomdv`,
+  `gpsr`, `oracle` and `adaptive`. Keep `routing-bench` and drop the rest to
+  run the harness on the stock arms alone, or add your own arm module beside
+  it.
+- `adaptive-<ver>.tar.gz` is the `adaptive` module on its own, for any ns-3
+  ≥ 3.36 tree. Install it beside `routing-bench` to get its arms in
+  `routing-compare`, or use `AdaptiveHelper` in your own program.
 
-**Planned** (epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764)):
+**Planned:** the bring-your-own-protocol tutorial with an arm template is
+[ns3-tools#4](https://github.com/swarm-routing/ns3-tools/issues/4), and the
+vendored arms move to ns3-tools later
+([ns3-tools#34](https://github.com/swarm-routing/ns3-tools/issues/34)). See the
+[roadmap](roadmap.md) for the exit criteria.
 
-- **v2.7.0:** the harness and the `adaptive` arms ship as their own release
-  packages, the readers as a Python package with a versioned marker contract,
-  and this guide becomes a bring-your-own-protocol tutorial with an arm
-  template.
+### The ns3-tools pin
 
-See the [roadmap](roadmap.md) for the exit criteria.
+[`ns3-tools.lock`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3-tools.lock)
+at the repository root names the one ns3-tools release this repository uses:
+its tag, the commit the tag names, and the sha256 of the two assets it takes
+(`routing-bench-<ver>.tar.gz` and `ns3_tool-<ver>-py3-none-any.whl`).
+`tools/ns3_tools.py` reads it:
+
+```bash
+python3 tools/ns3_tools.py fetch                # download, check sha256, unpack into .ns3-tools/<tag>/
+python3 tools/ns3_tools.py path routing-bench   # what `make install-ns3` copies to contrib/
+python3 tools/ns3_tools.py run bench_parse A B  # any ns3_tool reader, at the pin
+python3 tools/ns3_tools.py verify               # the tag still names the commit; the assets still match
+```
+
+`make install-ns3`, every CI gate, the release packages, the campaign tools
+and the chart scripts go through it, so a published number always names one
+harness and one reader version. The release bundle ships the lock, and the
+release notes name the pin. `NS3_TOOLS_DIR=<ns3-tools checkout>` uses a local
+checkout instead, for work on a bump only.
+
+**Bumping it** is a PR that changes every line of the lock together:
+
+1. Take the new tag's commit (`git ls-remote https://github.com/swarm-routing/ns3-tools refs/tags/vX.Y.Z`)
+   and the two sha256 from the release's `SHA256SUMS`.
+2. Run `python3 tools/ns3_tools.py verify`, then the readers' corpus check:
+   `python3 tools/bench/test_bench_parse_query.py`.
+3. If the harness changed, show the committed cells are unchanged: re-run the
+   [v2.6.0 control](benchmarks/v2.6.0-harness-control.md) plan on the new pin
+   and check it with
+   `python3 tools/bench/harness_control.py tools/bench/campaigns/v2.6.0-harness-control.yaml`,
+   or at least a 20-seed cell before and after the bump with identical
+   `##RUN##` lines. A reader change keeps its output byte-identical on
+   `results/cells/` unless the change is the point, which the PR then says.
 
 ## Citing
 

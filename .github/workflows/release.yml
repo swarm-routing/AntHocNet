@@ -252,12 +252,11 @@ jobs:
           ( cd dist && sha256sum "anthocnet-ns3-modules-${VER}.tar.gz" > "anthocnet-ns3-modules-${VER}.tar.gz.sha256" )
           cat "dist/anthocnet-ns3-modules-${VER}.tar.gz.sha256"
           echo "MOD_SHA256=$(cut -d' ' -f1 < "dist/anthocnet-ns3-modules-${VER}.tar.gz.sha256")" >> "$GITHUB_ENV"
-          # The same run writes the standalone harness and adaptive-arms
-          # packages (#770); checksum them the same way.
-          for p in routing-bench adaptive; do
-            ( cd dist && sha256sum "$p-${VER}.tar.gz" > "$p-${VER}.tar.gz.sha256" )
-            cat "dist/$p-${VER}.tar.gz.sha256"
-          done
+          # The same run writes the standalone adaptive-arms package (#770);
+          # checksum it the same way. The harness package is ns3-tools' own
+          # release asset now (swarm-routing/ns3-tools#29).
+          ( cd dist && sha256sum "adaptive-${VER}.tar.gz" > "adaptive-${VER}.tar.gz.sha256" )
+          cat "dist/adaptive-${VER}.tar.gz.sha256"
 
       - name: Bake recipe for this release (#613)
         # ns-3's own installer: the module tarball above as an ns-contrib
@@ -291,7 +290,6 @@ jobs:
           subject-path: |
             dist/anthocnet-${{ env.VER }}.zip
             dist/anthocnet-ns3-modules-${{ env.VER }}.tar.gz
-            dist/routing-bench-${{ env.VER }}.tar.gz
             dist/adaptive-${{ env.VER }}.tar.gz
 
       - name: Attest the SBOM (#614)
@@ -316,7 +314,7 @@ jobs:
           test "$(jq -r '.payloadType' "dist/anthocnet-${VER}.intoto.jsonl")" = "application/vnd.in-toto+json"
           test "$(wc -l < "dist/anthocnet-${VER}.intoto.jsonl")" -eq 1
           for f in "dist/anthocnet-${VER}.zip" "dist/anthocnet-ns3-modules-${VER}.tar.gz" \
-                   "dist/routing-bench-${VER}.tar.gz" "dist/adaptive-${VER}.tar.gz"; do
+                   "dist/adaptive-${VER}.tar.gz"; do
             gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml"
           done
           spdx=$(jq -r '.spdxVersion | sub("^SPDX-"; "")' "dist/anthocnet-${VER}.spdx.json")   # e.g. 2.3
@@ -434,6 +432,13 @@ jobs:
           done
           echo "FAIL: could not update ns3-module after 3 attempts"; exit 1
 
+      - name: The ns3-tools release this one was built with (swarm-routing/ns3-tools#29)
+        # ns3-tools.lock pins the routing-bench harness and the readers; the
+        # bundle ships the lock, and the release body names the pin.
+        run: |
+          read -r repo tag commit < <(python3 tools/ns3_tools.py pin)
+          echo "NS3_TOOLS_PIN=[${repo} ${tag}](https://github.com/${repo}/releases/tag/${tag}) (\`${commit}\`)" >> "$GITHUB_ENV"
+
       - name: Publish release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
@@ -443,8 +448,6 @@ jobs:
             dist/anthocnet-${{ env.VER }}.zip.sha256
             dist/anthocnet-ns3-modules-${{ env.VER }}.tar.gz
             dist/anthocnet-ns3-modules-${{ env.VER }}.tar.gz.sha256
-            dist/routing-bench-${{ env.VER }}.tar.gz
-            dist/routing-bench-${{ env.VER }}.tar.gz.sha256
             dist/adaptive-${{ env.VER }}.tar.gz
             dist/adaptive-${{ env.VER }}.tar.gz.sha256
             dist/anthocnet-${{ env.VER }}.spdx.json
@@ -469,10 +472,14 @@ jobs:
             into your bake checkout's `contrib/`, then
             `./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
 
-            **Without AntHocNet** (#770): `routing-bench-${{ env.VER }}.tar.gz` is the
-            comparison harness with the stock ns-3 arms, and `adaptive-${{ env.VER }}.tar.gz`
-            adds the ARA, Termite, Q-routing and BeeAdHoc arms. Unpack either or both into
-            `ns-3/contrib`. Both are covered by the same provenance attestation.
+            **Comparison harness and readers**: built with ${{ env.NS3_TOOLS_PIN }},
+            the version `ns3-tools.lock` pins. The harness (`routing-bench`) and the benchmark
+            readers (`ns3_tool`) are that release's assets; `make install-ns3` fetches and
+            checks them.
+
+            **Without AntHocNet** (#770): `adaptive-${{ env.VER }}.tar.gz` holds the ARA,
+            Termite, Q-routing and BeeAdHoc arms; unpack it into `ns-3/contrib` next to the
+            harness from the ns3-tools release above. It is covered by the same provenance attestation.
 
             **Container images** (see `docker/README.md`): `ghcr.io/swarm-routing/anthocnet-ns3:${{ env.TAG }}-optimized`
             and `:${{ env.TAG }}-debug`, ns-3 with every module of this release built and tested,

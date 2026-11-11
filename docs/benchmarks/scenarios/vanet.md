@@ -533,7 +533,7 @@ in all.
 
 ![AntHocNet against each family's own yardsticks: its paired PDR gap to the oracle and to the best native baseline, in every cell of eight families](../charts/families-native.png)
 
-_Each dot is the mean over 20 paired seeds with its 95 % paired t-CI; filled = the CI excludes 0. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed v2.4.0 cells; the numbers come from [`tools/bench/native_view.py`](https://github.com/swarm-routing/AntHocNet/blob/main/tools/bench/native_view.py)._
+_Each dot is the mean over 20 paired seeds with its 95 % paired t-CI; filled = the CI excludes 0. Drawn by [`ns3/tools/family-charts.py`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3/tools/family-charts.py) from the committed v2.4.0 cells; the numbers come from [`ns3_tool.native_view` (ns3-tools)](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/python/ns3_tool/native_view.py)._
 
 | family | best native baseline | AntHocNet − best native, PDR | AntHocNet − oracle, PDR |
 |---|---|---|---|

@@ -54,8 +54,11 @@ count_lines() { printf '%s' "$1" | grep -c . || true; }
 
 # --- ground truth 1: vendored module names --------------------------------
 # Each vendored module (anthocnet at ns3/, plus the contrib baselines/controls
-# under ns3/<dir>/) declares itself via `build_lib(LIBNAME <name> ...)`.
-modules=$({ cat ns3/anthocnet/CMakeLists.txt ns3/baselines/*/CMakeLists.txt ns3/routing-bench/CMakeLists.txt 2>/dev/null || true; } \
+# under ns3/<dir>/, plus the pinned routing-bench) declares itself via `build_lib(LIBNAME <name> ...)`.
+# routing-bench comes from the ns3-tools release ns3-tools.lock pins (ns3-tools#29).
+bench_cmake="$(python3 tools/ns3_tools.py path routing-bench)/CMakeLists.txt"
+need_file "$bench_cmake" || exit 1
+modules=$({ cat ns3/anthocnet/CMakeLists.txt ns3/baselines/*/CMakeLists.txt "$bench_cmake" 2>/dev/null || true; } \
     | sed -n 's/^[[:space:]]*LIBNAME[[:space:]]*\([a-z0-9-]*\).*/\1/p' | sort -u)
 if ! printf '%s\n' "$modules" | grep -qx 'anthocnet'; then
     echo "FAIL [allowlists]: could not derive the vendored module set from"

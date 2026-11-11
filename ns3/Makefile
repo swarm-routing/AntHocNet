@@ -40,7 +40,10 @@ ORACLEDEST = $(NS3DIR)/contrib/oracle
 ADAPTIVEDEST = $(NS3DIR)/contrib/adaptive
 # v2.6.0 (ADR-0027, #766): routing-bench, the protocol-agnostic comparison
 # harness module (arm contract, registry, stock arms). Links only stock ns-3.
-BENCH  := $(HERE)/routing-bench
+# It lives in swarm-routing/ns3-tools (ns3-tools#29): install-baselines copies
+# the release pinned in ../ns3-tools.lock, which tools/ns3_tools.py fetches and
+# checks against its sha256 (NS3_TOOLS_DIR=<checkout> uses a local one).
+NS3_TOOLS = python3 $(ROOT)/tools/ns3_tools.py
 BENCHDEST = $(NS3DIR)/contrib/routing-bench
 
 .PHONY: install install-baselines uninstall doctor require-ns3dir
@@ -110,13 +113,9 @@ install-baselines: require-ns3dir
 	cp $(BASE)/adaptive/helper/*.h $(BASE)/adaptive/helper/*.cc "$(ADAPTIVEDEST)/helper/"
 	cp $(BASE)/adaptive/test/*.cc "$(ADAPTIVEDEST)/test/" 2>/dev/null || true
 	cp $(BASE)/adaptive/CMakeLists.txt "$(ADAPTIVEDEST)/"
-	@echo ">> Installing routing-bench harness module into $(BENCHDEST)"
-	mkdir -p "$(BENCHDEST)/model" "$(BENCHDEST)/helper" "$(BENCHDEST)/test" "$(BENCHDEST)/examples"
-	cp $(BENCH)/model/*.h  $(BENCH)/model/*.cc  "$(BENCHDEST)/model/"
-	cp $(BENCH)/helper/*.h $(BENCH)/helper/*.cc "$(BENCHDEST)/helper/"
-	cp $(BENCH)/examples/*.cc $(BENCH)/examples/CMakeLists.txt "$(BENCHDEST)/examples/"
-	cp $(BENCH)/test/*.cc "$(BENCHDEST)/test/"
-	cp $(BENCH)/CMakeLists.txt $(BENCH)/README.md "$(BENCHDEST)/"
+	@echo ">> Installing routing-bench harness module ($$($(NS3_TOOLS) pin)) into $(BENCHDEST)"
+	@bench=$$($(NS3_TOOLS) path routing-bench) && test -f "$$bench/CMakeLists.txt" && \
+	  mkdir -p "$(BENCHDEST)" && cp -r "$$bench/." "$(BENCHDEST)/"
 
 uninstall: require-ns3dir
 	@echo ">> Removing $(DEST)"

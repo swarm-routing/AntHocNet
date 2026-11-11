@@ -8,7 +8,7 @@ AntHocNet is licensed per directory
 | `core/` (the simulator-agnostic algorithm core, its tests and benchmarks) | `MIT OR GPL-2.0-only`, at your choice | [`core/LICENSE`](core/LICENSE) (MIT) and [`LICENSE`](LICENSE) (GPL-2.0) |
 | `tools/`, `ns3/tools/`, `docs/tools/` (the standalone tooling: benchmark parsing and statistics, campaigns, charts, CI checks, release scripts, their plans and fixtures) | `MIT OR GPL-2.0-only`, at your choice | [`LICENSE-MIT`](LICENSE-MIT) (MIT) and [`LICENSE`](LICENSE) (GPL-2.0) |
 | `docs/tools/mkdocs_hooks.py` | `GPL-2.0-only`: it imports `web/shell/` | [`LICENSE`](LICENSE) |
-| Everything else (the ns-3 modules under `ns3/`, including the `routing-bench` harness; `web/`; `docs/`; `results/`; `api/`; `paper/`; …) | `GPL-2.0-only` | [`LICENSE`](LICENSE) |
+| Everything else (the ns-3 modules under `ns3/`; `web/`; `docs/`; `results/`; `api/`; `paper/`; …) | `GPL-2.0-only` | [`LICENSE`](LICENSE) |
 | `ns3/baselines/aomdv/`, `ns3/baselines/gpsr/` | `GPL-2.0-only`, third-party (Copyright IITP RAS); provenance in each module's `README.md` | [`LICENSE`](LICENSE) |
 
 Each source file states its licence in an `SPDX-License-Identifier` line.
@@ -31,9 +31,11 @@ Each source file states its licence in an `SPDX-License-Identifier` line.
   parts, but they never pull GPL-only code in. `core/` includes nothing from
   outside `core/`, and the dual-licensed Python loads nothing from `web/shell/`
   or `.claude/`. CI enforces both rules, so the MIT option stays real.
-- **The C++ comparison harness stays GPL.** `ns3/routing-bench/` is an ns-3
+- **The C++ comparison harness stays GPL.** `routing-bench` is an ns-3
   module that builds only inside a GPL ns-3 tree, so an MIT option would buy
-  nothing there.
+  nothing there. It lives in swarm-routing/ns3-tools now, as do the `ns3_tool`
+  readers (`MIT OR GPL-2.0-only` there too); this repository fetches the
+  release `ns3-tools.lock` pins and carries no copy (ns3-tools#29).
 - **Contributions** to the dual-licensed paths are accepted under both licences. Contributions
   anywhere else are accepted under GPL-2.0-only. See
   [`CONTRIBUTING.md`](CONTRIBUTING.md).

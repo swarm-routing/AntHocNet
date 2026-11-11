@@ -141,7 +141,7 @@ published GHCR images (Actions → workflow → *Run workflow*):
   `scenario-matrix.yml` and `satellite-benchmark.yml`, removed in v2.5.0
   ([#746](https://github.com/swarm-routing/AntHocNet/issues/746)); the
   committed CSVs those produced stay readable by `sweep_summary.py` and
-  [`pool_runs.py`](../../tools/bench/pool_runs.py).
+  [`pool_runs.py`](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/python/ns3_tool/pool_runs.py).
 
 **Published numbers pin an ns3-dev digest and a campaign-image digest, never
 a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
@@ -304,7 +304,7 @@ baseline code.
    packets from its routing queue with no observable signal at all, which this
    harness had to reason around before its drop-conservation check could mean
    anything ([#229](https://github.com/swarm-routing/AntHocNet/issues/229); see the
-   `ns3/routing-bench/model/routing-bench-run.cc` conservation block). Baselines inherit
+   ns3-tools' `ns3/routing-bench/model/routing-bench-run.cc` conservation block). Baselines inherit
    their simulator's model gaps, and those gaps are not symmetric across arms.
 2. *They are the comparison set of 2004–2005, and 2026 reviewers increasingly
    read them as strawmen.* That criticism is correct and is not answered by
@@ -851,7 +851,7 @@ image.
 Every number published in these pages or in the papers repo carries a **95%
 confidence interval**, or is explicitly marked single-run/diagnostic. The
 computation lives in
-[`tools/bench/stats_util.py`](../../tools/bench/stats_util.py)
+[`ns3_tool.stats_util` (ns3-tools)](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/python/ns3_tool/stats_util.py)
 (consumed by `bench_parse.py` / `sweep_summary.py`; self-tested by
 `test_stats.py` in `lint.yml`) — change the methods there and here together.
 
@@ -939,7 +939,7 @@ stream-consuming helper — position allocator, mobility, wifi channel + devices
 the IPv4 stack, the routing helper for the arm, the flow-start variable and the
 OnOff sources — is now pinned with `AssignStreams()` from a **seed-derived base**,
 `seed * kStreamStride` (`kStreamStride` = 10⁶ in each of
-`ns3/routing-bench/model/routing-bench-run.cc`, `ns3/anthocnet/examples/isl-grid.cc` and
+ns3-tools' `ns3/routing-bench/model/routing-bench-run.cc`, `ns3/anthocnet/examples/isl-grid.cc` and
 `ns3/anthocnet/examples/manet-baselines.cc`, roughly three orders of magnitude above what a
 run actually consumes). The stride is enforced at runtime from the counts
 `AssignStreams()` returns, so a scenario that one day adds streams aborts loudly

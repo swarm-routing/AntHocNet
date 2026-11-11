@@ -47,7 +47,7 @@ hand.
 ## Commands
 
 ```bash
-S=tools/bench/bench_parse.py
+S="tools/ns3_tools.py run bench_parse"
 python3 $S off.txt on.txt                 # deltas of every cell vs the first
 python3 $S --ab off1 on1 off2 on2         # (off,on) pairs; flags cross-pair sign
 python3 $S --all a.txt b.txt              # every protocol, not just anthocnet
@@ -189,8 +189,8 @@ The cross-session procedure (formerly buried in issue #91's session notes):
 ## Campaign CSVs and satellite cells
 
 ```bash
-python3 tools/bench/sweep_summary.py results/campaign/*.csv          # anthocnet vs aodv per point
-python3 tools/bench/sweep_summary.py AFTER.csv --vs BEFORE.csv       # what did our change do (AFTER first)
+python3 tools/ns3_tools.py run sweep_summary results/campaign/*.csv          # anthocnet vs aodv per point
+python3 tools/ns3_tools.py run sweep_summary AFTER.csv --vs BEFORE.csv       # what did our change do (AFTER first)
 python3 ns3/tools/leo-summary.py walker16 starlink1 starlink1-storm  # leo-walker tables, paste verbatim
 ```
 

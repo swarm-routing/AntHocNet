@@ -71,3 +71,8 @@ __pycache__/
 # the browser adapter + learn site, fetched from swarm-routing.github.io (#850):
 # tools/checks/fetch-site-web.sh
 /web/
+
+# the routing-bench harness and the ns3_tool readers, fetched from the
+# swarm-routing/ns3-tools release ns3-tools.lock pins (ns3-tools#29):
+# tools/ns3_tools.py
+/.ns3-tools/

@@ -104,7 +104,7 @@ The tooling is in the same position as `core/`:
 
 - **It is standalone.** These are 52 Python and shell programs that read logs,
   CSVs and plans: benchmark parsing, the paired statistics and noise verdicts
-  (`tools/bench/stats_util.py`, `bench_parse.py`), the campaign runner, the
+  (`ns3_tool.stats_util` (ns3-tools), `bench_parse.py`), the campaign runner, the
   chart and summary scripts, the CI checks and the release scripts. None of
   them imports ns-3 or its bindings. Their imports are the standard library,
   each other, and permissive third-party packages (matplotlib, PyYAML).

@@ -56,12 +56,13 @@ jobs:
         # The v2.0.0 bundle shipped tools that imported .claude/ scripts it
         # excluded; this is the gate that would have caught it. ~1 s.
         run: tools/release/check-bundle.sh
-      - name: Statistics self-test (#293)
-        # stats_util.py computes the 95% CIs and paired tests every published
-        # number will carry; bench_parse.py's column-mapping check decides
-        # whether a cell's numbers may be trusted at all. Same reasoning as
-        # the gate below: a rule that can't fire isn't a gate.
-        run: python3 tools/bench/test_stats.py
+      - name: The ns3-tools pin (swarm-routing/ns3-tools#29)
+        # The harness and the readers (bench_parse, stats_util, ...) come from
+        # the swarm-routing/ns3-tools release ns3-tools.lock pins; their own
+        # self-tests (statistics, comparator view, ...) run in ns3-tools' CI.
+        # Here: the tag still names the locked commit, and both release assets
+        # still match the locked sha256.
+        run: python3 tools/ns3_tools.py verify
       - name: Benchmark-gate self-test
         # scenario_check.py decides whether a campaign's numbers may be read or
         # published, and it was itself untested until #229/#230 showed what that
@@ -90,14 +91,9 @@ jobs:
         # protocol's default: the control's baselines plus the arm's rows for
         # that protocol. The family pages' numbers come from its output.
         run: python3 tools/bench/test_compose_cell.py
-      - name: Comparator-view self-test (v2.5.0)
-        # comparator_view.py reads the v2.5.0 comparator campaign: anchors in
-        # one file, family cells paired by seed with the v2.4.0 control rows.
-        # The sign (arm minus reference) and the best-native pick are tested.
-        run: python3 tools/bench/test_comparator_view.py
       - name: Gate field-query self-test (#791)
-        # The CI gates in tools/checks/ read marker fields through
-        # bench_parse.py --get. On every committed cell the query must return
+        # The CI gates in tools/checks/ read marker fields through the pinned
+        # ns3_tool bench_parse --get. On every committed cell the query must return
         # what the positional awk it replaced printed; CSV columns are read by
         # header name, and a missing value prints nothing and exits 0.
         run: python3 tools/bench/test_bench_parse_query.py
@@ -177,7 +173,7 @@ jobs:
         run: |
           clang-format-18 --version
           git ls-files 'core/*.cpp' 'core/*.h' \
-            'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' 'ns3/routing-bench/*.cc' 'ns3/routing-bench/*.h' \
+            'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' \
             | xargs clang-format-18 --dry-run -Werror
 
   clang-tidy:

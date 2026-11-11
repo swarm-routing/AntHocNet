@@ -1,0 +1,16 @@
+# The swarm-routing/ns3-tools release AntHocNet builds and reads its benchmarks
+# with (swarm-routing/ns3-tools#29): the routing-bench harness (ns-3 module) and
+# the ns3_tool readers (bench_parse, stats_util, native_view, comparator_view,
+# pool_runs, sweep_summary). tools/ns3_tools.py fetches both release assets,
+# checks them against the sha256 below and unpacks them into .ns3-tools/<tag>/.
+#
+# Bump by PR only, every line together (docs/comparison-harness.md, "The
+# ns3-tools pin"): the tag, the commit it points at, and each asset's sha256
+# from the release's SHA256SUMS. `python3 tools/ns3_tools.py verify` checks the
+# tag still names the commit and the assets still match.
+NS3_TOOLS_REPO=swarm-routing/ns3-tools
+NS3_TOOLS_TAG=v0.1.0
+NS3_TOOLS_COMMIT=c61e9889834dd39c4257f638b9aa005124717ffa
+NS3_TOOLS_VERSION=0.1.0
+ROUTING_BENCH_SHA256=11619f71a7e9419037cb4eecd23af5f62f7739b73fee5610a6ce9b3b5addaa1f
+NS3_TOOL_WHEEL_SHA256=d10582cf8ced8e184dff6a205e197b8b518f946cffdbd333d720d6dc64f4af53

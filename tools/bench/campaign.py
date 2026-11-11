@@ -534,8 +534,9 @@ def cell_protocols(plan, cell, arm):
 
 
 def cmd_verdicts(plan, a):
-    parser = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                          "bench_parse.py")
+    # The reader pinned in ns3-tools.lock (swarm-routing/ns3-tools#29).
+    parser = [os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "ns3_tools.py"), "run", "bench_parse"]
     pairs = sorted({(cell, arm) for _l, cell, arm, *_ in jobs(plan)
                     if arm != plan["control"] and (not a.arm or arm == a.arm)},
                    key=lambda p: (p[1], list(plan["cells"]).index(p[0])))
@@ -547,7 +548,7 @@ def cmd_verdicts(plan, a):
                   f"{os.path.basename(test)})")
             continue
         for proto in cell_protocols(plan, cell, arm):
-            out = subprocess.run([sys.executable, parser, "--ab", "--proto",
+            out = subprocess.run([sys.executable, *parser, "--ab", "--proto",
                                   proto, base, test],
                                  capture_output=True, text=True, check=False).stdout
             line = next((ln.strip() for ln in out.splitlines()

@@ -19,9 +19,10 @@ v1.2.0–v1.9.0 tags.
 
 ```
 core/    simulator-agnostic C++ (no simulator headers) + unit tests
-ns3/     anthocnet/ (the ns-3 module + satellite harnesses), routing-bench/ (the comparison harness), baselines/<arm>/ (vendored arms), tools/
+ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
+ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
-tools/   shipped scripts: bench/ (stats, parsing, scenario_check), checks/ (CI gates), release/
+tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
 api/     Doxygen config for the API reference (/api/)
@@ -57,10 +58,10 @@ chosen from evidence later. Read it as a map of untested paths to aim tests at,
 not as a number to chase (CLAUDE.md rule 2).
 
 `quality.yml` (Quality) measures the wider picture on every push to `main` and
-every non-prose PR: the core **plus** the ns-3 module and the routing-bench
-harness (`test.py -s anthocnet`, `-s routing-bench` in
-`ns3-dev:latest-debug`, gcov on those two modules only through
-`ns3-build-contrib --coverage`), merged into one gcovr report that goes to
+every non-prose PR: the core **plus** the ns-3 module (`test.py -s anthocnet`,
+`-s routing-bench` in `ns3-dev:latest-debug`, gcov on the anthocnet module
+only through `ns3-build-contrib --coverage`; the routing-bench harness is
+ns3-tools' code and measured there), merged into one gcovr report that goes to
 [Codecov](https://codecov.io/gh/swarm-routing/AntHocNet) (`.codecov.yml`) and,
 with the merged compilation database, to
 [SonarQube Cloud](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
@@ -316,12 +317,12 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 | Inspect protocol internals | NS-3 `Tx`/`Rx`/`RouteChanged` trace sources; core counters via `IRouterObserver` |
 | Run the benchmark campaign loop (dispatch → fetch → parse) | `benchmark-results` skill (SKILL.md documents the whole procedure) |
 | Run a campaign (cells × arms, throttled so PR CI keeps runners) | `ns3-campaign` (swarm-routing/ns3-tools) + a plan in `tools/bench/campaigns/` that pins `repo`, `source_sha` and `image` (or `pins.<arm>`) (#662, #905): `plan`, `dispatch`, `status`, `collect [--redispatch]`, `verdicts`; every cell runs `source_sha` through `benchmark-cell.yml`. An arm in the plan's `legacy_arms` (the in-job build in a frozen ns-3 image, #867) goes through `tools/bench/campaign.py dispatch --arm A --log A.tsv`, which also requires `source_sha`. The `benchmark-results` skill has the procedure |
-| Run the comparison harness, or add a protocol (arm) to it | [`docs/comparison-harness.md`](docs/comparison-harness.md) — running `routing-compare` (alias `anthocnet-compare`), markers, readers, the `adaptive` `RoutingBase` hooks, registering an arm, the three gates. The harness is the `routing-bench` module (`ns3/routing-bench/`, its README); each arm module registers through `helper/<module>-bench-arms.cc`. The design (arm contract, hook order, explicit registration, compatibility promise): [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md) (epic #764) |
-| Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`tools/bench/bench_parse.py`) |
+| Run the comparison harness, or add a protocol (arm) to it | [`docs/comparison-harness.md`](docs/comparison-harness.md) — running `routing-compare` (alias `anthocnet-compare`), markers, readers, the `adaptive` `RoutingBase` hooks, registering an arm, the three gates. The harness is the `routing-bench` module of swarm-routing/ns3-tools, at the release `ns3-tools.lock` pins (`tools/ns3_tools.py` fetches it; bumping: comparison-harness.md "The ns3-tools pin"); each arm module registers through `helper/<module>-bench-arms.cc`. The design (arm contract, hook order, explicit registration, compatibility promise): [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md) (epic #764) |
+| Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`python3 tools/ns3_tools.py run bench_parse`: ns3-tools' reader at the pin) |
 | Build, test or screenshot the learn site | the `learn-site` skill in `swarm-routing/swarm-routing.github.io` (parity, smoke, README figures) |
 | Change the site's top bar, places or the docs/API look | the site repo's `site/anthocnet/shell/` (one source for game, docs and API; `inject.py`), `docs/places/`, the nav in `mkdocs.yml`; checked by `web/test/smoke.mjs` on `web/build-pages.sh` output |
 | Add a world, a mission or a core class | it needs its docs links (`read:` / `links:`), a family page needs `try:` front matter, a public core class needs a chamber in the site's `site/anthocnet/site/js/nest-data.js`, added by the site PR that bumps `protocols.lock` (CI here only warns about it, `--warn-nest`): `python3 tools/checks/check-site-links.py` says what is missing |
-| Summarize / export campaign sweep CSVs | `benchmark-results` skill (`tools/bench/sweep_summary.py`; `--export-sweeps` feeds the papers repo) |
+| Summarize / export campaign sweep CSVs | `benchmark-results` skill (`python3 tools/ns3_tools.py run sweep_summary`; `--export-sweeps` feeds the papers repo) |
 | Validate a scenario config or result plausibility | `benchmark-results` skill (`tools/bench/scenario_check.py`, #134): `preflight` before dispatching, `results [--anchor …]` before trusting numbers |
 | Pre-push invariant check on a diff | `anthocnet-review` skill (`.claude/skills/anthocnet-review/check_invariants.sh`) |
 | Understand why skills are script-first (and add a new analysis loop) | [ADR-0014](docs/adr/0014-agent-skills-are-script-first.md) — raw data stays out of LLM context; extend a skill script, don't eyeball |

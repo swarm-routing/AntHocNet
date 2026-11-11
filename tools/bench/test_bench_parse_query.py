@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
 # Copyright (C) 2026 Daniel Henrique Joppi
-"""Self-test for bench_parse.py's --get field query (#791).
+"""Self-test for bench_parse's --get field query (#791) on this repo's cells.
+
+The reader is ns3_tool.bench_parse, from the swarm-routing/ns3-tools release
+ns3-tools.lock pins (ns3-tools#29); this test keeps checking it against the
+cells committed here, which grow with every campaign.
 
 The CI gates in tools/checks/ used to read marker fields by position with awk.
-They now call ``bench_parse.py --get``, so this checks two things:
+They now call ``bench_parse --get``, so this checks two things:
 
 1. Equivalence: on every committed cell in results/cells/, the query returns
    exactly what the awk it replaced printed (##RUN## pdr, summary-table pdr,
@@ -19,7 +23,6 @@ Run: python3 test_bench_parse_query.py   (no pytest; exits non-zero on the
 """
 
 import glob
-import importlib.util
 import os
 import subprocess
 import sys
@@ -28,20 +31,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 
 
-def _load(name):
-    """Load a sibling module from source (same pattern as test_stats.py)."""
-    path = os.path.join(HERE, name + ".py")
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.path.insert(0, HERE)
-    try:
-        spec.loader.exec_module(module)
-    finally:
-        sys.path.pop(0)
-    return module
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import ns3_tools  # noqa: E402  (the readers pinned in ns3-tools.lock)
 
-
-bp = _load("bench_parse")
+bp = ns3_tools.module("bench_parse")
+CLI = [sys.executable, os.path.join(ROOT, "tools", "ns3_tools.py"), "run", "bench_parse"]
 
 
 def awk(prog, text, **var):
@@ -175,12 +169,12 @@ def test_missing_is_empty_exit_0():
     for src, field in (("run", "pdr"), ("table", "pdr"), ("csv", "pdr"), ("paths", "hopsMean")):
         check(bp.query(ROUTING_CSV, "nosuch", field, src) == [], f"{src} missing proto")
     proc = subprocess.run(
-        [sys.executable, os.path.join(HERE, "bench_parse.py"), "--get", "pdr",
+        [*CLI, "--get", "pdr",
          "--from", "csv", "--proto", "nosuch", "-"],
         input=ROUTING_CSV, capture_output=True, text=True, check=False)
     check(proc.returncode == 0 and proc.stdout == "", f"CLI missing: {proc}")
     proc = subprocess.run(
-        [sys.executable, os.path.join(HERE, "bench_parse.py"), "--get", "pdr",
+        [*CLI, "--get", "pdr",
          "--from", "csv", "--proto", "aodv", "-"],
         input=ROUTING_CSV, capture_output=True, text=True, check=False)
     check(proc.returncode == 0 and proc.stdout == "88.0\n", f"CLI value: {proc}")
