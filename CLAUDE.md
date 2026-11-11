@@ -42,7 +42,10 @@ hand since this repository's `CLAUDE.md` is not org-synced.
 - `main` has a merge queue: merge by enabling auto-merge (squash); a direct
   merge (`PUT pulls/<n>/merge`) is refused with HTTP 405. Only the ruleset's
   checks (`CI gate`, the CodeQL scan) gate a merge: a red or pending report-only check
-  (`codecov/patch`, `dco`, Sonar) is triaged, not waited on.
+  (`codecov/patch`, Sonar) is triaged, not waited on. A red `dco` on an
+  outside contributor's commit still holds the PR until that author signs
+  off; on the maintainer's or an agent's commits it is expected
+  (swarm-routing/.github#212).
 - Never add a `Signed-off-by` trailer, for the maintainer or anyone else: a
   DCO sign-off is a person's own certification.
 - Releases are cut on request only: dispatch the release `bump` when the
