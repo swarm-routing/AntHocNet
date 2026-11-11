@@ -111,7 +111,7 @@ merged before its first dispatch:
   `ns3:3.48`.
 
 **The readings** are v2.4.0's: AntHocNet − oracle, and AntHocNet − the best
-native baseline, paired per seed (`tools/bench/native_view.py`). The family
+native baseline, paired per seed (`ns3_tool.native_view` (ns3-tools)). The family
 joins the cross-family view (#711) with these cells.
 
 ## Results (v2.4.0)
@@ -135,7 +135,7 @@ Mean over 20 seeds, PDR with its 95 % t-interval:
 | hop oracle | 98.72 ± 0.12 | 124.0 | 0 | 97.01 ± 0.23 | 109.0 | 0 | 96.84 ± 0.22 | 123.0 | 0 |
 | delay oracle | 99.82 ± 0.02 | 98.0 | 0 | 96.66 ± 0.19 | 103.1 | 0 | 96.67 ± 0.21 | 107.7 | 0 |
 
-**The readings**, paired per seed (`tools/bench/native_view.py`):
+**The readings**, paired per seed (`ns3_tool.native_view` (ns3-tools)):
 
 | shell | AntHocNet − hop oracle (pp) | AntHocNet − OPSPF, the best native (pp) | d delay99 (ms) | d NRL | verdict |
 |---|---|---|---|---|---|

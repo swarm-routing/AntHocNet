@@ -3,10 +3,12 @@
 # Copyright (C) 2026 Daniel Henrique Joppi
 #
 # The standalone release packages install on a clean ns-3 tree (#770). Builds
-# the packages exactly as release.yml does (tools/release/module-tarball.sh),
-# unpacks the requested ones into <ns3-dir>/contrib, then configures, builds
-# and runs their test suites, and, when the harness is installed, a delivery
-# smoke of every arm it advertises.
+# adaptive exactly as release.yml does (tools/release/module-tarball.sh), takes
+# routing-bench from the swarm-routing/ns3-tools release ns3-tools.lock pins
+# (its routing-bench-<ver>.tar.gz, ns3-tools#29), unpacks the requested ones
+# into <ns3-dir>/contrib, then configures, builds and runs their test suites,
+# and, when the harness is installed, a delivery smoke of every arm it
+# advertises.
 #
 #   routing-bench            the harness alone: exactly the stock arms, and
 #                            each of them delivers multi-hop
@@ -21,9 +23,9 @@
 # Usage: check-packages.sh <ns3-dir> <package>[,<package>]
 set -euo pipefail
 # Marker fields are read by name through the tested reader, not by awk
-# position (#791; tools/bench/test_bench_parse_query.py).
-BENCH_PARSE="$(cd "$(dirname "$0")/../bench" && pwd)/bench_parse.py"
-field() { python3 "$BENCH_PARSE" --get "$1" --from "$2" --proto "$3" -; }  # reads stdin
+# position (#791; tools/bench/test_bench_parse_query.py), from ns3-tools.
+NS3_TOOLS="$(cd "$(dirname "$0")/.." && pwd)/ns3_tools.py"  # the reader pinned in ns3-tools.lock
+field() { python3 "$NS3_TOOLS" run bench_parse --get "$1" --from "$2" --proto "$3" -; }  # reads stdin
 
 NS3DIR=${1:?usage: check-packages.sh <ns3-dir> <package>[,<package>]}
 PKGS=${2:?usage: check-packages.sh <ns3-dir> <package>[,<package>]}
@@ -43,7 +45,11 @@ done
 "$REPO/tools/release/module-tarball.sh" 0.0.0-check "$tmp" >/dev/null
 mods="wifi;mobility;applications;aodv;olsr;dsdv;flow-monitor;mesh"
 for p in ${PKGS//,/ }; do
-    tar -xzf "$tmp/$p-0.0.0-check.tar.gz" -C "$NS3DIR/contrib"
+    if [ "$p" = routing-bench ]; then
+        cp -r "$(python3 "$NS3_TOOLS" path routing-bench)" "$NS3DIR/contrib/routing-bench"
+    else
+        tar -xzf "$tmp/$p-0.0.0-check.tar.gz" -C "$NS3DIR/contrib"
+    fi
     for f in CMakeLists.txt README.md LICENSE INSTALL.txt; do
         [ -s "$NS3DIR/contrib/$p/$f" ] || { say "FAIL: package $p has no $f"; fail=1; }
     done

@@ -7,7 +7,7 @@ leo-summary.py [--cells results/cells] CELL...
 Summarise the moving-constellation campaign (#297) from the committed
 leo-walker cells (results/cells/leo-<cell>-<arm>.txt, one arm per
 file, 20 seeds each) as the Markdown tables the results page carries. Stdlib
-plus tools/bench/stats_util.py, so the numbers on the page are
+plus ns3_tool/stats_util.py, so the numbers on the page are
 recomputed by anyone with python3 and never typed by hand.
 
 Per cell it prints:
@@ -25,7 +25,6 @@ Usage:
   python3 ns3/tools/leo-summary.py walker16 starlink1 starlink1-storm
 """
 import argparse
-import importlib.util
 import math
 import os
 import re
@@ -39,11 +38,10 @@ CLASSES = ["startup", "scheduled", "unplanned", "massfail", "other"]
 
 
 def _load_stats_util():
-    path = os.path.join(ROOT, "tools", "bench", "stats_util.py")
-    spec = importlib.util.spec_from_file_location("stats_util", path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    """ns3_tool.stats_util at the ns3-tools.lock pin (ns3-tools#29)."""
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    import ns3_tools
+    return ns3_tools.module("stats_util")
 
 
 su = _load_stats_util()

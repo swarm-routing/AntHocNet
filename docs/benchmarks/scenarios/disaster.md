@@ -145,7 +145,7 @@ It is merged before its first dispatch, as every campaign here is:
 
 - AntHocNet − oracle;
 - AntHocNet − the best native baseline (highest mean PDR, ties by delay99),
-  paired per seed (`tools/bench/native_view.py`).
+  paired per seed (`ns3_tool.native_view` (ns3-tools)).
 
 The family joins the cross-family view (#711) with that cell, so the
 statement on the [VANET page](vanet.md#ranking-stability-across-the-families)
@@ -165,7 +165,7 @@ Mean over 20 seeds, PDR with its 95 % t-interval:
 | OLSR | 66.69 ± 0.14 | 14.8 | 2.49 |
 | oracle | 81.47 ± 0.04 | 15.4 | 0.00 |
 
-**The readings**, paired per seed (`tools/bench/native_view.py`):
+**The readings**, paired per seed (`ns3_tool.native_view` (ns3-tools)):
 
 - **AntHocNet − oracle:** −3.77 [−4.16, −3.38] pp.
 - **AntHocNet − the best native baseline (AODV, 77.12 %):**

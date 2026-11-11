@@ -307,11 +307,14 @@ ns3/
                                        provenance + license in aomdv/README.md)
   adaptive/                            ARA, Termite and Q-routing, written from their
                                        papers (#563; fidelity sheets in adaptive/README.md)
-  routing-bench/                       the protocol-agnostic comparison harness
-                                       (ADR-0027): routing-compare and its alias
-                                       anthocnet-compare, the arm registry, the
-                                       stock arms (routing-bench/README.md)
 ```
+
+The protocol-agnostic comparison harness, `routing-bench` (ADR-0027:
+`routing-compare` and its alias `anthocnet-compare`, the arm registry, the
+stock arms), is not in this tree: it is swarm-routing/ns3-tools'
+`ns3/routing-bench/`. `make install-ns3` fetches the release
+`../ns3-tools.lock` pins (`tools/ns3_tools.py`, sha256-checked) and installs it
+as `contrib/routing-bench` (ns3-tools#29).
 
 ## Notes
 

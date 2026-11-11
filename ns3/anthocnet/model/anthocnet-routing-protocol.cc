@@ -3,6 +3,7 @@
 
 #include "anthocnet-routing-protocol.h"
 #include "anthocnet-packet.h"
+#include "anthocnet/core/ant_message_codec.h"
 #include "anthocnet/core/link_metric_registry.h"
 
 #include "ns3/log.h"
@@ -505,6 +506,29 @@ TypeId RoutingProtocol::GetTypeId() {
                             "(dest, neighbour, added).",
                             MakeTraceSourceAccessor(&RoutingProtocol::m_routeChangedTrace),
                             "ns3::anthocnet::RoutingProtocol::RouteChangedCallback")
+            .AddTraceSource("ControlTx",
+                            "swarm-core's router observer (#917): a control "
+                            "message of `kind` (GetKindName) was put on the "
+                            "medium, `bytes` long as encoded (kind, broadcast, "
+                            "bytes).",
+                            MakeTraceSourceAccessor(&RoutingProtocol::m_controlTxTrace),
+                            "ns3::anthocnet::RoutingProtocol::ControlTxCallback")
+            .AddTraceSource("ControlRx",
+                            "swarm-core's router observer (#917): a non-duplicate "
+                            "control message was processed (kind, bytes).",
+                            MakeTraceSourceAccessor(&RoutingProtocol::m_controlRxTrace),
+                            "ns3::anthocnet::RoutingProtocol::ControlRxCallback")
+            .AddTraceSource("DataDecision",
+                            "swarm-core's router observer (#917): what was decided "
+                            "for a data packet (dest, action: 1 Unicast, 3 Queue, "
+                            "4 Deliver, 5 Drop).",
+                            MakeTraceSourceAccessor(&RoutingProtocol::m_dataDecisionTrace),
+                            "ns3::anthocnet::RoutingProtocol::DataDecisionCallback")
+            .AddTraceSource("StateSize",
+                            "swarm-core's router observer (#917): the pheromone "
+                            "table's footprint changed (entries, bytes).",
+                            MakeTraceSourceAccessor(&RoutingProtocol::m_stateSizeTrace),
+                            "ns3::anthocnet::RoutingProtocol::StateSizeCallback")
             .AddTraceSource("MacReinject",
                             "A MAC retry-limit-dropped data packet was "
                             "re-injected into the pending queue (#46/#386). "
@@ -540,6 +564,28 @@ void RoutingProtocol::onAntReceived(::anthocnet::core::AntType type,
 void RoutingProtocol::onRouteChanged(::anthocnet::core::NodeAddress dest,
                                      ::anthocnet::core::NodeAddress nb, bool added) {
     m_routeChangedTrace(static_cast<uint32_t>(dest), static_cast<uint32_t>(nb), added);
+}
+
+void RoutingProtocol::onControlSent(uint8_t kind, bool broadcast, uint32_t bytes) {
+    m_controlTxTrace(kind, broadcast, bytes);
+}
+
+void RoutingProtocol::onControlReceived(uint8_t kind, uint32_t bytes) {
+    m_controlRxTrace(kind, bytes);
+}
+
+void RoutingProtocol::onDataDecision(::anthocnet::core::NodeAddress dest,
+                                     ::anthocnet::core::RouteAction action) {
+    m_dataDecisionTrace(ToIpv4(dest), static_cast<uint8_t>(action));
+}
+
+void RoutingProtocol::onStateSize(uint32_t entries, uint32_t bytes) {
+    m_stateSizeTrace(entries, bytes);
+}
+
+std::string RoutingProtocol::GetKindName(uint8_t kind) {
+    const char* name = ::anthocnet::core::findKindName(kind);
+    return name ? std::string(name) : std::to_string(kind);
 }
 
 void RoutingProtocol::GetPheromoneDiag(Ipv4Address dest, Ipv4Address neighbor, double& regular,
@@ -1123,6 +1169,7 @@ Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header& hea
         route->SetGateway(gateway);
         route->SetSource(m_ipv4->SourceAddressSelection(ifIdx, dst));
         route->SetOutputDevice(dev);
+        if (!m_sendingAnt) onDataDecision(ToCore(dst), RouteAction::Unicast);
         return route;
     }
 
@@ -1130,6 +1177,33 @@ Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header& hea
     // launch a reactive forward ant.
     return LoopbackRoute(header, oif);
 }
+
+namespace {
+
+// #917: marks this node's ant sends (m_sendingAnt) for as long as it lives.
+class AntSendScope {
+public:
+    explicit AntSendScope(bool& flag) : m_flag(flag) { m_flag = true; }
+    AntSendScope(const AntSendScope&) = delete;
+    AntSendScope& operator=(const AntSendScope&) = delete;
+    ~AntSendScope() { m_flag = false; }
+
+private:
+    bool& m_flag;
+};
+
+// #917: an ant reaches RouteInput as a UDP datagram to ANT_PORT (RouteInput's
+// packet carries no IP header, so the UDP header comes first); any other
+// locally delivered packet is data, and its delivery a DataDecision.
+bool IsDataDatagram(Ptr<const Packet> p, const Ipv4Header& header) {
+    if (header.GetProtocol() != 17) return true;  // not UDP: not an ant
+    UdpHeader udp;
+    if (p->GetSize() < udp.GetSerializedSize()) return true;
+    p->PeekHeader(udp);
+    return udp.GetDestinationPort() != RoutingProtocol::ANT_PORT;
+}
+
+}  // namespace
 
 bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
                                  Ptr<const NetDevice> idev, AHN_RI_CB(UnicastForwardCallback) ucb,
@@ -1148,7 +1222,10 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
     // Locally destined?
     int32_t iif = m_ipv4->GetInterfaceForDevice(idev);
     if (m_ipv4->IsDestinationAddress(dst, iif)) {
-        if (!lcb.IsNull()) lcb(p, header, iif);
+        if (!lcb.IsNull()) {
+            if (IsDataDatagram(p, header)) onDataDecision(ToCore(dst), RouteAction::Deliver);
+            lcb(p, header, iif);
+        }
         return true;
     }
 
@@ -1181,6 +1258,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
         route->SetGateway(gateway);
         route->SetSource(header.GetSource());
         route->SetOutputDevice(dev);
+        onDataDecision(ToCore(dst), RouteAction::Unicast);
         ucb(route, p, header);
         return true;
     }
@@ -1219,6 +1297,7 @@ void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header&
 
 void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     if (m_socketAddresses.empty()) return;
+    const AntSendScope sending(m_sendingAnt);
     Ptr<Packet> packet = Create<Packet>();
     AntHeader header(msg);
     packet->AddHeader(header);
@@ -1382,6 +1461,7 @@ void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
         if (!e.ucb.IsNull()) {
             m_everRouted.insert(coreDest);  // #21: this dest has been routed
             m_queue.NoteDelivered(e);       // #21: attribute this packet's hold
+            onDataDecision(coreDest, RouteAction::Unicast);
             e.ucb(route, e.packet, e.header);
         }
     }
@@ -1394,6 +1474,7 @@ void RoutingProtocol::DiscardQueue(NodeAddress coreDest) {
     // (repairDiscards()), but only the adapter owns the queue and so knows how
     // many packets each expired repair released.
     m_repairDiscardedPackets += pending.size();
+    for (std::size_t k = 0; k < pending.size(); ++k) onDataDecision(coreDest, RouteAction::Drop);
     for (QueueEntry& e : pending) {
         if (!e.ecb.IsNull()) e.ecb(e.packet, e.header, Socket::ERROR_NOROUTETOHOST);
     }
@@ -1418,6 +1499,7 @@ void RoutingProtocol::HelloTimerExpire() {
             // their hello would have (learnNeighbor on both names).
             Ptr<Packet> packet = Create<Packet>();
             packet->AddHeader(AntHeader(hello));
+            const AntSendScope sending(m_sendingAnt);
             for (auto& kv : m_socketAddresses) {
                 const int32_t i = m_ipv4->GetInterfaceForAddress(kv.second.GetLocal());
                 if (i >= 0 && m_ipv4->GetNetDevice(i)->IsPointToPoint()) {
@@ -1473,6 +1555,11 @@ void RoutingProtocol::ReactiveRetryTimerExpire() {
                 // layer, so the flood already shows there.
                 onAntSent(AntType::Reactive, ::anthocnet::core::AntDirection::Up,
                           /*broadcast=*/true);
+                onControlSent(
+                    ::anthocnet::core::controlKind(AntType::Reactive,
+                                                   ::anthocnet::core::AntDirection::Up),
+                    /*broadcast=*/true,
+                    static_cast<uint32_t>(::anthocnet::core::codec::serializedSize(refa)));
             } else {
                 // #21 dead spot: a route re-formed without a Deliver or a
                 // traversing backward ant (hello-learned neighbour, LinkFail

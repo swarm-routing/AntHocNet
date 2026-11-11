@@ -275,8 +275,8 @@ the ruleset, so nothing in the release needs a bypass actor.
 
 [`.github/workflows/quality.yml`](.github/workflows/quality.yml) runs on every
 push to `main` and every PR that changes more than prose. It measures coverage
-of AntHocNet's own C++ (the core, the ns-3 module and the routing-bench harness;
-not `ns3/baselines/`) under the core's unit tests and the module's `test.py`
+of AntHocNet's own C++ (the core and the ns-3 module; not `ns3/baselines/`, and
+not the routing-bench harness, which swarm-routing/ns3-tools measures) under the core's unit tests and the module's `test.py`
 suites, uploads it to [Codecov](https://codecov.io/gh/swarm-routing/AntHocNet)
 ([`.codecov.yml`](.codecov.yml): project status within 1% of the base, 80% on
 the patch), and runs a [SonarQube Cloud](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)

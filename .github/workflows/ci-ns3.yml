@@ -631,7 +631,8 @@ jobs:
 
   # ADR-0027 (#767, v2.6.0 exit criterion): the comparison harness alone, on
   # stock ns-3 -- routing-bench with no AntHocNet and no comparison module
-  # beside it. It must build, pass its tests, offer exactly the stock arms and
+  # beside it. The harness is the swarm-routing/ns3-tools release that
+  # ns3-tools.lock pins (ns3-tools#29), fetched and sha256-checked. It must build, pass its tests, offer exactly the stock arms and
   # deliver with them, and refuse an arm that is not installed.
   routing-bench-alone:
     name: routing-bench alone (stock ns-3 only)
@@ -646,12 +647,10 @@ jobs:
     # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install routing-bench only
+      - name: Install routing-bench only (the ns3-tools pin)
         run: |
-          d=/opt/ns-3/contrib/routing-bench
-          mkdir -p "$d"
-          cp -r ns3/routing-bench/model ns3/routing-bench/helper ns3/routing-bench/examples \
-                ns3/routing-bench/test ns3/routing-bench/CMakeLists.txt "$d/"
+          src=$(python3 tools/ns3_tools.py path routing-bench)
+          cp -r "$src" /opt/ns-3/contrib/routing-bench
       - name: Configure, build, test, run the stock arms
         run: |
           cd /opt/ns-3
@@ -684,10 +683,10 @@ jobs:
           fi
           grep -q "unknown protocol 'anthocnet'" /tmp/u.log
 
-  # #770 (v2.7.0 exit criterion): the standalone release packages
-  # (routing-bench-<ver>.tar.gz, adaptive-<ver>.tar.gz), built by
-  # tools/release/module-tarball.sh exactly as release.yml builds them, each
-  # unpacked into a clean stock ns-3 tree: it must build, pass its tests and,
+  # #770 (v2.7.0 exit criterion): the standalone packages, adaptive-<ver>.tar.gz
+  # built by tools/release/module-tarball.sh exactly as release.yml builds it,
+  # and routing-bench-<ver>.tar.gz from the ns3-tools release ns3-tools.lock
+  # pins (ns3-tools#29), each unpacked into a clean stock ns-3 tree: it must build, pass its tests and,
   # with the harness installed, every advertised arm must deliver multi-hop.
   # The harness alone and the harness with the adaptive arms run on every
   # version of the run; adaptive alone (it registers no arm without the
