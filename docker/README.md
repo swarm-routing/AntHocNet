@@ -73,6 +73,40 @@ What they published stays pullable and is never rebuilt:
 - NS-2 images (`ns2`, `anthocnet-ns2` at `2.34` / `2.35`), built through
   v1.9.0; see [docs/ns2-support.md](../docs/ns2-support.md).
 
+### Images of record
+
+Frozen means: never pushed again, never deleted, still pullable
+([swarm-routing/.github#110](https://github.com/swarm-routing/.github/issues/110)).
+Digests read from the registry on 2026-11-11. The `##PROV##` line of a
+published cell names the image as `image=<repo>:<tag>` (cells before the
+control campaign) or by digest (the control campaign, #867).
+
+| Image | Digest | Cells that name it | Published numbers |
+|---|---|---|---|
+| `ghcr.io/danieljoppi/ns3:3.42-opt` | `sha256:af6b50155528164de33764f059a2736d31bf4cca1c4778009c93fb6620ddc95e` | 519 `##PROV##` lines in `results/cells/` | the MANET, mesh, FANET, VANET, disaster and ISL-grid pages through v2.7.0 ([benchmark index](../docs/benchmarks.md)) |
+| `ghcr.io/danieljoppi/ns3:3.48` | `sha256:8b5a0e308dd4bbb55b3124cfff18f24746ba598646f90f24d38a6e4bfdf06c65` | 127 lines (LEO, SAGIN, satellite cells) | the satellite pages; the control arm of [v2.7.x image control](../docs/benchmarks/v2.7.x-image-control.md) |
+| `ghcr.io/danieljoppi/ns3:3.36` | `sha256:8d5ec48981810473613cbec96a0ee855a85827c57151ae89f08d96985d524bac` | none | the NS-3 3.36 compatibility leg, until this change |
+| `ghcr.io/danieljoppi/anthocnet-ns3:3.48` (`:latest`) | `sha256:404485ca9a37c1e49afab41bde6dd85ced3a236ef2dcdc28a3f3eeb79db626cb` | none | the release image of v2.x through v2.6.1 |
+| `ghcr.io/danieljoppi/anthocnet-ns3:3.36` | `sha256:0e29faac52f7aa30024d33a8a1465f307ab2691df8a814978ddc03d385dcc366` | none | the 3.36 release image |
+| `ghcr.io/swarm-routing/ns3:3.42-opt` | `sha256:735c52a7605d36f5a92fde95e17e29cbd77bc2529b31806be898749b41b81127` | none | the post-transfer rebuild (legacy replay path); not byte-identical to the `danieljoppi` tag |
+| `ghcr.io/swarm-routing/ns3:3.48` | `sha256:b1ff6fab12600beee57e453f468d72b49c7a967ff868e6aac4a143697760e690` | none | as above |
+| `ghcr.io/swarm-routing/ns3:3.36` | `sha256:938d9bb6ba74dba0af3e2dfc1af748621887ffc0f81a74bf859f1b2bd28c43e9` | none | the on-demand 3.36 leg of `ci-ns3.yml` |
+| `ghcr.io/swarm-routing/anthocnet-ns3:3.48` (`:latest`) | `sha256:0671d73f2092181a25f39cc5ae7f4f985a43bdfa2b5d09319513c9c3b2795edc` | none | the post-transfer rebuild |
+| `ghcr.io/swarm-routing/anthocnet-ns3:3.36` | `sha256:a6290ff0586fa35d91995e304094b6bd33e54664718f0791c03ef96ad144ca6e` | none | as above |
+
+The other tags (`3.41`, `3.47`, the `-<release>` pins) are no published cell's
+image; they stay for the same reason. A `:latest` tag on these repositories is
+not a pin: use the digest. The campaign images of new numbers are a separate
+set (`ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:...`, built by
+`campaign-image.yml`), recorded in each run's `##PROV##` line.
+
+No workflow on `main` pushes to `ghcr.io/danieljoppi/`, and none pulls from it
+for new work. The one reader is the control campaign: a plan's
+`legacy_images` names a `danieljoppi` digest so a published cell can be re-run
+in the image its `##PROV##` names (`tools/bench/campaigns/v2.7.x-image-control*.yaml`,
+`benchmark-cell.yml` `legacy_image`). Only the account owner can change those
+packages (keep them public, delete nothing); the checklist is on #110.
+
 Numbers measured on the new images (gcc-13, ns-3.48) are compared with
 published ones only after the control campaign of
 [#867](https://github.com/swarm-routing/AntHocNet/issues/867) has measured

@@ -221,7 +221,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15  # longest group (disaster): ~6 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
