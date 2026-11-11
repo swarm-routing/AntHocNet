@@ -69,6 +69,8 @@ jobs:
         version: ${{ fromJSON(inputs.versions) }}
         include:
           - version: ${{ inputs.gate-version }}
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # ccache (#609) for the legs that recompile all of ns-3, not only the
@@ -150,7 +152,7 @@ jobs:
           ls -l /tmp/ns3-tree.tar
       - name: Upload the built tree
         if: matrix.version == inputs.gate-version
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ns3-tree-${{ inputs.gate-version }}
           path: /tmp/ns3-tree.tar
@@ -222,6 +224,8 @@ jobs:
       fail-fast: false
       matrix:
         group: [disaster, arm-delivery, seeds, partition, fanet, vanet, satellite, misc]
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -484,6 +488,8 @@ jobs:
       # explicit so LSan can't start failing with "ptrace failed" after a
       # runner/docker update.
       options: --cap-add=SYS_PTRACE
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # ccache (#609), as in ns3-build: the sanitizer flags reach every
@@ -582,6 +588,8 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install AntHocNet only
@@ -624,6 +632,8 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install routing-bench only
@@ -699,6 +709,8 @@ jobs:
             packages: 'routing-bench,adaptive'
           - version: ${{ inputs.gate-version }}
             packages: 'adaptive'
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the package(s) from their release tarballs and check them

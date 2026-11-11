@@ -18,6 +18,10 @@ jobs:
     # 35-45 min (2026-10-31); the jobs take 1-4 min when green.
     timeout-minutes: 15  # longest green run: 2.2 min
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
         timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
@@ -29,6 +33,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15  # longest green run: 3.6 min (#840)
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain
         timeout-minutes: 10  # apt; longest green run: 3.1 min (#840)
@@ -58,6 +66,10 @@ jobs:
     # Adapter coverage would mean instrumenting a containerized ns-3 build and is
     # out of scope.
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -97,7 +109,7 @@ jobs:
             --xml-pretty --xml coverage/coverage.xml \
             --json-summary coverage/summary.json
       - name: Upload the detailed report (HTML + Cobertura XML)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core-coverage-report
           path: coverage/
@@ -112,6 +124,10 @@ jobs:
     # its decode path against a small seed corpus. ubuntu-24.04's clang ships
     # the libFuzzer/ASan runtimes; a crash/UB/over-read fails the job.
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build the codec fuzz target (clang + libFuzzer/ASan)
         run: |

@@ -50,6 +50,10 @@ jobs:
       contents: read           # checkout
       actions: read            # read workflow definitions for the workflow checks
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
       # Every action is SHA-pinned with the tag in a trailing comment, matching
       # the repo-wide pinning done in #338 — doubly so here, in a job that holds
       # `security-events: write` and an OIDC token.
@@ -78,6 +82,6 @@ jobs:
           publish_results: true
 
       - name: Upload to code scanning
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: results.sarif
