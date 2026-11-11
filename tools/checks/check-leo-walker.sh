@@ -65,9 +65,9 @@
 # release ns-3 supports.
 set -euo pipefail
 # Marker fields are read by name through the tested reader, not by awk
-# position (#791; tools/bench/test_bench_parse_query.py).
-BENCH_PARSE="$(cd "$(dirname "$0")/../bench" && pwd)/bench_parse.py"
-field() { python3 "$BENCH_PARSE" --get "$1" --from "$2" --proto "$3" -; }  # reads stdin
+# position (#791; tools/bench/test_bench_parse_query.py), from ns3-tools.
+NS3_TOOLS="$(cd "$(dirname "$0")/.." && pwd)/ns3_tools.py"  # the reader pinned in ns3-tools.lock
+field() { python3 "$NS3_TOOLS" run bench_parse --get "$1" --from "$2" --proto "$3" -; }  # reads stdin
 
 NS3DIR=${1:?usage: check-leo-walker.sh <ns3-dir>}
 # Resolve the repo before leaving it: CI calls this by a relative path.

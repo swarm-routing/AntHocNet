@@ -21,7 +21,7 @@ output is deterministic (the bootstrap is seeded by stats_util).
   * families-native.png -- the cross-family view (#711, ADR-0026) as a
     forest plot over every family cell: AntHocNet's paired per-seed PDR gap
     to the oracle and to the cell's best native baseline, 95 % t-CI
-    (tools/bench/native_view.py computes both).
+    (ns3_tool/native_view.py computes both).
   * scale-v240.png     -- #62: PDR and routing packets per node against node
     count, 50-500 nodes at constant density (the v2.4.0 scale campaign).
   * ../sweep-<name>.png -- the area / pause / scale sweep charts, re-rendered
@@ -51,18 +51,13 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter, NullLocator
 
-SKILL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
-                     "tools", "bench")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
+import ns3_tools  # the readers pinned in ns3-tools.lock
 
 
 def _load(name):
-    """Load a tools/bench module (single source for parsing and CI math)."""
-    sys.path.insert(0, SKILL)  # bench_parse imports stats_util by name
-    spec = importlib.util.spec_from_file_location(
-        name, os.path.join(SKILL, f"{name}.py"))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """An ns3_tool reader (single source for parsing and CI math, ns3-tools#29)."""
+    return ns3_tools.module(name)
 
 
 su = _load("stats_util")

@@ -161,11 +161,14 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   `CHANGELOG.md`, a Commitizen-driven `Release` workflow that builds an
   install-bundle zip (Zenodo-ready); Conventional-Commit PR titles are
   CI-enforced (item 14).
-- **Agent tooling is script-first** (ADR-0014): shipped scripts in `tools/bench/`
-  do benchmark parsing/A/B noise calls (`bench_parse.py`), campaign-CSV
-  summaries (`sweep_summary.py`), scenario pre-flight + result-plausibility
-  validation (`scenario_check.py`, #134), throttled campaigns from a plan
-  file (`campaign.py`, #662); the `.claude/skills/` hold the
+- **Agent tooling is script-first** (ADR-0014): benchmark parsing/A/B noise
+  calls (`bench_parse`) and campaign-CSV summaries (`sweep_summary`) are the
+  `ns3_tool` readers of swarm-routing/ns3-tools, run at the release
+  `ns3-tools.lock` pins through `tools/ns3_tools.py run` (ns3-tools#29, which
+  also moved the `routing-bench` harness there); shipped scripts in
+  `tools/bench/` do scenario pre-flight + result-plausibility validation
+  (`scenario_check.py`, #134) and throttled legacy campaigns from a plan file
+  (`campaign.py`, #662); the `.claude/skills/` hold the
   procedures and the diff invariant checks — raw tables and logs stay out of
   LLM context; only script verdicts are read. Release packages carry no agent
   files (`tools/release/check-bundle.sh`, #604).

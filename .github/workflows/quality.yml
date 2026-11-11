@@ -1,8 +1,9 @@
 name: Quality
 
 # SonarQube Cloud analysis and Codecov coverage of AntHocNet's own C++: the
-# core, the ns-3 module and the routing-bench harness (sonar-project.properties
-# lists them; ns3/baselines/ is out). Report-only: ci.yml's `CI gate` does not
+# core and the ns-3 module (sonar-project.properties lists them; ns3/baselines/
+# is out, and the routing-bench harness is measured in swarm-routing/ns3-tools,
+# where it lives: ns3-tools#29). Report-only: ci.yml's `CI gate` does not
 # wait for this workflow, and neither service's status is a required check, so
 # an outage at either one never blocks a merge.
 #
@@ -10,7 +11,8 @@ name: Quality
 # there, because Sonar's C++ analysis needs the ns-3 headers the compile
 # commands name. The core is built as ci-core.yml's core-coverage job builds it
 # (ANTHOCNET_COVERAGE); the module is built by the image's ns3-build-contrib
-# with --coverage on anthocnet and routing-bench only, and their test.py suites
+# with --coverage on anthocnet only (the harness from the ns3-tools pin is built,
+# not instrumented), and the anthocnet and routing-bench test.py suites
 # run as in ci-ns3.yml. The other gates (smokes, anchors, ASan) stay in ci.yml.
 on:
   push:
@@ -88,10 +90,11 @@ jobs:
             for e in "$src"/*; do ln -s "$e" "$stage/$m/"; done
             ln -s "$ws/core/include" "$ws/core/src" "$stage/$m/core/"
           done
-          ns3-build-contrib --coverage --quality-modules 'anthocnet;routing-bench' \
+          bench=$(python3 tools/ns3_tools.py path routing-bench)   # ns3-tools.lock (ns3-tools#29)
+          ns3-build-contrib --coverage --quality-modules 'anthocnet' \
             --suite anthocnet --suite routing-bench \
             "$ws/ns3/baselines/gpsr" "$ws/ns3/baselines/aomdv" "$stage/oracle" \
-            "$ws/ns3/baselines/adaptive" "$ws/ns3/routing-bench" "$stage/anthocnet"
+            "$ws/ns3/baselines/adaptive" "$bench" "$stage/anthocnet"
       - name: Merge the compilation databases
         # Sonar's CFamily analysis reads build/compile_commands.json: the core
         # build's entries and the ns-3 tree's, kept only for files that resolve
@@ -128,8 +131,7 @@ jobs:
         # is merged into one entry.
         run: |
           filters=(--filter 'core/src/' --filter 'core/include/'
-                   --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/'
-                   --filter 'ns3/routing-bench/model/' --filter 'ns3/routing-bench/helper/')
+                   --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/')
           gcovr --root . core/build-coverage "${filters[@]}" --json /tmp/cov-core.json
           gcovr --root /opt/ns-3 /opt/ns-3/cmake-cache "${filters[@]}" --json /tmp/cov-ns3.json
           python3 - /tmp/cov-core.json=. /tmp/cov-ns3.json=/opt/ns-3 <<'EOF'

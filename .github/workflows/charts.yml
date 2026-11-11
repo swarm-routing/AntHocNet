@@ -30,8 +30,8 @@ on:
       - 'results/campaign/**'
       - 'ns3/tools/family-charts.py'
       - 'ns3/tools/make-charts.py'
-      - 'tools/bench/bench_parse.py'
-      - 'tools/bench/stats_util.py'
+      - 'ns3-tools.lock'
+      - 'tools/ns3_tools.py'
       - 'requirements/matplotlib.txt'
       - '.github/workflows/charts.yml'
   pull_request:
@@ -40,8 +40,8 @@ on:
       - 'results/campaign/**'
       - 'ns3/tools/family-charts.py'
       - 'ns3/tools/make-charts.py'
-      - 'tools/bench/bench_parse.py'
-      - 'tools/bench/stats_util.py'
+      - 'ns3-tools.lock'
+      - 'tools/ns3_tools.py'
       - 'requirements/matplotlib.txt'
       - '.github/workflows/charts.yml'
   workflow_dispatch:

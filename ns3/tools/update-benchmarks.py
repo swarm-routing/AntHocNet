@@ -41,8 +41,8 @@ placeholder, because a wrong commit is worse than a missing one.
 """
 import argparse
 import csv
-import importlib.util
 import os
+import sys
 
 START = "<!-- BENCHMARK-TABLE-START -->"
 END = "<!-- BENCHMARK-TABLE-END -->"
@@ -55,13 +55,11 @@ _PROVENANCE = ""
 
 
 def _load_stats_util():
-    """Load tools/bench/stats_util.py (single source for the CI math)."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
-                        "tools", "bench", "stats_util.py")
-    spec = importlib.util.spec_from_file_location("stats_util", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """ns3_tool.stats_util at the ns3-tools.lock pin (single source for the CI math)."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                                    "tools"))
+    import ns3_tools
+    return ns3_tools.module("stats_util")
 
 
 su = _load_stats_util()

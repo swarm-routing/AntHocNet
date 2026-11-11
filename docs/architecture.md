@@ -284,7 +284,9 @@ The adapters do only what is intrinsically simulator-specific:
 
 The comparison harness is not part of the adapter: it measures the adapter
 beside other protocols. Since v2.6.0 it is its own ns-3 module,
-`routing-bench` (`routing-compare`, alias `anthocnet-compare`), and AntHocNet
+`routing-bench` (`routing-compare`, alias `anthocnet-compare`), since v2.7.0
+maintained in [swarm-routing/ns3-tools](https://github.com/swarm-routing/ns3-tools)
+at the release `ns3-tools.lock` pins, and AntHocNet
 reaches it as one arm among others, through `helper/anthocnet-bench-arms.cc`
 ([ADR-0027](adr/0027-the-comparison-harness-is-protocol-agnostic.md)). How to
 run it and add a protocol is in [comparison-harness.md](comparison-harness.md).

@@ -1,6 +1,6 @@
 # ADR-0027: The comparison harness is a protocol-agnostic module
 
-- **Status:** Accepted (maintainer request 2026-10-29, epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764); decides [#765](https://github.com/swarm-routing/AntHocNet/issues/765)). Implemented in v2.6.0 (#766, #767, #768); amended 2026-10-29 with the hooks the extraction needed (below)
+- **Status:** Accepted (maintainer request 2026-10-29, epic [#764](https://github.com/swarm-routing/AntHocNet/issues/764); decides [#765](https://github.com/swarm-routing/AntHocNet/issues/765)). Implemented in v2.6.0 (#766, #767, #768); amended 2026-10-29 with the hooks the extraction needed (below). Since v2.7.0 the module lives in [swarm-routing/ns3-tools](https://github.com/swarm-routing/ns3-tools) (`ns3/routing-bench/`), and this repository installs the release pinned in `ns3-tools.lock` ([ns3-tools#29](https://github.com/swarm-routing/ns3-tools/issues/29)); the decision below is unchanged, and paths to `ns3/routing-bench/` name that repository's tree
 - **Date:** 2026-10-29
 - **Builds on:** [ADR-0023](0023-one-core-one-simulator-adapter.md) (one simulator), [ADR-0026](0026-baselines-are-family-native.md) (family-native baselines)
 

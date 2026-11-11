@@ -485,7 +485,8 @@ def _verdicts():
 
     def run(cmd, **_k):
         calls.append(cmd[cmd.index("--proto") + 1])
-        return argparse.Namespace(stdout=f"    paired 95% CI (n=2): dPDR {calls[-1]}\n")
+        return argparse.Namespace(stdout=f"    paired 95% CI (n=2): dPDR {calls[-1]}\n",
+                                  stderr="", returncode=0)
 
     plan = dict(PLAN, program=cp.PROGRAM, jobs=[
         {"arms": ["control", "quiet"], "cells": "*",

@@ -10,7 +10,7 @@ per-point deltas, and the stddev-aware noise call happen in the script; only
 its compact grid should reach context.
 
 ```bash
-S=tools/bench/sweep_summary.py
+S="tools/ns3_tools.py run sweep_summary"
 python3 $S results/campaign/*.csv        # anthocnet vs aodv per point
 python3 $S --baseline olsr --group pause FILE    # other baseline / one group
 python3 $S AFTER.csv --vs BEFORE.csv             # same sweep, two code

@@ -19,8 +19,11 @@ cd "$(dirname "$0")/../.."
 dest="$OUT/anthocnet-$VER"
 rm -rf "$dest"
 mkdir -p "$dest"
+# ns3-tools.lock names the swarm-routing/ns3-tools release (tag, commit,
+# sha256) the harness and the readers come from (ns3-tools#29); `make
+# install-ns3` fetches it through tools/ns3_tools.py.
 for f in Makefile README.md LICENSE LICENSE-MIT LICENSING.md CHANGELOG.md CITATION.cff VERSION \
-         CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md SUPPORT.md CONTEXT.md; do
+         CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md SUPPORT.md CONTEXT.md ns3-tools.lock; do
   [ -e "$f" ] && cp "$f" "$dest/"
 done
 # Tracked files only: never ship build output, caches or local scratch.
