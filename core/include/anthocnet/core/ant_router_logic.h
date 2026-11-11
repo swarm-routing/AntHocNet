@@ -219,6 +219,22 @@ private:
     /// Build a Unicast/Broadcast decision carrying `ant`, counting it as sent
     /// and notifying the observer (the single choke point for ant emission).
     RouteDecision sendAnt(RouteAction action, NodeAddress nextHop, const AntMessage& ant);
+    /// Observer (#917): onControlSent for `ant` with its encoded size.
+    void reportControlSent(const AntMessage& ant, bool broadcast) const;
+    /// Observer (#917): onStateSize when the table's entry count changed since
+    /// the last report.
+    void reportStateSize();
+    /// Calls reportStateSize() when an entry point returns, by any path.
+    class StateReport {
+    public:
+        explicit StateReport(AntRouterLogic& logic) : logic_(logic) {}
+        StateReport(const StateReport&) = delete;
+        StateReport& operator=(const StateReport&) = delete;
+        ~StateReport() { logic_.reportStateSize(); }
+
+    private:
+        AntRouterLogic& logic_;
+    };
     /// Apply a received LinkFail notification and, if it costs this node its own
     /// best path, return a bounded propagated notification.
     std::vector<RouteDecision> handleLinkFail(const AntMessage& note, NodeAddress reporter);
@@ -274,6 +290,7 @@ private:
     double lastEvaporation_ = 0.0;  ///< last evaporateAll time
 
     IRouterObserver* observer_ = nullptr;            ///< optional, item 15
+    std::uint32_t stateEntries_ = 0;                 ///< footprint last reported (#917)
     std::map<AntType, std::uint64_t> antsSent_;      ///< sent counters by type
     std::map<AntType, std::uint64_t> antsReceived_;  ///< received counters by type
     std::uint64_t linkfailPropagations_ = 0;         ///< re-broadcast LinkFails (issue #20)

@@ -87,6 +87,19 @@ public:
     // same site that increments MacReinjectedPackets(), so a listener's event
     // count and that counter agree by construction.
     typedef void (*MacReinjectCallback)(const Ipv4Header& header, Ptr<const Packet> packet);
+    // #917: swarm-core's router-observer trace sources, same names and
+    // arguments (model/swarm-routing-base.h), except that DataDecision's
+    // action is the core RouteAction as uint8_t, numbered as
+    // swarm::core::RouteAction (Unicast 1, Queue 3, Deliver 4, Drop 5).
+    typedef void (*ControlTxCallback)(uint8_t kind, bool broadcast, uint32_t bytes);
+    typedef void (*ControlRxCallback)(uint8_t kind, uint32_t bytes);
+    typedef void (*DataDecisionCallback)(Ipv4Address dest, uint8_t action);
+    typedef void (*StateSizeCallback)(uint32_t entries, uint32_t bytes);
+
+    /// The name of a ControlTx/ControlRx kind ("REACTIVE_BANT"), or the kind
+    /// in decimal when the table does not name it (as swarm-core's
+    /// SwarmRoutingBase::GetKindName).
+    static std::string GetKindName(uint8_t kind);
 
     // core::IRouterObserver
     void onAntSent(::anthocnet::core::AntType type, ::anthocnet::core::AntDirection dir,
@@ -95,6 +108,14 @@ public:
                        ::anthocnet::core::AntDirection dir) override;
     void onRouteChanged(::anthocnet::core::NodeAddress dest, ::anthocnet::core::NodeAddress nb,
                         bool added) override;
+    void onControlSent(uint8_t kind, bool broadcast, uint32_t bytes) override;
+    void onControlReceived(uint8_t kind, uint32_t bytes) override;
+    // Fed by the core (onDataPacket) and by this adapter for the decisions it
+    // takes on its own (RouteOutput/RouteInput forwarding, local delivery,
+    // queue flush and discard).
+    void onDataDecision(::anthocnet::core::NodeAddress dest,
+                        ::anthocnet::core::RouteAction action) override;
+    void onStateSize(uint32_t entries, uint32_t bytes) override;
 
     // #216 diagnostic: read the current regular and virtual pheromone for
     // (dest, neighbour), both given as canonical Ipv4 addresses. Zeroes when
@@ -475,6 +496,15 @@ private:
     TracedCallback<uint8_t, uint8_t, bool> m_txAntTrace;
     TracedCallback<uint8_t, uint8_t> m_rxAntTrace;
     TracedCallback<uint32_t, uint32_t, bool> m_routeChangedTrace;
+    // #917: swarm-core's router-observer events (see ControlTxCallback above).
+    TracedCallback<uint8_t, bool, uint32_t> m_controlTxTrace;
+    TracedCallback<uint8_t, uint32_t> m_controlRxTrace;
+    TracedCallback<Ipv4Address, uint8_t> m_dataDecisionTrace;
+    TracedCallback<uint32_t, uint32_t> m_stateSizeTrace;
+    // #917: true while this node's own ant sockets are sending, so the
+    // RouteOutput lookup a unicast or subnet-broadcast ant triggers is not
+    // reported as a data decision.
+    bool m_sendingAnt = false;
     // #386: MAC-failure re-injection (see MacReinjectCallback above).
     TracedCallback<const Ipv4Header&, Ptr<const Packet>> m_macReinjectTrace;
     // #402: the cap counterpart — a MAC retry-limit-dropped data packet hit

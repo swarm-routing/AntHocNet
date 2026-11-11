@@ -149,7 +149,9 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   (`campaign-image.yml`); this repo builds no ns-3 images of its own since #866 (`docker/README.md`).
 - **Observability**: the core exposes ant/route counters + an optional
   `IRouterObserver`; the NS-3 module surfaces `Tx`/`Rx`/`RouteChanged` trace
-  sources, read by `anthocnet-compare --diag` (item 15).
+  sources, read by `anthocnet-compare --diag` (item 15), and swarm-core's
+  router-observer events (`ControlTx`/`ControlRx`/`DataDecision`/`StateSize`,
+  #917), which the core reports through the same observer without linking swarm-core.
 - **Benchmarks run nightly**: a classified scenario taxonomy across all
   baselines (AODV/OLSR/DSDV) with the table + a chart auto-committed to
   `docs/benchmarks*`; the paper's area/pause/scale sweeps were the manual

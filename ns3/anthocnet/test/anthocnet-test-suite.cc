@@ -38,6 +38,9 @@
 #include "ns3/ipv4-l3-protocol.h"
 #include "ns3/uinteger.h"
 
+#include <sstream>
+#include <string>
+
 #include "ns3/anthocnet-packet.h"
 #include "anthocnet/core/ant_message_codec.h"
 #include "ns3/anthocnet-helper.h"
@@ -644,6 +647,149 @@ private:
     uint32_t m_repairAnts;
 };
 
+// #917: swarm-core's router-observer trace sources (ControlTx, ControlRx,
+// DataDecision, StateSize) report every event, and connecting them changes
+// nothing (org rule 5): the same seed gives the same Tx/RouteChanged event
+// stream and the same delivered bytes with them connected and without.
+class ObserverTracesTestCase : public TestCase {
+public:
+    ObserverTracesTestCase()
+        : TestCase("Router-observer traces report and leave the run unchanged") {}
+
+    void DoRun() override {
+        const std::string without = Run(false);
+        const std::string with = Run(true);
+        NS_TEST_ASSERT_MSG_EQ(with, without, "connecting the observer traces changed the run");
+        NS_TEST_ASSERT_MSG_GT(m_controlTx, 0u, "no ControlTx");
+        NS_TEST_ASSERT_MSG_GT(m_controlRx, 0u, "no ControlRx");
+        NS_TEST_ASSERT_MSG_EQ(m_unnamedKinds, 0u, "a control kind without a name");
+        NS_TEST_ASSERT_MSG_EQ(m_zeroBytes, 0u, "a control message of 0 bytes");
+        NS_TEST_ASSERT_MSG_GT(m_forwarded, 0u, "no Unicast data decision");
+        NS_TEST_ASSERT_MSG_GT(m_delivered, 0u, "no Deliver data decision");
+        // One Deliver per 64-byte datagram the sink got: ants are not data.
+        NS_TEST_ASSERT_MSG_EQ(m_delivered, m_rxBytes / 64, "Deliver count != data delivered");
+        NS_TEST_ASSERT_MSG_GT(m_queued, 0u, "no Queue data decision");
+        NS_TEST_ASSERT_MSG_GT(m_stateReports, 0u, "no StateSize report");
+        NS_TEST_ASSERT_MSG_EQ(m_badStateBytes, 0u, "StateSize bytes are not entries x 16");
+        NS_TEST_ASSERT_MSG_EQ(ns3::anthocnet::RoutingProtocol::GetKindName(0x82),
+                              std::string("REACTIVE_BANT"), "kind name");
+        NS_TEST_ASSERT_MSG_EQ(ns3::anthocnet::RoutingProtocol::GetKindName(0x7f),
+                              std::string("127"), "unnamed kind");
+    }
+
+private:
+    // The 3-node line of AntHocNetDeliveryTestCase; returns its event stream.
+    std::string Run(bool observe) {
+        RngSeedManager::SetSeed(1);
+        RngSeedManager::SetRun(1);
+        m_events.str("");
+        m_rxBytes = 0;
+
+        NodeContainer nodes;
+        nodes.Create(3);
+        Ptr<SimpleChannel> channel = CreateObject<SimpleChannel>();
+        SimpleNetDeviceHelper devHelper;
+        NetDeviceContainer devices = devHelper.Install(nodes, channel);
+        Ptr<SimpleNetDevice> d0 = DynamicCast<SimpleNetDevice>(devices.Get(0));
+        Ptr<SimpleNetDevice> d2 = DynamicCast<SimpleNetDevice>(devices.Get(2));
+        channel->BlackList(d0, d2);
+        channel->BlackList(d2, d0);
+
+        AntHocNetHelper anthocnet;
+        InternetStackHelper internet;
+        internet.SetRoutingHelper(anthocnet);
+        internet.Install(nodes);
+        Ipv4AddressHelper address;
+        address.SetBase("10.1.0.0", "255.255.255.0");
+        // Both runs share this process, where streams are otherwise numbered
+        // on from the previous run: fix them, before the interfaces come up and
+        // the first hello is jittered, so the runs draw the same values.
+        anthocnet.AssignStreams(nodes, 0);
+        internet.AssignStreams(nodes, 1000);
+        Ipv4InterfaceContainer ifs = address.Assign(devices);
+
+        for (uint32_t i = 0; i < nodes.GetN(); ++i) {
+            Ptr<ns3::anthocnet::RoutingProtocol> rp = DynamicCast<ns3::anthocnet::RoutingProtocol>(
+                nodes.Get(i)->GetObject<Ipv4>()->GetRoutingProtocol());
+            rp->TraceConnectWithoutContext("Tx", MakeCallback(&ObserverTracesTestCase::Tx, this));
+            rp->TraceConnectWithoutContext("RouteChanged",
+                                           MakeCallback(&ObserverTracesTestCase::Route, this));
+            if (!observe) continue;
+            rp->TraceConnectWithoutContext("ControlTx",
+                                           MakeCallback(&ObserverTracesTestCase::ControlTx, this));
+            rp->TraceConnectWithoutContext("ControlRx",
+                                           MakeCallback(&ObserverTracesTestCase::ControlRx, this));
+            rp->TraceConnectWithoutContext("DataDecision",
+                                           MakeCallback(&ObserverTracesTestCase::Decision, this));
+            rp->TraceConnectWithoutContext("StateSize",
+                                           MakeCallback(&ObserverTracesTestCase::State, this));
+        }
+
+        const uint16_t port = 9;
+        Ptr<Socket> rx = Socket::CreateSocket(nodes.Get(2), UdpSocketFactory::GetTypeId());
+        rx->Bind(InetSocketAddress(Ipv4Address::GetAny(), port));
+        rx->SetRecvCallback(MakeCallback(&ObserverTracesTestCase::Receive, this));
+        Ptr<Socket> tx = Socket::CreateSocket(nodes.Get(0), UdpSocketFactory::GetTypeId());
+        tx->Connect(InetSocketAddress(ifs.GetAddress(2), port));
+        for (double t = 10.0; t < 18.0; t += 0.5) {
+            Simulator::Schedule(Seconds(t), &ObserverTracesTestCase::Send, this, tx);
+        }
+        Simulator::Stop(Seconds(20.0));
+        Simulator::Run();
+        Simulator::Destroy();
+        m_events << "rx " << m_rxBytes << "\n";
+        return m_events.str();
+    }
+
+    void Send(Ptr<Socket> s) { s->Send(Create<Packet>(64)); }
+    void Receive(Ptr<Socket> s) {
+        Ptr<Packet> p;
+        while ((p = s->Recv())) m_rxBytes += p->GetSize();
+    }
+    void Tx(uint8_t type, uint8_t dir, bool broadcast) {
+        m_events << Simulator::Now().GetNanoSeconds() << " tx " << unsigned(type) << ' '
+                 << unsigned(dir) << ' ' << broadcast << "\n";
+    }
+    void Route(uint32_t dest, uint32_t nb, bool added) {
+        m_events << Simulator::Now().GetNanoSeconds() << " route " << dest << ' ' << nb << ' '
+                 << added << "\n";
+    }
+    void ControlTx(uint8_t kind, bool /*broadcast*/, uint32_t bytes) {
+        ++m_controlTx;
+        if (ns3::anthocnet::RoutingProtocol::GetKindName(kind) == std::to_string(kind))
+            ++m_unnamedKinds;
+        if (bytes == 0) ++m_zeroBytes;
+    }
+    void ControlRx(uint8_t kind, uint32_t bytes) {
+        ++m_controlRx;
+        if (ns3::anthocnet::RoutingProtocol::GetKindName(kind) == std::to_string(kind))
+            ++m_unnamedKinds;
+        if (bytes == 0) ++m_zeroBytes;
+    }
+    void Decision(Ipv4Address /*dest*/, uint8_t action) {
+        using ::anthocnet::core::RouteAction;
+        if (action == static_cast<uint8_t>(RouteAction::Unicast)) ++m_forwarded;
+        if (action == static_cast<uint8_t>(RouteAction::Deliver)) ++m_delivered;
+        if (action == static_cast<uint8_t>(RouteAction::Queue)) ++m_queued;
+    }
+    void State(uint32_t entries, uint32_t bytes) {
+        ++m_stateReports;
+        if (bytes != entries * 16u) ++m_badStateBytes;
+    }
+
+    std::ostringstream m_events;
+    uint32_t m_rxBytes = 0;
+    uint32_t m_controlTx = 0;
+    uint32_t m_controlRx = 0;
+    uint32_t m_unnamedKinds = 0;
+    uint32_t m_zeroBytes = 0;
+    uint32_t m_forwarded = 0;
+    uint32_t m_delivered = 0;
+    uint32_t m_queued = 0;
+    uint32_t m_stateReports = 0;
+    uint32_t m_badStateBytes = 0;
+};
+
 // ns-3 made the TestSuite/TestCase enums scoped in ns-3.42 (enum class Type /
 // Duration) and removed the deprecated unscoped aliases in ns-3.47. So the
 // scoped form is required from 3.47, the unscoped form is the only one before
@@ -669,6 +815,7 @@ public:
         AddTestCase(new StrongestNextHopTestCase(), AHN_TEST_QUICK);
         AddTestCase(new PerHopCongestionSignalTestCase(), AHN_TEST_QUICK);
         AddTestCase(new RepairAntOnLinkBreakTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new ObserverTracesTestCase(), AHN_TEST_QUICK);
     }
 };
 

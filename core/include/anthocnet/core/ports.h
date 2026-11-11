@@ -11,10 +11,12 @@
 #ifndef ANTHOCNET_CORE_PORTS_H
 #define ANTHOCNET_CORE_PORTS_H
 
+#include <cstdint>
 #include <functional>
 #include <vector>
 
 #include "anthocnet/core/ant_message.h"
+#include "anthocnet/core/route_decision.h"
 #include "anthocnet/core/types.h"
 
 namespace anthocnet {
@@ -133,7 +135,63 @@ public:
     virtual void onAntReceived(AntType /*type*/, AntDirection /*dir*/) {}
     /// A neighbour/route entry was added (true) or removed (false).
     virtual void onRouteChanged(NodeAddress /*dest*/, NodeAddress /*nb*/, bool /*added*/) {}
+
+    // swarm-core's router observer events (#917; swarm-routing/ns3-swarm-core
+    // core/swarm-observer.h, same names, arguments and meaning). They fire
+    // beside the three above, never instead of them.
+
+    /// This node put a control message of `kind` (controlKind(): the wire type
+    /// byte, 0x80 set for a backward ant) on the medium, `bytes` long as the
+    /// codec encodes it (codec::serializedSize).
+    virtual void onControlSent(std::uint8_t /*kind*/, bool /*broadcast*/, std::uint32_t /*bytes*/) {
+    }
+    /// This node processed a (non-duplicate) received control message.
+    virtual void onControlReceived(std::uint8_t /*kind*/, std::uint32_t /*bytes*/) {}
+    /// What was decided for a data packet to `dest`: Unicast (forwarded),
+    /// Queue, Drop or Deliver. The core reports onDataPacket's verdict; an
+    /// adapter reports the decisions it takes without the core.
+    virtual void onDataDecision(NodeAddress /*dest*/, RouteAction /*action*/) {}
+    /// The pheromone table's footprint: regular plus virtual entries, and
+    /// their payload bytes (kStateEntryBytes each). Reported when it changes.
+    virtual void onStateSize(std::uint32_t /*entries*/, std::uint32_t /*bytes*/) {}
 };
+
+/// One entry of the kind-name table: a control kind and the name readers print
+/// ("REACTIVE_BANT", not "130"); swarm-core's KindName.
+struct KindName {
+    std::uint8_t kind;
+    const char* name;
+};
+
+/// Set in a control kind for a backward ant. The wire carries the direction in
+/// its own byte (docs/wire-format.md), so the kind folds it into the type
+/// byte's free high bit; the AntType values use bits 0x01..0x10.
+constexpr std::uint8_t kBackwardKindBit = 0x80;
+
+/// The observer's kind for an ant of `type` travelling in `dir`.
+inline std::uint8_t controlKind(AntType type, AntDirection dir) {
+    return static_cast<std::uint8_t>(static_cast<std::uint8_t>(type) |
+                                     (dir == AntDirection::Down ? kBackwardKindBit : 0));
+}
+
+/// Every control kind AntHocNet sends, by kind. A kind added to AntType is
+/// added here too (test_observability checks the table covers them).
+constexpr KindName kControlKindNames[] = {
+    {0x01, "HELLO"},    {0x02, "REACTIVE_FANT"}, {0x04, "PROACTIVE_FANT"}, {0x08, "REPAIR_FANT"},
+    {0x10, "LINKFAIL"}, {0x82, "REACTIVE_BANT"}, {0x84, "PROACTIVE_BANT"}, {0x88, "REPAIR_BANT"},
+};
+
+/// The name of `kind`, or nullptr when the table does not name it.
+inline const char* findKindName(std::uint8_t kind) {
+    for (const KindName& k : kControlKindNames) {
+        if (k.kind == kind) return k.name;
+    }
+    return nullptr;
+}
+
+/// Payload bytes of one pheromone entry, as onStateSize counts them: the
+/// (neighbour, destination) key and its value.
+constexpr std::uint32_t kStateEntryBytes = 2 * sizeof(NodeAddress) + sizeof(double);
 
 }  // namespace core
 }  // namespace anthocnet
