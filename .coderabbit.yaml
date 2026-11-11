@@ -60,10 +60,11 @@ reviews:
         repositories.
 # org-sync:end coderabbit-head
     # AntHocNet: generated data are not reviewed line by line (the org head has
-    # no extension point for path_filters, so they are instructions, not filters).
-    - path: "{results/**,requirements/*.txt,docs/benchmarks/**/*.png}"
+    # no extension point for path_filters, so they are instructions, not filters;
+    # CodeRabbit already skips images and CSVs by default).
+    - path: "{results/**,requirements/*.txt}"
       instructions: >-
-        Committed benchmark data, generated charts and hash-pinned lockfiles
+        Committed benchmark data and hash-pinned lockfiles
         (uv pip compile): do not review line by line; check only that the PR
         says how they were regenerated.
     # AntHocNet: the golden rules (AGENTS.md) a reviewer has to check by reading.
