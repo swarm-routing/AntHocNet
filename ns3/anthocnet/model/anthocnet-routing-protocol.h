@@ -40,6 +40,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "anthocnet/core/ant_router_logic.h"
 #include "anthocnet/core/config.h"
@@ -452,7 +454,14 @@ private:
     /// #181: SINR of recently received MPDUs by packet UID (bounded FIFO), and
     /// the latest SINR per neighbour, set when an ant from it is received.
     std::deque<std::pair<uint64_t, double>> m_rxSinrByUid;
+    /// #918: the same window indexed by UID: the newest sample's SINR and how
+    /// many samples of that UID the window holds, so an ant finds its frame's
+    /// SINR without scanning the window. Looked up only, never iterated.
+    std::unordered_map<uint64_t, std::pair<double, uint32_t>> m_rxSinrIndex;
     std::map<::anthocnet::core::NodeAddress, double> m_neighborSinrDb;
+    /// #918: decisions for DeferredRouteOutput, kept between packets so the
+    /// data path does not allocate a vector per packet.
+    std::vector<::anthocnet::core::RouteDecision> m_dataDecisions;
 
     // WifiMac handle for the item-10/A2 queue-occupancy signal (null on non-wifi
     // devices, where the p2p/ISL transmit-queue reader below takes over, #206).

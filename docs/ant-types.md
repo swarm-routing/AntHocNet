@@ -243,7 +243,10 @@ The types are not just a design abstraction — they are counted and traceable:
   with `0x80` set for a backward ant (`RoutingProtocol::GetKindName(kind)`
   prints `REACTIVE_BANT`; the core's table is `kControlKindNames` in
   `ports.h`) and `bytes` its encoded size; `DataDecision` `(dest, action)` for
-  every data packet forwarded, queued, delivered or dropped; and `StateSize`
+  every data packet forwarded, queued or delivered, and a `Drop` for each
+  packet a timed-out local repair releases (packets the pending queue discards
+  on expiry or overflow are not reported, so the trace does not count every
+  drop); and `StateSize`
   `(entries, bytes)` whenever the pheromone table's entry count changes.
   Connecting them changes nothing in the run (the `anthocnet` test suite checks it).
 - **`nrl` / `nrl_bytes`** aggregate all of it into the overhead the benchmark

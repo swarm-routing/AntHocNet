@@ -19,6 +19,8 @@ _Reproduce: `make reproduce FIG=core-speed` re-renders it from the committed dat
 | `codec_encode_full_ant` | encoding a forward ant carrying the wire maximum of 100 visited hops (1241 bytes) |
 | `codec_decode_full_ant` | decoding that frame |
 | `history_dedup` | recording a new `(src, seq)` in a full dedup tracker (`maxHistory` = 4096), which evicts the oldest entry |
+| `evaporate_all` | one maintenance-tick aging of a table with 64 destinations × 16 neighbours, regular and virtual (2048 entries), with a tick short enough that none is pruned ([#918](https://github.com/swarm-routing/AntHocNet/issues/918)) |
+| `create_hello` | building one hello's diffusion adverts from that table: the best pheromone per destination, ranked, capped at `maxHelloAdverts` (#918) |
 
 ## Running it
 

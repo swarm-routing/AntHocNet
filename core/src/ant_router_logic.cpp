@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 namespace anthocnet {
 namespace core {
@@ -151,25 +152,26 @@ std::vector<RouteDecision> AntRouterLogic::onMaintenanceTick() {
         note.timeStart = now;
         note.broadcastBudget = config_.repairMaxBroadcasts;
         note.helloDests.push_back({dest, 0.0});  // repair failed: no path left
-        out.push_back(broadcastForward(note));
+        out.push_back(broadcastForward(std::move(note)));
     }
     return out;
 }
 
-RouteDecision AntRouterLogic::broadcastForward(AntMessage& ant) {
+RouteDecision AntRouterLogic::broadcastForward(AntMessage&& ant) {
     if (ant.broadcastBudget == 0) return RouteDecision::drop();  // budget exhausted
     if (ant.broadcastBudget > 0) ant.broadcastBudget -= 1;       // -1 == untracked
-    return sendAnt(RouteAction::Broadcast, kInvalidAddress, ant);
+    return sendAnt(RouteAction::Broadcast, kInvalidAddress, std::move(ant));
 }
 
-RouteDecision AntRouterLogic::sendAnt(RouteAction action, NodeAddress nextHop,
-                                      const AntMessage& ant) {
+// Every caller hands over an ant it is done with, so the decision takes it
+// without a copy (#918).
+RouteDecision AntRouterLogic::sendAnt(RouteAction action, NodeAddress nextHop, AntMessage&& ant) {
     antsSent_[ant.type] += 1;
     if (observer_) {
         observer_->onAntSent(ant.type, ant.direction, action == RouteAction::Broadcast);
     }
     reportControlSent(ant, action == RouteAction::Broadcast);
-    return {action, nextHop, true, ant};
+    return {action, nextHop, true, std::move(ant)};
 }
 
 void AntRouterLogic::reportControlSent(const AntMessage& ant, bool broadcast) const {
@@ -185,6 +187,16 @@ void AntRouterLogic::reportStateSize() {
     stateEntries_ = entries;
     observer_->onStateSize(entries, entries * kStateEntryBytes);
 }
+
+namespace {
+/// A one-decision result, moved in: `return {d};` would copy d (and the ant it
+/// carries) out of the initializer list (#918).
+std::vector<RouteDecision> just(RouteDecision&& d) {
+    std::vector<RouteDecision> out;
+    out.push_back(std::move(d));
+    return out;
+}
+}  // namespace
 
 std::uint64_t AntRouterLogic::antsSent(AntType type) const {
     auto it = antsSent_.find(type);
@@ -256,7 +268,7 @@ std::vector<RouteDecision> AntRouterLogic::reportNeighborLoss(NodeAddress n) {
     note.seqNum = nextSeq();
     note.timeStart = clock_.now();
     note.broadcastBudget = config_.repairMaxBroadcasts;
-    return {broadcastForward(note)};
+    return just(broadcastForward(std::move(note)));
 }
 
 std::vector<RouteDecision> AntRouterLogic::reportTxFailure(NodeAddress next, NodeAddress dataDest) {
@@ -300,7 +312,7 @@ std::vector<RouteDecision> AntRouterLogic::reportTxFailure(NodeAddress next, Nod
             lastRepair_[dataDest] = now;
             AntMessage rrfa = createForwardAnt(AntType::Repair, dataDest);
             rrfa.lifeAnt = config_.lifeAnt;
-            out.push_back(broadcastForward(rrfa));
+            out.push_back(broadcastForward(std::move(rrfa)));
             // Arm the wait/discard window (D6): a backward ant from dataDest
             // cancels it; onMaintenanceTick fires it.
             const double wait = lostPathDelay > 0.0 ? config_.repairWaitFactor * lostPathDelay
@@ -350,12 +362,12 @@ std::vector<RouteDecision> AntRouterLogic::handleLinkFail(const AntMessage& note
     prop.dst = kInvalidAddress;
     prop.seqNum = nextSeq();
     prop.timeStart = clock_.now();
-    RouteDecision d = broadcastForward(prop);
+    RouteDecision d = broadcastForward(std::move(prop));
     if (d.action == RouteAction::Broadcast)
         ++linkfailPropagations_;
     else
         ++linkfailBudgetDrops_;
-    return {d};
+    return just(std::move(d));
 }
 
 // --- active sessions (item 04) ----------------------------------------------
@@ -601,11 +613,10 @@ AntMessage AntRouterLogic::createHelloAnt(std::size_t maxAdverts) {
     // deterministically — active sessions first, the remainder by best
     // pheromone — not by a coin flip (issue #26, item 6.5).
     std::vector<HelloDest> candidates;
-    for (NodeAddress dest : table_.regularDestinations()) {
-        const double best = table_.bestRegular(dest);
-        if (best <= config_.minPheromone) continue;
-        candidates.push_back({dest, best});
-    }
+    // #918: read each destination's best straight from its row.
+    table_.forEachBestRegular([this, &candidates](NodeAddress dest, double best) {
+        if (best > config_.minPheromone) candidates.push_back({dest, best});
+    });
     const std::vector<NodeAddress> active = activeDestinations();
     auto isActive = [&active](NodeAddress d) {
         return std::find(active.begin(), active.end(), d) != active.end();
@@ -783,6 +794,11 @@ void AntRouterLogic::reinforceFromBackAnt(const AntMessage& ant) {
 
 std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incoming,
                                                         NodeAddress prevHop) {
+    return onReceiveAnt(AntMessage(incoming), prevHop);
+}
+
+std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(AntMessage&& incoming,
+                                                        NodeAddress prevHop) {
     const StateReport report(*this);  // deposits, LinkFail pruning, new neighbours
     // Duplicate / loop detection. With multipath on (#96, [1] §3.1) a reactive
     // forward ant uses the per-generation acceptance filter: a later
@@ -845,7 +861,7 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
         return handleLinkFail(incoming, prevHop);  // apply + maybe propagate
     }
 
-    AntMessage ant = incoming;  // mutable working copy
+    AntMessage& ant = incoming;  // the working copy, ours to change (#918)
     const bool proactive = (ant.type == AntType::Proactive);
 
     if (ant.isForward()) {
@@ -876,7 +892,7 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
             AntMessage back = createBackAnt(ant);
             NodeAddress next = advanceBackAnt(back);
             if (next == kInvalidAddress) return {RouteDecision::drop()};
-            return {sendAnt(RouteAction::Unicast, next, back)};
+            return just(sendAnt(RouteAction::Unicast, next, std::move(back)));
         }
         if (ant.src == address_) {
             return {RouteDecision::drop()};  // our own forward ant looped back
@@ -902,8 +918,8 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
                 !genQuality_.allowBroadcast(ant.src, ant.seqNum, config_.reactiveMaxBroadcasts)) {
                 return {RouteDecision::drop()};
             }
-            stampForward(ant, kInvalidAddress);  // flood: every interface at once
-            return {broadcastForward(ant)};      // bounded per type (drop at budget 0)
+            stampForward(ant, kInvalidAddress);             // flood: every interface at once
+            return just(broadcastForward(std::move(ant)));  // bounded per type (drop at budget 0)
         }
         // A proactive ant with a route is normally unicast, but with a small
         // per-hop probability it is broadcast instead to explore new paths
@@ -913,10 +929,10 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
         if (proactive && config_.enableProactive && ant.broadcastBudget != 0 &&
             rng_.uniform() < config_.proactiveBroadcastProb) {
             stampForward(ant, kInvalidAddress);
-            return {broadcastForward(ant)};
+            return just(broadcastForward(std::move(ant)));
         }
         stampForward(ant, next);
-        return {sendAnt(RouteAction::Unicast, next, ant)};
+        return just(sendAnt(RouteAction::Unicast, next, std::move(ant)));
     }
 
     // Backward ant: rebuild the deposit state from the carried path (the four
@@ -947,18 +963,26 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(const AntMessage& incomi
 
     NodeAddress next = advanceBackAnt(ant);
     if (next == kInvalidAddress) return {RouteDecision::drop()};
-    return {sendAnt(RouteAction::Unicast, next, ant)};
+    return just(sendAnt(RouteAction::Unicast, next, std::move(ant)));
 }
 
 std::vector<RouteDecision> AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop) {
+    std::vector<RouteDecision> out;
+    onDataPacket(dest, prevHop, out);
+    return out;
+}
+
+void AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop,
+                                  std::vector<RouteDecision>& out) {
+    out.clear();
     NodeAddress next = nextHopForData(dest, prevHop);
     if (next == kInvalidAddress) {
         // No route: always hold the data, but launch at most one reactive ant
         // per destination per reactiveRetryInterval so a stream of packets to an
         // unreachable destination doesn't flood ants ([1] §4.2).
-        std::vector<RouteDecision> out{{RouteAction::Queue, dest, false, {}}};
+        out.push_back({RouteAction::Queue, dest, false, {}});
         if (observer_) observer_->onDataDecision(dest, RouteAction::Queue);
-        if (!config_.enableReactive) return out;  // ablation gate: hold, never discover
+        if (!config_.enableReactive) return;  // ablation gate: hold, never discover
         const double now = clock_.now();
         auto it = lastReactive_.find(dest);
         if (it == lastReactive_.end() || now - it->second >= config_.reactiveRetryInterval) {
@@ -972,15 +996,15 @@ std::vector<RouteDecision> AntRouterLogic::onDataPacket(NodeAddress dest, NodeAd
                                     : kInvalidAddress;
             if (steer != kInvalidAddress) {
                 ++directedSteers_;
-                out.push_back(sendAnt(RouteAction::Unicast, steer, refa));
+                out.push_back(sendAnt(RouteAction::Unicast, steer, std::move(refa)));
             } else {
-                out.push_back(sendAnt(RouteAction::Broadcast, kInvalidAddress, refa));
+                out.push_back(sendAnt(RouteAction::Broadcast, kInvalidAddress, std::move(refa)));
             }
         }
-        return out;
+        return;
     }
     if (observer_) observer_->onDataDecision(dest, RouteAction::Unicast);
-    return {{RouteAction::Unicast, next, false, {}}};
+    out.push_back({RouteAction::Unicast, next, false, {}});
 }
 
 }  // namespace core

@@ -47,48 +47,20 @@ void PheromoneEngine::evaporateAll(PheromoneTable& table, double dtSeconds,
         return std::pow(config_.alpha, dtSeconds / config_.evaporationInterval * it->second);
     };
 
-    const std::vector<NodeAddress> dests(table.regularDestinations().begin(),
-                                         table.regularDestinations().end());
-    for (NodeAddress dest : dests) {
-        const double f = factorFor(dest);
-        const std::vector<NodeAddress> neighbors(table.neighbors().begin(),
-                                                 table.neighbors().end());
-        for (NodeAddress n : neighbors) {
-            const double ph = table.getPheromoneRegular(dest, n);
-            if (ph <= 0.0) continue;
-            const double aged = ph * f;
-            if (aged < config_.minPheromone) {
-                table.removePheromoneRegular(dest, n);
-            } else {
-                table.setPheromoneRegular(dest, n, aged);
-            }
-        }
-    }
-
-    // Virtual pheromone ages here too, on the identical clock (#262). The
-    // thesis defines no virtual aging at all — per-hello replacement plus
-    // eviction on neighbour loss — so any decay is our extension, and it must
-    // at least be commensurable with the regular table: every virtual-vs-
-    // regular comparison (the #180/#252 emission gate included) assumes the
-    // two are in the same units. The old per-hello whole-table decay aged at
-    // alpha^degree per second, a rate set by topology, not time.
-    const std::vector<NodeAddress> vdests(table.virtualDestinations().begin(),
-                                          table.virtualDestinations().end());
-    for (NodeAddress dest : vdests) {
-        const double f = factorFor(dest);
-        const std::vector<NodeAddress> neighbors(table.neighbors().begin(),
-                                                 table.neighbors().end());
-        for (NodeAddress n : neighbors) {
-            const double ph = table.getPheromoneVirtual(dest, n);
-            if (ph <= 0.0) continue;
-            const double aged = ph * f;
-            if (aged < config_.minPheromone) {
-                table.removePheromoneVirtual(dest, n);
-            } else {
-                table.setPheromoneVirtual(dest, n, aged);
-            }
-        }
-    }
+    // Regular and virtual pheromone age together, on the identical clock
+    // (#262). The thesis defines no virtual aging at all — per-hello
+    // replacement plus eviction on neighbour loss — so any decay is our
+    // extension, and it must at least be commensurable with the regular table:
+    // every virtual-vs-regular comparison (the #180/#252 emission gate
+    // included) assumes the two are in the same units. The old per-hello
+    // whole-table decay aged at alpha^degree per second, a rate set by
+    // topology, not time.
+    //
+    // #918: in place over the rows that exist, current neighbours only, a
+    // link at <= 0 untouched and one aged below minPheromone pruned -- the
+    // same values the destinations x neighbours get/set/remove loop produced,
+    // without its lookups or its copies of the neighbour set.
+    table.ageEntries(factorFor, config_.minPheromone);
 }
 
 void PheromoneEngine::updateVirtual(PheromoneTable& table, const AntMessage& hello) const {
