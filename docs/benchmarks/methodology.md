@@ -159,11 +159,59 @@ naming this repo's historical `ghcr.io/swarm-routing/ns3:<version>` image
 (`3.42-opt` was the campaign pin) and an in-job module build. The published
 cells name `ghcr.io/danieljoppi/ns3:<version>`, the same recipe built before
 the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
-The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48): compare a
-post-move number with a published one only after the control campaign
-[#867](https://github.com/swarm-routing/AntHocNet/issues/867). The nightly refresh of
+The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48), and the
+control campaign [#867](https://github.com/swarm-routing/AntHocNet/issues/867)
+measured what that does ([results](v2.7.x-image-control.md)).
+
+**Cross-image rule.** **Accepted by the maintainer 2026-11-11 (#867, #915).**
+The rule follows the control and its follow-up
+([#915](v2.7.x-image-control.md#follow-up-the-ns-3-release-not-the-image-build-915)).
+Whether the 3.42 → 3.48 differences are an expected upstream change or an
+ns-3 regression is under investigation in
+[#923](https://github.com/swarm-routing/AntHocNet/issues/923).
+The follow-up showed that the differences come from the ns-3 release
+(3.42 → 3.48), not from the image build. So the rule is about releases:
+
+- **Read 1 holds for every family.** The published v2.4.0 cells reproduce byte
+  for byte on their recorded images at `b531d5d`. A published number stays
+  valid as a number of its recorded image and ns-3 release.
+- **Same ns-3 release, different build: compare directly, within the measured
+  pair.** On ns-3 3.48, the campaign image
+  (`anthocnet-ns3-campaign@sha256:ee930d8c…`, on
+  `ns3-dev:3.48-optimized@sha256:5585a93c…`) and the legacy in-job build
+  (`danieljoppi/ns3@sha256:8b5a0e30…`, `profile=default`) gave
+  byte-identical `##RUN##`/`##ROUTE##`/`##COMMON##` rows in all eight
+  families. A number from one of them may be compared with a number from the
+  other for every metric those rows carry.
+  - A later image, base or toolchain on the same release has not been measured.
+    Before its numbers are compared across builds, it gets a byte-identity check:
+    one control cell per family, `harness_control.py`-style, against this
+    image's cells at the same `source_sha`.
+  - A full paired control is needed only if that check finds a difference.
+- **Different ns-3 release: re-run the published side.** A published number
+  from another ns-3 release is **not** compared with a post-move number in
+  any family the release moves. Between 3.42 and 3.48 that is grid, static
+  mesh, FANET, VANET and disaster, plus AntHocNet's ISL rows (three fields).
+  - A claim that needs both re-runs the published side on the post-move
+    release (paired, same `source_sha`, ≥ 20 seeds) and compares the two
+    post-move numbers.
+  - The 3.42 → 3.48 move alone shifts delay tails (`delay99`) and NRL
+    ([table (b)](v2.7.x-image-control.md#b-old348-vs-old-the-ns-3-release-alone-348-vs-342-both-legacy-builds)).
+  - The published LEO and SAGIN cells already ran on 3.48, so they compare
+    directly (the bullet above).
+- **`PAIRED-NOISE` is not equivalence.** It says that no tested interval (dPDR,
+  d_d99, d_NRL) excludes zero, not that an effect is small enough for a given
+  claim, and it says nothing about the metrics it does not test. The
+  same-release clearance above rests on byte identity, not on `PAIRED-NOISE`.
+- **Comparisons within one image digest** (A/B arms, controls, sweeps in one
+  campaign) are unaffected.
+- A family or cell the control did not cover gets its own check before it is
+  compared across a build (byte identity) or a release (re-run).
+
+The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
-branch's code changed) is **paused until #867** has recorded that control: its
+branch's code changed) was **paused until the maintainer decided #867's rule**
+(accepted 2026-11-11) and stays paused until a change turns it back on: its
 schedule is off, so the table keeps its last pre-move numbers, and a manual
 dispatch still runs it. Its publish step is gated on the validation anchors
 below. Before trusting or comparing dispatched numbers, run

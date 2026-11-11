@@ -1,0 +1,68 @@
+# #915: separate the ns-3 release from the image build in #867's MANET-family
+# differences (maintainer: "investigate first", 2026-11-11).
+#
+# The #867 control (v2.7.x-image-control.yaml) ran its old arm on the legacy
+# danieljoppi/ns3 3.42-opt image for grid, static mesh, FANET, VANET, disaster
+# and ISL, and its dev arm on ns3-dev 3.48-optimized: two changes at once
+# (ns-3 3.42 -> 3.48, and the image build). LEO and SAGIN ran 3.48 on both
+# arms and were byte-identical. This plan re-runs those six cells once more,
+# on the legacy danieljoppi/ns3 **3.48** image (the one #867's LEO/SAGIN old
+# cells used), same source_sha, same seeds, same harness flags:
+#   old348 vs dev     (both ns-3 3.48): what the image build alone changes;
+#   old348 vs old     (3.48 vs 3.42, both legacy builds): what the release changes.
+#
+# Same generation as #867 (ctl867), so collect writes
+# results/cells/<cell>-ctl867-old348.txt beside #867's <cell>-ctl867.txt (old)
+# and <cell>-ctl867-dev.txt (dev). `old` is the control: verdicts here give
+# old348 vs old directly. old348 vs dev runs #867's plan (control old, arm dev)
+# on a directory whose <cell>-ctl867.txt is this arm's file (see the PR doc).
+#
+# Differences from #867's cells, and why:
+#   - version "3.48" on every cell (the point of the run).
+#   - Seed blocks only: the legacy 3.48 image builds ns-3's `default` profile
+#     (its ##PROV## says profile=default; #867's LEO cells ran ~2.3x slower
+#     there than on ns3-dev release), so the long cells are split to stay
+#     under the 340-min step limit: grid 4x5 seeds (was 2x10), FANET 2x10
+#     (was 1x20), VANET 10x2 (was 2x10). Seeds are the same 1-20; a run is a
+#     function of its seed alone, not of --firstRun/--runs (#352's stream
+#     pinning, routing-bench-run.cc), so the split changes no row.
+#   - No cell needs a 3.42-only flag: the dev arm ran all six on 3.48 with the
+#     same flags.
+#
+#   P=tools/bench/campaigns/v2.7.x-image-control-348.yaml
+#   python3 tools/bench/campaign.py plan     $P
+#   python3 tools/bench/campaign.py dispatch $P --arm old348 --cap 12 --log ctl867-old348.tsv
+#   python3 tools/bench/campaign.py collect  $P --arm old348 --log ctl867-old348.tsv --out results/cells
+#   python3 tools/bench/campaign.py verdicts $P --dir results/cells   # old348 vs old (3.42)
+generation: ctl867
+ref: main
+repo: swarm-routing/AntHocNet
+source_sha: b531d5d40c199b159527257119f872e3da7eeb5b
+program: routing-compare
+cap: 12
+control: old
+
+arms:
+  old: ""       # #867's old arm (3.42-opt legacy cells, already collected); no jobs here
+  old348: ""
+
+legacy_arms:
+  old348:
+    "3.48": ghcr.io/danieljoppi/ns3@sha256:8b5a0e308dd4bbb55b3124cfff18f24746ba598646f90f24d38a6e4bfdf06c65
+
+x-grid: &grid {scenario: paper, version: "3.48", nNodes: 50, time: 900, runs: 10, areaX: 1500, areaY: 300, speed: 20, range: 300, transport: udp, harness: compare}
+x-fanet: &fanet {scenario: fanet, version: "3.48", nNodes: 30, time: 900, runs: 20, areaX: 1000, areaY: 1000, pause: 0, speed: 30, propagation: range, mobility: gaussmarkov, transport: udp, harness: compare}
+x-vanet: &vanet {scenario: vanet, version: "3.48", time: 900, areaX: 800, areaY: 800, pause: 0, speed: 20, range: 300, propagation: urban, mobility: manhattan, transport: udp, harness: compare}
+x-disaster: &disaster {scenario: disaster, version: "3.48", nNodes: 47, time: 900, runs: 10, areaX: 1000, areaY: 500, speed: 20, pause: 30, range: 300, propagation: urban, mobility: trace, transport: udp, harness: compare, extraArgs: "--traceFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.ns2 --flowsFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.flows --buildings=120,170,320,330;680,170,880,330"}
+x-isl: &isl {harness: isl-grid, version: "3.48", torus: "true", islDelayMs: 5, islRate: 10Mbps, time: 900, runs: 20, cbrBps: 4096}
+
+cells:
+  grid-rwp-tworay: {source: grid-rwp-tworay-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *grid, runs: 5, mobility: rwp, propagation: tworay, pause: 30, protocols: "anthocnet,aodv,olsr,dsdv,aomdv,oracle"}, blocks: [1, 6, 11, 16]}
+  static-mesh: {source: static-mesh-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *grid, runs: 5, mobility: rwp, propagation: range, pause: 900, extraArgs: "--standard=80211a --rateManager=constant6 --ns3::dot11s::PeerLink::MaxBeaconLoss=20", protocols: "anthocnet,olsr,hwmp,oracle"}, blocks: [1, 6, 11, 16]}
+  fanet-main: {source: fanet-main-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *fanet, runs: 10, range: 350, protocols: "anthocnet,aodv,olsr,gpsr3d,oracle"}, blocks: [1, 11]}
+  vanet-sparse: {source: vanet-sparse-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *vanet, nNodes: 40, runs: 2, protocols: "anthocnet,aodv,gpsr,gpcr,oracle"}, blocks: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]}
+  disaster-main: {source: disaster-main-v240.txt, workflow: paper-benchmark.yml, inputs: {<<: *disaster, protocols: "anthocnet,aodv,olsr,oracle"}, blocks: [1, 11]}
+  sat-failcell: {source: sat-failcell-v240.txt, workflow: satellite-benchmark.yml, inputs: {<<: *isl, rows: 4, cols: 4, flows: 8, extraArgs: "--breakLink=0,0,3,0 --breakAt=450", protocols: "anthocnet,oracle"}}
+
+jobs:
+  - {arms: [old348], cells: "*"}
