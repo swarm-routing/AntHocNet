@@ -548,9 +548,12 @@ def cmd_verdicts(plan, a):
                   f"{os.path.basename(test)})")
             continue
         for proto in cell_protocols(plan, cell, arm):
-            out = subprocess.run([sys.executable, *parser, "--ab", "--proto",
+            res = subprocess.run([sys.executable, *parser, "--ab", "--proto",
                                   proto, base, test],
-                                 capture_output=True, text=True, check=False).stdout
+                                 capture_output=True, text=True, check=False)
+            if res.returncode != 0 and not res.stdout:  # the reader did not start
+                sys.exit(f"bench_parse failed (exit {res.returncode}):\n{res.stderr}")
+            out = res.stdout
             line = next((ln.strip() for ln in out.splitlines()
                          if ln.strip().startswith("paired 95% CI")), None)
             print(f"{arm}\t{cell}\t{proto}\t"

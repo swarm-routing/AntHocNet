@@ -22,6 +22,7 @@ jobs:
   python:
     name: Python tools (ruff)
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # pip, the ns3-tools pin check (network) and ~1 s self-tests (#840)
     steps:
       - name: Harden the runner (audit egress)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4

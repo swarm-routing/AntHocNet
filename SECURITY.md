@@ -75,8 +75,12 @@ gh attestation verify adaptive-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
 The comparison harness (`routing-bench-<ver>.tar.gz`) and the `ns3_tool`
 readers are swarm-routing/ns3-tools release assets, verified against that
 repository (its SECURITY.md). This repository uses the release named in
-`ns3-tools.lock`; `make install-ns3` checks both assets against the sha256
-recorded there before using them (ns3-tools#29).
+`ns3-tools.lock`. `tools/ns3_tools.py` (which `make install-ns3` calls) checks
+both assets against the sha256 recorded there when it downloads them, and
+then reuses that unpacked copy, under `.ns3-tools/<tag>/`, without checking it
+again; delete the directory to force a fresh, checked download. Setting
+`NS3_TOOLS_DIR` replaces the release with a local checkout and checks nothing
+(ns3-tools#29).
 
 Releases published before the repository moved to the `swarm-routing`
 organisation (2026-11-03) were signed as

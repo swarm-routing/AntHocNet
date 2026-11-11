@@ -47,6 +47,11 @@ import tempfile
 import urllib.request
 import zipfile
 
+try:
+    import fcntl
+except ImportError:  # not POSIX: fetches are not serialised
+    fcntl = None
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCK = os.path.join(ROOT, "ns3-tools.lock")
 KEYS = ("NS3_TOOLS_REPO", "NS3_TOOLS_TAG", "NS3_TOOLS_COMMIT", "NS3_TOOLS_VERSION",
@@ -127,11 +132,32 @@ def fetch():
     dest = os.path.join(cache, pin["NS3_TOOLS_TAG"])
     stamp = os.path.join(dest, ".complete")
     want = "".join(f"{sha}  {name}\n" for name, sha in assets(pin))
-    if os.path.isfile(stamp):
-        with open(stamp, encoding="utf-8") as f:
-            if f.read() == want:
-                return dest
+    if _complete(stamp, want):
+        return dest
     os.makedirs(cache, exist_ok=True)
+    # One fetch at a time per cache: a second caller waits, then finds the
+    # stamp and uses what the first one published.
+    with open(os.path.join(cache, ".lock"), "w", encoding="utf-8") as held:
+        if fcntl is not None:
+            fcntl.flock(held, fcntl.LOCK_EX)
+        if _complete(stamp, want):
+            return dest
+        _publish(pin, dest, want, cache)
+    print(f"ns3-tools: {pin['NS3_TOOLS_REPO']}@{pin['NS3_TOOLS_TAG']} "
+          f"({pin['NS3_TOOLS_COMMIT'][:12]}) -> {dest}", file=sys.stderr)
+    return dest
+
+
+def _complete(stamp, want):
+    """The cache was unpacked from exactly the locked assets."""
+    if not os.path.isfile(stamp):
+        return False
+    with open(stamp, encoding="utf-8") as f:
+        return f.read() == want
+
+
+def _publish(pin, dest, want, cache):
+    """Download, check and unpack into a scratch directory, then move it to dest."""
     work = tempfile.mkdtemp(prefix=".fetch-", dir=cache)
     try:
         dl = os.path.join(work, "dl")
@@ -142,13 +168,10 @@ def fetch():
         _unpack(tar_path, whl_path, out)
         with open(os.path.join(out, ".complete"), "w", encoding="utf-8") as f:
             f.write(want)
-        shutil.rmtree(dest, ignore_errors=True)
+        shutil.rmtree(dest, ignore_errors=True)  # an incomplete or stale unpack
         os.replace(out, dest)
     finally:
         shutil.rmtree(work, ignore_errors=True)
-    print(f"ns3-tools: {pin['NS3_TOOLS_REPO']}@{pin['NS3_TOOLS_TAG']} "
-          f"({pin['NS3_TOOLS_COMMIT'][:12]}) -> {dest}", file=sys.stderr)
-    return dest
 
 
 def path(part):
@@ -182,7 +205,7 @@ def verify():
     url = f"https://github.com/{pin['NS3_TOOLS_REPO']}.git"
     tag = pin["NS3_TOOLS_TAG"]
     out = subprocess.run(["git", "ls-remote", url, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}"],
-                         capture_output=True, text=True, check=True).stdout
+                         capture_output=True, text=True, check=True, timeout=120).stdout
     refs = dict(reversed(line.split("\t")) for line in out.splitlines() if "\t" in line)
     commit = refs.get(f"refs/tags/{tag}^{{}}") or refs.get(f"refs/tags/{tag}")
     if commit != pin["NS3_TOOLS_COMMIT"]:
@@ -205,7 +228,11 @@ def main(argv):
         print(path(rest[0]))
     elif cmd == "pin":
         pin = lock()
-        print(f"{pin['NS3_TOOLS_REPO']} {pin['NS3_TOOLS_TAG']} {pin['NS3_TOOLS_COMMIT']}")
+        local = os.environ.get("NS3_TOOLS_DIR")
+        if local:  # never let a local checkout pass for the locked release
+            print(f"local-checkout NS3_TOOLS_DIR={local} (not {pin['NS3_TOOLS_TAG']})")
+        else:
+            print(f"{pin['NS3_TOOLS_REPO']} {pin['NS3_TOOLS_TAG']} {pin['NS3_TOOLS_COMMIT']}")
     elif cmd == "verify":
         verify()
     elif cmd == "run" and rest:

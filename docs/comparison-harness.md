@@ -290,8 +290,11 @@ checkout instead, for work on a bump only.
 
 **Bumping it** is a PR that changes every line of the lock together:
 
-1. Take the new tag's commit (`git ls-remote https://github.com/swarm-routing/ns3-tools refs/tags/vX.Y.Z`)
-   and the two sha256 from the release's `SHA256SUMS`.
+1. Take the new tag's commit:
+   `git ls-remote https://github.com/swarm-routing/ns3-tools refs/tags/vX.Y.Z 'refs/tags/vX.Y.Z^{}'`
+   prints the commit on the `^{}` line for an annotated tag, and on the tag's
+   own line for a lightweight one. Take the two sha256 from the release's
+   `SHA256SUMS`.
 2. Run `python3 tools/ns3_tools.py verify`, then the readers' corpus check:
    `python3 tools/bench/test_bench_parse_query.py`.
 3. If the harness changed, show the committed cells are unchanged: re-run the
