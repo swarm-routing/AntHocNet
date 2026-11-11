@@ -8,3 +8,4 @@ topics = ["aco", "ad-hoc-networks", "ad-hoc-routing", "ant-colony-optimization",
 ruleset = "protocol"
 required_checks = ["CI gate"]
 code_scanning = true  # CodeQL results come from codeql.yml
+merge_queue = true  # PRs merge through a merge queue; ci.yml and codeql.yml run on merge_group

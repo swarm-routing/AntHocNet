@@ -111,9 +111,9 @@ live/inert per network regime — is diagrammed in
 
 ### Run a simulation with zero setup (Codespaces / VS Code devcontainer)
 
-One click gives you a container with ns-3.42 already built ([`.devcontainer/`](.devcontainer/),
-on the pinned [GHCR image](docker/README.md)); it installs this checkout's AntHocNet module and
-builds it for you. Locally: clone, then VS Code → *Dev Containers: Reopen in Container*. When the
+One click gives you a container with ns-3.48 already built ([`.devcontainer/`](.devcontainer/),
+on the org's [`ns3-dev`](https://github.com/swarm-routing/ns3-containers) `3.48-debug` image,
+pinned by digest); it installs this checkout's AntHocNet module and builds it for you. Locally: clone, then VS Code → *Dev Containers: Reopen in Container*. When the
 setup log finishes:
 
 ```bash
@@ -354,7 +354,7 @@ What is planned and in progress here: the issues labelled [`epic`](https://githu
 |------|--------|-------------------|
 | [#64](https://github.com/swarm-routing/AntHocNet/issues/64) Abstract discrete-event testbench in core/tests — trend regression without a simulator | In progress | 1 / 2 |
 | [#109](https://github.com/swarm-routing/AntHocNet/issues/109) Publish the AntHocNet implementation (reproducibility + cross-simulator paper) | In progress | 1 / 4 |
-| [#328](https://github.com/swarm-routing/AntHocNet/issues/328) 5-star open-source packaging — visibility, supply-chain trust, onboarding, docs site | In progress | 12 / 23 |
+| [#328](https://github.com/swarm-routing/AntHocNet/issues/328) 5-star open-source packaging — visibility, supply-chain trust, onboarding, docs site | In progress | 13 / 25 |
 | [#32](https://github.com/swarm-routing/AntHocNet/issues/32) Add an OMNeT++/INET adapter (third simulator target) | Planned | 0 / 4 |
 | [#65](https://github.com/swarm-routing/AntHocNet/issues/65) CORE/EMANE emulation target — run the real core as a Linux daemon | Planned | 0 / 3 |
 | [#194](https://github.com/swarm-routing/AntHocNet/issues/194) Make the NS-3 adapter satellite-capable (multi-interface, timescales, non-wifi signals) | Planned | no sub-issues yet |

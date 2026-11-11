@@ -107,6 +107,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       - name: Check the inputs
         env:
           IMAGE: ${{ inputs.image }}
@@ -172,6 +177,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
@@ -187,7 +197,7 @@ jobs:
           [ -f "$f" ] || { echo "::error::no results.txt in the cell's artifact"; exit 1; }
           python3 tools/bench/scenario_check.py results "$f" | tee "$RUNNER_TEMP/verdict.txt"
           { echo '```'; cat "$RUNNER_TEMP/verdict.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: benchmark-cell-verdict
@@ -209,6 +219,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
+    # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely
+    # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -334,7 +346,7 @@ jobs:
             | tee "$GITHUB_WORKSPACE/replay-check.txt"
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: benchmark-cell
           path: |
@@ -370,6 +382,11 @@ jobs:
       # `if:` cannot read secrets; whether the org App is configured can.
       ORG_APP: ${{ secrets.BOT_APP_ID != '' && secrets.BOT_APP_PRIVATE_KEY != '' }}
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       # #705: an app token, when configured, so the PR's push starts CI: the
       # org App first (swarm-routing/.github#21), then this repository's app.
       # One that cannot make its token is a warning, and the next is tried.

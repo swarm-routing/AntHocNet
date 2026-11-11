@@ -7,6 +7,9 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  # The merge queue (main ruleset `merge_queue`, .github/org-sync.toml) waits
+  # for `CI gate` on each merge group; without this trigger it never comes.
+  merge_group:
   workflow_dispatch:
     inputs:
       ns3-versions:
@@ -33,7 +36,8 @@ permissions:
 
 jobs:
   # Docs-only PRs skip the heavy jobs (#607). Pushes to main and manual runs
-  # always run everything; a PR is "docs-only" when every changed file is
+  # always run everything; a merge group is filtered like a PR, against the
+  # queue's base (a merge group has no pull_request.base.sha). A PR is "docs-only" when every changed file is
   # prose, docs, the paper, an issue template, committed benchmark data
   # (results/, scenarios.csv: benchmark-cell's own data PRs), the agent files
   # (.claude/: procedures, never shipped, golden rule 10) or repo metadata no
@@ -48,15 +52,20 @@ jobs:
       code: ${{ steps.diff.outputs.code }}
       site: ${{ steps.diff.outputs.site }}
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - id: diff
         env:
           EVENT: ${{ github.event_name }}
-          BASE: ${{ github.event.pull_request.base.sha }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
         run: |
-          if [ "$EVENT" != pull_request ]; then printf 'code=true\nsite=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ] && [ "$EVENT" != merge_group ]; then printf 'code=true\nsite=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only "$BASE" HEAD)
           printf 'changed:\n%s\n' "$files"
           code=false
@@ -90,6 +99,11 @@ jobs:
     # last of which broke every v1.5.0 ns-3 release image. Pure text against
     # tree-derived ground truth: seconds, no ns-3 build.
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check allowlists against the tree
         run: bash tools/checks/check-allowlists.sh
@@ -140,6 +154,11 @@ jobs:
     if: always()
     needs: [changes, allowlists, core, web, ns3]
     steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
       - env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
