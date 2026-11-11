@@ -268,6 +268,23 @@ clean stock ns-3 tree, with `tools/checks/check-packages.sh`:
 The harness must offer exactly the expected arms, and every arm must deliver
 over more than one hop.
 
+## Amendment (2026-11-11, roadmap v2.7.0): the harness ships from ns3-tools
+
+The 2026-10-31 amendment's release assets are superseded. The harness moved
+to [swarm-routing/ns3-tools](https://github.com/swarm-routing/ns3-tools) and
+ships there: `routing-bench-0.1.0.tar.gz` and the `ns3_tool` wheel of
+[ns3-tools v0.1.0](https://github.com/swarm-routing/ns3-tools/releases/tag/v0.1.0),
+signed, with an SBOM and provenance, on ns3-tools' own version line (#770,
+closed as superseded). The separate `adaptive` package is dropped: the
+vendored comparator modules move into ns3-tools after its 1.0
+([ns3-tools#34](https://github.com/swarm-routing/ns3-tools/issues/34)).
+
+**Transition.** Until AntHocNet switches over
+([ns3-tools#29](https://github.com/swarm-routing/ns3-tools/issues/29)), its
+release workflow still cuts the assets above from `module-tarball.sh`, and
+`ci-ns3.yml`'s `packages` job still checks them. They stop with the switch,
+and the module-and-registration boundary this ADR decides does not change.
+
 ## Consequences
 
 - **An arm becomes a module plus one function.** The wiring checklist in
