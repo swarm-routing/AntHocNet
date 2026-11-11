@@ -106,7 +106,7 @@ def _unpack(tar_path, whl_path, dest):
         if hasattr(tarfile, "data_filter"):  # Python 3.12, and 3.8-3.11 security releases
             t.extractall(dest, members=members, filter="data")
         else:
-            t.extractall(dest, members=members)  # noqa: S202 (members checked above)
+            t.extractall(dest, members=members)  # members checked above
     if not os.path.isfile(os.path.join(dest, "routing-bench", "CMakeLists.txt")):
         sys.exit("ns3-tools: the tarball has no routing-bench/CMakeLists.txt")
     py = os.path.join(dest, "python")

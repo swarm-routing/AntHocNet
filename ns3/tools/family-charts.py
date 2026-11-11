@@ -52,7 +52,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter, NullLocator
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
-import ns3_tools  # noqa: E402  (the readers pinned in ns3-tools.lock)
+import ns3_tools  # the readers pinned in ns3-tools.lock
 
 
 def _load(name):

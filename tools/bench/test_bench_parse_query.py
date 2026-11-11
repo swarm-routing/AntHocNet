@@ -32,7 +32,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 
 
 sys.path.insert(0, os.path.join(ROOT, "tools"))
-import ns3_tools  # noqa: E402  (the readers pinned in ns3-tools.lock)
+import ns3_tools  # the readers pinned in ns3-tools.lock
 
 bp = ns3_tools.module("bench_parse")
 CLI = [sys.executable, os.path.join(ROOT, "tools", "ns3_tools.py"), "run", "bench_parse"]
