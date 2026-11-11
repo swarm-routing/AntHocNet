@@ -1,12 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# CodeRabbit, the AI reviewer of this repository (#838, #864). Comments only:
-# it never approves or requests changes, and it is not a required check.
-#
-# Mirrored by hand from swarm-routing/.github templates/coderabbit/head.yaml and
-# tail.yaml (main at fb53f99, 2026-11-10): AntHocNet does not use org-sync, so
-# re-copy them here when they change. Everything marked "AntHocNet:" is this
-# repository's own (its AGENTS.md golden rules); the rest is the org's text.
-# Keys: https://docs.coderabbit.ai/reference/configuration
+# org-sync:begin coderabbit-head
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit review settings (org decision 2026-11-01, swarm-routing/ns3-containers#18):
 # the per-PR AI reviewer for every public swarm-routing repository. Comments
 # only: it never approves or requests changes, and it is not a required check.
@@ -31,11 +25,6 @@ reviews:
       - "dependabot[bot]"
   path_filters:
     - "!**/*.pdf"
-    # AntHocNet: committed benchmark data, generated charts and hash-pinned
-    # lockfiles (uv pip compile) are not reviewed.
-    - "!results/**"
-    - "!docs/benchmarks/**/*.png"
-    - "!requirements/*.txt"
   path_instructions:
     - path: "**/*"
       instructions: >-
@@ -49,8 +38,9 @@ reviews:
         (https://github.com/swarm-routing)` and an SPDX-License-Identifier that
         matches its directory's row in LICENSING.md: `MIT OR GPL-2.0-only` for a
         simulator-free core/ and standalone tooling, `GPL-2.0-only` for ns-3 modules,
-        the site, docs and data. A new directory needs its LICENSING.md row in the
-        same PR. Dual-licensed code must never include or import GPL-only code. Flag
+        the site, docs and data. An outside contributor may add their own
+        `Copyright (c) <year> <Name>` line beneath the org line (never instead of
+        it). A new directory needs its LICENSING.md row in the same PR. Dual-licensed code must never include or import GPL-only code. Flag
         any code that looks copied from ns-3's src/aodv or src/olsr.
     - path: ".github/workflows/**"
       instructions: >-
@@ -68,6 +58,14 @@ reviews:
         Docs are for ns-3 developers: commands must be runnable and exact; no invented
         numbers, DOIs or citations; paywalled papers never committed to public
         repositories.
+# org-sync:end coderabbit-head
+    # AntHocNet: generated data are not reviewed line by line (the org head has
+    # no extension point for path_filters, so they are instructions, not filters).
+    - path: "{results/**,requirements/*.txt,docs/benchmarks/**/*.png}"
+      instructions: >-
+        Committed benchmark data, generated charts and hash-pinned lockfiles
+        (uv pip compile): do not review line by line; check only that the PR
+        says how they were regenerated.
     # AntHocNet: the golden rules (AGENTS.md) a reviewer has to check by reading.
     - path: "core/**"
       instructions: >-
@@ -109,6 +107,7 @@ reviews:
         tools/checks/ keeps its verdict on committed data unless the PR says it
         changes it; ns-3 version differences are probed (./ns3 configure --help),
         not assumed.
+# org-sync:begin coderabbit-tail
   tools:
     shellcheck:
       enabled: true
@@ -131,3 +130,4 @@ knowledge_base:
       - "LICENSING.md"
 chat:
   auto_reply: true
+# org-sync:end coderabbit-tail

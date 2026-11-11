@@ -16,44 +16,16 @@ skill (WASM parity, browser smoke, README figures) moved with the game to
 scripts that anything shipped depends on live in `tools/` (ADR-0014), and
 nothing under `.claude/` reaches a release package (#604).
 
+<!-- org-sync:begin org -->
 **Handoffs are always a ticket.** When a session ends with work in flight, or a
 handoff is asked for, open a GitHub issue from the *Handoff* template (label
 `handoff`). Never write a handoff file in the repo. Start a new session from
 the newest open `handoff` issue, and close it when the work it hands off is
-done ([ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
+done ([AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
 
 **Every change is a PR to `main`, squash-merged.** Open the PR as soon as the
 branch is pushed, so all work is tracked; the squash title is the commit on
 `main`.
-
-## Agent pitfalls
-
-The org's list (swarm-routing/.github `templates/claude/org.md`), kept here by
-hand since this repository's `CLAUDE.md` is not org-synced.
-
-- `gh api … -F body=@file` reads the file; `-f body=@file` posts the literal
-  text `@file`.
-- When the permission system refuses a command (a merge, say), stop and report
-  it. Never retry it another way, and never ask another agent to run it.
-- A PR body's `Closes #N` closes the issue on merge; write `Part of #N` while
-  acceptance criteria remain open.
-- Before saying a tool or check is missing, look at `main` (`git fetch`,
-  `origin/main`), not a stale local checkout.
-- `main` has a merge queue: merge by enabling auto-merge (squash); a direct
-  merge (`PUT pulls/<n>/merge`) is refused with HTTP 405. Only the ruleset's
-  checks (`CI gate`, the CodeQL scan) gate a merge: a red or pending report-only check
-  (`codecov/patch`, Sonar) is triaged, not waited on. A red `dco` on an
-  outside contributor's commit still holds the PR until that author signs
-  off; on the maintainer's or an agent's commits it is expected
-  (swarm-routing/.github#212).
-- Never add a `Signed-off-by` trailer, for the maintainer or anyone else: a
-  DCO sign-off is a person's own certification.
-- Releases are cut on request only: dispatch the release `bump` when the
-  maintainer asks, once the version's `release:vX.Y.Z` issues are done
-  ([`docs/roadmap.md`](docs/roadmap.md)). Never type a DOI: read it from
-  Zenodo (AGENTS.md "Cut a release").
-- Cite a paper in a public issue, PR or doc by its `https://doi.org/<DOI>`
-  link, and never point into or name the private paper library there.
 
 ## Working defaults
 
@@ -73,16 +45,50 @@ Condensed from [andrej-karpathy-skills](https://github.com/forrestchang/andrej-k
 
 ## Response style — caveman (token economy)
 
-<!-- Vendored from https://github.com/JuliusBrussee/caveman — adapted for this repo.
-     "why use many token when few do trick." -->
-
 Answer in tight, low-filler prose: drop hedging, pleasantries, and preamble; keep
 the substance. Fewer output tokens on every reply, same information.
 
-**Carve-out (this repo's record stays full).** Keep byte-for-byte exact — code,
+**Carve-out (the record stays full).** Keep byte-for-byte exact — code,
 commands, file paths, error text, benchmark numbers. And keep the *durable
 record* detailed, never terse: commit messages, PR bodies, ADRs, `docs/`, and
-issue / finding threads. This project's cross-session traceability
-([ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md)) depends on those
-being complete — the AC_BE_NQOS / A2 investigation was only recoverable because
-the issue threads were thorough. Caveman the chat, not the record.
+issue / finding threads. Cross-session traceability depends on those being
+complete — AntHocNet's AC_BE_NQOS / A2 investigation was only recoverable
+because the issue threads were thorough. Caveman the chat, not the record.
+
+## Agent pitfalls
+
+- `gh api … -F body=@file` reads the file; `-f body=@file` posts the literal
+  text `@file`.
+- When the permission system refuses a command (a merge, say), stop and report
+  it. Never retry it another way, and never ask another agent to run it.
+- A PR body's `Closes #N` closes the issue on merge; write `Part of #N` while
+  acceptance criteria remain open.
+- Before saying a tool or check is missing, look at `main` (`git fetch`,
+  `origin/main`), not a stale local checkout.
+- In a repository with a merge queue, merge by enabling auto-merge (squash);
+  a direct merge (`PUT pulls/<n>/merge`) is refused with HTTP 405. Only the
+  required checks (`gh api repos/<owner>/<repo>/rules/branches/main`) gate a
+  merge: a red or pending report-only check (`codecov/patch`, Sonar) is
+  triaged, not waited on. A red `dco` on an outside contributor's commit
+  still holds the PR until that author signs off; on the maintainer's or an
+  agent's commits it is expected (swarm-routing/.github#212).
+- Never add a `Signed-off-by` trailer, for the maintainer or anyone else: a
+  DCO sign-off is a person's own certification (CONTRIBUTING "Outside
+  contributions").
+- Releases are cut on request only: dispatch the release `bump` when the
+  maintainer asks, once the version's `release:vX.Y.Z` issues are done; never
+  approve a gated publish. A failed publish is recovered with "Re-run all
+  jobs", never "Re-run failed jobs" (CONTRIBUTING "Cutting a release"). Never
+  type a DOI: read it from Zenodo.
+- Cite a paper in a public issue, PR or doc by its `https://doi.org/<DOI>`
+  link, and never point into or name the private paper library there.
+<!-- org-sync:end org -->
+
+## AntHocNet specifics
+
+- The release ladder and its exit criteria are in [`docs/roadmap.md`](docs/roadmap.md);
+  cut a release only on request, once the version's `release:vX.Y.Z` issues are done.
+- The traceability rationale for handoffs and finding threads is
+  [ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md).
+- The caveman response style is vendored from
+  https://github.com/JuliusBrussee/caveman and adapted for the org.

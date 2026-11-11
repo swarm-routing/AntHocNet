@@ -1,5 +1,21 @@
-# org-sync configuration (swarm-routing/.github tools/org-sync): settings only, no kind, so
-# org-sync and org-bot manage no templates here; tools/repo-settings reads [settings].
+# org-sync configuration (swarm-routing/.github tools/org-sync): kind protocol (#855).
+# AntHocNet keeps its own AGENTS.md, CLAUDE.md, README and Makefile text; org-sync
+# manages only the marked sections in them, the workflows and the seeds it lacks.
+kind = "protocol"
+title = "AntHocNet"
+dual = ["core/", "tools/", "ns3/tools/", "docs/tools/"]
+cxx = "14"
+zenodo_concept = "20981979"
+docs_url = "https://swarm-routing.github.io/AntHocNet/docs/"
+licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"
+# AntHocNet's golden rules 1-10 are the source of the org's (this repository is
+# the reference implementation, and other repositories cite "golden rule N" by
+# their numbers), so the org-rules section is not managed here; the other
+# managed AGENTS.md sections are.
+skip = ["AGENTS.md#org-rules"]
+badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "release", "doi", "cite", "licence", "cxx", "ns3", "ns3dev", "conventional", "arena", "docs"]
+
+
 [settings]
 # GitHub settings as code: swarm-routing/.github tools/repo-settings (swarm-routing/.github#117).
 description = "AntHocNet (Di Caro, Ducatelle & Gambardella), the hybrid ant-colony routing protocol for MANETs, as a paper-faithful reference: a simulator-agnostic C++ core, an ns-3 module, 20-seed benchmarks against AODV/OLSR/DSDV with 95% CIs, satellite/ISL scenarios, and its core compiled to WebAssembly for the learn-site game."

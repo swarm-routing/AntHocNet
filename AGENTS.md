@@ -242,6 +242,26 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 
 - C++14 for `core/` (aggregate init with default member initializers).
 - Namespace `anthocnet::core` for shared code.
+<!-- org-sync:begin conventions -->
+- Issues follow the org taxonomy ([CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues), from
+  [AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
+  (`bug`/`enhancement`/`chore`/`documentation`/`verification`, plus `epic` for
+  umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/`benchmark`/
+  `observability`/`packaging`/`learn-site`/`literature`), one `model:*`
+  recommendation, one `priority:P1|P2|P3` on non-epic issues, a
+  `release:vX.Y.Z` label only when a release in the repository's ladder
+  (`docs/roadmap.md`; until it lands, the org ROADMAP's release train)
+  gates the issue: that label set is the version's scope,
+  and the version is released when its issues are done (CONTRIBUTING
+  "Cutting a release"). Labels come from `labels.json` via the `sync-labels`
+  workflow.
+- Issue bodies: **Context** (evidence, numbers, links) · **Scope** ·
+  **Acceptance criteria** (checkboxes) · **Depends on** (cross-repo form
+  `swarm-routing/<repo>#N`) · **References**. Children of an epic say "Part of
+  #N" and are linked as sub-issues. Comments you post end with the Claude Code
+  footer.
+- Issues migrated from AntHocNet carry `migrated` and start with *Migrated from
+  `danieljoppi/AntHocNet#N`*.
 - Epics are listed where contributors look. In a public repository, this
   README's `## Epics` section and the org
   [ROADMAP](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#epics)
@@ -263,17 +283,7 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
   and keep no generated section.
 - Make minimal, reviewable changes; update the relevant doc/ADR when you change
   a documented decision.
-- When you open or update an issue, apply the label taxonomy from
-  [ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md#labelling-convention):
-  one type label (`bug`/`enhancement`/`chore`/`documentation`/`verification`,
-  plus `epic` for umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/
-  `benchmark`/`observability`/`packaging`/`learn-site`), one `model:*`
-  recommendation, one `priority:P1|P2|P3` label on non-epic issues, and a
-  `release:vX.Y.Z` label only when the roadmap ladder gates the issue.
-- Issue bodies follow one shape: **Context** (the evidence, with numbers and
-  links), **Scope**, **Acceptance criteria** (checkboxes), **Depends on**
-  (issue numbers), **References**. Children of an epic say "Part of #N" and are
-  linked as sub-issues. Comments you post end with the Claude Code footer.
+<!-- org-sync:end conventions -->
 - A new comparator arm (a protocol we did not design) must clear three gates
   before its numbers count: a fidelity sheet from its paper, the per-PR
   delivery smoke (#439), and an anchor reproducing its own paper's trend. If it
@@ -283,24 +293,80 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 
 ## Git workflow
 
+<!-- org-sync:begin git-workflow -->
 - Branch from `main` (`claude/<short-topic>`), one focused change per PR.
 - **Always open a PR to `main`** once the branch is pushed — every change is
-  tracked through one (org rule; maintainer decision 2026-11-10).
-- **PR titles are Conventional Commits** (`feat:`/`fix:`/`docs:`/…) — CI enforces
-  it, and since PRs are squash-merged the title is the commit on `main` and
-  drives the next version bump. See `CONTRIBUTING.md`.
-- Push with `git push -u origin <branch>`; open a PR; merge when CI is green.
-- `main` takes no direct push, bots and releases included: they open PRs from
-  `bot/<name>` branches (#879, #884; `CONTRIBUTING.md` "Branch protection").
-  `main` merges through a merge queue: enable auto-merge (squash) and the
-  queue tests each PR on the latest `main` and merges it; a direct merge
-  (`PUT pulls/<n>/merge`) is refused with HTTP 405, and a PR is not updated
-  by hand. Only the ruleset's checks (`CI gate` and the CodeQL scan) gate a merge (report-only checks
-  such as `codecov/patch` never hold a PR; a red `dco` on an outside
-  contributor's commit holds it until that author signs off, while on the
-  maintainer's or an agent's commits it is expected,
-  swarm-routing/.github#212). Never force-push a
-  branch someone else pushed.
+  tracked through one.
+- **PRs are squash-merged** (the only merge method enabled). The PR title is
+  the commit on `main`, so it is a lowercase Conventional Commit
+  (`feat:`/`fix:`/`docs:`/`chore:`/`ci:`…, optional scope).
+- Push with `git push -u origin <branch>`; merge when CI is green.
+- **`main` takes no direct push**, in any repo: its ruleset requires a PR and
+  the required checks, not an up-to-date branch. Bots push `bot/<name>` branches
+  and open PRs; a release is the bump PR from `bot/release`, tagged after it
+  merges (CONTRIBUTING "Cutting a release").
+- A PR behind `main` may merge as it is: the ruleset does not require an
+  up-to-date branch. Update it first
+  (`gh api -X PUT "repos/<owner>/<repo>/pulls/<n>/update-branch"`, with
+  `<owner>/<repo>` the PR's base repository and `<n>` its number) only when
+  `main` changed what it touches (a template, a workflow, a required check),
+  then merge after its CI on the updated branch. A
+  repository with a merge queue (`merge_queue = true` in its `[settings]`)
+  is not updated by hand: enable auto-merge and the queue tests each PR on
+  the latest `main` and merges it (CONTRIBUTING "Merge when CI is green").
+  Never force-push a branch someone else pushed. A behind `bot/release` PR is the exception:
+  dispatch the release `bump` again, so the version and changelog are rebuilt
+  on the new `main`.
+- **Settings are code.** Repository settings, rulesets, required checks and the
+  Actions allowlist change only by a PR to the repo's `[settings]` in
+  `.github/org-sync.toml` or to `templates/rulesets/` in `swarm-routing/.github`,
+  never in the UI or by a direct API write. A `templates/rulesets/` change
+  applies on merge; a repo's `[settings]` change applies when `repo-settings`
+  in `swarm-routing/.github` is dispatched with mode `apply` after the merge
+  (the daily run only checks). A required check runs on every PR (no `paths:`
+  filter; skip work inside a gate job instead) and is named exactly as its
+  check run. A new third-party action goes into `defaults.json`
+  `selected_actions` (`templates/rulesets/`) before or with the workflow that
+  uses it: in the same PR in `swarm-routing/.github`, otherwise merged there
+  first, or `repo-settings` refuses the repo.
+<!-- org-sync:end git-workflow -->
+- AntHocNet specifics: PR titles are enforced by CI (`pr-title.yml`), and since
+  the title is the commit on `main` it drives the next Commitizen version bump
+  (see `CONTRIBUTING.md`). `main` merges through the merge queue; only the
+  ruleset's checks (`CI gate` and the CodeQL scan) gate a merge.
+
+<!-- org-sync:begin skills -->
+## Agent skills
+
+The org's procedures ship as the Claude Code plugin **`swarm-routing`**, from
+[`swarm-routing/skills`](https://github.com/swarm-routing/skills). This
+repository's `.claude/settings.json` enables it, so Claude Code offers a skill
+when the task matches its description. Other agents (Codex, Cursor, Copilot, …)
+install the same skills with `npx skills add swarm-routing/skills`
+([skills.sh](https://skills.sh)). A skill is the procedure; the script does the
+work and runs without it (golden rule 9), so an agent without the skill starts
+from the script; so does a session that does not read this repository's
+settings (some hosted sessions with several repositories do not). If Claude
+Code says the plugin is missing (it was called
+`org-repo` before 2026-11-09, and a cached marketplace keeps the old list), run
+`claude plugin marketplace update swarm-routing` and start a new session.
+
+| Task | Script (any agent) | Skill |
+|------|--------------------|-------|
+| Bring this repository onto the org templates, or fix their drift | `swarm-routing/.github` `tools/org-sync/org_sync.py` | `org-repo` |
+| Write or review a protocol's paper-fidelity sheet (`docs/fidelity.md`) | `swarm-routing/.github` `tools/fidelity/fidelity.py` | `fidelity-sheet` |
+| Check a diff against the org golden rules before a PR or a review | `swarm-routing/.github` `tools/protocol-review/check_invariants.py` | `protocol-review` |
+| Bring the README, AGENTS/CLAUDE/CONTEXT and docs/ to the org documentation standard | `swarm-routing/.github` `tools/docs-review/check_docs.py` | `docs-review` |
+| Find new papers on a topic, or confirm a reference (Crossref, Semantic Scholar, OpenAlex; free sources only) | `swarm-routing/.github` `tools/lit-search/lit_search.py` | `lit-search` |
+
+A skill only this repository uses lives in its own `.claude/skills/`; a skill
+two repositories need moves to the plugin. Skills that file, cite and extract
+papers into the private papers library stay in `swarm-routing/papers`; finding
+new papers and confirming a reference is public (`lit-search`). A public skill
+may point to the papers skills, never carry library content. This section is managed by org-sync: add
+a row in `swarm-routing/.github` `templates/agents/skills.md`, not here (an edit
+here is undone by the next `org_sync.py apply`).
+<!-- org-sync:end skills -->
 
 ## Where to look
 
@@ -344,5 +410,6 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 | Work on satellite / ISL topologies | [ADR-0015](docs/adr/0015-satellite-substrate-lives-in-the-image.md) — **there is no separate satellite build**: one binary, scenario differences live in examples and flags (`isl-grid` static, `leo-walker` moving). [ADR-0022](docs/adr/0022-satellite-substrate-is-stock-ns3-leo.md) — the substrate is stock ns-3.48's LEO model, so moving-constellation work is 3.48-only. Track: [#192](https://github.com/swarm-routing/AntHocNet/issues/192) |
 | **Understand why satellite ≠ MANET** (before assuming a MANET intuition transfers) | [`docs/network-regimes.md`](docs/network-regimes.md) — the inversion in one line: MANET hides the *topology* and gives you the traffic; a constellation gives you the topology and hides the *traffic*. Diagrams, and a difference table where every row traces to a defect, parameter or control in this repo |
 | Cut a release | run the `Release` workflow (Commitizen) with `mode: bump`; it opens the bump PR, and merging that PR tags and publishes (#882); see `CONTRIBUTING.md`. **Post-release, record the version DOI** — Zenodo mints it async a few minutes after publish; read it from the public API (`curl -sL https://zenodo.org/api/records/20981980/versions/latest \| python3 -c "import json,sys; d=json.load(sys.stdin); print(d['metadata']['version'], d['doi'])"`; address it through a *version* record — the concept ID 20981979 returns 404 there — and check the version printed is the one you released), or ask the maintainer if `zenodo.org` is proxy-blocked (403, as it was until 2026-09). Never invent one. Then append a row to the DOI table in `CONTRIBUTING.md` via a `docs:` PR — the README badge and `CITATION.cff` stay on the concept DOI (#116) |
+| Change an org-managed section (`AGENTS.md` conventions/git-workflow/skills, `CLAUDE.md` org section, `SECURITY.md` reporting, `.coderabbit.yaml` head/tail, README badges) | `.github/org-sync.toml` (kind `protocol`; `AGENTS.md#org-rules` is skipped on purpose: golden rules 1–10 here are the source the org's grew from) and the templates in `swarm-routing/.github` `templates/`; never edit between the `org-sync:begin/end` markers — change the template, then `python3 ../.github/tools/org-sync/org_sync.py apply .` (#855) |
 | Tune defaults | `core/include/anthocnet/core/config.h` |
 | **Look up a parameter's default, its provenance, or how to calibrate it** | [`docs/configuration.md`](docs/configuration.md) — all 38 `Config` fields with a `source` column ([1] §/thesis/repo choice/**unknown**), the ns-3 attribute for each, the sweep→A/B→noise loop, and the checklist for adding a parameter. The `unknown` rows in §3.2 are the next #88/#169 candidates |
