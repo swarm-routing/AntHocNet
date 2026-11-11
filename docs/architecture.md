@@ -181,9 +181,11 @@ Three relationships carry the architecture:
 
 ### Stateful components
 
-- **`PheromoneTable`** — regular/virtual pheromone maps keyed by
-  `(neighbor, destination)`, the neighbour set, and per-table destination sets.
-  Stochastic next-hop selection takes its randomness from an injected `IRng`.
+- **`PheromoneTable`** — regular/virtual pheromone per `(neighbor, destination)`,
+  stored as one row per destination in neighbour order (#918), the neighbour
+  set, and per-table destination sets. Selection, `best*` and evaporation walk
+  a row; a row is dropped with its last entry. Stochastic next-hop selection
+  takes its randomness from an injected `IRng`.
 - **`PheromoneEngine`** — the evaporation/reinforcement math
   (`evaporate`, `reinforce`, `updateRegular`, `updateVirtual`, `cleanNeighbor`).
 - **`AntHistoryTracker`** — `(src, seqNum)` duplicate detection, FIFO-capped.

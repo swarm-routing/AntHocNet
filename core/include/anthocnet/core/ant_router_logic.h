@@ -202,12 +202,21 @@ public:
     /// returning the actions the adapter must carry out. May return an empty
     /// vector (nothing to do) or a single Drop.
     std::vector<RouteDecision> onReceiveAnt(const AntMessage& ant, NodeAddress prevHop);
+    /// Same, taking the received ant by value (#918): an adapter that is done
+    /// with its decoded copy moves it in, and the ant the core forwards is
+    /// that copy, not a second one.
+    std::vector<RouteDecision> onReceiveAnt(AntMessage&& ant, NodeAddress prevHop);
 
     /// Decide what to do with a locally-originated or in-transit *data* packet
     /// destined for `dest`: route it (Unicast), or (no route) request one and
     /// Queue it. The adapter emits the returned reactive forward ant, if any.
     std::vector<RouteDecision> onDataPacket(NodeAddress dest,
                                             NodeAddress prevHop = kInvalidAddress);
+    /// Same decisions, written into `out` (cleared first) instead of a new
+    /// vector (#918): an adapter that keeps `out` between packets allocates
+    /// nothing on the data path. The vector-returning form stays for the
+    /// browser adapter.
+    void onDataPacket(NodeAddress dest, NodeAddress prevHop, std::vector<RouteDecision>& out);
 
 private:
     std::uint32_t nextSeq() { return seqNum_++; }
@@ -215,10 +224,10 @@ private:
     /// Turn a forward/notification ant into a Broadcast decision, honouring its
     /// broadcastBudget: an untracked ant (-1) always broadcasts; a budgeted ant
     /// decrements and broadcasts while >0, and is Dropped once exhausted.
-    RouteDecision broadcastForward(AntMessage& ant);
+    RouteDecision broadcastForward(AntMessage&& ant);
     /// Build a Unicast/Broadcast decision carrying `ant`, counting it as sent
     /// and notifying the observer (the single choke point for ant emission).
-    RouteDecision sendAnt(RouteAction action, NodeAddress nextHop, const AntMessage& ant);
+    RouteDecision sendAnt(RouteAction action, NodeAddress nextHop, AntMessage&& ant);
     /// Apply a received LinkFail notification and, if it costs this node its own
     /// best path, return a bounded propagated notification.
     std::vector<RouteDecision> handleLinkFail(const AntMessage& note, NodeAddress reporter);

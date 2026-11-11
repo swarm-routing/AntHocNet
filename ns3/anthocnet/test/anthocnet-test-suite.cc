@@ -38,10 +38,13 @@
 #include "ns3/ipv4-l3-protocol.h"
 #include "ns3/uinteger.h"
 
+#include <vector>
+
 #include "ns3/anthocnet-packet.h"
 #include "anthocnet/core/ant_message_codec.h"
 #include "ns3/anthocnet-helper.h"
 #include "ns3/anthocnet-routing-protocol.h"
+#include "ns3/anthocnet-rqueue.h"
 
 using namespace ns3;
 using ::anthocnet::core::AntDirection;
@@ -545,6 +548,84 @@ public:
     }
 };
 
+// #918: the pending queue's in-place DequeueAll/Purge. Every backward ant at
+// every node flushes its origin, so a flush for a destination with nothing
+// queued must leave the queue exactly as it was; a real flush hands out that
+// destination's packets in queue order and keeps the others' order; an aged
+// entry is still purged first, through its error callback.
+class RequestQueueInPlaceTestCase : public TestCase {
+public:
+    RequestQueueInPlaceTestCase()
+        : TestCase("Pending queue: in-place, order-preserving flush (#918)") {}
+
+    void DoRun() override {
+        using ns3::anthocnet::QueueEntry;
+        using ns3::anthocnet::RequestQueue;
+        RequestQueue q(64, Seconds(10));
+        const char* dsts[] = {"10.0.0.1", "10.0.0.2", "10.0.0.1", "10.0.0.3", "10.0.0.2"};
+        std::vector<uint64_t> uids;
+        for (const char* d : dsts) {
+            QueueEntry e;
+            e.packet = Create<Packet>(8);
+            e.header.SetDestination(Ipv4Address(d));
+            uids.push_back(e.packet->GetUid());
+            q.Enqueue(e);
+        }
+
+        // No match: nothing out, nothing moved.
+        std::vector<QueueEntry> out;
+        q.DequeueAll(Ipv4Address("10.0.0.9"), out);
+        NS_TEST_ASSERT_MSG_EQ(out.size(), 0u, "a flush with no match dequeues nothing");
+        NS_TEST_ASSERT_MSG_EQ(q.Size(), 5u, "a flush with no match keeps every entry");
+
+        // A match: that destination's packets, in queue order.
+        q.DequeueAll(Ipv4Address("10.0.0.1"), out);
+        NS_TEST_ASSERT_MSG_EQ(out.size(), 2u, "both packets for 10.0.0.1");
+        NS_TEST_ASSERT_MSG_EQ(out[0].packet->GetUid(), uids[0], "queue order kept (1st)");
+        NS_TEST_ASSERT_MSG_EQ(out[1].packet->GetUid(), uids[2], "queue order kept (2nd)");
+        NS_TEST_ASSERT_MSG_EQ(q.Size(), 3u, "the other three stay");
+
+        // The rest kept their order: drain them one destination at a time.
+        std::vector<QueueEntry> rest;
+        q.DequeueAll(Ipv4Address("10.0.0.2"), rest);
+        q.DequeueAll(Ipv4Address("10.0.0.3"), rest);
+        NS_TEST_ASSERT_MSG_EQ(rest.size(), 3u, "three left");
+        NS_TEST_ASSERT_MSG_EQ(rest[0].packet->GetUid(), uids[1], "kept order (10.0.0.2 first)");
+        NS_TEST_ASSERT_MSG_EQ(rest[1].packet->GetUid(), uids[4], "kept order (10.0.0.2 second)");
+        NS_TEST_ASSERT_MSG_EQ(rest[2].packet->GetUid(), uids[3], "kept order (10.0.0.3)");
+        NS_TEST_ASSERT_MSG_EQ(q.Size(), 0u, "empty");
+
+        // Aging: an expired entry leaves through its error callback on the
+        // next flush, even one that matches nothing; a live one stays.
+        m_errors = 0;
+        RequestQueue aging(64, Seconds(1));
+        QueueEntry old;
+        old.packet = Create<Packet>(8);
+        old.header.SetDestination(Ipv4Address("10.0.0.1"));
+        old.ecb = MakeCallback(&RequestQueueInPlaceTestCase::OnError, this);
+        aging.Enqueue(old);
+        Simulator::Schedule(Seconds(0.5), [&aging]() {
+            QueueEntry young;
+            young.packet = Create<Packet>(8);
+            young.header.SetDestination(Ipv4Address("10.0.0.2"));
+            aging.Enqueue(young);
+        });
+        std::vector<QueueEntry> none;
+        Simulator::Schedule(Seconds(1.2),
+                            [&aging, &none]() { aging.DequeueAll(Ipv4Address("10.0.0.9"), none); });
+        Simulator::Run();
+        Simulator::Destroy();
+        NS_TEST_ASSERT_MSG_EQ(none.size(), 0u, "nothing matched");
+        NS_TEST_ASSERT_MSG_EQ(m_errors, 1u, "the aged entry was purged through its ecb");
+        NS_TEST_ASSERT_MSG_EQ(aging.Stats().droppedCount[ns3::anthocnet::HOLD_SETUP], 1u,
+                              "and counted as dropped");
+    }
+
+private:
+    void OnError(Ptr<const Packet>, const Ipv4Header&, Socket::SocketErrno) { ++m_errors; }
+    uint32_t m_errors = 0;
+};
+
 // Repair ant fires on a MAC transmit-failure (ADR-0008 detector D, issue #19).
 // Two adhoc-wifi nodes within range establish a data session; the receiver is
 // then moved out of range so the sender's unicasts fail after the retry limit.
@@ -669,6 +750,7 @@ public:
         AddTestCase(new StrongestNextHopTestCase(), AHN_TEST_QUICK);
         AddTestCase(new PerHopCongestionSignalTestCase(), AHN_TEST_QUICK);
         AddTestCase(new RepairAntOnLinkBreakTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new RequestQueueInPlaceTestCase(), AHN_TEST_QUICK);
     }
 };
 

@@ -4,16 +4,29 @@
 /**
  * PheromoneTable: per-node routing state.
  *
- * Holds the regular and virtual pheromone maps keyed by (neighbor,
- * destination), the neighbour set, and the per-table destination sets. This
- * is a near-verbatim port of the original NS-2 class with two changes:
+ * Holds the regular and virtual pheromone, the neighbour set, and the
+ * per-table destination sets. This began as a near-verbatim port of the
+ * original NS-2 class with two changes:
  *   - randomness is taken from an injected IRng (not libc rand());
  *   - the probabilistic selection helpers are const-correct and take the
  *     config so BETA is not a compile-time constant.
+ *
+ * Storage (#918): one row per destination, holding a {neighbour, regular,
+ * virtual} entry per neighbour that has pheromone toward it, in neighbour
+ * order. Next-hop selection, best*() and evaporation walk one contiguous row
+ * beside the (ordered) neighbour set instead of looking every (neighbour,
+ * destination) pair up in a map. A row is dropped when its last entry is.
+ * What the table answers is unchanged: entries of a node that is no longer a
+ * neighbour stay (as they did in the maps) and are skipped by every walk, and
+ * the destination sets keep their never-shrinking meaning, because callers
+ * observe them (routing-table dumps, randomDestination, adaptive-evaporation
+ * churn state); an empty destination simply has no row.
  */
 #ifndef ANTHOCNET_CORE_PHEROMONE_TABLE_H
 #define ANTHOCNET_CORE_PHEROMONE_TABLE_H
 
+#include <cstddef>
+#include <iterator>
 #include <map>
 #include <set>
 #include <utility>
@@ -28,8 +41,6 @@ namespace core {
 
 class PheromoneTable {
 public:
-    using Key = std::pair<NodeAddress, NodeAddress>;  // (neighbor, dest)
-    using PheromoneMap = std::map<Key, double>;
     using NeighborSet = std::set<NodeAddress>;
     using DestinationSet = std::set<NodeAddress>;
 
@@ -52,16 +63,34 @@ public:
     void setPheromoneRegular(NodeAddress dest, NodeAddress neighbor, double value);
     void setPheromoneVirtual(NodeAddress dest, NodeAddress neighbor, double value);
 
-    bool isEmptyRegular() const { return pheromoneRegular_.empty(); }
-    bool isEmptyVirtual() const { return pheromoneVirtual_.empty(); }
+    bool isEmptyRegular() const { return numRegular_ == 0; }
+    bool isEmptyVirtual() const { return numVirtual_ == 0; }
 
     /// Size gauge (issue #133): current (neighbor, dest) entry counts. The
     /// table grows with destinations x neighbours (regular + virtual) and only
     /// evaporation / link-failure removal shrink it, so adapters export these
     /// to observe growth over long runs. Read-only; no routing behaviour.
-    std::size_t numEntriesRegular() const { return pheromoneRegular_.size(); }
-    std::size_t numEntriesVirtual() const { return pheromoneVirtual_.size(); }
-    std::size_t numEntries() const { return pheromoneRegular_.size() + pheromoneVirtual_.size(); }
+    std::size_t numEntriesRegular() const { return numRegular_; }
+    std::size_t numEntriesVirtual() const { return numVirtual_; }
+    std::size_t numEntries() const { return numRegular_ + numVirtual_; }
+    /// Destinations that currently hold a row, i.e. at least one regular or
+    /// virtual entry (#918). Unlike the destination sets, this shrinks.
+    std::size_t numRows() const { return rows_.size(); }
+
+    /// Calls f(dest, bestRegular(dest)) for every regular destination, in
+    /// destination order: the same values as calling bestRegular() per
+    /// destination, read straight from the rows (#918, the hello build).
+    template <typename F>
+    void forEachBestRegular(F f) const;
+
+    /// Ages every entry in place (#918): for each row, each entry whose
+    /// neighbour is a current neighbour and whose value is > 0 is multiplied
+    /// by factorFor(dest), and removed when the result is below
+    /// `minPheromone`. Regular and virtual alike. This is exactly what
+    /// PheromoneEngine::evaporateAll used to do through get/set/remove over
+    /// destinations x neighbours, without the lookups or the copies.
+    template <typename FactorFor>
+    void ageEntries(FactorFor factorFor, double minPheromone);
 
     // --- neighbour management --------------------------------------------
     void addNeighbor(NodeAddress neighbor);
@@ -107,6 +136,26 @@ public:
     void setLinkWeights(const std::map<NodeAddress, double>* weights) { linkWeights_ = weights; }
 
 private:
+    /// One neighbour's pheromone toward a row's destination. An absent value
+    /// is has* == false (and reads as 0), as a missing map key used to.
+    struct Entry {
+        NodeAddress neighbor;
+        double regular;
+        double virt;
+        bool hasRegular;
+        bool hasVirtual;
+    };
+    using Row = std::vector<Entry>;  ///< sorted by neighbour
+    using Rows = std::map<NodeAddress, Row>;
+
+    const Entry* find(NodeAddress dest, NodeAddress neighbor) const;
+    Entry& upsert(NodeAddress dest, NodeAddress neighbor);
+    /// Clears one value; erases the entry, and the row, once nothing is left.
+    void erase(NodeAddress dest, NodeAddress neighbor, bool regular);
+    /// The largest regular value a current neighbour holds in `row`, or 0.
+    double bestRegularIn(const Row& row) const;
+    double bestVirtualIn(const Row& row) const;
+
     /// One candidate's selection weight, pow(pheromone, beta) (#655).
     struct Term {
         NodeAddress neighbor;
@@ -127,12 +176,62 @@ private:
     /// decision. Not part of the table's state.
     mutable std::vector<Term> terms_;
 
-    PheromoneMap pheromoneRegular_;
-    PheromoneMap pheromoneVirtual_;
+    Rows rows_;
+    std::size_t numRegular_ = 0;
+    std::size_t numVirtual_ = 0;
     NeighborSet neighborTable_;
     DestinationSet destRegular_;
     DestinationSet destVirtual_;
 };
+
+template <typename F>
+void PheromoneTable::forEachBestRegular(F f) const {
+    auto row = rows_.begin();
+    for (NodeAddress dest : destRegular_) {
+        while (row != rows_.end() && row->first < dest) ++row;
+        const bool has = row != rows_.end() && row->first == dest;
+        f(dest, has ? bestRegularIn(row->second) : 0.0);
+    }
+}
+
+template <typename FactorFor>
+void PheromoneTable::ageEntries(FactorFor factorFor, double minPheromone) {
+    for (auto row = rows_.begin(); row != rows_.end();) {
+        const double f = factorFor(row->first);
+        Row& entries = row->second;
+        auto nb = neighborTable_.begin();
+        std::size_t out = 0;
+        for (std::size_t i = 0; i < entries.size(); ++i) {
+            Entry e = entries[i];
+            while (nb != neighborTable_.end() && *nb < e.neighbor) ++nb;
+            if (nb != neighborTable_.end() && *nb == e.neighbor) {
+                if (e.hasRegular && !(e.regular <= 0.0)) {
+                    const double aged = e.regular * f;
+                    if (aged < minPheromone) {
+                        e.hasRegular = false;
+                        e.regular = 0.0;
+                        --numRegular_;
+                    } else {
+                        e.regular = aged;
+                    }
+                }
+                if (e.hasVirtual && !(e.virt <= 0.0)) {
+                    const double aged = e.virt * f;
+                    if (aged < minPheromone) {
+                        e.hasVirtual = false;
+                        e.virt = 0.0;
+                        --numVirtual_;
+                    } else {
+                        e.virt = aged;
+                    }
+                }
+            }
+            if (e.hasRegular || e.hasVirtual) entries[out++] = e;
+        }
+        entries.resize(out);
+        row = entries.empty() ? rows_.erase(row) : std::next(row);
+    }
+}
 
 }  // namespace core
 }  // namespace anthocnet

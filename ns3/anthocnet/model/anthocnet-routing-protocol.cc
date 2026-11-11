@@ -30,6 +30,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 namespace ns3 {
 
@@ -806,8 +807,16 @@ constexpr std::size_t kSinrWindow = 64;
 }  // namespace
 
 void RoutingProtocol::NotifyPhyRxSinr(Ptr<const Packet> packet, double sinrDb) {
-    m_rxSinrByUid.emplace_back(packet->GetUid(), sinrDb);
-    if (m_rxSinrByUid.size() > kSinrWindow) m_rxSinrByUid.pop_front();
+    const uint64_t uid = packet->GetUid();
+    m_rxSinrByUid.emplace_back(uid, sinrDb);
+    auto& indexed = m_rxSinrIndex[uid];
+    indexed.first = sinrDb;  // the newest sample of a UID wins, as the scan did
+    ++indexed.second;
+    if (m_rxSinrByUid.size() > kSinrWindow) {
+        auto it = m_rxSinrIndex.find(m_rxSinrByUid.front().first);
+        if (--it->second.second == 0) m_rxSinrIndex.erase(it);
+        m_rxSinrByUid.pop_front();
+    }
 }
 
 double RoutingProtocol::sinrDbFrom(NodeAddress neighbor) const {
@@ -1196,8 +1205,14 @@ void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header&
     m_queue.Enqueue(entry);
 
     // Ask the core what to do; it returns Queue + a reactive forward ant.
-    std::vector<RouteDecision> decisions = m_logic->onDataPacket(ToCore(header.GetDestination()));
+    // #918: into the kept vector. Taken out of the member while it runs, so a
+    // packet routed from inside ExecuteDecisions gets a vector of its own.
+    std::vector<RouteDecision> decisions;
+    decisions.swap(m_dataDecisions);
+    m_logic->onDataPacket(ToCore(header.GetDestination()), kInvalidAddress, decisions);
     ExecuteDecisions(decisions, kInvalidAddress);
+    decisions.clear();
+    m_dataDecisions.swap(decisions);
 }
 
 // --- ant I/O ----------------------------------------------------------------
@@ -1267,7 +1282,7 @@ void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
 
     AntHeader header;
     packet->RemoveHeader(header);
-    AntMessage incoming = header.Message();
+    AntMessage incoming = std::move(header.Message());  // #918: the header is done with it
 
     // #203: a hello carries both of the sender's names — `src` is how the core
     // will name it in pheromone tables and retraced ant paths, `sender` is where
@@ -1311,14 +1326,15 @@ void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
 
     NodeAddress prevHop = ToCore(sender);
     // #181: the SINR this ant's frame arrived with is the latest sample of the
-    // link from prevHop (newest first: a retransmission shares the UID).
-    for (auto it = m_rxSinrByUid.rbegin(); it != m_rxSinrByUid.rend(); ++it) {
-        if (it->first == packet->GetUid()) {
-            m_neighborSinrDb[prevHop] = it->second;
-            break;
-        }
+    // link from prevHop (the newest of its UID: a retransmission shares it).
+    if (!m_rxSinrIndex.empty()) {
+        auto it = m_rxSinrIndex.find(packet->GetUid());
+        if (it != m_rxSinrIndex.end()) m_neighborSinrDb[prevHop] = it->second.first;
     }
-    std::vector<RouteDecision> decisions = m_logic->onReceiveAnt(incoming, prevHop);
+    // #918: the core takes the decoded ant itself; keep what is read after.
+    const NodeAddress antSrc = incoming.src;
+    const bool backward = incoming.isBackward();
+    std::vector<RouteDecision> decisions = m_logic->onReceiveAnt(std::move(incoming), prevHop);
 
     // A Deliver means a route to incoming.src was just discovered. And any
     // backward ant that traverses this node installs/refreshes a route toward
@@ -1330,21 +1346,22 @@ void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
     bool flushed = false;
     for (const RouteDecision& d : decisions) {
         if (d.action == RouteAction::Deliver) {
-            FlushQueue(incoming.src);
+            FlushQueue(antSrc);
             flushed = true;
             break;
         }
     }
-    if (!flushed && incoming.isBackward()) {
-        FlushQueue(incoming.src);
+    if (!flushed && backward) {
+        FlushQueue(antSrc);
     }
-    ExecuteDecisions(decisions, incoming.src);
+    ExecuteDecisions(decisions, antSrc);
 }
 
 void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
     Ipv4Address dst = ToIpv4(coreDest);
     std::vector<QueueEntry> pending;
     m_queue.DequeueAll(dst, pending);
+    if (pending.empty()) return;  // #918: the usual case on a backward ant
 
     for (QueueEntry& e : pending) {
         NodeAddress next = m_logic->nextHopForData(coreDest);
