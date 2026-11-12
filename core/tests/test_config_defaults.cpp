@@ -11,8 +11,9 @@
  * this test, `make test` fails at the offending commit and names the field.
  *
  * If a default is changed *deliberately*, update the assertion here, the table
- * in docs/configuration.md §3.1, and the adapter defaults checked by
- * tools/checks/check-default-parity.py in the same commit.
+ * in docs/configuration.md §3.1, and the ns-3 attribute's initial value in the
+ * same commit: the anthocnet ns-3 suite's ConfigDefaultsMatchCoreTestCase
+ * fails when an attribute and core::Config{} disagree (#793).
  */
 #include "anthocnet/core/config.h"
 #include "test_support.h"

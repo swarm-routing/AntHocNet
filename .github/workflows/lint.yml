@@ -140,14 +140,6 @@ jobs:
         run: |
           python3 docs/tools/check-headers.py --self-test
           python3 docs/tools/check-headers.py .
-      - name: Config default parity (core vs ns-3)
-        # A Config default that drifts in one tree only is the #252/#254
-        # failure mode: proactiveInterval leaked 10 -> 2 in a PR that claimed
-        # not to change it, and the benchmark regression took two days to
-        # trace. core/tests/test_config_defaults.cpp pins the core values;
-        # this pins the adapter copies to core. Cheap (stdlib-only regexes,
-        # <1 s) and it runs on every PR. See #258.
-        run: python3 tools/checks/check-default-parity.py
       - name: Game <-> docs links and the Nest's coverage (#631, #635)
         # Every world and Academy mission links its docs page, every family
         # results page links its world, every target exists, every public core
