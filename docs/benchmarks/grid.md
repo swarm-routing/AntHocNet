@@ -817,6 +817,81 @@ The exact (`approx=0`) rule exists only where the graph *is* the wiring — see
 the [satellite ISL suite](satellite/isl-grid.md), which publishes the
 `mode=wired approx=0` cell.
 
+### The matched set at v2.7.0: re-measured on ns-3 3.48 ([#460](https://github.com/swarm-routing/AntHocNet/issues/460))
+
+> **Current tables, measured 2026-11-11 for v2.7.0.** The six cells re-run on
+> `main` @ `00ae02f` (#927, the first commit whose harness is
+> swarm-routing/ns3-tools v0.1.0's `routing-bench`), in one campaign image
+> (`anthocnet-ns3-campaign@sha256:65cd973a…`, on
+> `ns3-dev:3.48-optimized@sha256:5585a93c…`), 20 seeds, the same five arms in
+> one run, CBR sources (#521). Plan:
+> [`tools/bench/campaigns/v2.7.0-grid-460.yaml`](../../tools/bench/campaigns/v2.7.0-grid-460.yaml),
+> pre-registered on #460 before dispatch. Cells:
+> `results/cells/grid-<mobility>-<channel>-g460.txt`. Every number below comes
+> from `tools/bench/common_tables.py` on those files.
+>
+> **These are ns-3 3.48 numbers.** The tables they replace (kept below,
+> marked superseded) were measured at `4611bbb` on ns-3 3.42, before #496 and
+> #521. Under the accepted
+> [cross-image rule](methodology.md#reproducing-via-ci-manual-dispatch)
+> a number from one ns-3 release is not compared with one from another in this
+> family, so **no delta between the two generations is quoted**: each table is
+> a number of its own source, image and release.
+
+Hops on the identity-matched `##COMMON##` set — the `(flow, seq)` packets all
+five arms delivered, the same transmissions in every arm since #459:
+
+| mobility | channel | anthocnet | aodv | olsr | dsdv | **oracle** | hop bound (oracle ≤ arm, seeds) |
+|---|---|---|---|---|---|---|---|
+| rwp | tworay | 1.408 | 1.483 | 1.369 | 1.376 | **1.340** | **holds 20/20 against every arm** |
+| ssrwp | tworay | 1.387 | 1.467 | 1.353 | 1.359 | **1.326** | **holds 20/20 against every arm** |
+| gaussmarkov | tworay | 1.467 | 1.504 | 1.400 | 1.406 | **1.362** | **holds 20/20 against every arm** |
+| rwp | nakagami | 1.361 | 1.224 | 1.209 | 1.081 | **1.236** | anthocnet 20/20; aodv 4/20, olsr 1/20, dsdv 0/20 |
+| ssrwp | nakagami | 1.366 | 1.228 | 1.219 | 1.080 | **1.242** | anthocnet 20/20; aodv 1/20, olsr 0/20, dsdv 0/20 |
+| gaussmarkov | nakagami | 1.452 | 1.236 | 1.233 | 1.097 | **1.268** | anthocnet 20/20; aodv 0/20, olsr 0/20, dsdv 0/20 |
+
+- **Two-ray: the bound holds in every seed of every cell**, by
+  0.028–0.037 hops against the closest arm (olsr; paired 95 % intervals all
+  below zero).
+- **Nakagami: it fails against aodv, olsr and dsdv.** Oracle minus arm,
+  paired per seed: aodv **+0.012 / +0.014 / +0.032**, olsr **+0.026 / +0.023 /
+  +0.035**, dsdv **+0.155 / +0.162 / +0.170** (rwp / ssrwp / gaussmarkov; every
+  interval above zero). The `p50-approx` median radius (373.4 m) leaves out
+  links the radios have, and the arms that use them route the same packets in
+  fewer hops than the control thinks possible.
+
+Latency on the same set, anthocnet minus oracle (ms; paired per-seed mean and
+95 % t interval):
+
+| mobility | channel | meanC anthocnet | meanC oracle | Δ | p99C anthocnet | p99C oracle | Δ |
+|---|---|---|---|---|---|---|---|
+| rwp | tworay | 4.4 | 1.9 | **+2.5** [+2.2, +2.8] | 67.3 | 12.6 | **+54.8** [+44.2, +65.3] |
+| ssrwp | tworay | 4.2 | 1.8 | **+2.5** [+2.2, +2.7] | 56.8 | 12.5 | **+44.3** [+35.7, +53.0] |
+| gaussmarkov | tworay | 5.6 | 2.1 | **+3.5** [+3.2, +3.8] | 139.8 | 13.6 | **+126.2** [+117.0, +135.3] |
+| rwp | nakagami | 28.7 | 23.7 | **+5.0** [+2.7, +7.3] | 428.7 | 963.9 | **−535.3** [−641.2, −429.4] |
+| ssrwp | nakagami | 29.5 | 22.3 | **+7.2** [+5.3, +9.1] | 430.4 | 963.5 | **−533.1** [−627.2, −439.0] |
+| gaussmarkov | nakagami | 44.1 | 28.5 | **+15.6** [+13.0, +18.1] | 637.1 | 1021.1 | **−384.0** [−426.8, −341.2] |
+
+**The oracle is faster in the mean in all six cells** (anthocnet slower on
+20/20 seeds in five cells, 17/20 in rwp-nakagami), and the **tail inversion
+under fading survives**: on identical packets the oracle's p99 is 0.96–1.02 s
+against AntHocNet's 0.43–0.64 s (anthocnet faster on 19–20 of 20 seeds). The
+mechanism below is unchanged.
+
+`scenario_check.py results`: the two-ray cells WARN only. The Nakagami cells
+FAIL on the known #431 hop residual against dsdv (beyond the gate's 0.05) and
+on nothing else, except one display FAIL in gaussmarkov-nakagami: the #464
+refusal gate reads 63 oracle refusals (seed 9) against the second seed block's
+drop row, which prints `route=0.00`; the first block's row, where seed 9 is,
+books them (`route=0.04`). It concerns the oracle's PDR denominator, not the
+matched set.
+
+#### Superseded: the `4611bbb` re-measure (ns-3 3.42, before #496 and #521)
+
+Kept as the record of what the first fixed-harness measurement read
+(ADR-0013). Do not quote it against the v2.7.0 tables above (different source,
+release and offered load).
+
 > **These numbers supersede the phase-3 matched-hop and matched-latency tables,
 > which were measured on a broken instrument.** Phase 3 reported that the
 > oracle used more hops than every real arm in all six cells (e.g. `rwp-tworay`
@@ -935,10 +1010,11 @@ one at all is open, and if it does not, the answer is a probability-weighted
   measurement but are not a bound.
 - **Hop count — a bound on the two-ray cells, and not on the fading cells.**
   This is the change #457 and #459 bought: the assertion fires and passes at 20
-  seeds on all three two-ray cells. On the fading cells it fires and fails, and
-  the failure is the measured size of the median-radius approximation rather
-  than a defect in any arm — quote it as that, not as "dsdv beats optimal
-  routing".
+  seeds on all three two-ray cells (and again at v2.7.0 on ns-3 3.48, #460).
+  On the fading cells it fires and fails (at v2.7.0 against aodv, olsr and
+  dsdv), and the failure is the measured size of the median-radius
+  approximation rather than a defect in any arm — quote it as that, not as
+  "dsdv beats optimal routing".
 - **`delay99` across arms is a separate trap**, and the oracle's fading tail is
   the clearest instance of it in the corpus. It is a general metric rule, not an
   oracle quirk — see
@@ -1047,6 +1123,16 @@ The superseded versions:
 - **`4611bbb` #431 re-measure** (runs `32209168271` … `32209193038`): per-cell
   table on [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820);
   its run logs have expired.
+
+The matched-set tables
+([the v2.7.0 re-measure](#the-matched-set-at-v270-re-measured-on-ns-3-348-460))
+have their own provenance: `main` @ `00ae02f`, campaign image
+`ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:65cd973a7dfa3b8b2809e3b0059a483a1109c022f6e0a309e1651fe761f327e9`
+(built by `campaign-image.yml` run `43039521796` on
+`ns3-dev:3.48-optimized@sha256:5585a93c5cea1980592539e2d26a4e111e0ff4b0cc63b3dfd6ea5de459d80d3f`),
+plan `tools/bench/campaigns/v2.7.0-grid-460.yaml`, two 10-seed blocks per cell
+(runs `43040372707` … `43080675493`, listed in each cell's header), cells
+`results/cells/grid-<mobility>-<channel>-g460.txt`.
 
 ## What is deliberately not published here
 
