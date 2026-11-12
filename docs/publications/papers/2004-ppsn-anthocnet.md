@@ -6,7 +6,7 @@
 > Springer-Verlag, 2004. **Conference best paper award.** Also published as
 > IDSIA Technical Report **IDSIA-25-04-2004** (August 2004); the two bodies are
 > 99.96 % identical (verified on the maintainer-supplied PDFs, 2026-07-19).
-> <https://doi.org/10.1007/978-3-540-30217-9_47> (`anthocnet2004` in
+> <https://doi.org/10.1007/978-3-540-30217-9_47> (`DDG04` in
 > [`docs/references.bib`](../../references.bib)).
 >
 > This is the document cited as **[1]** throughout `core/` comments,
