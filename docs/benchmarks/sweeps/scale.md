@@ -275,8 +275,8 @@ dispatch:
 | f = 2.0 | 200 | 3000 × 1000 | 10 × 2 seeds |
 | f = 3.16 | 500 | 4743 × 1581 | AntHocNet + AODV 10 × 2 seeds; OLSR 20 × 1; oracle 20 × 1 |
 
-**Sizing.** Run [`39527509217`](https://github.com/swarm-routing/AntHocNet/actions/runs/39527509217)
-ran 500 nodes, 1 seed, all four protocols, on `ns3:3.42-opt`:
+**Sizing.** Run `39527509217` (since deleted from Actions; its numbers are
+kept here) ran 500 nodes, 1 seed, all four protocols, on `ns3:3.42-opt`:
 
 | protocol | PDR % | NRL |
 |---|---|---|

@@ -11,3 +11,7 @@
 # Placeholders and local addresses used in examples.
 ^https?://(localhost|127\.0\.0\.1)
 ^https://claude\.ai/
+# Open copy of the BeeAdHoc GECCO 2005 paper (its DOI is cited beside it). The
+# host times out from GitHub's runners (2026-10-28, 2026-11-11, three retries
+# of 30 s) yet serves the PDF in about a second from elsewhere (2026-11-12).
+^https://gpbib\.cs\.ucl\.ac\.uk/gecco2005/
