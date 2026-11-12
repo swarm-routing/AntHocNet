@@ -212,8 +212,8 @@ regression to open an issue about.
 - **`Code-Review` (0): accepted.** It counts changesets approved by someone
   other than their author. AntHocNet has one maintainer, and GitHub does not
   let an author approve their own PR, so every merge is unreviewed by a second
-  human. The AI reviewers (`claude-review.yml`, CodeRabbit) comment but never
-  approve, and a bot that auto-approves would game the check rather than meet
+  human. The AI reviewer (CodeRabbit, see [AI review](#ai-review)) comments
+  but never approves, and a bot that auto-approves would game the check rather than meet
   it, so none is added. What changes it: a second maintainer or a regular
   outside reviewer approving PRs.
 - **`Contributors` (3): accepted.** It counts the organisations among recent
@@ -414,6 +414,77 @@ registered. **Do not invent one.** Steps:
    ```markdown
    [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/<ID>/badge)](https://www.bestpractices.dev/projects/<ID>)
    ```
+
+## AI review
+
+One AI reviewer comments on pull requests: **CodeRabbit**, a GitHub App on
+the free open-source plan, configured by [`.coderabbit.yaml`](.coderabbit.yaml)
+(the org's settings plus this repository's golden rules, #838). It reviews
+each PR once, when it opens (not drafts or Dependabot bumps), and again only
+on request. It only comments: it never approves or requests changes, and it
+is not a required check, so only `CI gate` and the CodeQL scan decide whether
+a PR can merge. The Claude Code Action review (`claude-review.yml`) was
+removed by maintainer decision (#864); CodeRabbit is the only AI reviewer.
+
+How a finding is handled, by humans and agents alike:
+
+1. **A finding is a claim to verify, not an order.** Trace a realistic path
+   to the failure before changing anything. On #829 the first round's
+   findings were real and fixed in `b09b275`
+   ([thread](https://github.com/swarm-routing/AntHocNet/pull/829#discussion_r4427507353));
+   the second round's conflicted with #791's equivalence contract, were
+   declined with the reason, and CodeRabbit withdrew them
+   ([thread](https://github.com/swarm-routing/AntHocNet/pull/829#discussion_r4433674689)).
+2. **Answer every thread on the thread itself:** fix it (name the commit) or
+   decline it with the reason, so the decision stays next to the code. Then
+   resolve the thread. The `main` ruleset requires every review thread
+   resolved before a merge, so an unanswered finding holds the PR.
+3. **Severity decides whether a finding is worth a push.** A Major, Critical
+   or security finding is fixed now, or put to the maintainer; a security
+   thread stays open until the maintainer decides. A Minor, nitpick or
+   suggestion finding does not trigger a push by itself: answer it, resolve
+   it, and let the next code push carry any change. A confirmed bug that is
+   not fixed in the PR also gets an issue, or a comment on an existing one,
+   linked from the thread before it is resolved
+   ([ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md)). On #832 both Major
+   findings were fixed in `219bd83`
+   ([thread](https://github.com/swarm-routing/AntHocNet/pull/832#discussion_r4433828978)),
+   and the Minor "PASS overstates what ran" wording was deferred to a later
+   push ([thread](https://github.com/swarm-routing/AntHocNet/pull/832#discussion_r4433879819)).
+4. **An unverified finding is still a claim to check.** CodeRabbit marks a
+   finding its own verification could not confirm; check it like any other.
+   #832's `--filter-module-examples-and-tests` finding was one, and it was
+   real ([thread](https://github.com/swarm-routing/AntHocNet/pull/832#discussion_r4433828991)).
+5. **Pushes cost review budget.** The plan allows a limited number of
+   reviews per hour (CodeRabbit's footer said "up to 10 included reviews per
+   hour" on #832). Batch fixes; do not push one commit per finding.
+6. **Echoes are not requests.** CodeRabbit edits its summary comment and
+   repeats finding text after a push, and an agent's own replies come back
+   to it as events. These need no action.
+7. **Wait for the review before enabling auto-merge.** `main` merges through
+   the merge queue, and auto-merge does not wait for a check that is not
+   required: a PR whose CI is quick can merge before CodeRabbit has
+   reviewed it, and the review then fails with "The pull request is
+   closed" (swarm-routing/.github#238). Enable auto-merge once CodeRabbit's
+   review is posted and every thread is answered and resolved.
+
+**Commands.** Post them as a PR comment, addressed to CodeRabbit's handle
+(`coderabbitai`, with the at-sign): `review` (review the commits since the
+last review; the way to get a second review, as pushes are not reviewed
+automatically), `full review` (re-review every file), `pause` and `resume`
+(stop and restart automatic reviews), `resolve` (resolve all of its threads,
+only once each one is answered), `rate limit` (whether another review is
+available now), and `help`. Never use `approve`: an approval from a bot would
+game Scorecard's `Code-Review` rather than meet it (see above). The full list
+is CodeRabbit's
+[review commands](https://docs.coderabbit.ai/reference/review-commands)
+page (checked 2026-11-12).
+
+**Learnings.** CodeRabbit stores "learnings" from replies to its findings;
+they live in CodeRabbit's app, where the maintainer manages them, and are not
+reviewed in a PR. A convention the reviewer should apply belongs in
+`.coderabbit.yaml` instead, where a PR changes it (its head and tail sections
+come from `swarm-routing/.github`'s templates through org-sync).
 
 ## Pull requests
 
