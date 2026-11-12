@@ -2177,7 +2177,16 @@ def check_oracle(path, rows):
     seed_mode = {}  # seed -> mode tag, read by the #431 hop gate's severity
     oracle_origin_refusals = {}  # seed -> #464 refused-send count
     ORACLE_SPLIT_SEEN.clear()  # seed -> carried the #464 split (#521 precision)
+    # A cell collected from seed blocks holds one summary table, so one
+    # `# drops` row, per block: a seed's refusals are booked in its own
+    # block's row only (#933). seed -> the firstRun of its block's ##CONFIG##.
+    seed_block = {}
+    block = None
     for line in text.splitlines():
+        b = re.match(r"^##CONFIG## .*\bfirstRun=(\d+)", line)
+        if b:
+            block = b.group(1)
+            continue
         m = ORACLE_LINE.match(line)
         if not m:
             continue
@@ -2186,6 +2195,7 @@ def check_oracle(path, rows):
          no_route_origin, no_route_fwd, nrl) = m.groups()
         if proto == ORACLE_PROTO:
             seed_mode[seed] = mode
+            seed_block[seed] = block
         tag = f"{os.path.basename(path)} seed{seed}/{proto}"
         if proto != ORACLE_PROTO:
             report("FAIL", f"{tag}: a ##ORACLE## row for '{proto}' — only the "
@@ -2271,42 +2281,52 @@ def check_oracle(path, rows):
     # (##MATCH## delivered / ##RUN## PDR, per seed), only a share that would
     # print as >= 0.01 can contradict a 0.00 column. Pre-#464 cells (no split)
     # keep the unconditional FAIL: their refusals were never booked at all.
-    below_print = False
-    if oracle_origin_refusals and all(
-            ORACLE_SPLIT_SEEN.get(sd) for sd in oracle_origin_refusals):
-        pdr_by_seed, deliv_by_seed = {}, {}
-        for line in text.splitlines():
-            m = re.match(r"^\s*##RUN##\s+(\d+)\s+" + ORACLE_PROTO
-                         + r"\s+([\d.]+)\s", line)
-            if m:
-                pdr_by_seed[m.group(1)] = float(m.group(2))
-            m = re.match(r"^\s*##MATCH##\s+(\d+)\s+" + ORACLE_PROTO
-                         + r"\s+(\d+)\s", line)
-            if m:
-                deliv_by_seed[m.group(1)] = int(m.group(2))
-        seeds = set(pdr_by_seed) & set(deliv_by_seed)
-        if seeds and all(pdr_by_seed[sd] > 0 for sd in seeds):
-            offered = sum(100.0 * deliv_by_seed[sd] / pdr_by_seed[sd]
-                          for sd in seeds)
-            share = 100.0 * sum(oracle_origin_refusals.values()) / offered
-            below_print = share < 0.005
-    if sum(oracle_origin_refusals.values()) > 0 and not below_print:
-        for r in rows:
-            if r.get("proto") != ORACLE_PROTO:
-                continue
-            route = _fnum(r, "drop_route")
-            if route is not None and route == 0.0:
-                total = sum(oracle_origin_refusals.values())
-                report("FAIL",
-                       f"{os.path.basename(path)}/{ORACLE_PROTO}: {total} "
-                       "failed route lookup(s) but the route column reads "
-                       "0.00 — refused sends are missing from both the drop "
-                       "book and the PDR denominator, so this arm's PDR is "
-                       "computed over the packets it had a route for, not "
-                       "over offered traffic. The #215 identity cannot catch "
-                       "this on its own: the book closes at sum=100.00 "
-                       "BECAUSE the same packets are absent from the "
-                       "denominator (#464)")
+    # #933: on a cell of several seed blocks, each `# drops` row is held
+    # against the refusals of its own block's seeds, and the #521 share is
+    # taken over that block's offered traffic; a single-block cell is one
+    # block holding every seed.
+    pdr_by_seed, deliv_by_seed = {}, {}
+    for line in text.splitlines():
+        m = re.match(r"^\s*##RUN##\s+(\d+)\s+" + ORACLE_PROTO
+                     + r"\s+([\d.]+)\s", line)
+        if m:
+            pdr_by_seed[m.group(1)] = float(m.group(2))
+        m = re.match(r"^\s*##MATCH##\s+(\d+)\s+" + ORACLE_PROTO
+                     + r"\s+(\d+)\s", line)
+        if m:
+            deliv_by_seed[m.group(1)] = int(m.group(2))
+    for r in rows:
+        if r.get("proto") != ORACLE_PROTO:
+            continue
+        rb = re.search(r" block(\d+)$", r.get("where") or "")
+        refusals = {sd: n for sd, n in oracle_origin_refusals.items()
+                    if rb is None or seed_block.get(sd) == rb.group(1)}
+        total = sum(refusals.values())
+        if total == 0:
+            continue
+        below_print = False
+        if all(ORACLE_SPLIT_SEEN.get(sd) for sd in refusals):
+            seeds = {sd for sd in set(pdr_by_seed) & set(deliv_by_seed)
+                     if rb is None or seed_block.get(sd) == rb.group(1)}
+            if seeds and all(pdr_by_seed[sd] > 0 for sd in seeds):
+                offered = sum(100.0 * deliv_by_seed[sd] / pdr_by_seed[sd]
+                              for sd in seeds)
+                if offered > 0:
+                    below_print = 100.0 * total / offered < 0.005
+        if below_print:
+            continue
+        route = _fnum(r, "drop_route")
+        if route is not None and route == 0.0:
+            report("FAIL",
+                   f"{r.get('where')}/{ORACLE_PROTO}: {total} "
+                   "failed route lookup(s) but the route column reads "
+                   "0.00 — refused sends are missing from both the drop "
+                   "book and the PDR denominator, so this arm's PDR is "
+                   "computed over the packets it had a route for, not "
+                   "over offered traffic. The #215 identity cannot catch "
+                   "this on its own: the book closes at sum=100.00 "
+                   "BECAUSE the same packets are absent from the "
+                   "denominator (#464)")
 
     # --- #431: the per-seed hop bound on the identity-matched set -----------
     # "No protocol routes the same packet in fewer hops" asserted where it is
