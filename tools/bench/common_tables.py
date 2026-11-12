@@ -27,7 +27,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-import ns3_tools  # noqa: E402  (the readers pinned in ns3-tools.lock)
+import ns3_tools  # the readers pinned in ns3-tools.lock
 
 ROW = re.compile(
     r"^\s*##COMMON##\s+(\d+)\s+([a-z][\w-]*)\s+\d+\s+(\d+)\s+(\S+)\s+(\S+)\s+\S+\s+(\S+)"
