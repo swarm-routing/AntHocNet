@@ -202,7 +202,7 @@ Every entry was retrieved on 2026-10-09 at abstract or summary level.
 
 **Families**
 - Raffelsberger & Hellwagner, *Evaluation of MANET routing protocols in a realistic emergency response scenario*, WISES 2012 — [CCS Labs entry](https://www.ccs-labs.org/bib/raffelsberger2012evaluation/), [PDF (archived)](https://web.archive.org/web/20240416071219/https://www.itec.aau.at/bib/files/WISES2012-cr.pdf)
-- Reina et al., *Ad hoc network in a disaster area: a composite mobility model and its evaluation* — [HAL](https://hal.archives-ouvertes.fr/hal-00544222)
+- Reina et al., *Ad hoc network in a disaster area: a composite mobility model and its evaluation* — [HAL](https://hal.science/hal-00544222)
 - Kioumourtzis et al., tactical MANET routing evaluation (2012) — [Univ. Patras](https://telematics.upatras.gr/?p=1808)
 - Grandhomme et al., *Comparison of inter-MANET routing protocol evaluation tools* (2016) — [EURECOM](https://www.eurecom.edu/fr/publication/5061)
 - *Satellite Communications in the New Space Era* (survey) — [arXiv 2002.08811](https://arxiv.org/pdf/2002.08811)
@@ -216,14 +216,14 @@ Every entry was retrieved on 2026-10-09 at abstract or summary level.
 - *Survey on Neighbor Discovery and Beam Alignment in mmWave-Enabled UAV Swarm Networks* (2024) — [arXiv 2410.11490](https://arxiv.org/pdf/2410.11490)
 
 **Mechanisms**
-- Mobility-anticipated ETX — [HAL hal-01072234](https://hal.archives-ouvertes.fr/hal-01072234)
+- Mobility-anticipated ETX — [HAL hal-01072234](https://hal.science/hal-01072234)
 - Neishaboori & Kesidis, *SINR-sensitive routing in wireless 802.11 mesh networks* — [Penn State](https://pure.psu.edu/en/publications/sinr-sensitive-routing-in-wireless-80211-mesh-networks/)
 - Draves, Padhye & Zill, mesh routing metrics — [Microsoft Research](https://microsoft.com/en-us/research/wp-content/uploads/2016/02/mesh-metrics.pdf)
 - iCAR: intersection-based connectivity-aware routing — [ICESI repository](https://repository.icesi.edu.co/handle/10906/83089)
 - ML link-lifetime prediction in VANETs, Sensors 2022 — [doi:10.3390/s22166038](https://api.crossref.org/works/10.3390%2FS22166038)
 - Driving path stability in VANETs — [arXiv 1906.08370](https://arxiv.org/pdf/1906.08370)
 - Mavrovouniotis & Yang, adaptive / self-adaptive evaporation — [CUT repository](https://ktisis.cut.ac.cy/handle/20.500.14279/30859), [Springer](https://link.springer.com/doi/10.1007/978-3-642-37192-9_61)
-- BeeAdHoc, GECCO 2005 — [PDF](https://gpbib.cs.ucl.ac.uk/gecco2005/docs/p153.pdf); PEEBR — [SAI](https://saiconference.com/Downloads/Volume5No4/Paper_11-On_the_Performance_of_the_Predicted_Energy_Efficient_Bee-Inspired_Routing_PEEBR.pdf)
+- BeeAdHoc, GECCO 2005 — [doi:10.1145/1068009.1068034](https://doi.org/10.1145/1068009.1068034), [PDF](https://gpbib.cs.ucl.ac.uk/gecco2005/docs/p153.pdf); PEEBR — [SAI](https://saiconference.com/Downloads/Volume5No4/Paper_11-On_the_Performance_of_the_Predicted_Energy_Efficient_Bee-Inspired_Routing_PEEBR.pdf)
 - Hybrid ant-colony inter-cluster routing for FANET, Sci. Rep. 2024 — [PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11228038/)
 
 **Comparators**
@@ -235,15 +235,15 @@ Every entry was retrieved on 2026-10-09 at abstract or summary level.
 
 **Swarm comparators**
 - Güneş et al., ARA — the ant-colony based routing algorithm for MANETs (2002) — [FU Berlin](https://cst-pub.imp.fu-berlin.de/Guenes2002e.html)
-- Roth & Wicker, Termite (SIDM 2005) — [PDF](https://forum.cone.informatik.uni-freiburg.de/teaching/seminar/adhoc-s08/mobiPapers/SIDM2005.pdf); Roth thesis — [Cornell eCommons](https://hdl.handle.net/1813/240); seminar critique — [Freiburg](https://forum.cone.informatik.uni-freiburg.de/teaching/seminar/adhoc-s08/finalTalks/05fin_Termite_Max_Fechner.pdf)
+- Roth & Wicker, Termite (SIDM 2005, published as a chapter of *Stigmergic Optimization*, 2006) — [doi:10.1007/978-3-540-34690-6_7](https://doi.org/10.1007/978-3-540-34690-6_7); Roth thesis — [Cornell eCommons](https://hdl.handle.net/1813/240); a seminar critique (Univ. Freiburg ad hoc networking seminar; title and author not recorded), whose copy is no longer online, formerly at `forum.cone.informatik.uni-freiburg.de/teaching/seminar/adhoc-s08/finalTalks/05fin_Termite_Max_Fechner.pdf`
 - Wang, HOPNET (2007 thesis) — [UManitoba MSpace](https://mspace.lib.umanitoba.ca/bitstream/1993/20935/1/Wang_HOPNET_a.pdf)
 - Ducatelle, AntHocNet thesis (2007) — [SONAR (USI)](https://sonar.ch/global/documents/318075)
 - *Performance Analysis of Swarm Based Routing Protocols for MANETs* (NS-2 thesis, Thapar University) — [TUDR](https://tudr.thapar.edu/items/22361eb3-790e-4330-bfe9-1bb009c24e4c)
 
 **Secure comparators**
-- Sadasivam, Changrani & Yang, SEAD vs DSDV vs DSR — [UHCL](https://sceweb.sce.uhcl.edu/yang/research/MANETII05-sadasivam.pdf)
-- *Evaluations of Secure MANET Routing Protocols* (Ariadne, SAODV under attack; thesis) — [UHCL](https://sceweb.uhcl.edu/yang/public/download/Tuan%20thesis%20040506.doc)
-- ARAN vs AODV under blackhole and IP spoofing (GloMoSim) — [CUP](https://kr.cup.edu.in/items/8aa53833-6e82-4351-87ac-2605a272bb8d/full)
+- Sadasivam, Changrani & Yang, SEAD vs DSDV vs DSR (the author-hosted copy at UHCL is no longer online, and the work has no DOI; formerly at `sceweb.sce.uhcl.edu/yang/research/MANETII05-sadasivam.pdf`)
+- *Evaluations of Secure MANET Routing Protocols* (Ariadne, SAODV under attack; thesis, UHCL; its copy is no longer online, and it has no DOI; formerly at `sceweb.uhcl.edu/yang/public/download/Tuan%20thesis%20040506.doc`)
+- ARAN vs AODV under blackhole and IP spoofing (GloMoSim; title and authors not recorded; a Central University of Punjab repository record, offline since 2026-10, no DOI; formerly at `kr.cup.edu.in/items/8aa53833-6e82-4351-87ac-2605a272bb8d/full`)
 - Cryptographic versus trust-based methods for MANET routing security (SAODV vs TAODV on hardware) — [Stevens](https://researchwith.stevens.edu/en/publications/cryptographic-versus-trust-based-methods-for-manet-routing-securi/)
 - Secure bee algorithms for MANET routing (survey; BeeSec, BeeAIS) — [UB](https://pubs.ub.ro/article/3797)
 - Secure routing in MANETs: a bio-inspired approach with honey bees — [Inderscience](https://www.inderscience.com/offer.php?id=66750)
