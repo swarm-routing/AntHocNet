@@ -46,13 +46,6 @@ ARMS=anthocnet,aodv,olsr,dsdv,aomdv,gpsr,oracle
 GRID="--nNodes=30 --area=1000 --blocksX=5 --blocksY=5 --mobility=manhattan
       --speedMin=10 --speed=20 --flows=4 --runs=1 --time=60"
 
-# A first `./ns3 run` in a tree unpacked from the gate's tarball may
-# reconfigure and print CMake lines on stdout ("-- Failed to locate
-# sphinx-build ..."), which the same-seed comparison below would read as a
-# difference (seen on #957). Build once first, so both compared runs print the
-# program's output only.
-./ns3 build >/dev/null 2>&1 || ./ns3 build
-
 # --- 1-5: the urban run ----------------------------------------------------
 args="anthocnet-compare --csv --diag --protocols=$ARMS $GRID --propagation=urban"
 out=$(./ns3 run "$(echo $args)" 2>/dev/null)
