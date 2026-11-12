@@ -36,6 +36,8 @@ learned and secure protocols, and the game campaign ([learn-campaign.md](learn-c
 | Page | What it is |
 |---|---|
 | [porting-notes.md](porting-notes.md) | Bugs fixed in extraction, what an adapter does, wire-format and version caveats. |
+| [development.md](development.md) | Build, test and verify in detail: coverage, validating an adapter change through CI, the browser adapter and learn site, the docs and release-package checks. The long form of AGENTS.md's "Build & verify". |
+| [where-to-look.md](where-to-look.md) | Every task in AGENTS.md's "Where to look" with its full entry: files, commands, decisions and issues. |
 | [ns2-support.md](ns2-support.md) | **The removed NS-2 target in one place** — frozen at v1.2.0, shipped through v1.9.0, removed at v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)): which tags and images still carry it, and why it was retired. |
 | [wire-format.md](wire-format.md) | Canonical on-wire ant layout and the `kWireVersion` rules (golden rule 4). |
 | [configuration.md](configuration.md) | Every tunable, its default's **provenance**, the ns-3 attribute for it, and the calibration loop. |
