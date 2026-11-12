@@ -240,14 +240,35 @@ jobs:
           name: ns3-tree-${{ inputs.gate-version }}
           path: /tmp/ns3-tree
       - name: Restore the built tree
-        run: tar -xpf /tmp/ns3-tree/ns3-tree.tar -C /opt/ns-3 && rm -rf /tmp/ns3-tree
+        # `./ns3` reconfigures when cmake-cache/ns3scratches, the scratch/**/*.cc
+        # list saved at configure, differs from its glob now, and it compares
+        # the lists in order. glob returns directory order, which differs
+        # between runner hosts (ns-3's scratch/ has five .cc files in three
+        # directories), so a tree built on one runner reconfigured on another
+        # about half the time, printing CMake lines into the gates' same-seed
+        # comparisons (#959). When only the order differs, rewrite the list in
+        # this runner's order, as ns3's update_scratches_list does.
+        run: |
+          tar -xpf /tmp/ns3-tree/ns3-tree.tar -C /opt/ns-3 && rm -rf /tmp/ns3-tree
+          python3 - <<'PY'
+          import glob, os
+          f = "/opt/ns-3/cmake-cache/ns3scratches"
+          now = "\n".join(glob.glob(os.path.join("/opt/ns-3", "scratch", "**", "*.cc"), recursive=True))
+          saved = open(f).read() if os.path.exists(f) else None
+          if saved is None:
+              print("ns3scratches: none")
+          elif saved == now:
+              print("ns3scratches: already in this runner's order")
+          elif sorted(saved.split("\n")) == sorted(now.split("\n")):
+              open(f, "w").write(now)  # only the order differs: no reconfigure is due
+              print("ns3scratches: same files in another order; rewritten in this runner's (#959)")
+          else:  # other files: a real change, left for ./ns3 to reconfigure
+              print("ns3scratches: other files than at configure; left as it is")
+          PY
       - name: Settle the restored tree
-        # Since 2026-11-12 the first `./ns3 run` in a restored tree sometimes
-        # reconfigures and prints CMake lines ("-- Failed to locate
-        # sphinx-build ...") on stdout, which the gates' same-seed comparisons
-        # read as non-determinism (vanet and fanet on #957 and main). Building
-        # once here takes any reconfigure before the gates run; on a settled
-        # tree it is ninja's "no work to do". The trigger is tracked separately.
+        # A guard (#958): with ns3scratches rewritten above, this is ninja's
+        # "no work to do". If it reconfigures again, the CMake lines show here
+        # instead of in a gate's same-seed comparison; #959 has the history.
         timeout-minutes: 10
         run: cd /opt/ns-3 && ./ns3 build
       - name: 3-D field smoke (#480, --areaZ for the FANET family)
