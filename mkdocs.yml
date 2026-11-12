@@ -145,6 +145,8 @@ nav:
       - configuration.md
       - wire-format.md
       - porting-notes.md
+      - development.md
+      - where-to-look.md
       - ns2-support.md
       - cross-validation.md
   - Archive:
