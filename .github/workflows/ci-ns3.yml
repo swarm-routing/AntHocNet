@@ -241,6 +241,15 @@ jobs:
           path: /tmp/ns3-tree
       - name: Restore the built tree
         run: tar -xpf /tmp/ns3-tree/ns3-tree.tar -C /opt/ns-3 && rm -rf /tmp/ns3-tree
+      - name: Settle the restored tree
+        # Since 2026-11-12 the first `./ns3 run` in a restored tree sometimes
+        # reconfigures and prints CMake lines ("-- Failed to locate
+        # sphinx-build ...") on stdout, which the gates' same-seed comparisons
+        # read as non-determinism (vanet and fanet on #957 and main). Building
+        # once here takes any reconfigure before the gates run; on a settled
+        # tree it is ninja's "no work to do". The trigger is tracked separately.
+        timeout-minutes: 10
+        run: cd /opt/ns-3 && ./ns3 build
       - name: 3-D field smoke (#480, --areaZ for the FANET family)
         # --areaZ > 0 must really place AND move nodes in a 3-D box (altitude
         # span from the harness's `# geom` diagnostic at t=0 and mid-run), under
