@@ -110,3 +110,33 @@ do not auto-apply labels):
   re-deriving context.
 - Slightly more issue/comment bookkeeping per session — the cost the #19
   regression showed is worth paying.
+
+## Amendment (2026-11-12): a handoff belongs to its work
+
+Item 5 said a fresh session starts from the newest open `handoff` issue and
+that every session ending with work in flight opens one. Read literally, that
+sends a session asked for an unrelated task to whichever handoff is newest,
+and lets a resumed session open a second handoff for the same work, leaving
+the first open for a later session to pick up. Three of item 5's sentences
+are replaced; the rest of it (an issue from the *Handoff* template, never a
+file; what a handoff carries) stands:
+
+| Item 5 said | Now |
+|---|---|
+| "Open one whenever a session ends with work in flight, or when a handoff is asked for." | the first and second bullets below |
+| "A fresh AI chat (or a human) starts from the newest open `handoff` issue, then drops into the linked issues for detail." | the first bullet |
+| "The session that completes the work closes the handoff issue with a pointer to the result." | the third bullet |
+
+Item 5 now reads:
+
+- A session that **continues** handed-off work starts from the newest open
+  `handoff` issue **for that work**; a session given a **new task** starts
+  from the request.
+- A session that continued a handoff and ends with work still in flight
+  **updates that issue** instead of opening another.
+- The session that completes the work closes the handoff issue, **and any
+  older one it superseded**, with a pointer to the result.
+
+The org's agent defaults say the same (swarm-routing/.github#293), as does
+CONTRIBUTING "Issues" in `swarm-routing/.github`; this keeps the three in one
+rule (CodeRabbit on swarm-routing/Termite#76 and swarm-routing/HOPNET#71).
