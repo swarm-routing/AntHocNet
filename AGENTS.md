@@ -2,10 +2,19 @@
 
 Operational guide for LLM agents working in this repository. Read this before
 changing anything; [`CONTEXT.md`](CONTEXT.md) holds the background and history
-when a task needs it. Design detail lives in
+(domain background, current state, glossary, open questions): read the section
+the task needs, not the whole file. Design detail lives in
 [`docs/architecture.md`](docs/architecture.md), maintenance detail in
 [`docs/porting-notes.md`](docs/porting-notes.md), and the rationale behind the
 structure in the [ADRs](docs/adr/).
+
+This repository's own skills (`.claude/skills/`, procedures only, golden rule
+10): `anthocnet-review` (golden-rule checks on a diff) and `benchmark-results`
+(dispatch → fetch → validate → compare). The `learn-site` skill (WASM parity,
+browser smoke, README figures) moved with the game to
+`swarm-routing/swarm-routing.github.io` (#850). The caveman response style
+below is vendored from https://github.com/JuliusBrussee/caveman and adapted for
+the org.
 
 ## What this repo is
 
