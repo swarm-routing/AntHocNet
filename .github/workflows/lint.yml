@@ -221,7 +221,13 @@ jobs:
       - name: Install clang-tidy
         if: steps.diff.outputs.run == 'true'
         timeout-minutes: 10  # apt, its own step so a hang fails fast (#840)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq clang-tidy-18 >/dev/null
+        run: |
+          for i in 1 2 3; do
+            sudo apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          sudo apt-get install -y -qq clang-tidy-18 >/dev/null
       - name: clang-tidy
         if: steps.diff.outputs.run == 'true'
         run: |

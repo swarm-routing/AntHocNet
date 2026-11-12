@@ -92,7 +92,12 @@ jobs:
         if: matrix.version == '3.36'
         timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
+          for i in 1 2 3; do
+            apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
           printf 'CCACHE_DIR=%s\nCCACHE_MAXSIZE=1G\n' "$CCACHE_DIR" >> "$GITHUB_ENV"
           ccache -z
@@ -216,7 +221,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15  # longest group (disaster): ~6 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/danieljoppi/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -504,7 +509,12 @@ jobs:
       - name: Install ccache
         timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
         run: |
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends ccache
+          for i in 1 2 3; do
+            apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
+          apt-get install -y -qq --no-install-recommends ccache
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
           printf 'CCACHE_DIR=%s\nCCACHE_MAXSIZE=1G\n' "$CCACHE_DIR" >> "$GITHUB_ENV"
           ccache -z

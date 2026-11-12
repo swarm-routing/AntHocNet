@@ -53,7 +53,11 @@ jobs:
       - name: Install toolchain
         timeout-minutes: 10  # apt; longest green run: 36 s (#840)
         run: |
-          sudo apt-get update -qq
+          for i in 1 2 3; do
+            sudo apt-get update -qq --error-on=any && break
+            [ "$i" = 3 ] && exit 1
+            sleep $((i * 15))
+          done
           sudo apt-get install -y -qq --no-install-recommends ccache ninja-build
           ccache -z
       - name: Clone ns-3-dev

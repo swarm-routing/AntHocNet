@@ -33,14 +33,15 @@ These are inherent to vanilla AntHocNet, not implementation bugs:
 - **Limited replay protection.** Replays are suppressed only by the bounded
   `(src, seq)` dedup history; once an entry is evicted, a replay is possible.
 
+<!-- org-sync:begin reporting -->
 ## Reporting a vulnerability
 
-This is a research / educational codebase. If you find a memory-safety or
-resource-exhaustion issue in the parser (the in-scope surface above), please
-open an issue describing the malformed input and the observed behaviour.
-Where enabled, GitHub's private vulnerability reporting (**Security → Report a
-vulnerability** on the repo) is the preferred channel; the open-issue route
-remains available.
+Report privately through GitHub's private vulnerability reporting: the
+repository's **Security** tab, then **Report a vulnerability**. If that is
+not available, open an issue that only asks for a private contact, and put
+no vulnerability details in it. This is a research project maintained on a
+best-effort basis: expect an acknowledgement within a few days, not an SLA.
+<!-- org-sync:end reporting -->
 
 ## Verifying a release
 

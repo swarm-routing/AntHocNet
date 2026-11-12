@@ -16,9 +16,32 @@
 #   make reproduce FIG=grid                     # re-render from committed data, diff the PNG
 #   make reproduce FIG=grid MODE=rerun NS3DIR=… # re-measure a cell, validate, render
 
-.PHONY: test core-test bench-core format doctor install-ns3 uninstall-ns3 clean reproduce reproduce-list
+.PHONY: help build test lint check ci shell core-test bench-core format doctor install-ns3 uninstall-ns3 clean reproduce reproduce-list
 
-test: core-test
+# The org's standard target names (swarm-routing/.github#11); `org-sync check`
+# verifies the names, the recipes are this repository's own.
+NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
+
+help: ## list the targets
+	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+build: ## build the core (the ns-3 module builds on a tree: make install-ns3)
+	cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
+	cmake --build core/build -j
+
+test: core-test ## the fast tests CI runs on every PR (core, no simulator)
+
+lint: ## clang-format dry run over the project's own C++, as CI
+	git ls-files 'core/*.cpp' 'core/*.h' \
+	  'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' | xargs $(CLANG_FORMAT) --dry-run -Werror
+
+check: lint test ## the local subset of what CI gates on
+
+ci: check ## alias of check (CI itself runs .github/workflows/ci.yml)
+
+shell: ## an interactive shell in the dev image with this repo at /src
+	docker run --rm -it -v "$(CURDIR):/src" -w /src $(NS3_IMAGE) bash
+
 
 core-test:
 	cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
