@@ -249,6 +249,20 @@ flowchart LR
     V20 --> V21 --> V22 --> V23 --> V24 --> V25 --> V30 --> V31 --> V32 --> V33
 ```
 
+## History
+
+AntHocNet began as [Daniel Joppi](https://github.com/danieljoppi)'s college
+project: an implementation of the protocol on NS-2, started in 2008 and kept on
+GitHub ever since. More than 16 years later it was revived as a test of
+AI-assisted development: the algorithm was separated from any one NS-2 version
+into a simulator-free `core/`, ported to ns-3, and became the reference
+implementation the [swarm-routing](https://github.com/swarm-routing)
+organisation grew from, where other swarm protocols are now implemented and
+compared on the same footing. Tests, determinism checks and paired benchmarks
+safeguard the implementation, and the work is organised as tickets and
+roadmaps that any person, with any AI assistant, can start from. The full
+motivation is on the [organisation profile](https://github.com/swarm-routing#why-this-exists).
+
 ## What changed from the original
 
 The original project was a whole vendored `ns-allinone-2.34` snapshot with the
