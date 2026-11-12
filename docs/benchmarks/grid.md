@@ -853,13 +853,12 @@ five arms delivered, the same transmissions in every arm since #459:
 - **Two-ray: the bound holds in every seed of every cell**, by
   0.028–0.037 hops against the closest arm (olsr; paired 95 % intervals all
   below zero).
-- **Nakagami: it fails against three arms, not two.** Oracle minus arm, paired
-  per seed: aodv **+0.012 / +0.014 / +0.032**, olsr **+0.026 / +0.023 /
+- **Nakagami: it fails against aodv, olsr and dsdv.** Oracle minus arm,
+  paired per seed: aodv **+0.012 / +0.014 / +0.032**, olsr **+0.026 / +0.023 /
   +0.035**, dsdv **+0.155 / +0.162 / +0.170** (rwp / ssrwp / gaussmarkov; every
-  interval above zero). The superseded table had the oracle above olsr and
-  dsdv only. The reading does not change: the `p50-approx` median radius
-  (373.4 m) leaves out links the radios have, and the arms that use them route
-  the same packets in fewer hops than the control thinks possible.
+  interval above zero). The `p50-approx` median radius (373.4 m) leaves out
+  links the radios have, and the arms that use them route the same packets in
+  fewer hops than the control thinks possible.
 
 Latency on the same set, anthocnet minus oracle (ms; paired per-seed mean and
 95 % t interval):
@@ -1012,10 +1011,10 @@ one at all is open, and if it does not, the answer is a probability-weighted
 - **Hop count — a bound on the two-ray cells, and not on the fading cells.**
   This is the change #457 and #459 bought: the assertion fires and passes at 20
   seeds on all three two-ray cells (and again at v2.7.0 on ns-3 3.48, #460).
-  On the fading cells it fires and fails — against olsr and dsdv at `4611bbb`,
-  and against aodv as well at v2.7.0 — and the failure is the measured size of
-  the median-radius approximation rather than a defect in any arm — quote it
-  as that, not as "dsdv beats optimal routing".
+  On the fading cells it fires and fails (at v2.7.0 against aodv, olsr and
+  dsdv), and the failure is the measured size of the median-radius
+  approximation rather than a defect in any arm — quote it as that, not as
+  "dsdv beats optimal routing".
 - **`delay99` across arms is a separate trap**, and the oracle's fading tail is
   the clearest instance of it in the corpus. It is a general metric rule, not an
   oracle quirk — see
