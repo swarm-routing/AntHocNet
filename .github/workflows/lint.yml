@@ -92,6 +92,11 @@ jobs:
         # protocol's default: the control's baselines plus the arm's rows for
         # that protocol. The family pages' numbers come from its output.
         run: python3 tools/bench/test_compose_cell.py
+      - name: Matched-set tables self-test (#460)
+        # common_tables.py computes grid.md's matched-hop and matched-latency
+        # tables from ##COMMON## rows. A synthetic cell with known answers,
+        # no simulator, ~1 s.
+        run: python3 tools/bench/test_common_tables.py
       - name: Gate field-query self-test (#791)
         # The CI gates in tools/checks/ read marker fields through the pinned
         # ns3_tool bench_parse --get. On every committed cell the query must return

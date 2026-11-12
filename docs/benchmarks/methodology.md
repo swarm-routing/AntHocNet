@@ -471,13 +471,19 @@ derived per interface from the simulator's own objects; every oracle row carries
   from an RNG stream whose index depended on which routing arm ran, so the
   matched set's `(flow, seq)` keys named packets **sent at different times in
   each arm** — matched by index, not by transmission (#459). Re-measured on the
-  fixed harness at 20 seeds, the real arms reproduce to within ±0.015 while the
-  oracle alone falls by 0.50–0.81, and the bound **holds in 20/20 seeds against
-  every arm on all three two-ray cells** (`rwp-tworay` oracle 1.300 against
-  anthocnet 1.545 and aodv 1.460).
+  fixed harness at 20 seeds (`4611bbb`, ns-3 3.42), the real arms reproduced
+  to within ±0.015 while the oracle alone fell by 0.50–0.81. The current
+  measurement is v2.7.0's (#460: `00ae02f`, ns-3 3.48, CBR sources; a number of
+  its own release, not compared with the 3.42 one): the bound **holds in 20/20
+  seeds against every arm on all three two-ray cells** (`rwp-tworay` oracle
+  1.340 against anthocnet 1.408, aodv 1.483, olsr 1.369 and dsdv 1.376;
+  superseded `4611bbb` reading: oracle 1.300, anthocnet 1.545, aodv 1.460).
 - **What survives is a narrower, real approximation error under fading.** On
-  the three Nakagami cells the oracle is above olsr by +0.028..+0.038 and above
-  dsdv by +0.149..+0.167 in 20/20 seeds, while beating anthocnet 0/20. Since
+  the three Nakagami cells the oracle is above dsdv by +0.155..+0.170, above
+  olsr by +0.023..+0.035 and above aodv by +0.012..+0.032 (paired per-seed
+  means, every interval above zero), while staying below anthocnet in 20/20
+  seeds (v2.7.0, #460; at `4611bbb` it was above olsr and dsdv only, by
+  +0.028..+0.038 and +0.149..+0.167). Since
   the matched set is the intersection over all arms, dsdv routes the *same*
   packets in fewer hops than the shortest-path control believes possible, which
   means the `p50-approx` median radius (373.4 m) is missing links the radios
@@ -487,7 +493,9 @@ derived per interface from the simulator's own objects; every oracle row carries
   against each arm's + 0.05, with no survivorship guard (none is needed on the
   matched set) — a real FAIL on every mode that claims the hop bound, a loud
   WARN on `p50-approx` for a sub-defect excess (≤ 0.15), and a FAIL regardless
-  of mode beyond that. Full six-cell readout and the superseded numbers:
+  of mode beyond that. Current six-cell tables:
+  [grid.md](grid.md#the-matched-set-at-v270-re-measured-on-ns-3-348-460);
+  the `4611bbb` readout and the numbers it superseded:
   [#431](https://github.com/swarm-routing/AntHocNet/issues/431#issuecomment-5339246820);
   corpus-wide blast radius of the instrument defect: #460.
 - Consequently the AntHocNet-to-oracle gap is an **upper bound on how much of

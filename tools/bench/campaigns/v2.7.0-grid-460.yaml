@@ -1,0 +1,90 @@
+# #460: the six-cell MANET grid re-measured on the fixed harness at the
+# v2.7.0 source, for grid.md's matched-hop and matched-latency tables (claims
+# 1-3 of #460's inventory) and methodology.md's hop-bound paragraph.
+# Pre-registered on #460 before dispatch.
+#
+# Why again: the published tables (grid.md, "These numbers supersede the
+# phase-3 ...") come from the #431 re-measure at 4611bbb (2026-08-19, legacy
+# danieljoppi/ns3 3.42-opt, harness at #459). The rest of grid.md has moved on
+# twice since (#496 at dd171e5e, v2.4.0's family-native arms), the harness now
+# comes from swarm-routing/ns3-tools v0.1.0 (#927), and the maintainer's
+# 2026-11-09 decision on #460 asks for claims 1-3 to be re-measured before
+# v2.7.0 is cut.
+#
+# Release: ns-3 3.48 (ns3-dev:3.48-optimized, by digest; 3.48 while #843 is
+# open, since aodv is an arm). Per the accepted #867 rule (methodology.md,
+# "Cross-image rule"), a 3.42 number is NOT compared with a 3.48 one in this
+# family: the new tables replace the 4611bbb ones as numbers of 3.48 at this
+# source_sha, the 4611bbb values stay on the page as superseded numbers of
+# their own image and release, and no delta between the two generations is
+# quoted.
+#
+# Cells: grid.md's six (scenario paper, 50 nodes, 900 s, 1500 x 300 m,
+# speed 20, range 300, udp; pause 30 for rwp/ssrwp and 0 for gaussmarkov),
+# seeds 1-20 in two blocks of 10. Arms: anthocnet,aodv,olsr,dsdv,oracle in one
+# run, the tables' five columns. ##COMMON##'s matched set is the intersection
+# over every arm in the run, so the arm set is part of the measurement: no
+# aomdv here (v2.4.0's grid adds it), so the common set is the tables' own.
+#
+# Reading, fixed before dispatch (per cell, 20 seeds, from the ##COMMON##
+# rows by script; scenario_check.py results on each cell first):
+#   1. Hop bound: oracle hopsC <= arm hopsC, per seed and per arm; reported as
+#      k/20 per arm. Expectation from 4611bbb: holds 20/20 on the three
+#      two-ray cells; fails vs olsr and dsdv on the three Nakagami cells
+#      (the p50-approx median radius). Any other outcome is reported as is.
+#   2. Latency: meanC and p99C, anthocnet - oracle, per-seed paired mean with
+#      its 95 % t interval. Expectation: oracle faster in the mean in all six
+#      cells; the p99C sign inverts under fading.
+#   3. methodology.md's paragraph is rewritten from (1).
+# Whatever the outcome, the 4611bbb tables stay on the page as superseded
+# values (ADR-0013); nothing is edited in place without that note.
+#
+# Image: built by campaign-image.yml run 43039521796 from source_sha on
+# ns3-dev:3.48-optimized (base digest in every cell's  6 cells x 2 blocks = 12 jobs, ~4 h each (ctl867's dev grid cell:
+# 10 seeds x 6 arms in ~4 h). Dispatched with --cap 6 so PR CI keeps runners.
+#
+#   P=tools/bench/campaigns/v2.7.0-grid-460.yaml
+#   ns3-campaign plan     $P
+#   ns3-campaign dispatch $P --cap 6
+#   ns3-campaign status   $P --brief
+#   ns3-campaign collect  $P --out results/cells
+generation: g460
+ref: main
+repo: swarm-routing/AntHocNet
+source_sha: 00ae02f5b0c16fc2800d060b01c7ecc70b4e3439
+image: ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:65cd973a7dfa3b8b2809e3b0059a483a1109c022f6e0a309e1651fe761f327e9
+program: routing-compare
+cap: 6
+control: main
+
+arms:
+  main: ""
+
+cells:
+  grid-rwp-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --diag --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+  grid-rwp-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=nakagami --diag --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+  grid-ssrwp-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --diag --mobility=ssrwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+  grid-ssrwp-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=nakagami --diag --mobility=ssrwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+  grid-gaussmarkov-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=0 --propagation=tworay --diag --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+  grid-gaussmarkov-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=0 --propagation=nakagami --diag --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle"}
+    blocks: [1, 11]
+
+jobs:
+  - {arms: [main], cells: "*"}
