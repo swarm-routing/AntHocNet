@@ -140,3 +140,13 @@ Item 5 now reads:
 The org's agent defaults say the same (swarm-routing/.github#293), as does
 CONTRIBUTING "Issues" in `swarm-routing/.github`; this keeps the three in one
 rule (CodeRabbit on swarm-routing/Termite#76 and swarm-routing/HOPNET#71).
+
+## Amendment (2026-11-12): the model labels are suggestions, for Claude Pro models
+
+Item 3's `model:*` labels stay, but as **suggestions**, not requirements, and
+renamed to the models a Claude Pro plan includes (maintainer decision on
+swarm-routing/.github#280): `model:haiku-4.5` → `model:haiku-5.5`,
+`model:sonnet-5` → `model:sonnet-5.5`, `model:opus-4.8` → `model:opus-5.5`, and
+`model:fable-5` → `model:opus-5.5` (Fable is usage-credits-only on Pro, so it
+has no label; architectural work writes its design first). The open issues
+were relabelled on 2026-11-12; closed issues keep the old labels.
