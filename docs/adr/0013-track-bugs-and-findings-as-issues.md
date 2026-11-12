@@ -117,7 +117,17 @@ Item 5 said a fresh session starts from the newest open `handoff` issue and
 that every session ending with work in flight opens one. Read literally, that
 sends a session asked for an unrelated task to whichever handoff is newest,
 and lets a resumed session open a second handoff for the same work, leaving
-the first open for a later session to pick up. Item 5 now reads:
+the first open for a later session to pick up. Three of item 5's sentences
+are replaced; the rest of it (an issue from the *Handoff* template, never a
+file; what a handoff carries) stands:
+
+| Item 5 said | Now |
+|---|---|
+| "Open one whenever a session ends with work in flight, or when a handoff is asked for." | the first and second bullets below |
+| "A fresh AI chat (or a human) starts from the newest open `handoff` issue, then drops into the linked issues for detail." | the first bullet |
+| "The session that completes the work closes the handoff issue with a pointer to the result." | the third bullet |
+
+Item 5 now reads:
 
 - A session that **continues** handed-off work starts from the newest open
   `handoff` issue **for that work**; a session given a **new task** starts
