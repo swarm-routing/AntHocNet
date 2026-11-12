@@ -11,17 +11,33 @@ invariants with a dozen greps.
 
 ```bash
 bash .claude/skills/anthocnet-review/check_invariants.sh [BASE]   # BASE defaults to origin/main
+bash .claude/skills/anthocnet-review/check_invariants.sh --self-test   # the wire-diff filter's own cases
 ```
 
-It reports PASS/WARN/FAIL for:
+It reports PASS/WARN/FAIL for the rules below. Two of them **run CI's own
+gates** rather than a copy of them, so the skill sees what CI will see (#794);
+the rest are the skill's heuristics over the diff.
 
-- **Rule 1 (FAIL):** any `core/src` or `core/include` file that `#include`s an
-  `ns2/` or `ns3/` header — breaks the simulator-agnostic core. Hard stop.
-- **Rule 1, browser (FAIL):** a `core/` file includes an `emscripten` header —
-  the WASM glue belongs in `web/`.
-- **Rule 4 (WARN):** `ant_message.h` / `ant_message_codec` changed without a
-  `kWireVersion` bump in the diff; reminds you to also update the ns-3 header
-  (`ns3/anthocnet/model/anthocnet-packet`), `test_codec.cpp`, and `docs/wire-format.md`.
+From CI gates:
+
+- **Rule 1 (FAIL):** `python3 docs/tools/check-headers.py .`, as `lint.yml`
+  runs it on every tracked file: a `core/` angle include must be a C++
+  standard-library header and a quote include must resolve under `core/` (so no
+  ns-3, NS-2, emscripten or `web/` header, `..` paths included), and every
+  source file carries its SPDX line (ADR-0028). Hard stop.
+- **Rule 10 (FAIL):** `tools/release/check-bundle.sh`, as `lint.yml` and
+  `release.yml` run it: nothing shipped references a `.claude/skills/…` script
+  (move the script to `tools/`, #604), and the package carries no agent or CI
+  files. The rule's regex lives only there. Takes a few seconds (it assembles
+  the bundle).
+
+The skill's own heuristics:
+
+- **Rule 4 (WARN):** `ant_message.h` / `ant_message_codec` changed in code
+  lines without a `kWireVersion` bump in `core/`; reminds you to also update the
+  ns-3 header (`ns3/anthocnet/model/anthocnet-packet`), `test_codec.cpp`, and
+  `docs/wire-format.md`. Added or removed lines that are blank or only a comment
+  (`//`, `/*`, `*`) do not count, so a comment or SPDX edit stays quiet (#783).
 - **Rule 7 (WARN):** `core/` logic changed but no `core/tests/` file changed.
 - **Docs (WARN):** a core/adapter change with no `docs/` touch — confirm no
   ADR needs updating.
@@ -30,9 +46,6 @@ It reports PASS/WARN/FAIL for:
 - **Rule 9 (WARN):** the browser adapter lives in swarm-routing.github.io
   (`site/anthocnet/`, #850); after a `core/` change run
   `tools/checks/fetch-site-web.sh && web/test/parity.sh` (CI's `web-parity` does).
-- **Rule 10 (FAIL):** a shipped file references a `.claude/skills/…` script —
-  move the script to `tools/` (#604; CI's `tools/release/check-bundle.sh`
-  catches it too).
 - **Docs nav (WARN):** a new `docs/*.md` page that `mkdocs.yml` does not list —
   it would be unreachable on the site.
 

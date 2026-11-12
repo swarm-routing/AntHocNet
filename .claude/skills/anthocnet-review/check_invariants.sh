@@ -3,10 +3,31 @@
 # doesn't spend a dozen greps/reads discovering them by hand. Reports PASS/WARN/
 # FAIL per rule; exits non-zero if any FAIL. Heuristic, not a substitute for
 # reading the diff — it catches the invariants that are cheap to check and easy
-# to forget.
+# to forget. Rules 1 and 10 run the CI gates themselves (docs/tools/check-headers.py,
+# tools/release/check-bundle.sh), so the skill reports what CI will (#794).
 #
 # Usage: check_invariants.sh [BASE]      (BASE defaults to origin/main)
+#        check_invariants.sh --self-test (the wire-diff filter's own cases)
 set -u
+
+# The lines of a unified diff that add or remove code: +/- lines that are not
+# headers, blank, or only a comment (//, /*, *, */). Rule 4 counts these, so an
+# edit to a comment (an SPDX line, #783) is not a wire-format change.
+code_changes() {
+  grep -E '^[+-]' | grep -vE '^(\+\+\+|---)( |$)' \
+    | grep -vE '^[+-][[:space:]]*($|//|/\*|\*)'
+}
+
+if [ "${1:-}" = "--self-test" ]; then
+  ok=1
+  comment_only=$'--- a/core/include/anthocnet/core/ant_message.h\n+++ b/core/include/anthocnet/core/ant_message.h\n-// SPDX-License-Identifier: GPL-2.0-only\n+// SPDX-License-Identifier: MIT OR GPL-2.0-only\n+\n- * old doc line\n+ * new doc line\n+/* block */'
+  field=$'--- a/core/include/anthocnet/core/ant_message.h\n+++ b/core/include/anthocnet/core/ant_message.h\n+    uint32_t hopLimit = 0;  // new field'
+  [ -z "$(printf '%s\n' "$comment_only" | code_changes)" ] || { echo "FAIL self-test: comment-only diff counted as code"; ok=0; }
+  [ -n "$(printf '%s\n' "$field" | code_changes)" ] || { echo "FAIL self-test: field change not counted"; ok=0; }
+  [ "$ok" = 1 ] && { echo "ok: self-test"; exit 0; }
+  exit 1
+fi
+
 cd "$(git rev-parse --show-toplevel)" || exit 2
 BASE="${1:-origin/main}"
 MB=$(git merge-base "$BASE" HEAD 2>/dev/null || echo "$BASE")
@@ -16,21 +37,23 @@ diff_txt=$(git diff "$MB"...HEAD; git diff; git diff --cached)
 fail=0; warn=0
 say() { printf '%-5s %s\n' "$1" "$2"; }
 
-# Rule 1 — core/ must never include an NS-2/NS-3 header (the portability invariant).
-bad=$(printf '%s\n' "$changed" | grep -E '^core/(src|include)/' \
-      | while read -r f; do [ -f "$f" ] && grep -lE '#include\s*[<"](ns3|ns2)/' "$f"; done)
-if [ -n "$bad" ]; then say FAIL "core/ includes an NS header:"; echo "$bad" | sed 's/^/        /'; fail=1
-else say PASS "core/ has no NS-2/NS-3 headers"; fi
-
-# Rule 1 (browser) — core/ must not include emscripten either; WASM glue lives in web/.
-bad=$(printf '%s\n' "$changed" | grep -E '^core/(src|include)/' \
-      | while read -r f; do [ -f "$f" ] && grep -lE '#include\s*[<"]emscripten' "$f"; done)
-if [ -n "$bad" ]; then say FAIL "core/ includes an emscripten header (belongs in web/):"; echo "$bad" | sed 's/^/        /'; fail=1; fi
+# Rule 1 — core/ includes only the C++ standard library and core/ itself (no
+# ns-3, NS-2, emscripten or web/ header), and licence headers are in place.
+# This is CI's gate (lint.yml), run on every tracked file, not a copy of it.
+if out=$(python3 docs/tools/check-headers.py . 2>&1); then
+  say PASS "core/ includes and licence headers (docs/tools/check-headers.py)"
+else
+  say FAIL "docs/tools/check-headers.py (CI gate):"; printf '%s\n' "$out" | sed 's/^/        /'; fail=1
+fi
 
 # Rule 4 — a wire-format change must bump kWireVersion (+ both adapters, test_codec, doc).
 wire_touched=$(printf '%s\n' "$changed" | grep -E 'ant_message(\.h|_codec)' || true)
 if [ -n "$wire_touched" ]; then
-  if printf '%s\n' "$diff_txt" | grep -qE '^\+.*kWireVersion'; then
+  mapfile -t wf <<<"$wire_touched"
+  wire_code=$( { git diff "$MB"...HEAD -- "${wf[@]}"; git diff -- "${wf[@]}"; git diff --cached -- "${wf[@]}"; } | code_changes)
+  if [ -z "$wire_code" ]; then
+    say PASS "wire files changed in comments only"
+  elif { git diff "$MB"...HEAD -- core/; git diff -- core/; git diff --cached -- core/; } | code_changes | grep -qE '^\+.*kWireVersion'; then
     say PASS "wire files changed and kWireVersion is bumped"
   else
     say WARN "wire files changed but no kWireVersion bump in the diff:"; echo "$wire_touched" | sed 's/^/        /'
@@ -59,12 +82,12 @@ if printf '%s\n' "$changed" | grep -qE '^web/(src|include)/'; then
 fi
 
 # Rule 10 — nothing shipped depends on .claude/ (ADR-0014 amendment, #604).
-# Code and workflow files only: a doc may describe a maintainer-only agent
-# tool without shipping a dependency on it.
-dep=$(printf '%s\n' "$changed" | grep -vE '^(\.claude/|tools/release/|AGENTS\.md|CLAUDE\.md)' \
-      | grep -E '\.(py|sh|mjs|js|ya?ml|cc|cpp|h|txt)$|Makefile$' \
-      | while read -r f; do [ -f "$f" ] && grep -lE '\.claude/skills/[^ ]+\.(py|sh)|"\.claude", *"skills"' "$f"; done)
-if [ -n "$dep" ]; then say FAIL "shipped file depends on a .claude/skills script (move it to tools/):"; echo "$dep" | sed 's/^/        /'; fail=1; fi
+# CI's release-package gate holds the rule; run it rather than a second regex.
+if out=$(tools/release/check-bundle.sh 2>&1); then
+  say PASS "release package clean (tools/release/check-bundle.sh)"
+else
+  say FAIL "tools/release/check-bundle.sh (CI gate):"; printf '%s\n' "$out" | grep -v '^ns3-tools:' | sed 's/^/        /'; fail=1
+fi
 
 # New docs page must be in the mkdocs nav (else it is unreachable on the site).
 for f in $(printf '%s\n' "$changed" | grep -E '^docs/.*\.md$'); do
