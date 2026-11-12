@@ -24,6 +24,6 @@ description = "AntHocNet (Di Caro, Ducatelle & Gambardella), the hybrid ant-colo
 homepage = "https://swarm-routing.github.io/AntHocNet/"
 topics = ["aco", "ad-hoc-networks", "ad-hoc-routing", "ant-colony-optimization", "anthocnet", "leo-satellite", "manet", "network-simulation", "ns-3", "routing-protocol", "satellite-networking", "swarm-intelligence", "webassembly"]
 ruleset = "protocol"
-required_checks = ["CI gate", "check / org-sync"]  # check / org-sync: org-sync.yml (#929)
+required_checks = ["CI gate", "check / org-sync", "review / coderabbit"]  # check / org-sync: org-sync.yml (#929)
 code_scanning = true  # CodeQL results come from codeql.yml
 merge_queue = true  # PRs merge through a merge queue; ci.yml, codeql.yml and org-sync.yml run on merge_group
