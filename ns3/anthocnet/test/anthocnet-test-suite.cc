@@ -37,6 +37,9 @@
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-l3-protocol.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
+#include "ns3/integer.h"
+#include "ns3/nstime.h"
 
 #include <sstream>
 #include <string>
@@ -44,6 +47,7 @@
 
 #include "ns3/anthocnet-packet.h"
 #include "anthocnet/core/ant_message_codec.h"
+#include "anthocnet/core/config.h"
 #include "ns3/anthocnet-helper.h"
 #include "ns3/anthocnet-routing-protocol.h"
 #include "ns3/anthocnet-rqueue.h"
@@ -870,6 +874,104 @@ private:
     uint32_t m_badStateBytes = 0;
 };
 
+// Every ns-3 attribute that writes a core::Config field starts at core::Config{}'s
+// value (#793; it replaces the regex check tools/checks/check-default-parity.py,
+// #258). The user-visible default is the attribute's initial value, not the
+// constructor initialiser: ns-3 sets attributes after the constructor runs. So
+// this reads both the TypeId's initial value and the attribute of a freshly
+// created object, converted to the core's units (Time -> seconds), and compares
+// them with the compiled Config{}. The map lives here, so renaming a core
+// field is a compile error and renaming an attribute fails the lookup; neither
+// is silently skipped. Deliberately not mapped: ReactiveRetryInterval, the
+// adapter's own retry timer, a different quantity from the core's
+// reactiveRetryInterval (docs/configuration.md §3.3 item 2).
+class ConfigDefaultsMatchCoreTestCase : public TestCase {
+public:
+    ConfigDefaultsMatchCoreTestCase()
+        : TestCase("ns-3 attribute defaults equal core::Config{} (#793)") {}
+
+    void DoRun() override {
+        using ns3::anthocnet::RoutingProtocol;
+        const ::anthocnet::core::Config c;
+        const struct {
+            const char* attribute;
+            double core;
+        } fields[] = {
+            {"Alpha", static_cast<double>(c.alpha)},
+            {"BetaAnts", static_cast<double>(c.betaAnts)},
+            {"BetaData", static_cast<double>(c.betaData)},
+            {"Gamma", static_cast<double>(c.gamma)},
+            {"HopCountAlpha", static_cast<double>(c.hopCountAlpha)},
+            {"EnableProactive", static_cast<double>(c.enableProactive)},
+            {"EnableDiffusion", static_cast<double>(c.enableDiffusion)},
+            {"EnableReactive", static_cast<double>(c.enableReactive)},
+            {"EnableRepair", static_cast<double>(c.enableRepair)},
+            {"EnableLinkFail", static_cast<double>(c.enableLinkFail)},
+            {"EnableDirectedReactive", static_cast<double>(c.enableDirectedReactive)},
+            {"ShareKinematics", static_cast<double>(c.shareKinematics)},
+            {"EnableLinkLifetime", static_cast<double>(c.enableLinkLifetime)},
+            {"LinkLifetimeRange", static_cast<double>(c.linkLifetimeRange)},
+            {"LinkLifetimeHorizon", static_cast<double>(c.linkLifetimeHorizon)},
+            {"LinkLifetimeFloor", static_cast<double>(c.linkLifetimeFloor)},
+            {"EnableQuietMode", static_cast<double>(c.enableQuietMode)},
+            {"QuietTolerance", static_cast<double>(c.quietTolerance)},
+            {"QuietBackoffFactor", static_cast<double>(c.quietBackoffFactor)},
+            {"QuietMaxBackoff", static_cast<double>(c.quietMaxBackoff)},
+            {"EnableAdaptiveEvaporation", static_cast<double>(c.enableAdaptiveEvaporation)},
+            {"AdaptiveEvapRefChurn", static_cast<double>(c.adaptiveEvapRefChurn)},
+            {"AdaptiveEvapMin", static_cast<double>(c.adaptiveEvapMin)},
+            {"AdaptiveEvapMax", static_cast<double>(c.adaptiveEvapMax)},
+            {"AdaptiveEvapTau", static_cast<double>(c.adaptiveEvapTau)},
+            {"ProactiveBroadcastProb", static_cast<double>(c.proactiveBroadcastProb)},
+            {"ProactiveVirtualMargin", static_cast<double>(c.proactiveVirtualMargin)},
+            {"MaxHelloAdverts", static_cast<double>(c.maxHelloAdverts)},
+            {"SessionTtl", static_cast<double>(c.sessionTtl)},
+            {"HelloInterval", static_cast<double>(c.helloInterval)},
+            {"ProactiveInterval", static_cast<double>(c.proactiveInterval)},
+            {"TxFailureThreshold", static_cast<double>(c.txFailureThreshold)},
+            {"RepairWaitFactor", static_cast<double>(c.repairWaitFactor)},
+            {"RepairTimeout", static_cast<double>(c.repairTimeout)},
+            {"HopTime", static_cast<double>(c.hopTimeSec)},
+            {"EnableMultipath", static_cast<double>(c.enableMultipath)},
+            {"AntAcceptanceFactor", static_cast<double>(c.antAcceptanceFactor)},
+            {"AntAcceptanceFactorNewHop", static_cast<double>(c.antAcceptanceFactorNewHop)},
+            {"LinkfailNotifyInterval", static_cast<double>(c.linkfailNotifyInterval)},
+            {"EnableMacMetric", static_cast<double>(c.enableMacMetric)},
+            {"SinrCriticalDb", static_cast<double>(c.sinrCriticalDb)},
+            {"SinrPenaltyCost", static_cast<double>(c.sinrPenaltyCost)},
+        };
+        const TypeId tid = RoutingProtocol::GetTypeId();
+        Ptr<RoutingProtocol> fresh = CreateObject<RoutingProtocol>();
+        for (const auto& f : fields) {
+            struct TypeId::AttributeInformation info;
+            NS_TEST_ASSERT_MSG_EQ(tid.LookupAttributeByName(f.attribute, &info), true,
+                                  "no attribute " << f.attribute << " on RoutingProtocol");
+            NS_TEST_EXPECT_MSG_EQ(AsCoreValue(*info.initialValue), f.core,
+                                  f.attribute << ": attribute initial value differs from "
+                                                 "core::Config{}");
+            Ptr<AttributeValue> now = info.checker->Create();
+            fresh->GetAttribute(f.attribute, *now);
+            NS_TEST_EXPECT_MSG_EQ(AsCoreValue(*now), f.core,
+                                  f.attribute << ": a new RoutingProtocol differs from "
+                                                 "core::Config{}");
+        }
+    }
+
+private:
+    // The attribute's value in the core's units, as a double (bools 0/1).
+    static double AsCoreValue(const AttributeValue& v) {
+        if (const auto* d = dynamic_cast<const DoubleValue*>(&v)) return d->Get();
+        if (const auto* b = dynamic_cast<const BooleanValue*>(&v)) return b->Get() ? 1.0 : 0.0;
+        if (const auto* u = dynamic_cast<const UintegerValue*>(&v))
+            return static_cast<double>(u->Get());
+        if (const auto* i = dynamic_cast<const IntegerValue*>(&v))
+            return static_cast<double>(i->Get());
+        if (const auto* t = dynamic_cast<const TimeValue*>(&v)) return t->Get().GetSeconds();
+        NS_FATAL_ERROR("attribute value of an unmapped type");
+        return 0.0;
+    }
+};
+
 // ns-3 made the TestSuite/TestCase enums scoped in ns-3.42 (enum class Type /
 // Duration) and removed the deprecated unscoped aliases in ns-3.47. So the
 // scoped form is required from 3.47, the unscoped form is the only one before
@@ -897,6 +999,7 @@ public:
         AddTestCase(new RepairAntOnLinkBreakTestCase(), AHN_TEST_QUICK);
         AddTestCase(new ObserverTracesTestCase(), AHN_TEST_QUICK);
         AddTestCase(new RequestQueueInPlaceTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new ConfigDefaultsMatchCoreTestCase(), AHN_TEST_QUICK);
     }
 };
 

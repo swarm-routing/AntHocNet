@@ -559,7 +559,16 @@ The checklist that would have prevented #88 and #169:
    an `AddAttribute` block *and* the corresponding `m_config.<field> = m_<attr>;`
    assignment (there are two such blocks, one per construction path; miss one and
    the attribute silently does nothing). The description string is user-facing
-   documentation: put the source in it.
+   documentation: put the source in it. Give the attribute the core default as
+   its initial value, and add the pair to `ConfigDefaultsMatchCoreTestCase` in
+   [`anthocnet-test-suite.cc`](../ns3/anthocnet/test/anthocnet-test-suite.cc):
+   it compares every mapped attribute's initial value, and a fresh object's,
+   with the compiled `core::Config{}`, so a default moved in one tree only
+   fails `test.py -s anthocnet` (#793; the #252/#254 leak; it replaced the
+   regex check `tools/checks/check-default-parity.py`, #258).
+   [`config_dump`](../core/tests/config_dump.cpp) prints `core::Config{}` as
+   JSON for tools that need the defaults; its field list must name the new
+   field, or the core build fails on a `static_assert`.
 4. **A core test** in `core/tests/` (golden rule 7) that pins the *behaviour* the
    parameter controls, not merely that the field round-trips.
 5. **Docs**: a row in §3.1 of this file, plus

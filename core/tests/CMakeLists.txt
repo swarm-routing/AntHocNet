@@ -43,6 +43,13 @@ foreach(test ${ANTHOCNET_TESTS})
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
+# config_dump prints core::Config{} as JSON, with the values the compiler
+# evaluated (#793). Registered with ctest so `make test` builds and runs it;
+# tools read its output instead of parsing config.h with a regex.
+add_executable(config_dump config_dump.cpp)
+target_link_libraries(config_dump PRIVATE anthocnet_core)
+add_test(NAME config_dump COMMAND config_dump)
+
 # Experiments. Built like a test so they cannot silently rot against core
 # changes, but deliberately NOT registered with ctest: their value is the
 # numbers they print, not a pass/fail assertion, and a "test" that always
