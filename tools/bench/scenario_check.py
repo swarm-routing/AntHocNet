@@ -2311,7 +2311,8 @@ def check_oracle(path, rows):
             if seeds and all(pdr_by_seed[sd] > 0 for sd in seeds):
                 offered = sum(100.0 * deliv_by_seed[sd] / pdr_by_seed[sd]
                               for sd in seeds)
-                below_print = 100.0 * total / offered < 0.005
+                if offered > 0:
+                    below_print = 100.0 * total / offered < 0.005
         if below_print:
             continue
         route = _fnum(r, "drop_route")
