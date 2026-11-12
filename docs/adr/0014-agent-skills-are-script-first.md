@@ -9,7 +9,7 @@
 Much of the recurring agent work in this repo is not code change but *data
 work*: parsing benchmark tables, computing A/B deltas, judging run-to-run
 noise, validating scenario configs and result plausibility, transforming
-campaign CSVs for the papers repo. Done "in context" — the model reading raw
+campaign CSVs into paper plot data. Done "in context" — the model reading raw
 tables and doing arithmetic in its head — this work is:
 
 1. **Error-prone.** The #47/#68/#71 EnableMacMetric episode showed the exact
@@ -55,7 +55,7 @@ Current inventory:
 | `sweep_summary.py` | `benchmark-results` | campaign-CSV schema check, per-point deltas, stddev-aware noise call, papers export |
 | `scenario_check.py` | `benchmark-results` | pre-flight scenario degeneracy checks; result plausibility + anchor floors (#134) |
 | `check_invariants.sh` | `anthocnet-review` (named `protocol-review` until 2026-11-09, #860) | golden-rule checks on a diff |
-| `figdata.py` | `figures` (papers repo) | campaign CSV / `##BENCH##` → paper plot data, diff report, preliminary-flag audit |
+| `figdata.py` | `figures` (kept with the paper drafts) | campaign CSV / `##BENCH##` → paper plot data, diff report, preliminary-flag audit |
 
 ## Alternatives considered
 
@@ -77,9 +77,9 @@ Current inventory:
 - The scripts are themselves code: they need the same review care, and their
   formats (e.g. `##BENCH##`, the classified CSV schema) become interfaces —
   a harness output change must update the parsers in the same PR.
-- The papers repo participates via its `figures` skill (`figdata.py`), so
-  numbers cross the repo boundary only through validated transforms
-  (papers-repo golden rules 1–3), never by hand.
+- The paper drafts participate via their `figures` skill (`figdata.py`), so
+  numbers cross the repo boundary only through validated transforms, never by
+  hand.
 
 ## Amendment (2026-10-09): shared scripts live in `tools/`, skills hold procedures
 

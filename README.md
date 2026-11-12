@@ -334,13 +334,17 @@ To cite this implementation, use the “Cite this repository” button (from
 
 Both are recorded in `CITATION.cff`; the version DOI for a future release is
 added there when that release is archived. Please also cite the sources this
-implements:
+implements (every work the repository relies on, with its role, is in
+[docs/references.bib](docs/references.bib)):
 
 - G. Di Caro, F. Ducatelle, L. M. Gambardella, *AntHocNet: an Ant-Based Hybrid
   Routing Algorithm for Mobile Ad Hoc Networks*, PPSN VIII, LNCS 3242,
-  pp. 461–470, Springer, 2004 — the algorithm ([digest](docs/publications/papers/2004-ppsn-anthocnet.md)).
+  pp. 461–470, Springer, 2004,
+  [doi:10.1007/978-3-540-30217-9_47](https://doi.org/10.1007/978-3-540-30217-9_47)
+  — the algorithm ([digest](docs/publications/papers/2004-ppsn-anthocnet.md)).
 - F. Ducatelle, *Adaptive Routing in Ad Hoc Wireless Multi-hop Networks*, PhD
-  thesis, Università della Svizzera Italiana / IDSIA, 2007 — the designated
+  thesis, Università della Svizzera Italiana / IDSIA, 2007,
+  <https://sonar.ch/global/documents/318075> (no DOI) — the designated
   primary source for parameters the paper leaves unspecified
   ([status](docs/publications/thesis/README.md)).
 

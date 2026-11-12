@@ -855,7 +855,7 @@ image.
 
 ## Statistical policy ([#293](https://github.com/swarm-routing/AntHocNet/issues/293))
 
-Every number published in these pages or in the papers repo carries a **95%
+Every number published in these pages or in a paper about this work carries a **95%
 confidence interval**, or is explicitly marked single-run/diagnostic. The
 computation lives in
 [`ns3_tool.stats_util` (ns3-tools)](https://github.com/swarm-routing/ns3-tools/blob/v0.1.0/python/ns3_tool/stats_util.py)
@@ -1089,8 +1089,8 @@ entire corpus rather than a convenient label:
 - `v1.3.0` therefore reproduces every published number. A reader who checks out
   the **default branch** instead will not, and that is expected, not a defect.
 
-The papers repo's Artifact Availability statement pins to `v1.3.0` for exactly
-this reason (`swarm-routing/papers#23`).
+The study paper's Artifact Availability statement pins to `v1.3.0` for exactly
+this reason.
 
 ### The #371 flip: the corpus is re-established at `a1daa7a`
 

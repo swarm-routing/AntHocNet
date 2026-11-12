@@ -6,7 +6,7 @@ JOSS papers are short and describe the *software*, not new results.
 - `paper.md` — the paper (Markdown + YAML metadata; ~250–1000 words).
 - `paper.bib` — references (cited with `[@key]`).
 
-Lives in this repo (not the private `papers` repo) because JOSS review
+Lives in this repo (not with the maintainer's other paper drafts) because JOSS review
 targets the **software repository** directly and expects `paper.md` to live
 in it.
 
@@ -36,9 +36,8 @@ of the updated criteria (independent of code quality):
 
 Revisit once the ICNS3 study paper is published (the citable reference that
 seeds #2) and the repo shows a few months of ordinary, spaced-out post-v1.0
-activity. Full reasoning: `swarm-routing/papers` repo,
-`docs/adr/0002-venue-strategy.md` (update section) and
-`AntHocNet/publication-options.md`.
+activity. The full reasoning is the maintainer's venue-strategy decision, kept
+with the paper drafts.
 
 The repo already meets JOSS's *mechanical* criteria: OSI license (GPL-2.0),
 documentation, automated tests, CI, and community guidelines
@@ -65,6 +64,4 @@ JOSS `paper.md` schema). ORCID: 0009-0009-6436-8174.
 
 JOSS reviews the *software*; it explicitly does not require novel results.
 The fuller reproducibility / cross-simulator **study** paper is a separate,
-longer paper kept in the private `papers` repo
-(`AntHocNet/icns3-anthocnet-reproducible-cross-simulator/`, targeting
-ICNS3/SoftwareX) alongside the venue survey.
+longer paper, targeting ICNS3/SoftwareX, drafted outside this repository.

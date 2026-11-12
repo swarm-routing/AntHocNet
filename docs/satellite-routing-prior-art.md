@@ -325,9 +325,8 @@ Stated plainly so nobody mistakes its reach:
    corroborated ACO's presence in the literature, and supplied the ns3-leo
    citation plus a substrate candidate the track had missed.
 
-Land sources in the **private** papers repo under `AntHocNet/library/satellite/` and grep
-them with the `pdf-extract` skill rather than reading them into context. Note
-that this (public) repo keeps digests and citations only — never extracted text.
+This (public) repo keeps digests and citations only — never a source's full
+text or extracted text; cite each work by its DOI link.
 
 ## Sources
 
@@ -344,4 +343,4 @@ that this (public) repo keeps digests and citations only — never extracted tex
 - [Trace-driven Path Emulation of Satellite Networks using Hypatia (arXiv 2510.27027)](https://arxiv.org/pdf/2510.27027)
 - [xeoverse: A Real-time Simulation Platform for Large LEO Satellite Mega-Constellations (arXiv 2406.11366)](https://arxiv.org/pdf/2406.11366)
 - [Secure and Scalable Rerouting in LEO Satellite Networks (arXiv 2509.10173)](https://arxiv.org/pdf/2509.10173)
-- [AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks (Springer, the repo's [1])](https://link.springer.com/chapter/10.1007/978-3-540-30217-9_47)
+- [AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks (PPSN VIII, 2004, the repo's [1])](https://doi.org/10.1007/978-3-540-30217-9_47)

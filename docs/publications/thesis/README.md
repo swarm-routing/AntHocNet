@@ -7,20 +7,14 @@ the **primary source** for parameter verification; the 2004 PPSN paper
 ([`../papers/2004-ppsn-anthocnet.md`](../papers/2004-ppsn-anthocnet.md))
 confirms formulas and several constants but left the items below open.
 
-**The PDF was supplied on 2026-07-25** and lives in the *private* papers repo at
-`AntHocNet/library/anthocnet/2007-ducatelle-thesis.pdf`. It is not in this repository and
-must not be: this repo keeps digests and citations only (papers-repo golden
-rule 4). Search it with the `pdf-extract` skill rather than reading it into
-context — it is ~570k characters:
+**The thesis was obtained on 2026-07-25.** Its public record is
+<https://sonar.ch/global/documents/318075> (no DOI is registered for it;
+`ducatelle2007` in [`docs/references.bib`](../../references.bib)). This repo keeps
+digests and citations only, never the thesis's text.
 
-```bash
-python3 .claude/skills/pdf-extract/pdfx.py grep \
-  AntHocNet/library/anthocnet/2007-ducatelle-thesis.pdf 'unloaded' -C 3
-```
-
-Glyph caveat: the thesis renders the constant as `thop` (no underscore) and
-keeps ligatures (`ﬁxed`, `diﬀerent`), so search prose fragments ("unloaded",
-"we kept") rather than typeset symbols.
+Glyph caveat for anyone searching its text: the thesis renders the constant as
+`thop` (no underscore) and keeps ligatures (`ﬁxed`, `diﬀerent`), so search prose
+fragments ("unloaded", "we kept") rather than typeset symbols.
 
 ## Status of the questions that were waiting on it
 

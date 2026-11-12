@@ -1,8 +1,9 @@
 # #800: the BeeAdHoc anchor, pre-registered before dispatch.
 #
 # Source (maintainer decision 2026-10-30): the PG 460 final report, ch. 7, the
-# one we hold (hdl 2003/22405, papers library beeadhoc/). The GECCO 2005 paper
-# (DOI 10.1145/1068009.1068034) is paywalled; re-checking this anchor against
+# one openly available (https://doi.org/10.17877/de290r-14312, `pg460` in
+# docs/references.bib). The GECCO 2005 paper
+# (https://doi.org/10.1145/1068009.1068034) is paywalled; re-checking this anchor against
 # it, once it is in hand, is #815.
 #
 # What ch. 7 says (§7.1.4 setup, §7.2.2-7.2.6 results; the numbers are in

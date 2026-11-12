@@ -543,7 +543,7 @@ is unaffected (golden rule 9).
 ### What does not change
 
 - **URLs.** `/docs/...` and `/api/...` stay where they are, so citations, the
-  Zenodo records, the papers repo and every README link keep working. The
+  Zenodo records, the papers that cite them and every README link keep working. The
   places are presentation, not paths.
 - **No JavaScript needed to read.** A docs page is still a plain HTML page; only
   the game needs JavaScript.
