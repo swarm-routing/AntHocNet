@@ -326,7 +326,8 @@ Stated plainly so nobody mistakes its reach:
    citation plus a substrate candidate the track had missed.
 
 This (public) repo keeps digests and citations only — never a source's full
-text or extracted text; cite each work by its DOI link.
+text or extracted text; cite each work by its DOI link, or by its publisher's
+or institution's page when it has no DOI.
 
 ## Sources
 

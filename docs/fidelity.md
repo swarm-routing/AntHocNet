@@ -37,7 +37,7 @@ table. **[1]** above is `anthocnet2004`; the thesis is `ducatelle2007`.
 | ducatelle2007 | Ducatelle, *Adaptive routing in ad hoc wireless multi-hop networks*, PhD thesis, Università della Svizzera italiana, 2007 | <https://sonar.ch/global/documents/318075> |
 | gpcr | Lochert et al., *Geographic routing in city scenarios*, ACM SIGMOBILE Mobile Computing and Communications Review 9(1), 2005, pp. 69–72 | <https://doi.org/10.1145/1055959.1055970> |
 | gpsr | Karp & Kung, *GPSR: greedy perimeter stateless routing for wireless networks*, Proceedings of the 6th annual international conference on Mobile computing and networking, 2000, pp. 243–254 | <https://doi.org/10.1145/345910.345953> |
-| lens | Zhao & Pan, *LENS: A LEO Satellite Network Measurement Dataset*, Proceedings of the ACM Multimedia Systems Conference 2024 on ZZZ, 2024, pp. 278–284 | <https://doi.org/10.1145/3625468.3652170> |
+| lens | Zhao & Pan, *LENS: A LEO Satellite Network Measurement Dataset*, Proceedings of the 15th ACM Multimedia Systems Conference, 2024, pp. 278–284 | <https://doi.org/10.1145/3625468.3652170> |
 | ns3 | Riley & Henderson, *The ns-3 Network Simulator*, Modeling and Tools for Network Simulation, 2010, pp. 15–34 | <https://doi.org/10.1007/978-3-642-12331-3_2> |
 | ns3tools | Joppi, *swarm-routing/ns3-tools: v0.1.0*, version v0.1.0, Zenodo, 2026 | <https://doi.org/10.5281/zenodo.24136068> |
 | olsr | *Optimized Link State Routing Protocol (OLSR)*, Technical report, RFC Editor, 2003 | <https://doi.org/10.17487/rfc3626> |
