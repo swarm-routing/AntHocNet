@@ -3,7 +3,8 @@
 How this implementation maps to the canonical paper, what is reproduced, and
 where it deviates — honestly. The reference is **[1]** = Di Caro, Ducatelle &
 Gambardella, *AntHocNet: an Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc
-Networks*, PPSN VIII, LNCS 3242, 2004 (digest:
+Networks*, PPSN VIII, LNCS 3242, 2004, <https://doi.org/10.1007/978-3-540-30217-9_47>
+(`anthocnet2004` in [`references.bib`](references.bib); digest:
 [`publications/papers/2004-ppsn-anthocnet.md`](publications/papers/2004-ppsn-anthocnet.md)).
 The living compliance ledger is [issue #91](https://github.com/swarm-routing/AntHocNet/issues/91).
 
@@ -13,6 +14,38 @@ The living compliance ledger is [issue #91](https://github.com/swarm-routing/Ant
 > AODV reproduce** the paper. It does **not** claim bit-for-bit reproduction of
 > the paper's Qualnet numbers, nor that every headline metric is reproduced on
 > every ns-3 channel model — see *Known deviations* below.
+
+## Sources
+
+Every work this repository relies on, with its role, is an entry of
+[`references.bib`](references.bib); the table below is generated from it
+(`fidelity.py bib sources`, swarm-routing/.github), so edit the bib, never the
+table. **[1]** above is `anthocnet2004`; the thesis is `ducatelle2007`.
+
+<!-- fidelity:sources:begin -->
+| Key | Citation | Link |
+|---|---|---|
+| abc | Schoonderwoerd et al., *Ant-Based Load Balancing in Telecommunications Networks*, Adaptive Behavior 5(2), 1997, pp. 169–207 | <https://doi.org/10.1177/105971239700500203> |
+| anthocnet2004 | Di Caro, Ducatelle & Gambardella, *AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks*, Parallel Problem Solving from Nature - PPSN VIII, 2004, pp. 461–470 | <https://doi.org/10.1007/978-3-540-30217-9_47> |
+| anthocnet2005 | Di Caro, Ducatelle & Gambardella, *AntHocNet: an adaptive nature‐inspired algorithm for routing in mobile ad hoc networks*, European Transactions on Telecommunications 16(5), 2005, pp. 443–455 | <https://doi.org/10.1002/ett.1062> |
+| antnet | Di Caro & Dorigo, *AntNet: Distributed Stigmergetic Control for Communications Networks*, Journal of Artificial Intelligence Research 9, 1998, pp. 317–365 | <https://doi.org/10.1613/jair.530> |
+| aodv | Perkins & Royer, *Ad-hoc on-demand distance vector routing*, Proceedings WMCSA'99. Second IEEE Workshop on Mobile Computing Systems and Applications, 1999, pp. 90–100 | <https://doi.org/10.1109/mcsa.1999.749281> |
+| aomdv | Marina & Das, *On-demand multipath distance vector routing in ad hoc networks*, Proceedings Ninth International Conference on Network Protocols. ICNP 2001, 2001, pp. 14–23 | <https://doi.org/10.1109/icnp.2001.992756> |
+| ara | Gunes, Sorges & Bouazizi, *ARA-the ant-colony based routing algorithm for MANETs*, Proceedings. International Conference on Parallel Processing Workshop, 2002, pp. 79–85 | <https://doi.org/10.1109/icppw.2002.1039715> |
+| beeadhoc2005 | Wedde et al., *BeeAdHoc: an energy efficient routing algorithm for mobile ad hoc networks inspired by bee behavior*, Proceedings of the 7th annual conference on Genetic and evolutionary computation, 2005, pp. 153–160 | <https://doi.org/10.1145/1068009.1068034> |
+| dsdv | Perkins & Bhagwat, *Highly dynamic Destination-Sequenced Distance-Vector routing (DSDV) for mobile computers*, Proceedings of the conference on Communications architectures, protocols and applications - SIGCOMM '94, 1994, pp. 234–244 | <https://doi.org/10.1145/190314.190336> |
+| ducatelle2007 | Ducatelle, *Adaptive routing in ad hoc wireless multi-hop networks*, PhD thesis, Università della Svizzera italiana, 2007 | <https://sonar.ch/global/documents/318075> |
+| gpcr | Lochert et al., *Geographic routing in city scenarios*, ACM SIGMOBILE Mobile Computing and Communications Review 9(1), 2005, pp. 69–72 | <https://doi.org/10.1145/1055959.1055970> |
+| gpsr | Karp & Kung, *GPSR: greedy perimeter stateless routing for wireless networks*, Proceedings of the 6th annual international conference on Mobile computing and networking, 2000, pp. 243–254 | <https://doi.org/10.1145/345910.345953> |
+| lens | Zhao & Pan, *LENS: A LEO Satellite Network Measurement Dataset*, Proceedings of the 15th ACM Multimedia Systems Conference, 2024, pp. 278–284 | <https://doi.org/10.1145/3625468.3652170> |
+| ns3 | Riley & Henderson, *The ns-3 Network Simulator*, Modeling and Tools for Network Simulation, 2010, pp. 15–34 | <https://doi.org/10.1007/978-3-642-12331-3_2> |
+| ns3tools | Joppi, *swarm-routing/ns3-tools: v0.1.0*, version v0.1.0, Zenodo, 2026 | <https://doi.org/10.5281/zenodo.24136068> |
+| olsr | *Optimized Link State Routing Protocol (OLSR)*, Technical report, RFC Editor, 2003 | <https://doi.org/10.17487/rfc3626> |
+| pg460 | Farooq & Wedde, *BeeAdHoc: an efficient, secure and scalable routing framework for mobile adhoc networks*, Technical report, Technische Universität Dortmund, 2006 | <https://doi.org/10.17877/de290r-14312> |
+| qrouting | Boyan & Littman, *Packet Routing in Dynamically Changing Networks: A Reinforcement Learning Approach*, Advances in Neural Information Processing Systems, 1993 | <https://papers.nips.cc/paper_files/paper/1993/hash/4ea06fbc83cdd0a06020c35d50e1e89a-Abstract.html> |
+| roth2005 | Roth, *Termite: A Swarm Intelligent Routing Algorithm For Mobile Wireless Ad-Hoc Networks*, PhD thesis, Cornell University, 2005 | <https://hdl.handle.net/1813/240> |
+| termite2003 | Roth & Wicker, *Termite: ad-hoc networking with stigmergy*, GLOBECOM '03. IEEE Global Telecommunications Conference (IEEE Cat. No.03CH37489), 2003, pp. 2937–2941 | <https://doi.org/10.1109/glocom.2003.1258772> |
+<!-- fidelity:sources:end -->
 
 ## Mechanisms (feature ↔ paper § ↔ evidence)
 

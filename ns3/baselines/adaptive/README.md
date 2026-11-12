@@ -73,7 +73,8 @@ AODV's.
 
 Source: M. H. Roth, *Termite: A Swarm Intelligent Routing Algorithm for Mobile
 Wireless Ad-Hoc Networks*, PhD dissertation, Cornell University, 2005,
-chapter 4 (supplied by the maintainer; `papers` library). Section and table
+chapter 4 (<https://hdl.handle.net/1813/240>; `roth2005` in
+[`docs/references.bib`](../../../docs/references.bib)). Section and table
 numbers below are the dissertation's. The GLOBECOM 2003 paper (Roth & Wicker)
 is the same algorithm's first report and was not obtained.
 
@@ -133,12 +134,13 @@ load.
 Source: H. F. Wedde, M. Farooq (instructors) et al., *BeeAdHoc: an Efficient,
 Secure and Scalable Routing Framework for Mobile AdHoc Networks*, Project Group
 460 final report, University of Dortmund, 2006 (open:
-[hdl 2003/22405](https://hdl.handle.net/2003/22405)). The report describes
+<https://doi.org/10.17877/de290r-14312>; `pg460` in
+[`docs/references.bib`](../../../docs/references.bib)). The report describes
 three versions: the ns-2 simulation (ch. 3), a formal multi-agent model with
 swarms (ch. 4), and a Linux kernel module (ch. 12–13). The arm follows the
 **Linux module**, the only one the report specifies down to its data
 structures, constants (§14.3.2) and listings. The GECCO 2005 paper
-(DOI 10.1145/1068009.1068034) was not available; nothing below rests on it.
+(<https://doi.org/10.1145/1068009.1068034>) was not available; nothing below rests on it.
 
 | Report | Implementation | Status |
 |---|---|---|

@@ -36,19 +36,72 @@ keywords:
   - routing protocol
   - ns-3
 references:
-  - type: conference-paper
-    title: "AntHocNet: an ant-based hybrid routing algorithm for mobile ad hoc networks"
+  - type: book
+    title: "AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks"
     authors:
       - family-names: "Di Caro"
-        given-names: Gianni
-      - family-names: Ducatelle
-        given-names: Frederick
-      - family-names: Gambardella
+        given-names: "Gianni"
+      - family-names: "Ducatelle"
+        given-names: "Frederick"
+      - family-names: "Gambardella"
         given-names: "Luca Maria"
     collection-title: "Parallel Problem Solving from Nature - PPSN VIII"
-    collection-type: proceedings
-    volume: 3242
+    start: "461"
+    end: "470"
     year: 2004
     publisher:
       name: "Springer Berlin Heidelberg"
-    notes: "The algorithm this software implements."
+    doi: "10.1007/978-3-540-30217-9_47"
+    notes: "The work this repository implements."
+  - type: thesis
+    title: "Adaptive routing in ad hoc wireless multi-hop networks"
+    authors:
+      - family-names: "Ducatelle"
+        given-names: "Frederick"
+    institution:
+      name: "Università della Svizzera italiana"
+    thesis-type: "PhD thesis"
+    year: 2007
+    url: "https://sonar.ch/global/documents/318075"
+    notes: "The work this repository implements. No DOI: none registered."
+  - type: conference-paper
+    title: "LENS: A LEO Satellite Network Measurement Dataset"
+    authors:
+      - family-names: "Zhao"
+        given-names: "Jinwei"
+      - family-names: "Pan"
+        given-names: "Jianping"
+    collection-title: "Proceedings of the 15th ACM Multimedia Systems Conference"
+    collection-type: proceedings
+    start: "278"
+    end: "284"
+    year: 2024
+    publisher:
+      name: "ACM"
+    doi: "10.1145/3625468.3652170"
+    notes: "Data this repository uses."
+  - type: book
+    title: "The ns-3 Network Simulator"
+    authors:
+      - family-names: "Riley"
+        given-names: "George F."
+      - family-names: "Henderson"
+        given-names: "Thomas R."
+    collection-title: "Modeling and Tools for Network Simulation"
+    start: "15"
+    end: "34"
+    year: 2010
+    publisher:
+      name: "Springer Berlin Heidelberg"
+    doi: "10.1007/978-3-642-12331-3_2"
+    notes: "A tool this repository uses."
+  - type: software
+    title: "swarm-routing/ns3-tools: v0.1.0"
+    authors:
+      - family-names: "Joppi"
+        given-names: "Daniel"
+    year: 2026
+    publisher:
+      name: "Zenodo"
+    doi: "10.5281/zenodo.24136068"
+    notes: "A tool this repository uses."

@@ -272,8 +272,8 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   and **all five were closed by 2026-09-24**, when the P1 query returned
   nothing. When it is empty, sort by `priority:P2` and read the roadmap (#298)
   for sequencing.
-- **Where the fidelity work stands.** The 2007 Ducatelle thesis is now readable
-  in the private `papers` repo, and auditing every `Config` default against it
+- **Where the fidelity work stands.** The 2007 Ducatelle thesis is now in hand
+  (<https://sonar.ch/global/documents/318075>), and auditing every `Config` default against it
   (#182) changed the shape of the question: [1] (PPSN 2004) and the thesis
   **disagree**, and the thesis supersedes. "Paper-compliant" and
   "thesis-faithful" are different targets, and v1.1.0 ships a hybrid — see

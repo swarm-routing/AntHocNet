@@ -15,7 +15,7 @@ python3 $S results/campaign/*.csv        # anthocnet vs aodv per point
 python3 $S --baseline olsr --group pause FILE    # other baseline / one group
 python3 $S AFTER.csv --vs BEFORE.csv             # same sweep, two code
                                                  #   generations (see below)
-python3 $S --export-sweeps sweeps.csv FILE...    # emit the papers-repo
+python3 $S --export-sweeps sweeps.csv FILE...    # emit the paper drafts'
                                                  #   plots/data/sweeps.csv schema
 ```
 
@@ -64,7 +64,7 @@ sparse-static   0  20   97.7 0.6  97.2 0.7   +0.5  -4.1  -9.7  PAIRED-IMPROVED
 The unpaired columns on that same line say `NOISE`. Older CSVs without the
 sibling fall back to the materiality verdict and print no paired line, so
 pre-#319 campaigns still compare exactly as before.
-`--export-sweeps` is the bridge to the papers repo's `figures` skill
+`--export-sweeps` is the bridge to the paper drafts' `figures` skill
 (`plot_sweeps.py` reads that schema directly).
 
 ## Satellite constellation cells (`ns3/tools/leo-summary.py`, #297)
