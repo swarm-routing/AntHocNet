@@ -235,15 +235,15 @@ Every entry was retrieved on 2026-10-09 at abstract or summary level.
 
 **Swarm comparators**
 - Güneş et al., ARA — the ant-colony based routing algorithm for MANETs (2002) — [FU Berlin](https://cst-pub.imp.fu-berlin.de/Guenes2002e.html)
-- Roth & Wicker, Termite (SIDM 2005, published as a chapter of *Stigmergic Optimization*, 2006) — [doi:10.1007/978-3-540-34690-6_7](https://doi.org/10.1007/978-3-540-34690-6_7); Roth thesis — [Cornell eCommons](https://hdl.handle.net/1813/240); a seminar critique (Univ. Freiburg), whose copy is no longer online
+- Roth & Wicker, Termite (SIDM 2005, published as a chapter of *Stigmergic Optimization*, 2006) — [doi:10.1007/978-3-540-34690-6_7](https://doi.org/10.1007/978-3-540-34690-6_7); Roth thesis — [Cornell eCommons](https://hdl.handle.net/1813/240); a seminar critique (Univ. Freiburg ad hoc networking seminar; title and author not recorded), whose copy is no longer online, formerly at `forum.cone.informatik.uni-freiburg.de/teaching/seminar/adhoc-s08/finalTalks/05fin_Termite_Max_Fechner.pdf`
 - Wang, HOPNET (2007 thesis) — [UManitoba MSpace](https://mspace.lib.umanitoba.ca/bitstream/1993/20935/1/Wang_HOPNET_a.pdf)
 - Ducatelle, AntHocNet thesis (2007) — [SONAR (USI)](https://sonar.ch/global/documents/318075)
 - *Performance Analysis of Swarm Based Routing Protocols for MANETs* (NS-2 thesis, Thapar University) — [TUDR](https://tudr.thapar.edu/items/22361eb3-790e-4330-bfe9-1bb009c24e4c)
 
 **Secure comparators**
-- Sadasivam, Changrani & Yang, SEAD vs DSDV vs DSR (the author-hosted copy at UHCL is no longer online, and the work has no DOI)
-- *Evaluations of Secure MANET Routing Protocols* (Ariadne, SAODV under attack; thesis, UHCL; its copy is no longer online, and it has no DOI)
-- ARAN vs AODV under blackhole and IP spoofing (GloMoSim; Central University of Punjab repository, offline since 2026-10, no DOI)
+- Sadasivam, Changrani & Yang, SEAD vs DSDV vs DSR (the author-hosted copy at UHCL is no longer online, and the work has no DOI; formerly at `sceweb.sce.uhcl.edu/yang/research/MANETII05-sadasivam.pdf`)
+- *Evaluations of Secure MANET Routing Protocols* (Ariadne, SAODV under attack; thesis, UHCL; its copy is no longer online, and it has no DOI; formerly at `sceweb.uhcl.edu/yang/public/download/Tuan%20thesis%20040506.doc`)
+- ARAN vs AODV under blackhole and IP spoofing (GloMoSim; title and authors not recorded; a Central University of Punjab repository record, offline since 2026-10, no DOI; formerly at `kr.cup.edu.in/items/8aa53833-6e82-4351-87ac-2605a272bb8d/full`)
 - Cryptographic versus trust-based methods for MANET routing security (SAODV vs TAODV on hardware) — [Stevens](https://researchwith.stevens.edu/en/publications/cryptographic-versus-trust-based-methods-for-manet-routing-securi/)
 - Secure bee algorithms for MANET routing (survey; BeeSec, BeeAIS) — [UB](https://pubs.ub.ro/article/3797)
 - Secure routing in MANETs: a bio-inspired approach with honey bees — [Inderscience](https://www.inderscience.com/offer.php?id=66750)
