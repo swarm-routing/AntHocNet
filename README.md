@@ -252,8 +252,8 @@ flowchart LR
 ## History
 
 AntHocNet began as [Daniel Joppi](https://github.com/danieljoppi)'s college
-project: an implementation of the protocol on NS-2, started in 2008 and kept on
-GitHub ever since. More than 16 years later it was revived as a test of
+project: an implementation of the protocol on NS-2, started in 2008 and put on
+GitHub in [January 2016](https://github.com/swarm-routing/AntHocNet/commit/b7ac7d0f24). Years later it was revived as a test of
 AI-assisted development: the algorithm was separated from any one NS-2 version
 into a simulator-free `core/`, ported to ns-3, and became the reference
 implementation the [swarm-routing](https://github.com/swarm-routing)
