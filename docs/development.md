@@ -134,7 +134,7 @@ there. Locally (needs an activated emsdk, pinned in `.github/actions/setup-emsdk
 tools/checks/fetch-site-web.sh          # web/ <- site/anthocnet (SITE_DIR=<checkout> to copy a local one)
 web/test/parity.sh 120 "1 2 7 42"      # native vs WASM decision traces, byte-identical
 web/build-site.sh                       # -> web/build-site/ (the Pages root)
-node web/test/smoke.mjs web/build-site  # needs playwright-core + axe-core in cwd
+node web/test/smoke.mjs "$PWD/web/build-site"  # needs playwright-core + axe-core in cwd
 ```
 
 The site repo's `learn-site` skill has the full procedure, including
