@@ -176,8 +176,8 @@ regenerating the README figures from the game.
 
 In a Claude Code on the web session, `.claude/hooks/session-start.sh` (#618)
 already installed these tools at CI's pins; set `AHN_WEB=1` in the environment
-to also get emsdk and playwright for the browser checks above. CI's one
-required check is the `CI gate` job; docs-only PRs skip the simulator jobs (#607)
+to also get emsdk and playwright for the browser checks above. CI's
+required checks are the `CI gate` job and `check / org-sync` (org-sync.yml); docs-only PRs skip the simulator jobs (#607)
 but not the `pages` job, which builds the whole site, crawls it
 (`tools/checks/check-site.py`) and runs the browser smoke with axe on every docs page.
 
@@ -333,7 +333,7 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 - AntHocNet specifics: PR titles are enforced by CI (`pr-title.yml`), and since
   the title is the commit on `main` it drives the next Commitizen version bump
   (see `CONTRIBUTING.md`). `main` merges through the merge queue; only the
-  ruleset's checks (`CI gate` and the CodeQL scan) gate a merge.
+  ruleset's checks (`CI gate`, `check / org-sync` and the CodeQL scan) gate a merge.
 
 <!-- org-sync:begin skills -->
 ## Agent skills
