@@ -10,20 +10,36 @@
 #        check_invariants.sh --self-test (the wire-diff filter's own cases)
 set -u
 
-# The lines of a unified diff that add or remove code: +/- lines that are not
-# headers, blank, or only a comment (//, /*, *, */). Rule 4 counts these, so an
-# edit to a comment (an SPDX line, #783) is not a wire-format change.
+# The code a unified diff adds or removes. Each +/- line is reduced to its code
+# (comments, and doc lines that start with "* ", "*/" or "/*", are cut away),
+# and a removed line whose code reappears among the added lines cancels it.
+# What is left is printed as +code / -code. Rule 4 counts these, so an edit to
+# a comment (an SPDX line, #783), even a trailing one, is not a wire-format
+# change, while code after a leading /* */ still is. Block-comment lines that
+# do not start with "*" are not recognised and count as code (a false WARN).
+code_of() {
+  sed -E 's@/\*([^*]|\*+[^*/])*\*+/@@g; s@//.*$@@; s@^[[:space:]]*(\*[[:space:]].*|\*|\*/.*|/\*.*)$@@; s@^[[:space:]]+@@; s@[[:space:]]+$@@' \
+    | grep -v '^$' | sort
+}
 code_changes() {
-  grep -E '^[+-]' | grep -vE '^(\+\+\+|---)( |$)' \
-    | grep -vE '^[+-][[:space:]]*($|//|/\*|\*)'
+  local d rem add
+  d=$(cat)
+  rem=$(printf '%s\n' "$d" | grep -E '^-' | grep -vE '^--- ' | cut -c2- | code_of)
+  add=$(printf '%s\n' "$d" | grep -E '^\+' | grep -vE '^\+\+\+ ' | cut -c2- | code_of)
+  comm -3 <(printf '%s\n' "$rem" | grep -v '^$') <(printf '%s\n' "$add" | grep -v '^$') \
+    | sed -E 's/^\t/+/; t; s/^/-/'
 }
 
 if [ "${1:-}" = "--self-test" ]; then
   ok=1
-  comment_only=$'--- a/core/include/anthocnet/core/ant_message.h\n+++ b/core/include/anthocnet/core/ant_message.h\n-// SPDX-License-Identifier: GPL-2.0-only\n+// SPDX-License-Identifier: MIT OR GPL-2.0-only\n+\n- * old doc line\n+ * new doc line\n+/* block */'
-  field=$'--- a/core/include/anthocnet/core/ant_message.h\n+++ b/core/include/anthocnet/core/ant_message.h\n+    uint32_t hopLimit = 0;  // new field'
-  [ -z "$(printf '%s\n' "$comment_only" | code_changes)" ] || { echo "FAIL self-test: comment-only diff counted as code"; ok=0; }
-  [ -n "$(printf '%s\n' "$field" | code_changes)" ] || { echo "FAIL self-test: field change not counted"; ok=0; }
+  h=$'--- a/core/include/anthocnet/core/ant_message.h\n+++ b/core/include/anthocnet/core/ant_message.h\n'
+  quiet() { [ -z "$(printf '%s\n' "$h$2" | code_changes)" ] || { echo "FAIL self-test: $1 counted as code"; ok=0; }; }
+  loud() { [ -n "$(printf '%s\n' "$h$2" | code_changes)" ] || { echo "FAIL self-test: $1 not counted"; ok=0; }; }
+  quiet "comment-only diff" $'-// SPDX-License-Identifier: GPL-2.0-only\n+// SPDX-License-Identifier: MIT OR GPL-2.0-only\n+\n- * old doc line\n+ * new doc line\n+/* block */\n+ */'
+  quiet "trailing-comment edit" $'-    int x;  // old\n+    int x;  // new'
+  loud "field change" $'+    uint32_t hopLimit = 0;  // new field'
+  loud "code after a leading block comment" $'+/* units: hops */ uint32_t hopLimit = 0;'
+  loud "pointer write" $'-    *p = 1;\n+    *p = 2;'
   [ "$ok" = 1 ] && { echo "ok: self-test"; exit 0; }
   exit 1
 fi

@@ -36,8 +36,12 @@ The skill's own heuristics:
 - **Rule 4 (WARN):** `ant_message.h` / `ant_message_codec` changed in code
   lines without a `kWireVersion` bump in `core/`; reminds you to also update the
   ns-3 header (`ns3/anthocnet/model/anthocnet-packet`), `test_codec.cpp`, and
-  `docs/wire-format.md`. Added or removed lines that are blank or only a comment
-  (`//`, `/*`, `*`) do not count, so a comment or SPDX edit stays quiet (#783).
+  `docs/wire-format.md`. Only code counts: each added or removed line is cut to
+  its code (comments and `* `-style doc lines removed), and a removed line whose
+  code reappears among the added ones cancels out. So a comment, SPDX or
+  trailing-comment edit stays quiet (#783), while code after a leading `/* */`
+  or a `*p = …` write still warns. Block-comment lines that do not start with
+  `*` are read as code (a false WARN, never a missed one).
 - **Rule 7 (WARN):** `core/` logic changed but no `core/tests/` file changed.
 - **Docs (WARN):** a core/adapter change with no `docs/` touch — confirm no
   ADR needs updating.
