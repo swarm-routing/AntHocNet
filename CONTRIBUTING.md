@@ -443,7 +443,10 @@ How a finding is handled, by humans and agents alike:
    or security finding is fixed now, or put to the maintainer; a security
    thread stays open until the maintainer decides. A Minor, nitpick or
    suggestion finding does not trigger a push by itself: answer it, resolve
-   it, and let the next code push carry any change. On #832 both Major
+   it, and let the next code push carry any change. A confirmed bug that is
+   not fixed in the PR also gets an issue, or a comment on an existing one,
+   linked from the thread before it is resolved
+   ([ADR-0013](docs/adr/0013-track-bugs-and-findings-as-issues.md)). On #832 both Major
    findings were fixed in `219bd83`
    ([thread](https://github.com/swarm-routing/AntHocNet/pull/832#discussion_r4433828978)),
    and the Minor "PASS overstates what ran" wording was deferred to a later
