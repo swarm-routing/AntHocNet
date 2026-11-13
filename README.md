@@ -52,7 +52,8 @@ bars: 95% CI) — current numbers and per-scenario pages in
 An ant-colony-optimization routing protocol for mobile ad-hoc networks,
 implemented once as a **simulator-agnostic algorithm core** with a thin
 **NS-3** adapter (and a browser adapter that runs the same core as WebAssembly
-on the [learn site](https://swarm-routing.github.io/AntHocNet/), the project's front page).
+on the [learn site](https://swarm-routing.github.io/AntHocNet/); the project's front page is its
+[project page](https://swarm-routing.github.io/projects/AntHocNet/)).
 
 The repository does not bundle a copy of any simulator. You install AntHocNet
 onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.36+, with a
