@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-# Copyright (C) 2026 Daniel Henrique Joppi
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 """Self-test for check_cells.py (#976): a sound cell passes; a spliced line,
 a malformed ##RUN##/##BENCH##/# stddev field, a duplicated row and an arm with
 a missing seed each fail; a legacy cell passes only while each recorded splice
@@ -107,6 +107,16 @@ got = findings(replace(SOUND, "##PROV##", "##RUN## 2 aodv 1 2 3 4 5\n##PROV##"))
 expect(any("dup:" in f for f in got), f"a duplicated ##RUN## row fails: {got}")
 got = findings(replace(SOUND, "##RUN## 2 aodv 96.0 15.0 216.5 12.7 17.6 9.1 2.5 inf 9.8\n", ""))
 expect(any("seeds:" in f and "aodv" in f for f in got), f"an arm short of a seed fails: {got}")
+got = findings(replace(replace(SOUND, "##RUN## 1 aodv 97.0 14.0 215.5 12.8 17.5 9.0 2.5 inf 9.9\n", ""),
+                       "##RUN## 2 aodv 96.0 15.0 216.5 12.7 17.6 9.1 2.5 inf 9.8\n", ""))
+expect(any("seeds:" in f and "aodv" in f for f in got),
+       f"a declared arm with no ##RUN## row fails: {got}")
+got = findings(replace(SOUND, "runs=2 firstRun=1", "runs=3 firstRun=1"))
+expect(any("seeds:" in f and "[3]" in f for f in got),
+       f"a seed ##CONFIG## declares and no arm ran fails: {got}")
+got = findings(replace(SOUND, "runs=2 firstRun=1", "runs=1 firstRun=1"))
+expect(any("seeds:" in f and "no ##CONFIG## declares" in f for f in got),
+       f"a seed ##CONFIG## does not declare fails: {got}")
 
 # Every committed cell passes, the 16 legacy ones included.
 r = subprocess.run([sys.executable, os.path.join(HERE, "check_cells.py")],

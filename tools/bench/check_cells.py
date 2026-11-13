@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-# Copyright (C) 2026 Daniel Henrique Joppi
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 """Every committed cell reads strictly (#976).
 
 A cell under results/cells/ is the evidence its published numbers are computed
@@ -18,8 +18,11 @@ reader could misread:
   stddev  a ``# stddev`` value that is not a number
   dup     one ``##NAME## <seed> <arm>`` row twice: a reader keeps one of them
           silently (``bench_parse`` keeps the last)
-  seeds   arms whose ``##RUN##`` seed sets differ: a seed lost to one arm
-          breaks every paired comparison against it
+  seeds   an arm (named by a ``##RUN##`` row or a ``##CONFIG##`` protocols=
+          list) without a ``##RUN##`` row for every seed the ``##CONFIG##``
+          runs=/firstRun= lines declare (without them: every seed any arm
+          has), or with one they do not declare: a lost seed breaks every
+          paired comparison against that arm
 
 Legacy cells (LEGACY below) carry the splices paper-benchmark.yml wrote between
 #268 and its removal (#758). They pass only as recorded: exactly the listed
@@ -201,14 +204,23 @@ def check(path):
     table = rows(lines, spliced)
     out += [f"{ls[1]}: dup: {k[0]} seed {k[1]} {k[2]} also on line {ls[0]}"
             for k, ls in sorted(table.items()) if len(ls) > 1]
-    seeds = {}
+    seeds, declared = {}, set()
     for (mk, s, a) in table:
         if mk == "RUN":
             seeds.setdefault(a, set()).add(s)
-    if len({frozenset(v) for v in seeds.values()}) > 1:
-        ref = set.union(*seeds.values())
-        out += [f"seeds: {a} lacks ##RUN## seed(s) {sorted(ref - v)}"
-                for a, v in sorted(seeds.items()) if ref - v]
+    for i, line in enumerate(lines, 1):
+        if line.startswith("##CONFIG##") and i not in spliced:
+            kv = dict(t.split("=", 1) for t in line.split()[1:] if "=" in t)
+            for arm in filter(None, kv.get("protocols", "").split(",")):
+                seeds.setdefault(arm, set())
+            if kv.get("runs", "").isdigit() and kv.get("firstRun", "").isdigit():
+                first = int(kv["firstRun"])
+                declared |= set(range(first, first + int(kv["runs"])))
+    ref = declared or set().union(*seeds.values())
+    out += [f"seeds: {a} lacks ##RUN## seed(s) {sorted(ref - v)}"
+            for a, v in sorted(seeds.items()) if ref - v]
+    out += [f"seeds: {a} has ##RUN## seed(s) {sorted(v - ref)} no ##CONFIG## declares"
+            for a, v in sorted(seeds.items()) if declared and v - declared]
     if listed is not None:
         for i in sorted(set(listed) & set(spliced)):
             cands, copies = identify(lines, i, spliced[i], spliced, table)

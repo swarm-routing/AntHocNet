@@ -102,7 +102,7 @@ jobs:
         # fails a cell a strict reader (swarm-routing/ns3-tools#146) would
         # reject or any reader could misread: a line spliced by another
         # writer, a non-numeric ##RUN##/##BENCH##/# stddev field, a row twice,
-        # an arm short of a seed. The 16 cells the retired paper-benchmark.yml
+        # an arm without a ##RUN## row for each seed ##CONFIG## declares. The 16 cells the retired paper-benchmark.yml
         # spliced ##RSS## into are listed, line by line, and pass only while
         # every splice has its intact copy. Stdlib only, ~1 s.
         run: |
