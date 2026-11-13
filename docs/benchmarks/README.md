@@ -57,7 +57,7 @@ running it twice produces no second diff.
 In CI:
 
 - **Benchmarks** (`.github/workflows/benchmarks.yml`, nightly when the default
-  branch's code changed, or on demand) runs the *discrete* scenarios with `--quick` and commits the refreshed
+  branch's code changed, or on demand) runs the *discrete* scenarios at 20 seeds and 120 s in the campaign image and proposes the refreshed
   index summary, scenario pages and `discrete-summary.png`.
 - **Benchmark cell** (`.github/workflows/benchmark-cell.yml`, manual, dispatched
   by `ns3-campaign` from swarm-routing/ns3-tools, #905) runs the heavier campaigns and sweeps one cell
