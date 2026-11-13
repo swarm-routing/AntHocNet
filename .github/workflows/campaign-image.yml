@@ -59,6 +59,7 @@ permissions:
 jobs:
   resolve:
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.3 min (#982)
     outputs:
       commit: ${{ steps.c.outputs.commit }}
       commit7: ${{ steps.c.outputs.commit7 }}
@@ -123,6 +124,7 @@ jobs:
   record:
     needs: [resolve, image]
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.2 min (#982)
     outputs:
       image: ${{ steps.r.outputs.image }}
     steps:

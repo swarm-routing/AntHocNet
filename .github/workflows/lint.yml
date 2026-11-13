@@ -161,6 +161,7 @@ jobs:
   clang-format:
     name: C++ formatting (clang-format)
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 1.4 min (#982)
     # #35: the project's own C++ -- core/, the browser adapter and the ns-3
     # module -- is formatted by .clang-format (clang-format-18, the version on
     # ubuntu-24.04 runners). ns3/baselines/ is excluded by .clang-format-ignore:

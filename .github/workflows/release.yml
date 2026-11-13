@@ -56,6 +56,7 @@ jobs:
   propose:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'bump' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # no recent green run to size it from: a pip install (capped at 10), the bump and one PR (#982)
     # contents + pull-requests: write only to open the PR with the workflow
     # token when no bot token is configured (#705); CI then needs a close and
     # reopen of the PR.
@@ -126,6 +127,7 @@ jobs:
       ${{ (github.event_name == 'workflow_dispatch' && inputs.mode != 'bump') ||
           (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release): bump version ')) }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 20  # longest green run: 1.8 min; the attestation steps call out to Sigstore (#982)
     permissions:
       contents: read
       pull-requests: read  # which PR a pushed release commit came from
@@ -341,6 +343,7 @@ jobs:
     needs: release
     if: ${{ inputs.mode != 'dryrun' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # no recent green run to size it from: a tag, a branch push and the release upload (#982)
     permissions:
       contents: write      # the tag, the ns3-module push and the GitHub Release
     env:
