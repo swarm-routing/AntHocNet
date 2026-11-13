@@ -7,15 +7,18 @@ name: Benchmarks
 # AND the taxonomy chart in docs/benchmarks/. So the published numbers + figures
 # track the code within a day.
 #
-# Scope: this runs the *discrete* named scenarios at time=120 s but
-# runs=10 -- the #293/#314 published-point floor. It used to be the --quick
-# preset (runs=2), which was a cost choice from when Actions minutes were
-# believed billed; #121's answer (they are not) removed the reason, and #318
-# removed the excuse: at 2 runs the tables now render t(1)-wide intervals
-# their own methodology calls unpublishable. The 120 s duration stays -- the
-# floor is about dispersion, not duration, and absolute plausibility is the
-# anchor gate's job. The heavier parameter sweeps (area/pause/scale) are
-# manual campaigns (benchmark-cell.yml via tools/bench/campaign.py) at 900 s / 20 seeds.
+# Scope: this runs the *discrete* named scenarios at time=120 s and
+# runs=20 (seeds 1-20, #977). Every protocol of a scenario runs on the same
+# realisation per seed, so the table is paired by construction and meets org
+# golden rule 6's ">= 20 seeds" floor for a comparison: a reader compares its
+# columns, so it is held to the comparison floor, not to the 10-run
+# publication floor (#293/#318) it used from #320 to #977, nor the 2-run
+# --quick preset before that. The 120 s duration stays -- the floor is about
+# dispersion, not duration, and absolute plausibility is the anchor gate's
+# job. 20 seeds of the two heaviest scenarios do not fit one job ceiling
+# (6 h) beside the other four, so each scenario is its own matrix job and
+# the `tables` job joins them. The heavier parameter sweeps (area/pause/scale)
+# are manual campaigns (benchmark-cell.yml via ns3-campaign) at 900 s / 20 seeds.
 #
 # No `push` trigger (#864). It ran on every merge, and most of those runs were
 # cancelled by the next merge (13 of 19 push runs from 10-30 to 11-08); the
@@ -23,14 +26,18 @@ name: Benchmarks
 # changed, so the push runs bought nothing but runner time. A daily run bounds
 # how stale the published table can get at 24 h, whatever the merge cadence.
 #
-# PAUSED (#866, maintainer decision 2026-11-10): the schedule is off until the
-# control campaign #867 has measured the move to the campaign image (gcc-11 /
-# ns-3.42 / default profile -> gcc-13 / ns-3.48 / release). Until then the
-# table keeps its last pre-move numbers; a manual dispatch still runs it.
-# Re-enable by restoring the schedule below once #867's result is recorded.
+# Paused from 2026-11-10 until #977 (#866, #867): the schedule was off
+# until the control campaign #867 had measured the move to the campaign image
+# (gcc-11 / ns-3.42 / default profile -> gcc-13 / ns-3.48 / release). Its
+# cross-image rule was accepted on 2026-11-11 (docs/benchmarks/methodology.md
+# "Cross-image rule"): a number from another ns-3 release is not compared with
+# one from this image. So every generated block stamps the image digest and
+# the ns-3 release it was measured on (update-benchmarks.py --image), and
+# docs/benchmarks.md keeps the last ns-3 3.42 table as superseded, with no
+# delta quoted against it.
 on:
-  # schedule:
-  #   - cron: '17 4 * * *'
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 # Read-only by default; each job that writes declares its own scopes
@@ -61,6 +68,7 @@ jobs:
   # merge is re-measured within a day (#365, #864).
   changed:
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # a checkout and a git diff: seconds
     outputs:
       run: ${{ steps.diff.outputs.run }}
     steps:
@@ -117,12 +125,16 @@ jobs:
     with:
       ns3-version: '3.48'
 
-  benchmark:
+  # The validation anchors gate everything after them (#59): if an anchor
+  # regresses (cf. the #51 ~50% single-hop loss that silently depressed every
+  # published PDR ~2x), no scenario runs and the table is never refreshed from
+  # a mis-calibrated channel. Thresholds live in ns3/tools/anchors.yml;
+  # rationale in docs/benchmarks/methodology.md "Validation anchors".
+  anchors:
     needs: [changed, image]
     if: needs.changed.outputs.run == 'true'
     runs-on: ubuntu-24.04
-    # Read-only: the regenerated table + charts reach main through the publish
-    # job's PR (#789); packages to pull the campaign image.
+    timeout-minutes: 20  # ~2 min on the campaign image
     permissions:
       contents: read
       packages: read
@@ -142,7 +154,93 @@ jobs:
           IMAGE: ${{ needs.image.outputs.image }}
         run: |
           echo "image: $IMAGE"
+          cat /opt/ns-3/.swarm-configure.env
           cd /opt/ns-3 && ./ns3 show profile
+      - name: Validation-anchor gate (blocks publish; #59)
+        run: |
+          bash tools/checks/check-anchors.sh /opt/ns-3 single-hop
+          bash tools/checks/check-anchors.sh /opt/ns-3 broch-low-mobility
+
+  # One job per discrete scenario (DISCRETE in ns3/tools/run-scenarios.py), so
+  # 20 seeds of the heaviest one stay far under the job ceiling. The list is
+  # the table's row order.
+  benchmark:
+    needs: [image, anchors]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180  # the heaviest scenario, 20 seeds: ~75 min (#977)
+    strategy:
+      fail-fast: true
+      matrix:
+        scenario: [dense-small, paper-base, sparse-static, high-mobility, heavy-load, large-scale]
+    # Read-only: the regenerated table + charts reach main through the publish
+    # job's PR (#789); packages to pull the campaign image.
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run ${{ matrix.scenario }} (20 seeds, 120 s; #977)
+        env:
+          SCENARIO: ${{ matrix.scenario }}
+        run: |
+          python3 ns3/tools/run-scenarios.py /opt/ns-3 \
+            --out "$GITHUB_WORKSPACE/scenarios-$SCENARIO.csv" --only "$SCENARIO" \
+            --runs 20 --time 120
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scenario-${{ matrix.scenario }}
+          path: |
+            scenarios-${{ matrix.scenario }}.csv
+            scenarios-${{ matrix.scenario }}-runs.csv
+          retention-days: 7
+
+  tables:
+    needs: [image, benchmark]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.image.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: scenario-*
+          path: parts
+          merge-multiple: true
+      - name: Join the scenario CSVs in the table's row order
+        run: |
+          python3 - <<'EOF'
+          import csv
+          order = ["dense-small", "paper-base", "sparse-static",
+                   "high-mobility", "heavy-load", "large-scale"]
+          for suffix in ("", "-runs"):
+              rows, head = [], None
+              for name in order:
+                  with open(f"parts/scenarios-{name}{suffix}.csv", newline="") as f:
+                      r = csv.DictReader(f)
+                      head = head or r.fieldnames
+                      rows += list(r)
+              with open(f"scenarios{suffix}.csv", "w", newline="") as f:
+                  w = csv.DictWriter(f, fieldnames=head)
+                  w.writeheader()
+                  w.writerows(rows)
+              print(f"scenarios{suffix}.csv: {len(rows)} rows")
+          EOF
       - name: Install matplotlib
         timeout-minutes: 3  # apt; longest green run: 34 s (#840)
         run: |
@@ -152,44 +250,24 @@ jobs:
             sleep $((i * 15))
           done
           apt-get install -y python3-matplotlib
-      - name: Validation-anchor gate (blocks publish; #59)
-        # Run the known-expected anchors on the *stock* baselines harness
-        # before producing or publishing any numbers: if an anchor regresses
-        # (cf. the #51 ~50% single-hop loss that silently depressed every
-        # published PDR ~2x) this step fails and the table/charts below are
-        # never refreshed from a mis-calibrated channel. Thresholds live in
-        # ns3/tools/anchors.yml; rationale in docs/benchmarks/methodology.md
-        # "Validation anchors".
-        run: |
-          bash tools/checks/check-anchors.sh /opt/ns-3 single-hop
-          bash tools/checks/check-anchors.sh /opt/ns-3 broch-low-mobility
-      - name: Run scenario taxonomy (10 runs, 120 s — the #318 floor)
-        run: |
-          python3 ns3/tools/run-scenarios.py /opt/ns-3 \
-            --out "$GITHUB_WORKSPACE/scenarios.csv" --only discrete \
-            --runs 10 --time 120
       - name: Render charts
-        run: python3 ns3/tools/make-charts.py "$GITHUB_WORKSPACE/scenarios.csv" --outdir docs/benchmarks
+        run: python3 ns3/tools/make-charts.py scenarios.csv --outdir docs/benchmarks
       - name: Update results tables (index summary + per-scenario pages)
         # --commit/--run-url (#365): every regenerated block states the commit
-        # it was measured at. Two things this buys that the page banners alone
-        # do not. (1) The banners claim these numbers "track the current tip of
-        # main" -- true only while this job keeps up, and it demonstrably does
-        # not: eight merges on 2026-07-26 produced no refresh at all because
-        # each push cancelled the run in flight, and nothing on the page said
-        # so. A stamped commit that lags main makes that staleness readable.
-        # (2) A reader who wants to reproduce a cell now has the SHA to check
-        # out, which is the acceptance criterion of #365.
-        #
-        # The cost is churn: because the stamp changes with every measured
-        # commit, the commit step below fires on every run instead of only
-        # when a number moves. That is the intended trade -- an unchanged table
-        # measured at a new commit is new information, not an empty commit.
+        # it was measured at, so a stamped commit that lags main makes
+        # staleness readable and a reader has the SHA to reproduce a cell.
+        # --image/--ns3-release (#977): and the image digest and ns-3 release,
+        # because under the cross-image rule numbers from different ns-3
+        # releases are not compared, and the block is what a reader quotes.
+        env:
+          IMAGE: ${{ needs.image.outputs.image }}
         run: |
-          python3 ns3/tools/update-benchmarks.py "$GITHUB_WORKSPACE/scenarios.csv" \
+          . /opt/ns-3/.swarm-configure.env
+          python3 ns3/tools/update-benchmarks.py scenarios.csv \
             docs/benchmarks.md \
             --commit "$GITHUB_SHA" \
-            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --image "$IMAGE" --ns3-release "$NS3_VERSION"
       - name: Upload CSV + charts artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -215,7 +293,7 @@ jobs:
   # replaces the PR's branch.
   publish:
     name: Open or update the benchmark PR
-    needs: benchmark
+    needs: tables
     runs-on: ubuntu-24.04
     # contents + pull-requests: write only to open the PR with the workflow
     # token when no bot token is configured (#705).
@@ -240,7 +318,7 @@ jobs:
         with:
           branch: bot/benchmarks
           title: 'chore(benchmarks): refresh benchmark results and charts'
-          body: The scenario taxonomy re-measured at ${{ github.sha }} (10 runs, 120 s); `docs/benchmarks.md`, the per-scenario pages and the taxonomy chart regenerated by `ns3/tools/update-benchmarks.py` and `make-charts.py`.
+          body: The scenario taxonomy re-measured at ${{ github.sha }} (20 seeds, 120 s); `docs/benchmarks.md`, the per-scenario pages and the taxonomy chart regenerated by `ns3/tools/update-benchmarks.py` and `make-charts.py`.
           paths: docs/benchmarks.md docs/benchmarks
           labels: documentation,benchmark
           org-app-id: ${{ secrets.BOT_APP_ID }}

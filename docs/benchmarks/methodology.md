@@ -210,10 +210,12 @@ The follow-up showed that the differences come from the ns-3 release
 
 The nightly refresh of
 [`../benchmarks.md`](../benchmarks.md) (`benchmarks.yml`, when the default
-branch's code changed) was **paused until the maintainer decided #867's rule**
-(accepted 2026-11-11) and stays paused until a change turns it back on: its
-schedule is off, so the table keeps its last pre-move numbers, and a manual
-dispatch still runs it. Its publish step is gated on the validation anchors
+branch's code changed) was paused from 2026-11-10 until the maintainer decided
+#867's rule (accepted 2026-11-11) and was turned back on by #977, at 20 seeds
+per scenario in the campaign image. Following this rule, its numbers (ns-3
+3.48) are not compared with the last table measured on ns-3 3.42, which
+`benchmarks.md` keeps as superseded; each generated block names the image
+digest and ns-3 release it was measured on. Its publish step is gated on the validation anchors
 below. Before trusting or comparing dispatched numbers, run
 the validation loop in
 [`configuration.md` §5](../configuration.md#5-how-to-calibrate-a-parameter)
@@ -1321,7 +1323,7 @@ biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routi
 **The optimized image is for numbers, never for CI.** CI (`ci.yml`) keeps
 running in `default`/`debug` images on purpose: those assertions have caught
 real bugs, and a green run with assertions compiled out is a weaker statement.
-Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866; its schedule is paused until #867) run in a
+Campaigns and the nightly taxonomy (`benchmarks.yml`, since #866) run in a
 campaign image, which is built `FROM` an `ns3-dev:<ver>-optimized` digest;
 protocol metrics are bit-identical across the two profiles (#124), only the
 cost differs.

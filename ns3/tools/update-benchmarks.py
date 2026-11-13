@@ -38,6 +38,12 @@ Provenance (#365). Pass --commit SHA (and optionally --run-url URL) and every
 generated block states the commit its numbers were measured at. CI always
 passes it; a hand-run that omits it emits no stamp at all rather than a
 placeholder, because a wrong commit is worse than a missing one.
+
+Image (#977). Pass --image REF and --ns3-release VER as well and the stamp
+names the image digest and the ns-3 release the numbers were measured on. Under
+the cross-image rule (docs/benchmarks/methodology.md) numbers from different
+ns-3 releases are not compared, so a reader needs the release next to the
+number, not only in the workflow that produced it.
 """
 import argparse
 import csv
@@ -118,7 +124,7 @@ def _row(r):
             f"{_off(r.get('delay_off90_ms'))} |")
 
 
-def _set_provenance(commit, run_url):
+def _set_provenance(commit, run_url, image="", ns3_release=""):
     """Render the per-block provenance sentence once (#365).
 
     Empty when no commit was supplied: a block with no stamp says "whoever
@@ -133,7 +139,15 @@ def _set_provenance(commit, run_url):
     short = commit[:7]
     where = f"[`{short}`](https://github.com/swarm-routing/AntHocNet/commit/{commit})"
     run = f", [run]({run_url})" if run_url else ""
-    _PROVENANCE = f"_Measured at {where}{run}._"
+    on = ""
+    if image:
+        # A digest reference is long; the repository and 12 hex digits
+        # identify it, as `docker images` shows it.
+        name, _, digest = image.partition("@sha256:")
+        ref = f"{name.rsplit('/', 1)[-1]}@sha256:{digest[:12]}" if digest else image
+        rel = f", ns-3 {ns3_release}" if ns3_release else ""
+        on = f" on `{ref}`{rel}"
+    _PROVENANCE = f"_Measured at {where}{on}{run}._"
 
 
 def _stamp():
@@ -351,8 +365,12 @@ def main():
                          "omitted means no provenance stamp is written")
     ap.add_argument("--run-url", default="",
                     help="URL of the workflow run that measured them")
+    ap.add_argument("--image", default="",
+                    help="image the numbers were measured in, by digest (#977)")
+    ap.add_argument("--ns3-release", default="",
+                    help="ns-3 release of that image, e.g. 3.48 (#977)")
     args = ap.parse_args()
-    _set_provenance(args.commit, args.run_url)
+    _set_provenance(args.commit, args.run_url, args.image, args.ns3_release)
     csv_path, doc_path = args.csv_file, args.doc_file
     with open(csv_path, newline="") as f:
         rows = list(csv.DictReader(f))

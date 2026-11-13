@@ -12,9 +12,9 @@
 > ([#327](https://github.com/swarm-routing/AntHocNet/issues/327)) and the
 > per-seed RNG stream assignment
 > ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)). They are a
-> nightly regression signal at the 10-run publication floor
-> ([#318](https://github.com/swarm-routing/AntHocNet/issues/318)); the
-> release-pinned, 20-seed numbers live on the sweep and headline pages. See
+> nightly regression signal at 20 seeds per scenario
+> ([#977](https://github.com/swarm-routing/AntHocNet/issues/977)), in the
+> campaign image their stamp names; the release-pinned numbers live on the sweep and headline pages. See
 > [Provenance](../methodology.md#provenance-which-version-a-number-was-measured-at)
 > and [#365](https://github.com/swarm-routing/AntHocNet/issues/365).
 
@@ -33,7 +33,7 @@ counterpart of the [scale sweep](../sweeps/scale.md).
 Defined as `DISCRETE["large-scale"]` in
 [`ns3/tools/run-scenarios.py`](../../../ns3/tools/run-scenarios.py)
 (`scenario=paper nNodes=100 areaX=2100 areaY=700`). The nightly `benchmarks`
-workflow runs the taxonomy with `--quick`.
+workflow runs the taxonomy at 20 seeds (#977).
 
 ## Results
 
