@@ -396,7 +396,7 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 >   - AntHocNet's own losses fell under CBR (route 1.41 → 0.90 % in
 >     rwp-tworay), and its total is now below the oracle's MAC loss alone.
 >   - **So the oracle's delivery is not a bound on the two-ray cells at this
->     load.** The [quoting rule](#how-these-numbers-may-be-quoted-a-delivery-bound-everywhere-latency-and-hops-on-two-ray)
+>     load.** The [quoting rule](#how-these-numbers-may-be-quoted-delivery-against-the-disk-reference-latency-and-hops-on-two-ray)
 >     narrows: delivery is a bound on the Nakagami cells only. There the
 >     oracle still leads AntHocNet by 4.19–7.96 pp on every seed.
 >   - Quote the two-ray result as "AntHocNet beats the hop-count, link-blind
@@ -465,7 +465,7 @@ per-run sibling remain the **1 s corpus**, superseded twice over.
 
 The oracle column is a reference point rather than a competitor; how far each
 of its columns may be read as a bound is settled in
-[the quoting rule](#how-these-numbers-may-be-quoted-a-delivery-bound-everywhere-latency-and-hops-on-two-ray).
+[the quoting rule](#how-these-numbers-may-be-quoted-delivery-against-the-disk-reference-latency-and-hops-on-two-ray).
 
 ### Delivery — PDR %, mean ± 95 % CI
 
@@ -692,11 +692,12 @@ oracle rows have `nrl` min = max = 0.00 and `nrl_bytes` max = 0.0000. That zero
 is an *asserted invariant* (`NS_ABORT` in-harness plus a `scenario_check` rule),
 not a measurement that happened to come out at zero.
 
-**These columns are not all readable the same way.** PDR is a bound in all six
-cells; `delay`/`delay99` are a bound only on the three two-ray cells; NRL is an
+**These columns are not all readable the same way.** PDR was a bound in all six
+cells at `4611bbb`, and since v2.7.0 is quoted as a reference (the 300 m disk;
+the derived radius is out-delivered on two-ray); `delay`/`delay99` are a bound only on the three two-ray cells; NRL is an
 assertion rather than a measurement; and `hopsMean` is not a bound anywhere on
 this page. The
-[quoting rule](#how-these-numbers-may-be-quoted-a-delivery-bound-everywhere-latency-and-hops-on-two-ray)
+[quoting rule](#how-these-numbers-may-be-quoted-delivery-against-the-disk-reference-latency-and-hops-on-two-ray)
 below is where that is settled, with its evidence. Note already that `hopsMean`
 is **higher than every real arm's** in every cell, and that this is *not* the
 defect it was once read as. `hopsMean` averages over each arm's **own** delivered
@@ -717,7 +718,7 @@ splits as:
 
 ```
 channel = 100 − oracle_pdr        (what the oracle reference did not deliver)
-routing = oracle_pdr − arm_pdr    (what this protocol lost that the reference did not)
+routing = oracle_pdr − arm_pdr    (net PDR shortfall of this protocol against the reference)
 total   = 100 − arm_pdr           = channel + routing
 ```
 
@@ -840,8 +841,9 @@ the oracle's refused sends missing from its PDR denominator (biasing
 `oracle_pdr` upward). The v2.7.0 table uses the same 300 m disk with the #464
 accounting.
 
-The reading survives both: **the headroom above AntHocNet is almost entirely
-addressable in the protocol.** What the decomposition does *not* do is split
+The reading survives both: **against this reference, the headroom above
+AntHocNet is almost entirely addressable in the protocol** (a statement about
+the net PDR difference, not about which packets each arm delivered). What the decomposition does *not* do is split
 the routing term further — into discovery cost, suboptimal path choice and
 reconvergence loss — so it bounds the addressable headroom against this
 reference rather than itemising it. The channel term is a property of the
@@ -1039,9 +1041,10 @@ radius in the feasible band between those failures. Whether a fading channel has
 one at all is open, and if it does not, the answer is a probability-weighted
 (ETX-shaped) graph or an accepted-and-scoped limit — not further radius tuning.
 
-### How these numbers may be quoted: a delivery bound everywhere, latency and hops on two-ray
+### How these numbers may be quoted: delivery against the disk reference, latency and hops on two-ray
 
-- **Delivery — robust in all six cells.** Re-verified on the fixed harness:
+- **Delivery — a reference in all six cells, quoted against the 300 m disk.**
+  Re-verified on the fixed harness:
   oracle PDR 96.00–98.20 % against the best real arm's 85.58–92.42 % at
   `4611bbb`, with **zero violations in 120/120 seeds**. After #496 the best real
   arm (AntHocNet) reads 88.11–97.97 %, still below the oracle in every cell
@@ -1050,9 +1053,10 @@ one at all is open, and if it does not, the answer is a probability-weighted
   `decode-approx` oracle on all three two-ray cells by 0.42–0.66 pp (interval
   below zero), so the derived-radius oracle is a reference there, not a
   delivery bound. The oracle held to the scenario's 300 m disk out-delivers
-  every arm in 120/120 seeds at v2.7.0 (by ≥ +0.8 pp per seed), and it is the
-  [gap decomposition](#gap-decomposition-the-headline)'s reference; every PDR
-  conclusion on this page stands against it.
+  every arm in 120/120 seeds at v2.7.0 (by ≥ +0.8 pp per seed). That is a
+  measurement, not a bound (no disk is exact on these channels, metrics.md),
+  and it is the [gap decomposition](#gap-decomposition-the-headline)'s
+  reference; every PDR conclusion on this page is stated against it.
 - **Latency — two-ray only.** The mean and tail advantages hold there with the
   graph error working *against* the oracle (missing links only, so the true
   optimum is faster still — the bound is conservative). On the fading cells the
