@@ -308,7 +308,8 @@ AntHocNet leads delivery in every cell, 5.8–11.3 pp above the best native base
 >
 > Cells: `results/cells/grid-<mobility>-<channel>-cbr521.txt`. Each marker carries
 > 20 rows per arm. Rows split by the workflow's interleaved `##RSS##` line
-> are dropped; their clean re-emitted copies are kept. `bench_parse` column
+> are dropped; their clean re-emitted copies are kept
+> ([#976](https://github.com/swarm-routing/AntHocNet/issues/976)). `bench_parse` column
 > mapping is OK (25 checks) on all six. Statistics come from `stats_util`.
 >
 > **`scenario_check.py results`:**
@@ -1108,6 +1109,11 @@ Every cell self-identifies through its `##CONFIG##` row
 is read from the data, not from dispatch order — and its `##PROV##` line pins
 `commit=dd171e5e` ([#365](https://github.com/swarm-routing/AntHocNet/issues/365)).
 `bench_parse` column-mapping self-checks passed (25 checks) on all six cells.
+Each cell carries a few rows cut by the workflow's interleaved `##RSS##` line,
+each with its intact copy before `##PROV##`. A strict reader refuses them as
+committed; every number on this page reads the same from the intact rows
+([#976](https://github.com/swarm-routing/AntHocNet/issues/976),
+[methodology](methodology.md#976-rss-lines-spliced-into-16-cells-no-published-number-moves)).
 `scenario_check.py results`:
 
 - the two-ray cells are WARN-only (the approximate-oracle notes);

@@ -322,6 +322,12 @@ All cells:
 - the control run reproduces the pre-#496 200 ms AntHocNet rows byte for
   byte, so `TimerJitter=0` is exactly the old timer.
 
+In `static-mesh-jitter-cap1s.txt`, line 45 is seed 9's row cut by the
+workflow's interleaved `##RSS##` line. Its intact copy is line 60, so the
+#494 row reads all 20 seeds. A strict reader refuses the file as committed
+([#976](https://github.com/swarm-routing/AntHocNet/issues/976),
+[methodology](methodology.md#976-rss-lines-spliced-into-16-cells-no-published-number-moves)).
+
 Reproduce with a campaign plan cell (`workflow: paper-benchmark.yml`, which
 `tools/bench/campaign.py` translates for `benchmark-cell.yml` since v2.5.0,
 #746) using `nNodes=50 time=900 runs=20

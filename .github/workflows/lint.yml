@@ -97,6 +97,17 @@ jobs:
         # tables from ##COMMON## rows. A synthetic cell with known answers,
         # no simulator, ~1 s.
         run: python3 tools/bench/test_common_tables.py
+      - name: Every committed cell reads strictly (#976)
+        # A committed cell is immutable evidence (ADR-0013). check_cells.py
+        # fails a cell a strict reader (swarm-routing/ns3-tools#146) would
+        # reject or any reader could misread: a line spliced by another
+        # writer, a non-numeric ##RUN##/##BENCH##/# stddev field, a row twice,
+        # an arm short of a seed. The 16 cells the retired paper-benchmark.yml
+        # spliced ##RSS## into are listed, line by line, and pass only while
+        # every splice has its intact copy. Stdlib only, ~1 s.
+        run: |
+          python3 tools/bench/test_check_cells.py
+          python3 tools/bench/check_cells.py
       - name: Gate field-query self-test (#791)
         # The CI gates in tools/checks/ read marker fields through the pinned
         # ns3_tool bench_parse --get. On every committed cell the query must return

@@ -1263,6 +1263,57 @@ Verdicts that changed:
 
 The pinned `v1.3.0` sweeps are not re-measured.
 
+### #976: `##RSS##` lines spliced into 16 cells; no published number moves
+
+This is a log-capture defect in 16 committed cells, not a measurement defect.
+It was found on 2026-11-12, when the strict readers
+([swarm-routing/ns3-tools#146](https://github.com/swarm-routing/ns3-tools/pull/146))
+refused 9 of them.
+
+**The defect.** From [#268](https://github.com/swarm-routing/AntHocNet/issues/268)
+until the workflow was retired ([#758](https://github.com/swarm-routing/AntHocNet/issues/758)),
+`paper-benchmark.yml` ran a memory sampler that echoed an
+`##RSS## t=… rss_kb=…` line into the step's output every 60 s. The simulator's
+output reached the same job log through `tee`, in block-buffered chunks that
+end mid-line, so a sample could land inside a row. The cells were transcribed
+from that log, so 35 lines were cut, in `##RUN##`, `##ORACLE##`, `##AIR##`,
+`##ENERGY##`, `##GOODPUT##`, `##ROUTE##` and `##DROPID##` rows. The file `tee`
+wrote was never spliced, and the workflow's compact result block re-emitted
+the marker rows from it at the end of the log. So **each cut row has an intact
+copy** near the end of the same cell, before its `##PROV##` line.
+
+**What it affects: nothing published.** A lenient reader (every `bench_parse`
+before #146, including the pinned `v0.1.0`) skipped or partly read each cut
+row, then read its intact copy, and a later row for the same seed replaces an
+earlier one. #976 recomputed all 16 cells: the old reader on the committed
+file against the strict reader on the cell without its spliced lines. Every
+per-seed value matches, so every mean, t-interval, paired interval and
+Wilcoxon p matches. The bootstrap `delay99` intervals of six grid cells move
+in their last digit when the spliced lines are deleted, because the resampling
+follows row order. Restoring each intact row in place reproduces them exactly.
+In particular, the two FANET cells did **not** lose AODV's seed 6: its intact
+copy is line 377 of each, and it is byte-identical to the same seed's row in
+`fanet-main-6arm.txt`.
+
+**The cells stay as committed** (ADR-0013). `tools/bench/check_cells.py`
+runs on every PR (`lint.yml`). It fails any committed cell with a spliced
+line, a non-numeric `##RUN##`, `##BENCH##` or `# stddev` field, a duplicated
+row, or an arm short of a seed. The 16 cells are listed in it line by line,
+and they pass only while every recorded splice has its intact copy.
+`check_cells.py --inventory CELL…` prints the table #976 publishes. To read
+one of these cells with a strict `bench_parse`, pass `--lenient`, or drop the
+lines that contain `##RSS##` first.
+
+**The current pipeline cannot produce it.** No campaign workflow runs a
+sampler: `benchmark-cell.yml` and swarm-routing/.github's
+`reusable-benchmark-cell.yml` send only the harness's output to
+`results.txt`. Cells are collected from that artifact
+(`ns3-campaign collect`), not from the log. `##PERF##`, the resource line that
+replaced the sampler
+([swarm-routing/ns3-tools#91](https://github.com/swarm-routing/ns3-tools/issues/91)),
+is written by the harness itself, on the same stream as the rows, after each
+arm's run.
+
 ### Run ID → commit
 
 Every campaign CSV under `results/campaign/` is named after the Actions
@@ -1475,6 +1526,7 @@ flowchart TB
         L1["Conventional-Commit PR title"]
         L2["ruff over ns3/tools + skills"]
         L3["<b>test_scenario_check.py</b><br/>every gate rule: one must-fire +<br/>one must-not-fire case"]
+        L4["<b>check_cells.py</b><br/>every committed cell reads strictly;<br/>legacy splices only with an intact copy (#976)"]
     end
 
     subgraph BENCH["benchmarks.yml — nightly, when the code changed"]
