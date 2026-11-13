@@ -15,7 +15,7 @@
 [![Runs on ns-3](https://img.shields.io/badge/runs%20on-ns--3-informational)](https://www.nsnam.org)
 [![Built on: ns3-dev](https://img.shields.io/badge/built%20on-ns3--dev%20image-blue?logo=docker)](https://github.com/orgs/swarm-routing/packages/container/package/ns3-dev)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org)
-[![Colony Arena: AntHocNet](https://img.shields.io/badge/Colony%20Arena-project%20page-orange)](https://swarm-routing.github.io/arena/AntHocNet/)
+[![Colony Arena: AntHocNet](https://img.shields.io/badge/Colony%20Arena-project%20page-orange)](https://swarm-routing.github.io/projects/AntHocNet/)
 [![Docs](https://img.shields.io/badge/docs-site-blue)](https://swarm-routing.github.io/AntHocNet/docs/)
 <!-- org-sync:end badges -->
 [![Core coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fswarm-routing.github.io%2FAntHocNet%2Fbadges%2Fcoverage.json)](https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml)
