@@ -26,6 +26,23 @@ two columns on this page must be read:
   general reason in
   [`delay99` is not comparable across arms with materially different PDR](#delay99-is-not-comparable-across-arms-with-materially-different-pdr-415)
   below — the oracle simply happens to be the arm that made the rule visible.
+- **Under fading (and on two-ray) no disk is exact, so its PDR is a
+  reference, not a bound.** Only a `RangePropagationLossModel` channel or a
+  wired graph gives the oracle the true adjacency (`approx=0`). On a
+  `tworay` or `nakagami` channel link viability is a continuous — under
+  fading a random — function of distance, and every radius the oracle can be
+  held to is a choice (`approx=1`): the scenario's 300 m `--range`
+  (`disk-approx`) or the radius derived from the PHY (`decode-approx`,
+  `p50-approx`, #457). A real arm can then out-deliver it, and does: at
+  v2.7.0 on ns-3 3.48 AntHocNet delivers 0.42–0.66 pp more than the
+  derived-radius oracle on all three two-ray grid cells. The grid's
+  [gap decomposition](grid.md#gap-decomposition-the-headline) therefore uses
+  the **fixed 300 m disk** as its reference (maintainer decision on
+  [#460](https://github.com/swarm-routing/AntHocNet/issues/460), 2026-11-13:
+  the scenario's configured range, the same radius whatever the channel),
+  reports the derived radius only as a sensitivity row, and reads its
+  channel term as "what this reference did not deliver", not "what no router
+  could have delivered".
 
 Its exactness limits (`approx=0` vs `approx=1`) are a *harness* property, not a
 metric one, and live in

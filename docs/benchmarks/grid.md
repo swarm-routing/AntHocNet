@@ -628,7 +628,9 @@ arm that makes the split measurable.
 
 > **Read this section as the v1.5.0 phase-3 record, measured before #496.**
 > The analysis below (the composition argument, the per-cell oracle table, the
-> gap decomposition and the caveat) was measured at `40b434d` / `4611bbb`. In
+> superseded gap decomposition and the caveat) was measured at `40b434d` /
+> `4611bbb`; the [gap decomposition's current table](#gap-decomposition-the-headline)
+> is v2.7.0's (#460, ns-3 3.48). In
 > that version the oracle was a separate dispatch beside the `a1daa7a`
 > four-arm grid, and AntHocNet still had the unjittered timer. Its oracle-side
 > findings still stand, because the oracle's own numbers are reproduced
@@ -711,13 +713,102 @@ measured in [the caveat section](#the-caveat-stated-with-the-numbers-rather-than
 ### Gap decomposition — the headline
 
 With an arm whose routing overhead is exactly zero, the shortfall to 100 %
-splits without modelling assumptions:
+splits as:
 
 ```
-channel = 100 − oracle_pdr        (what no routing protocol could have delivered)
-routing = oracle_pdr − arm_pdr    (what this protocol lost that perfect routing did not)
+channel = 100 − oracle_pdr        (what the oracle reference did not deliver)
+routing = oracle_pdr − arm_pdr    (what this protocol lost that the reference did not)
 total   = 100 − arm_pdr           = channel + routing
 ```
+
+**The reference is the oracle held to the fixed 300 m disk** — the scenario's
+configured `--range`, the same radius whatever the channel
+(`--ns3::oracle::Topology::LinkRangeM=300`, `##ORACLE## mode=disk-approx
+approx=1`). That is the maintainer's decision on
+[#460](https://github.com/swarm-routing/AntHocNet/issues/460) (2026-11-13):
+its links are solidly in range, so it is the conservative *delivery*
+reference, while the radius derived from the PHY (#457) stays the better
+*adjacency* model for the hop bound and is reported below only as a
+sensitivity row. On these channels no disk is exact
+([metrics.md](metrics.md)): the oracle is a **reference, not a bound**, and the
+channel term reads "what this reference did not deliver", not "what no router
+could have delivered".
+
+> **Current table, measured 2026-11-13 for v2.7.0 (ns-3 3.48).** Plan
+> [`tools/bench/campaigns/v2.7.0-grid-460-disk.yaml`](../../tools/bench/campaigns/v2.7.0-grid-460-disk.yaml)
+> (generation `g460d`), pre-registered on #460 before dispatch: the
+> [v2.7.0 matched-set campaign](#the-matched-set-at-v270-re-measured-on-ns-3-348-460)
+> with one change, the oracle's radius. Same source (`00ae02f`), same campaign
+> image (`anthocnet-ns3-campaign@sha256:65cd973a…`), same six cells, 20 seeds,
+> the same five arms in one run. Runs `43350054961` … `43370704703` (listed in
+> each cell's `##PROV##`); cells `results/cells/grid-<mobility>-<channel>-g460d.txt`.
+> **Control:** the anthocnet, aodv, olsr and dsdv `##RUN##` rows of every
+> `g460d` cell are byte-identical to the `g460` cell's (80 of 80 per cell),
+> so the attribute moved the oracle alone and its column composes with the
+> arms' published numbers. Every number below comes from
+> `tools/bench/gap_decomposition.py` on those files. `scenario_check.py
+> results`: every FAIL is the matched-set hop gate, pre-registered as
+> expected (a 300 m disk the radios outreach is #431's defect class), so no
+> hop or latency number is read from these cells; those tables stay the
+> `g460` ones.
+
+| mobility | channel | oracle PDR % (95 % t) | arm | total gap (pp) | channel (pp) | routing (pp, paired 95 % t) | **routing share** |
+|---|---|---|---|---|---|---|---|
+| rwp | tworay | 99.94 [99.88, 99.99] | anthocnet | 1.59 | 0.06 | 1.53 [1.38, 1.68] | **95.9 %** |
+| rwp | tworay | | aodv | 12.29 | 0.06 | 12.22 [11.72, 12.72] | **99.5 %** |
+| ssrwp | tworay | 99.92 [99.85, 100.00] | anthocnet | 1.45 | 0.07 | 1.38 [1.21, 1.54] | **94.8 %** |
+| ssrwp | tworay | | aodv | 12.07 | 0.07 | 12.00 [11.36, 12.64] | **99.4 %** |
+| gaussmarkov | tworay | 99.89 [99.79, 99.98] | anthocnet | 2.74 | 0.11 | 2.63 [2.38, 2.88] | **95.8 %** |
+| gaussmarkov | tworay | | aodv | 13.59 | 0.11 | 13.47 [13.03, 13.92] | **99.2 %** |
+| rwp | nakagami | 99.10 [98.97, 99.24] | anthocnet | 9.00 | 0.89 | 8.11 [7.05, 9.16] | **90.1 %** |
+| rwp | nakagami | | aodv | 25.86 | 0.89 | 24.96 [23.86, 26.07] | **96.5 %** |
+| ssrwp | nakagami | 99.03 [98.84, 99.21] | anthocnet | 9.09 | 0.97 | 8.11 [7.16, 9.06] | **89.3 %** |
+| ssrwp | nakagami | | aodv | 27.46 | 0.97 | 26.49 [25.51, 27.47] | **96.5 %** |
+| gaussmarkov | nakagami | 98.44 [98.13, 98.74] | anthocnet | 13.60 | 1.56 | 12.04 [11.01, 13.06] | **88.5 %** |
+| gaussmarkov | nakagami | | aodv | 34.61 | 1.56 | 33.05 [31.93, 34.17] | **95.5 %** |
+
+Each term is the mean of its per-seed values, rounded on its own, so a row's
+printed components can differ from its total by 0.01 pp. The disk oracle
+out-delivers **every** arm (anthocnet, aodv, olsr, dsdv) in **120 of 120**
+seeds, by at least +0.8 pp per seed (anthocnet, ssrwp-tworay). It refused
+4–474 lookups per cell for want of a path on its own graph (#464 books them in
+the denominator), which is what the 300 m disk costs it.
+
+**On two-ray the channel costs a tenth of a point** (0.06–0.11 pp): 94.8–95.9 %
+of AntHocNet's 1.5–2.7 pp shortfall and 99.2–99.5 % of AODV's 12.1–13.6 pp
+is routing. **Under Nakagami the channel costs about a point** (0.89–1.56 pp),
+leaving 88.5–90.1 % of AntHocNet's gap and 95.5–96.5 % of AODV's on the
+routing side. AntHocNet's routing loss is 2.7× to 8.7× smaller than AODV's in
+every cell.
+
+**Sensitivity row: the derived radius.** The same script on the `g460`
+cells, whose oracle uses #457's PHY-derived radius (`decode-approx` 423.3 m
+on two-ray, `p50-approx` 373.4 m on Nakagami). The arms' columns are the same
+rows (the control above); only the reference moves:
+
+| mobility | channel | oracle PDR % (95 % t) | anthocnet routing (pp) | anthocnet share | aodv routing (pp) | aodv share |
+|---|---|---|---|---|---|---|
+| rwp | tworay | 97.98 [97.80, 98.17] | −0.42 [−0.64, −0.20] | — | 10.27 [9.75, 10.79] | 83.6 % |
+| ssrwp | tworay | 98.06 [97.86, 98.27] | −0.48 [−0.72, −0.25] | — | 10.14 [9.55, 10.73] | 84.0 % |
+| gaussmarkov | tworay | 96.60 [96.26, 96.94] | −0.66 [−1.03, −0.28] | — | 10.19 [9.77, 10.61] | 75.0 % |
+| rwp | nakagami | 95.84 [95.41, 96.28] | 4.84 [3.81, 5.88] | 53.8 % | 21.70 [20.53, 22.88] | 83.9 % |
+| ssrwp | nakagami | 95.88 [95.45, 96.31] | 4.96 [4.00, 5.93] | 54.7 % | 23.34 [22.35, 24.34] | 85.0 % |
+| gaussmarkov | nakagami | 94.41 [93.81, 95.00] | 8.00 [6.94, 9.07] | 58.9 % | 29.02 [27.83, 30.21] | 83.8 % |
+
+The wider derived graph routes over marginal links and delivers 1.9–4.0 pp
+less, so it moves 1.9–4.0 pp from the routing term to the channel term. On the
+two-ray cells that is more than AntHocNet's whole routing loss: **AntHocNet
+out-delivers the derived-radius oracle** (interval below zero, so no share is
+printed). That is the derived radius acting as the reference it is, not a
+bound, and the reason the disk is the headline. Routing still dominates AODV's
+gap in every cell under either reference.
+
+#### Superseded: the v1.5.0 decomposition (300 m `--range`, before #464)
+
+Measured at `40b434d` / `4611bbb` on ns-3 3.42, with the oracle then pinned to
+the scenario's `--range` and before #464 put refused sends in its denominator.
+Kept as the record (ADR-0013); not compared with the v2.7.0 table above
+(different ns-3 release, #867 rule).
 
 | mobility | channel | arm | total gap (pp) | channel (pp) | routing (pp) | **routing share** |
 |---|---|---|---|---|---|---|
@@ -739,67 +830,23 @@ one row's printed components differ from its printed total by 0.01 pp
 (ssrwp-nakagami/aodv: 0.45 + 26.54 vs 26.98). The values are quoted as the
 analysis emitted them rather than re-derived to make the row add up.
 
-**On two-ray the channel costs nothing at all.** The oracle delivers 100.00 %
-exactly, so *every* point of AntHocNet's 7.0–9.9 pp shortfall — and of AODV's
-13.4–16.1 pp — is protocol overhead: discovery floods, reconvergence holds,
-stale next hops, packets dropped waiting for a route. Under Nakagami the
-channel finally costs something, and it costs **half a point**: 0.45–0.59 pp,
-leaving **95.5–95.8 %** of AntHocNet's gap and **98.2–98.3 %** of AODV's on the
-routing side.
+At the time it read: on two-ray the oracle delivered 100.00 %, so every point
+of AntHocNet's 7.0–9.9 pp shortfall was protocol overhead; under Nakagami the
+channel cost 0.45–0.59 pp, leaving 95.5–95.8 % of AntHocNet's gap and
+98.2–98.3 % of AODV's on the routing side. Two things kept it from being
+re-quoted until the v2.7.0 table above replaced it: #457 changed the oracle's
+radius (which made the reference a choice, settled on #460), and #464 found
+the oracle's refused sends missing from its PDR denominator (biasing
+`oracle_pdr` upward). The v2.7.0 table uses the same 300 m disk with the #464
+accounting.
 
-> **This decomposition is pending a re-derivation, and the direction of the
-> change is known.** The table above uses the v1.5.0 oracle, whose adjacency was
-> the scenario's `--range` — a 300 m geometric disk. [#457](https://github.com/swarm-routing/AntHocNet/pull/457)
-> replaced that with a radius derived from the installed PHY (423.3 m on
-> two-ray, 373.4 m on Nakagami), and a wider graph routes over marginal links,
-> so the oracle's own delivery falls. Re-measured at 20 seeds on the fixed
-> harness, oracle PDR is **96.00–98.20 %** rather than 99.41–100.00 %, which
-> moves the channel term to **1.80–4.00 pp** and the routing share to
-> **67.0–88.4 %** (AntHocNet 67.0–76.2 %, AODV 79.1–88.4 %). The qualitative
-> reading is unchanged — routing dominates the gap in every cell — but "the
-> channel costs nothing at all on two-ray" and "under 0.6 pp" are specific to
-> the 300 m disk and must not be quoted against the current oracle.
->
-> The table is **not** silently restated here because which oracle belongs in
-> this decomposition is a real analytical choice, not a transcription: the 300 m
-> disk is the more conservative *delivery* reference (its links are solidly
-> in range, so `100 − oracle_pdr` is a tighter floor on what no router could
-> deliver), while the derived radius is the better *adjacency* model and is what
-> makes the hop bound hold. Picking one for this table is tracked on
-> [#460](https://github.com/swarm-routing/AntHocNet/issues/460) with the measured
-> numbers for both.
->
-> **A second, independent reason the same figures are overstated
-> ([#464](https://github.com/swarm-routing/AntHocNet/issues/464)).** When the
-> oracle's graph holds no path it refuses the send outright — `RouteOutput`
-> returns `nullptr`, so the packet never reaches `Ipv4L3Protocol::Send` and
-> FlowMonitor never counts it as transmitted. Until #464 those refusals were
-> absent from the PDR denominator *and* from the drop book, so `oracle_pdr`
-> was computed over the packets the control had a route for rather than over
-> offered traffic — biasing it **upward** and the channel term downward, which
-> is the same direction as the radius question above. The published v1.5.0
-> grid ran under the 300 m disk and did carry refusals, so "the oracle
-> delivers 100.00 % exactly" is optimistic on that account too. The effect is
-> small — 3 of the 120 re-measured seeds carry any refusals at all (2, 2 and
-> 30 lookups, all on fading cells), so under the derived radii it is worth
-> hundredths of a point — but it is systematic rather than noise, and it must
-> be corrected before the decomposition is re-derived rather than after.
-
-The reading that matters is the one this grid could not previously support:
-**the headroom above AntHocNet is almost entirely addressable in the protocol**.
-A fading channel that intuition blames for a 10–14 pp delivery gap turns out to
-account for under 0.6 pp of it. What the decomposition does *not* do is split
+The reading survives both: **the headroom above AntHocNet is almost entirely
+addressable in the protocol.** What the decomposition does *not* do is split
 the routing term further — into discovery cost, suboptimal path choice and
-reconvergence loss — so it bounds the addressable headroom rather than
-itemising it.
-
-Note the shape of the two columns: the channel term is a property of the
+reconvergence loss — so it bounds the addressable headroom against this
+reference rather than itemising it. The channel term is a property of the
 *cell*, identical for every arm in it, while the routing term is what
-distinguishes the arms. AntHocNet's routing loss is **2.4× to 2.7× smaller than
-AODV's** on the fading cells (9.76 vs 26.05; 10.01 vs 26.54; 13.54 vs 32.18),
-which is the same ranking the paired
-[ΔPDR table](#anthocnet-vs-aodv-paired-per-seed) reports, now expressed
-against an absolute reference instead of against AODV.
+distinguishes the arms.
 
 ### The caveat, stated with the numbers rather than under them
 
@@ -998,10 +1045,14 @@ one at all is open, and if it does not, the answer is a probability-weighted
   oracle PDR 96.00–98.20 % against the best real arm's 85.58–92.42 % at
   `4611bbb`, with **zero violations in 120/120 seeds**. After #496 the best real
   arm (AntHocNet) reads 88.11–97.97 %, still below the oracle in every cell
-  (by 0.23 pp at the tightest, ssrwp-tworay). A different-but-reasonable adjacency rule moves
-  that by a fraction of a point and cannot move the margins, so the
-  [gap decomposition](#gap-decomposition-the-headline) and every PDR conclusion
-  on this page stand.
+  (by 0.23 pp at the tightest, ssrwp-tworay). **At v2.7.0 on ns-3 3.48 (#460)
+  that no longer holds for the derived radius**: AntHocNet out-delivers the
+  `decode-approx` oracle on all three two-ray cells by 0.42–0.66 pp (interval
+  below zero), so the derived-radius oracle is a reference there, not a
+  delivery bound. The oracle held to the scenario's 300 m disk out-delivers
+  every arm in 120/120 seeds at v2.7.0 (by ≥ +0.8 pp per seed), and it is the
+  [gap decomposition](#gap-decomposition-the-headline)'s reference; every PDR
+  conclusion on this page stands against it.
 - **Latency — two-ray only.** The mean and tail advantages hold there with the
   graph error working *against* the oracle (missing links only, so the true
   optimum is faster still — the bound is conservative). On the fading cells the
