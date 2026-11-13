@@ -631,6 +631,13 @@ and OLSR's pre-#510 denominator:
 | main, 350 m | oracle at 100 ms (all five arms re-run) | `36936966493` | `0197fe66` | `results/cells/fanet-main-oracle100ms.txt` |
 | sparse, 250 m | oracle at 100 ms (all five arms re-run) | `36936970028` | `0197fe66` | `results/cells/fanet-sparse-oracle100ms.txt` |
 
+In both main-cell files, line 62 is AODV's seed-6 `##RUN##` row cut by the
+workflow's interleaved `##RSS##` line. Its intact copy is line 377, and it is
+byte-identical to the same row in `fanet-main-6arm.txt`. So all 20 AODV seeds
+are in every number above. A strict reader refuses the files as committed
+([#976](https://github.com/swarm-routing/AntHocNet/issues/976),
+[methodology](../methodology.md#976-rss-lines-spliced-into-16-cells-no-published-number-moves)).
+
 **Dispatch** (the inputs of the `paper-benchmark.yml` these cells ran on; since
 v2.5.0, #746, a campaign plan cell with the same inputs goes through
 `benchmark-cell.yml`, translated flag for flag by `tools/bench/campaign.py`):
