@@ -16,9 +16,12 @@ run-name: ${{ inputs.label || inputs.cell || 'benchmark cell' }}
 #   labels name this repository at `source_sha`, runs the harness with
 #   `./ns3 run --no-build` (every cell of a campaign runs one binary, #866) and
 #   uploads the artifact `benchmark-cell` (results.txt with ##ARGS##/##PROV##,
-#   kept 7 days). `verdict` adds the scenario_check verdict. Campaigns go
-#   through `ns3-campaign` (swarm-routing/ns3-tools), which dispatches this
-#   path with image, source_sha, harness, args, cell and label.
+#   kept 7 days; `benchmark-cell-<key>` when `key` is given). `verdict` adds
+#   the scenario_check verdict. Campaigns go through `ns3-campaign`
+#   (swarm-routing/ns3-tools), which dispatches this path with image,
+#   source_sha, harness, args, cell, label and `key`, the cell key over every
+#   pinned input, so a re-dispatched campaign reuses a cell already run
+#   (swarm-routing/ns3-tools#155).
 # - no `image` (the legacy in-job build): the job `legacy` runs in this repo's
 #   historical ghcr.io/swarm-routing/ns3:<version> image (3.36, 3.41, 3.42,
 #   3.42-opt, 3.47, 3.48; frozen since images.yml was retired), or in
@@ -76,6 +79,9 @@ on:
         default: ''
       label:
         description: 'Run name (<generation>/<arm>/<cell>), set by the campaign tools'
+        default: ''
+      key:
+        description: 'Cell key (64 hex) ns3-campaign computes over every pinned input; written into ##PROV## and the artifact name, so a later campaign reuses the cell; empty = none'
         default: ''
       version:
         description: 'Legacy path only (no image): ghcr.io/swarm-routing/ns3:<version>, e.g. 3.42-opt; 3.48 for leo-walker'
@@ -168,6 +174,7 @@ jobs:
       args: ${{ inputs.args }}
       seeds: ${{ inputs.seeds }}
       cell: ${{ inputs.cell }}
+      key: ${{ inputs.key }}
 
   # scenario_check on the image path's results, with the tools of source_sha.
   verdict:
@@ -188,7 +195,7 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: benchmark-cell
+          name: ${{ inputs.key != '' && format('benchmark-cell-{0}', inputs.key) || 'benchmark-cell' }}
           path: ${{ runner.temp }}/cell
       - name: scenario_check verdict
         run: |
@@ -375,6 +382,7 @@ jobs:
     needs: [cell, verdict, legacy]
     if: ${{ always() && inputs.open_pr && (needs.legacy.result == 'success' || (needs.cell.result == 'success' && needs.verdict.result == 'success')) }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # no green run in the last 100 to size it from: tokens, a checkout, one artifact, a commit and a PR (#982)
     permissions:
       contents: write
       pull-requests: write

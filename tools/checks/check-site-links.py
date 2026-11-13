@@ -22,6 +22,9 @@ Usage:  python3 tools/checks/check-site-links.py            # the repo
         python3 tools/checks/check-site-links.py --warn-nest # Nest findings warn, the rest fail
         python3 tools/checks/check-site-links.py --self-test [--warn-nest]
 
+web/ is not tracked here (#850): run tools/checks/fetch-site-web.sh first.
+Without it the script says so in one line and exits 2 (#983).
+
 The Nest lives in swarm-routing.github.io (#850) and follows this repository's
 core only through that site's protocols.lock bump, so a strict Nest rule on
 both sides would deadlock adding or removing a public core class. This
@@ -33,6 +36,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import tempfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FAMILY_PAGES = [
@@ -42,6 +46,27 @@ FAMILY_PAGES = [
     "docs/benchmarks/scenarios/fanet.md",
     "docs/benchmarks/satellite/leo-walker.md",
 ]
+
+
+SITE_FILES = [
+    "web/site/js/worlds.js",
+    "web/site/js/missions-data.js",
+    "web/site/js/nest-data.js",
+    "web/site/js/install-steps.js",
+    "web/site/js/replay.js",
+]
+
+
+def missing_site(root: str = REPO) -> str | None:
+    """One line for a checkout without the site's files, None when all are there.
+
+    web/ is fetched, not tracked (#850), so a fresh checkout has none of them.
+    """
+    for rel in SITE_FILES:
+        if not os.path.isfile(os.path.join(root, rel)):
+            return (f"check-site-links: {rel} is missing: web/ is not tracked here (#850), "
+                    "run tools/checks/fetch-site-web.sh first")
+    return None
 
 
 def read(rel: str) -> str:
@@ -259,11 +284,23 @@ def self_test() -> int:
             ok = n == 0
         print(f"{'ok  ' if ok else 'FAIL'} {name}: {n} finding(s)")
         bad += not ok
-    print(f"{len(cases) - bad}/{len(cases)} cases passed")
+    # A checkout without web/ gets one line naming the missing file and the
+    # fetch script (#983); this checkout, with web/ fetched, gets none.
+    with tempfile.TemporaryDirectory() as empty:
+        msg = missing_site(empty)
+    ok = (msg is not None and "\n" not in msg and SITE_FILES[0] in msg
+          and "tools/checks/fetch-site-web.sh" in msg and missing_site() is None)
+    print(f"{'ok  ' if ok else 'FAIL'} a checkout without web/: {msg}")
+    bad += not ok
+    print(f"{len(cases) + 1 - bad}/{len(cases) + 1} cases passed")
     return 1 if bad else 0
 
 
 def main() -> int:
+    msg = missing_site()
+    if msg:
+        print(msg, file=sys.stderr)
+        return 2
     if "--self-test" in sys.argv:
         return self_test()
     errs = check(*repo_inputs(), **extra_inputs())

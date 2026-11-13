@@ -68,7 +68,7 @@ jobs:
   # merge is re-measured within a day (#365, #864).
   changed:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5  # a checkout and a git diff: seconds
+    timeout-minutes: 5  # longest green run: 0.1 min (#982)
     outputs:
       run: ${{ steps.diff.outputs.run }}
     steps:
@@ -135,6 +135,7 @@ jobs:
     if: needs.changed.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20  # ~2 min on the campaign image
+    # Read-only; packages to pull the campaign image.
     permissions:
       contents: read
       packages: read

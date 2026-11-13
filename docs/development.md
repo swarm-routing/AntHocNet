@@ -153,6 +153,7 @@ but not the `pages` job, which builds the whole site, crawls it
 python3 docs/tools/check-links.py .     # relative links resolve
 python3 docs/tools/check-mermaid.py .   # mermaid blocks render on GitHub
 python3 docs/tools/check-headers.py .   # SPDX headers on every source file
+python3 tools/checks/check-wire-doc.py   # docs/wire-format.md names the codec's kWireVersion (#981)
 mkdocs build --strict                   # nav + anchors (needs web/shell: run tools/checks/fetch-site-web.sh first)
 tools/release/check-bundle.sh           # release package: no agent files, tools present
 # C++ formatting (.clang-format, clang-format-18; lint.yml fails on a diff, #35):

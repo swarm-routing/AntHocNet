@@ -540,6 +540,44 @@ def _ctl867_plan():
            "ctl867-vanet", list(plan["cells"]))
 
 
+@case("plan: each job's ns-3 release, image and commit; a mixed-release cell is flagged")
+def _plan_releases():
+    image = "ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:" + "c" * 64
+    real = cp.registry_config
+    cp.registry_config = lambda ref: {"Labels": {cp.NS3_LABEL: "ghcr.io/swarm-routing/ns3-dev:3.48-optimized"}}
+    plan = dict(PLAN, source_sha=SHA, image=image, legacy_arms={"control": {"3.42": LEGACY}})
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as out, \
+                contextlib.redirect_stderr(io.StringIO()) as err:
+            cp.cmd_plan(plan, argparse.Namespace(offline=False))
+        with contextlib.redirect_stdout(io.StringIO()) as off, \
+                contextlib.redirect_stderr(io.StringIO()) as offerr:
+            cp.cmd_plan(plan, argparse.Namespace(offline=True))
+    finally:
+        cp.registry_config = real
+    rows = [ln.split("\t") for ln in out.getvalue().splitlines()]
+    got = {r[0]: r[1:4] for r in rows}
+    expect(got["control/sat"] == ["ns-3 3.42", LEGACY, SHA]
+           and got["quiet/sat"] == ["ns-3 3.48", image, SHA], "plan-rows", got)
+    expect("warning: sat: the arms run different ns-3 releases (control 3.42, quiet 3.48)"
+           in err.getvalue() and "warning: grid" not in err.getvalue(), "plan-mixed", err.getvalue())
+    # offline: the image's release is not read, and the cell is flagged as unread
+    # a malformed registry answer (a list, not a config) is a warning and ?, not a crash
+    cp._NS3.clear()
+    cp.registry_config = lambda ref: ["not", "a", "config"]
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as bad, \
+                contextlib.redirect_stderr(io.StringIO()) as baderr:
+            cp.cmd_plan(plan, argparse.Namespace(offline=False))
+    finally:
+        cp.registry_config = real
+    expect("\tns-3 ?\t" + image in bad.getvalue()
+           and "cannot read" in baderr.getvalue(), "plan-malformed", baderr.getvalue())
+    expect("\tns-3 ?\t" + image in off.getvalue()
+           and "(control 3.42, quiet ?) (? = not read)" in offerr.getvalue(), "plan-offline",
+           offerr.getvalue())
+
+
 def main():
     for name, fn in CASES:
         fn()

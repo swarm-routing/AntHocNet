@@ -48,6 +48,7 @@ jobs:
   changes:
     name: what changed (docs-only PRs skip the heavy jobs)
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.4 min (#982)
     outputs:
       code: ${{ steps.diff.outputs.code }}
       site: ${{ steps.diff.outputs.site }}
@@ -92,6 +93,7 @@ jobs:
   allowlists:
     name: module/arm/marker allowlist consistency
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.4 min (#982)
     # #435: the module lists (ci-ns3.yml's mods=, benchmark-cell.yml's
     # --enable-modules, the retired Dockerfile.ns3) and the protocol-arm awk alternation
     # (check-determinism.sh filter_rows) are hand-maintained copies that fail
@@ -151,6 +153,7 @@ jobs:
   ci-gate:
     name: CI gate
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.3 min; a hung gate stalls the merge queue (#982)
     if: always()
     needs: [changes, allowlists, core, web, ns3]
     steps:
