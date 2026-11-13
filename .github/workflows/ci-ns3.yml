@@ -293,7 +293,9 @@ jobs:
         run: bash tools/checks/check-manhattan.sh /opt/ns-3
       - name: Tuning-bench ns-3 lines run in anthocnet-compare (#638)
         # The learn site's bench copies --ns3::anthocnet::RoutingProtocol::<Attr>
-        # flags generated from config.h and configuration.md. Every field it
+        # flags generated from the core's config_dump (the compiled defaults,
+        # #793; config_fields.py builds it in core/build-config-dump/), the
+        # doc comments in config.h and configuration.md. Every field it
         # exposes, moved off its default as the bench writes it, must be
         # accepted by the module's TypeId: an unknown attribute or a malformed
         # value aborts the run. web/test/bench.test.mjs holds the page to the
