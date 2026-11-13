@@ -8,23 +8,28 @@ and by [`docs/porting-notes.md`](porting-notes.md). The encoder/decoder lives in
 v1.9.0, so a byte produced on one simulator was interpreted identically on the
 other).
 
-All multi-byte integers and `double`s are **little-endian**. Variable arrays are
+All multi-byte integers, `double`s and `float`s are **little-endian**. Variable arrays are
 **length-prefixed** with a `uint16` count. There is exactly one layout — see
 [ADR-0006](adr/0006-on-wire-protocol-version.md) for why we version it and why
 we do *not* negotiate alternative layouts.
 
 > **Status.** The table below is the layout **the codec emits today** —
-> `kWireVersion = 0x03`. All decided wire changes have **landed**: the version
+> `kWireVersion = 0x04`. All decided wire changes have **landed**: the version
 > byte + bounds/enum enforcement (item 12,
 > 0x01), `broadcastBudget` + `AntType::LinkFail`
 > (item 05, 0x02), and
 > the per-hop-delta `AntHop.time` semantic + the backward-ant byte slim
-> (item 02/ADR-0009, 0x03). Keep
-> this section in sync with the code as the format evolves.
+> (item 02/ADR-0009, 0x03), and the optional trailing kinematics section on
+> hellos (#573, [ADR-0025](adr/0025-kinematics-port-absent-when-unknown.md),
+> 0x04). Keep
+> this section in sync with the code as the format evolves:
+> `tools/checks/check-wire-doc.py` fails CI when the version here is not the
+> codec's.
 
 ## Frame layout (current code)
 
-The fixed 37-byte head, then three length-prefixed variable arrays:
+The fixed 37-byte head, then three length-prefixed variable arrays, then, on a
+hello only, an optional 25-byte kinematics section:
 
 ```mermaid
 packet-beta
@@ -38,10 +43,11 @@ packet-beta
 184-247: "lifeAnt (f64)"
 248-279: "broadcastBudget (i32)"
 280-295: "nVisited (u16)"
-296-359: "visited[] — 12 bytes per AntHop, then nHistory / history[] / nHello / helloDests[]"
+296-359: "visited[] — 12 bytes per AntHop, then nHistory / history[] / nHello / helloDests[], then the optional kinematics section (hello only)"
 ```
 
-Everything after `nVisited` is variable-length and repeats the same shape:
+Everything after `nVisited` up to the end of `helloDests[]` is variable-length
+and repeats the same shape:
 a `u16` count followed by that many 12-byte records (`{i32 node; f64 value}`).
 Each count is rejected on decode if it exceeds its cap — `kMaxVisitedOnWire`,
 `kMaxHistoryOnWire`, `kMaxHelloOnWire` — so a malformed or hostile frame cannot
@@ -49,7 +55,7 @@ allocate unboundedly. Byte offsets and semantics per field:
 
 | Offset | Field | Type | Bytes | Meaning |
 |-------:|-------|------|------:|---------|
-| 0  | `version`   | `u8`     | 1 | Wire-format version (`kWireVersion`, currently `0x03`). Checked first; a mismatch is rejected in O(1). |
+| 0  | `version`   | `u8`     | 1 | Wire-format version (`kWireVersion`, currently `0x04`). Checked first; a mismatch is rejected in O(1). |
 | 1  | `type`      | `u8`     | 1 | Ant role (`AntType`): `0x01` Hello, `0x02` Reactive, `0x04` Proactive, `0x08` Repair, `0x10` LinkFail. Validated on decode. |
 | 2  | `direction` | `u8`     | 1 | `AntDirection`: `0x11` Up (forward), `0x12` Down (backward). Validated on decode. |
 | 3  | `src`       | `i32`    | 4 | Originating node. |
@@ -64,19 +70,49 @@ allocate unboundedly. Byte offsets and semantics per field:
 | …  | `history[]` | `AntHop` | 12·n | Back-ant retraced path: `{ i32 node; f64 time }`. The receiver reconstructs the deposit state (`prevHop`/`hops`/`pathTime`/`pheromone`) from this (ADR-0009). |
 | …  | `nHello`    | `u16`    | 2 | Count of `helloDests` entries (rejected if `> kMaxHelloOnWire`). Also carries the `LinkFail` payload of `(dest, newBestPheromone)`. |
 | …  | `helloDests[]` | `HelloDest` | 12·n | Hello adverts / LinkFail payload: `{ i32 node; f64 pheromone }`. |
+| …  | `kinematicsTag` | `u8` | 0 or 1 | **Optional, `Hello` only** (0x04, ADR-0025): `kKinematicsTag` = `0x4B` (`'K'`), the first byte of the kinematics section. Present only when the six values below follow. |
+| …  | `x`, `y`, `z` | `f32` × 3 | 0 or 12 | The sender's position in metres, in the adapter's Cartesian frame, in this order. IEEE-754 single precision, little-endian. |
+| …  | `vx`, `vy`, `vz` | `f32` × 3 | 0 or 12 | The sender's velocity in metres per second, same frame, in this order. IEEE-754 single precision, little-endian. |
+
+### The kinematics section (0x04)
+
+The section is the last 25 bytes (`kKinematicsSize` = 1 + 6·4) of a hello that
+carries it: the tag byte `0x4B`, then `x y z vx vy vz`, each a `float32`. In
+memory the six values are `double`s (`Kinematics` in
+`core/include/anthocnet/core/types.h`); the encoder narrows each to `float32`
+and the decoder widens it back, so a value round-trips at `float32` precision.
+
+- **Presence.** The encoder writes the section when `AntMessage::hasKinematics`
+  is set. The core sets it on a hello only when `Config::shareKinematics` is on
+  (default **off**; `Config::enableLinkLifetime` implies it) and the adapter's
+  `IKinematics::self()` knows this node's position, with every value finite
+  and within `float32` range (ADR-0025). There is no
+  count or flag field for it: a decoder knows the section is there because
+  bytes remain after `helloDests[]`. A hello without it is byte for byte a
+  0x03 hello except for the version byte.
+- **Decode.** After `helloDests[]` a frame must either end or continue with
+  exactly one well-formed section. The decoder **rejects the whole frame** if
+  the bytes that remain are on any ant type other than `Hello`, are not exactly
+  25, do not start with `0x4B`, or hold a value that is not finite (NaN or
+  ±infinity). So a missing section is valid (`hasKinematics` is false and the
+  kinematics read as unknown, never as zeros), and a truncated section, an
+  unknown tag or trailing bytes of any other kind are a dropped packet.
 
 `prevHop`/`hops`/`pathTime` (was `prevSINR`)/`pheromone` are **no longer on the
 wire** (ADR-0009): they are transient deposit state, recomputed at each receiver
 from `history`. Fixed prefix (`version` through `broadcastBudget`) is **35 bytes**;
-the three empty arrays add 6 bytes of counts, so the minimum frame is **41 bytes**.
+the three empty arrays add 6 bytes of counts, so the minimum frame is **41 bytes**
+(**66 bytes** for a hello that carries the kinematics section and no adverts).
 Worst-case size is bounded because `nVisited`/`nHistory`/`nHello` are capped on
-decode (`kMaxVisitedOnWire`/`kMaxHistoryOnWire`/`kMaxHelloOnWire`, enforcement
-added by item 12).
+decode (`kMaxVisitedOnWire` = 100, `kMaxHistoryOnWire` = 100, `kMaxHelloOnWire`
+= 64; enforcement added by item 12) and the kinematics section has one fixed
+size: the largest frame a decoder accepts is 41 + 12·(100 + 100 + 64) =
+**3209 bytes**, or **3234 bytes** for a hello with the section.
 
 ## Planned wire evolution
 
 `kWireVersion` is a **monotonic counter**, not a fixed value — `0x01` (item 12),
-`0x02` (item 05), `0x03` (item 02 slim); each subsequent layout/semantic change
+`0x02` (item 05), `0x03` (item 02 slim), `0x04` (#573 kinematics); each subsequent layout/semantic change
 increments it. Do not hard-code a number; use `current + 1`.
 
 1. ✅ **Version byte (landed, 0x01)** — item 12,
@@ -92,6 +128,11 @@ increments it. Do not hard-code a number; use `current + 1`.
    [ADR-0009](adr/0009-backward-ants-carry-path-not-state.md). Removed `prevHop`,
    `hops`, `prevSINR`→`pathTime`, `pheromone` from the serialized image (−24
    bytes); they are recomputed at each receiver from `history`.
+4. ✅ **Hello kinematics section (landed, 0x04)** — #573,
+   [ADR-0025](adr/0025-kinematics-port-absent-when-unknown.md). Added the
+   optional trailing section on hellos: the tag `kKinematicsTag` (`0x4B`), then
+   `x y z vx vy vz` as `float32`. Absent unless `Config::shareKinematics` is
+   on, so default frames keep their 0x03 length.
 
 ## Versioning
 
@@ -130,11 +171,11 @@ directly from the NS-2 packet header. That carried three defects (see
 | `seqNum` width | `u_int8_t` → wrapped after 256 ants, aliasing `(src,seq)` dedup | `u32` |
 | Path / dedup growth | Unbounded | Capped by `Config::maxPathLength` / `maxHistory` (also enforced on decode) |
 | Endianness / portability | Native struct layout (compiler/arch dependent) | Explicit little-endian, compiler/arch independent |
-| Version marker | None | None today; 1-byte `version` at offset 0 *planned* (item 12, ADR-0006) |
+| Version marker | None | 1-byte `version` at offset 0 (`kWireVersion`; item 12, ADR-0006) |
 | Transient compute state on the wire | N/A (live object) | `prevHop`/`hops`/`pathTime`/`pheromone` are **off the wire** (item 02, ADR-0009): the wire carries only identity + path, and each receiver recomputes them from `history` |
 
 So there is no "original wire format" to be byte-compatible *with*; this codec is
-the first portable format, and the planned version byte exists so the *next*
+the first portable format, and the version byte exists so the *next*
 change is detectable in a way the original never was.
 
 ## vs. the protocol specification
@@ -157,7 +198,8 @@ specification to track.
 | `lifeAnt` | **Implementation** | Repair-ant TTL budget — a concrete realisation of the spec's bounded local repair. |
 | `timeStart`, `seqNum` | **Implementation** | Trip-time accounting and `(src,seq)` duplicate suppression. The spec assumes ant identification; these are the mechanisms. |
 | `prevHop` | **Implementation** | Retrace bookkeeping. *Computed locally, removed from the wire by item 02.* |
-| `version` | **Implementation** | Frame envelope; no spec analogue. *Planned, item 12.* |
+| `version` | **Implementation** | Frame envelope; no spec analogue (item 12). |
+| kinematics section (`x y z vx vy vz`) | **Implementation** | Not in the papers: the sender's position and velocity for link-lifetime prediction (#573, #574, ADR-0025). Optional, default off. |
 
 Where a field's behaviour deviates from the paper, the deviation is tracked in
 the design ADRs and GitHub issues (items 02, 03 in particular), not here — this document
@@ -172,4 +214,6 @@ When you change `AntMessage` fields, update **in the same field order** and bump
 2. `core/src/ant_message_codec.cpp` (serialize + deserialize + size constants).
 3. `ns3/anthocnet/model/anthocnet-packet` (`AntHeader` Serialize/Deserialize/GetSerializedSize).
 4. `core/tests/test_codec.cpp` (round-trip + the version-mismatch rejection test).
-5. This table and the offsets above.
+5. This table and the offsets above, and the "currently" value in the
+   `version` row (`python3 tools/checks/check-wire-doc.py` compares it with
+   the codec's).

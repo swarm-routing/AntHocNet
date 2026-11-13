@@ -172,7 +172,7 @@ Three relationships carry the architecture:
 
 - **`AntMessage`** — a plain, copyable description of an ant: type, direction,
   src/dst, `seqNum` (32-bit), timing, `broadcastBudget`, the visited/history
-  stacks, and hello adverts. The back-ant deposit state (prevHop/hops/pathTime/
+  stacks, hello adverts, and a hello's optional kinematics (ADR-0025). The back-ant deposit state (prevHop/hops/pathTime/
   pheromone) is transient — recomputed from `history`, not carried (ADR-0009).
   This replaces the original header-resident `AntTimeEntry**` malloc'd arrays.
 - **`VisitedPath`** — `std::vector<AntHop>`; `AntHop` is `{node, time}`.

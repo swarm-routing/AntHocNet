@@ -77,6 +77,13 @@ if [ -n "$wire_touched" ]; then
   fi
 fi
 
+# Rule 4 — docs/wire-format.md names the version the codec emits (CI gate, #981).
+if out=$(python3 tools/checks/check-wire-doc.py 2>&1); then
+  say PASS "docs/wire-format.md is at the codec's kWireVersion (tools/checks/check-wire-doc.py)"
+else
+  say FAIL "tools/checks/check-wire-doc.py (CI gate):"; printf '%s\n' "$out" | sed 's/^/        /'; fail=1
+fi
+
 # Rule 7 — core logic changes are covered by a core unit test.
 core_src=$(printf '%s\n' "$changed" | grep -E '^core/(src|include)/' | grep -v '/tests/' || true)
 core_test=$(printf '%s\n' "$changed" | grep -E '^core/tests/' || true)
