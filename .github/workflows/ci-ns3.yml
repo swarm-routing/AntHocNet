@@ -10,9 +10,10 @@ name: CI / ns-3
 # release by swarm-routing/ns3-containers (org CONTRIBUTING invariant 7). The
 # gates, the satellite smoke and the release-tarball install run on the
 # `gate-version` leg. Older ns-3 releases run only on demand: ci.yml's manual
-# workflow_dispatch passes `versions` (e.g. ["3.36","3.42"]); their images are
-# frozen history (3.36, which ns3-dev does not build: this repo's own
-# ghcr.io/swarm-routing/ns3:3.36, frozen since images.yml was retired, #866).
+# workflow_dispatch passes `versions` (e.g. ["3.42","3.46"]); their images are
+# ns3-dev:<ver>, which swarm-routing/ns3-containers builds for 3.40 to 3.49 (on
+# demand for the older ones). 3.40 is the floor: the 3.36 leg, the last user of
+# this repo's frozen ghcr.io/swarm-routing/ns3 package, was retired (#987).
 # Published numbers do not run here: they pin an ns3-dev digest and a campaign
 # image digest (campaign-image.yml), never a rolling tag.
 #
@@ -52,10 +53,9 @@ jobs:
     # (ns-3's `default` profile, Ubuntu 24.04 / gcc-13, `mesh` built in); the
     # plain configure below matches their flags, so no stock object is
     # recompiled (verified on 3.48 and 3.49: 0 stock objects,
-    # swarm-routing/ns3-containers#9). 3.36, on demand only, keeps this repo's
-    # own frozen image (the retired images.yml, Ubuntu 22.04 / gcc-11).
+    # swarm-routing/ns3-containers#9).
     container:
-      image: ${{ matrix.version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -73,34 +73,6 @@ jobs:
     # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # ccache (#609) for the legs that recompile all of ns-3, not only the
-      # module: 3.36 (its reconfigure invalidates the image's build) and ASan
-      # (new compile flags). The other legs rebuild only the module delta in
-      # 35-48 s and stay without it: ns-3 picks ccache up at configure time,
-      # which changes every compile command and would force the full rebuild
-      # it is meant to save. Keyed per leg and commit; a run restores the
-      # newest entry of its leg and saves a new one unless it hit exactly.
-      - name: Restore ccache
-        id: ccache
-        if: matrix.version == '3.36'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .ccache
-          key: ccache-ns3-3.36-gcc11-${{ github.sha }}
-          restore-keys: ccache-ns3-3.36-gcc11-
-      - name: Install ccache
-        if: matrix.version == '3.36'
-        timeout-minutes: 10  # apt; longest green run: 1.8 min (#840)
-        run: |
-          for i in 1 2 3; do
-            apt-get update -qq --error-on=any && break
-            [ "$i" = 3 ] && exit 1
-            sleep $((i * 15))
-          done
-          apt-get install -y -qq --no-install-recommends ccache
-          export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
-          printf 'CCACHE_DIR=%s\nCCACHE_MAXSIZE=1G\n' "$CCACHE_DIR" >> "$GITHUB_ENV"
-          ccache -z
       - name: Mark the image's tree (gate leg, for ns3-gates)
         # ns3-gates restores what this leg adds to /opt/ns-3 (#875): every file
         # written after this mark, plus the installed modules under contrib/.
@@ -122,7 +94,7 @@ jobs:
           line=$(printf '%s\n' "$out" | grep '^##DOCTOR## ')
           # The ns3-dev images set NS3_VERSION to the installed release (also
           # for `latest` and for a minor tag that resolves to a patch, e.g.
-          # 3.46 -> 3.46.1); this repo's ns3:3.36 image does not.
+          # 3.46 -> 3.46.1).
           want="${NS3_VERSION:-${{ matrix.version }}}"
           case "$line" in *" ns3=$want "*) ;; *) echo "FAIL: doctor misread the version (want $want)"; exit 1;; esac
           case "$line" in *" module=installed "*) ;; *) echo "FAIL: doctor did not see the module"; exit 1;; esac
@@ -162,19 +134,10 @@ jobs:
           name: ns3-tree-${{ inputs.gate-version }}
           path: /tmp/ns3-tree.tar
           retention-days: 1
-      - name: ccache stats
-        if: matrix.version == '3.36'
-        run: ccache -s
-      - name: Save ccache
-        if: matrix.version == '3.36' && steps.ccache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .ccache
-          key: ccache-ns3-3.36-gcc11-${{ github.sha }}
       - name: Run module test suite (header round-trip + multi-hop delivery)
         if: env.RUN_TESTS == '1'
         run: |
-          if [ "$RUN_TESTS" != 1 ]; then echo "skip: no test filter on this ns-3 (3.36); the delivery smoke below still runs"; exit 0; fi
+          if [ "$RUN_TESTS" != 1 ]; then echo "skip: no test filter on this ns-3 (a tree older than the filter); the delivery smoke below still runs"; exit 0; fi
           cd /opt/ns-3 && ./test.py -s anthocnet && ./test.py -s oracle && ./test.py -s adaptive && ./test.py -s routing-bench
       - name: Smoke-run the example
         run: cd /opt/ns-3 && ./ns3 run anthocnet-example
@@ -221,7 +184,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15  # longest group (disaster): ~6 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -516,7 +479,7 @@ jobs:
     # on main (#130).
     continue-on-error: true
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -529,7 +492,7 @@ jobs:
     # in a container cannot take it on a GitHub-hosted runner (it needs sudo on the VM).
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # ccache (#609), as in ns3-build: the sanitizer flags reach every
+      # ccache (#609): the sanitizer flags reach every
       # object, so this leg recompiles all of ns-3 (~15 min cold).
       - name: Restore ccache
         id: ccache
@@ -568,7 +531,7 @@ jobs:
           # CXXFLAGS/LDFLAGS, which ns-3's CMake only reads on a *fresh*
           # configure, hence the ./ns3 clean first (the flag change forces a
           # full rebuild either way). --filter-module-examples-and-tests was added
-          # after ns-3.36: without it (an on-demand 3.36 gate) the test suites are
+          # after ns-3.36: without it (a tree older than the filter) the test suites are
           # not built and only the sanitized delivery smoke runs, as in ns3-build.
           # Unquoted on use on purpose: it word-splits into two arguments (no
           # spaces inside; `;` is not a separator in an expansion).
@@ -603,7 +566,7 @@ jobs:
           key: ccache-ns3-asan-${{ inputs.gate-version }}-gcc13-${{ github.sha }}
       - name: Run module test suite under ASan/LSan
         run: |
-          if [ "$RUN_TESTS" != 1 ]; then echo "skip: no test filter on this ns-3 (3.36); the delivery smoke below still runs"; exit 0; fi
+          if [ "$RUN_TESTS" != 1 ]; then echo "skip: no test filter on this ns-3 (a tree older than the filter); the delivery smoke below still runs"; exit 0; fi
           cd /opt/ns-3 && ./test.py -s anthocnet && ./test.py -s oracle && ./test.py -s adaptive && ./test.py -s routing-bench
       - name: E2E delivery smoke under ASan/LSan
         # Same loose "routes data" gate as ns3-build, but without ns3-build's
@@ -626,7 +589,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 1.2 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -648,8 +611,8 @@ jobs:
         run: |
           cd /opt/ns-3
           alone_mods='anthocnet;wifi;mobility;applications;aodv;olsr;dsdv;flow-monitor;point-to-point;csma'
-          # ns-3.36 (on-demand gate version) has no example/test filter: build
-          # and run the example only, as ns3-build does on that tree.
+          # A tree older than the example/test filter (none above the 3.40
+          # floor): build and run the example only, as ns3-build does there.
           if ./ns3 configure --help 2>/dev/null | grep -q filter-module-examples-and-tests; then
             ./ns3 configure --enable-tests --enable-examples \
               --filter-module-examples-and-tests='anthocnet' --enable-modules="$alone_mods"
@@ -671,7 +634,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 1.2 min
     container:
-      image: ${{ inputs.gate-version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', inputs.gate-version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -687,8 +650,8 @@ jobs:
         run: |
           cd /opt/ns-3
           alone_mods='routing-bench;wifi;mobility;applications;aodv;olsr;dsdv;flow-monitor;mesh'
-          # ns-3.36 (on-demand gate version) has no example/test filter: skip
-          # the test suite there, as ns3-build does; the arm checks still run.
+          # A tree older than the example/test filter (none above the 3.40
+          # floor): skip the test suite there, as ns3-build does; the arm checks still run.
           if ./ns3 configure --help 2>/dev/null | grep -q filter-module-examples-and-tests; then
             ./ns3 configure --enable-tests --enable-examples \
               --filter-module-examples-and-tests='routing-bench' --enable-modules="$alone_mods"
@@ -728,7 +691,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10  # longest green run: 3.3 min
     container:
-      image: ${{ matrix.version == '3.36' && 'ghcr.io/swarm-routing/ns3:3.36' || format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
+      image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
