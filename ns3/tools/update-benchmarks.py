@@ -141,12 +141,11 @@ def _set_provenance(commit, run_url, image="", ns3_release=""):
     run = f", [run]({run_url})" if run_url else ""
     on = ""
     if image:
-        # A digest reference is long; the repository and 12 hex digits
-        # identify it, as `docker images` shows it.
-        name, _, digest = image.partition("@sha256:")
-        ref = f"{name.rsplit('/', 1)[-1]}@sha256:{digest[:12]}" if digest else image
+        # The full reference, registry path and whole digest: it is what a
+        # reader pulls to reproduce the block, and the cross-image rule
+        # compares images by it (#977).
         rel = f", ns-3 {ns3_release}" if ns3_release else ""
-        on = f" on `{ref}`{rel}"
+        on = f" on `{image}`{rel}"
     _PROVENANCE = f"_Measured at {where}{on}{run}._"
 
 

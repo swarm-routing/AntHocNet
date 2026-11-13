@@ -144,12 +144,12 @@ PDR % ± 95% CI. Its per-scenario pages are in the git history at that commit.
 
 | scenario | class | anthocnet | aodv | olsr | dsdv |
 |---|---|---:|---:|---:|---:|
-| [dense-small](benchmarks/scenarios/dense-small.md) | dense / low-mobility | 38.4 ± 6.1 | 38.6 ± 7.9 | 22.1 ± 5.3 | 20.2 ± 5.6 |
-| [paper-base](benchmarks/scenarios/paper-base.md) | sparse / mobile | 94.4 ± 1.5 | 78.7 ± 3.6 | 71.8 ± 3.5 | 67.2 ± 2.8 |
-| [sparse-static](benchmarks/scenarios/sparse-static.md) | sparse / static | 96.0 ± 3.1 | 88.8 ± 4.1 | 99.4 ± 0.4 | 98.5 ± 1.5 |
-| [high-mobility](benchmarks/scenarios/high-mobility.md) | sparse / high-mobility | 93.6 ± 0.9 | 77.8 ± 3.1 | 71.3 ± 3.0 | 65.6 ± 3.1 |
-| [heavy-load](benchmarks/scenarios/heavy-load.md) | dense / heavy-load | 88.6 ± 3.3 | 78.5 ± 2.8 | 70.8 ± 2.7 | 68.1 ± 3.1 |
-| [large-scale](benchmarks/scenarios/large-scale.md) | large / mobile | 91.3 ± 2.3 | 71.8 ± 2.6 | 61.4 ± 3.7 | 55.4 ± 4.6 |
+| [dense-small](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/dense-small.md) | dense / low-mobility | 38.4 ± 6.1 | 38.6 ± 7.9 | 22.1 ± 5.3 | 20.2 ± 5.6 |
+| [paper-base](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/paper-base.md) | sparse / mobile | 94.4 ± 1.5 | 78.7 ± 3.6 | 71.8 ± 3.5 | 67.2 ± 2.8 |
+| [sparse-static](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/sparse-static.md) | sparse / static | 96.0 ± 3.1 | 88.8 ± 4.1 | 99.4 ± 0.4 | 98.5 ± 1.5 |
+| [high-mobility](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/high-mobility.md) | sparse / high-mobility | 93.6 ± 0.9 | 77.8 ± 3.1 | 71.3 ± 3.0 | 65.6 ± 3.1 |
+| [heavy-load](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/heavy-load.md) | dense / heavy-load | 88.6 ± 3.3 | 78.5 ± 2.8 | 70.8 ± 2.7 | 68.1 ± 3.1 |
+| [large-scale](https://github.com/swarm-routing/AntHocNet/blob/5462fb56c71ceb1981078cc0cb86e940681e5d9f/docs/benchmarks/scenarios/large-scale.md) | large / mobile | 91.3 ± 2.3 | 71.8 ± 2.6 | 61.4 ± 3.7 | 55.4 ± 4.6 |
 
 </details>
 

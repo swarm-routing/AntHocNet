@@ -14,7 +14,9 @@
 > ([#352](https://github.com/swarm-routing/AntHocNet/issues/352)). They are a
 > nightly regression signal at 20 seeds per scenario
 > ([#977](https://github.com/swarm-routing/AntHocNet/issues/977)), in the
-> campaign image their stamp names; the release-pinned numbers live on the sweep and headline pages. See
+> campaign image their stamp names, from the first run after #977; until that
+> run regenerates the block, it is the last 10-run table, whose stamp names no
+> image. The release-pinned numbers live on the sweep and headline pages. See
 > [Provenance](../methodology.md#provenance-which-version-a-number-was-measured-at)
 > and [#365](https://github.com/swarm-routing/AntHocNet/issues/365).
 
