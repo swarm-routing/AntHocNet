@@ -459,8 +459,9 @@ jobs:
             dist/anthocnet-${{ env.VER }}.intoto.jsonl
           generate_release_notes: true
           body: |
-            AntHocNet ${{ env.TAG }}. Release notes: https://swarm-routing.github.io/AntHocNet/docs/releases/${{ env.TAG }}/
-            (from [CHANGELOG.md](https://github.com/swarm-routing/AntHocNet/blob/${{ env.TAG }}/CHANGELOG.md); the site redeploys when this run finishes).
+            AntHocNet ${{ env.TAG }}. Release notes: [CHANGELOG.md](https://github.com/swarm-routing/AntHocNet/blob/${{ env.TAG }}/CHANGELOG.md) at this tag.
+            The site (https://swarm-routing.github.io/AntHocNet/) builds AntHocNet at the commit its `protocols.lock` pins; it moves to
+            ${{ env.TAG }} in a lock-bump PR (`bot/lock`) in swarm-routing/swarm-routing.github.io after this release.
 
             **Install bundle** (`anthocnet-${{ env.VER }}.zip`) — the source to
             drop onto your own simulator tree:
@@ -509,6 +510,60 @@ jobs:
 
             The images are signed with cosign (keyless). See
             [SECURITY.md](https://github.com/${{ github.repository }}/blob/${{ env.TAG }}/SECURITY.md#verifying-a-release).
+
+      # Tell the site (swarm-routing/swarm-routing.github.io, release-sync.yml,
+      # swarm-routing/swarm-routing.github.io#121) that a release is published:
+      # it opens the bot/lock PR to this tag, redeploys Pages and opens the
+      # [release-sync] ticket (#1000). AntHocNet does not use the org's
+      # reusable-release.yml, which sends the same event for every other
+      # repository. Report-only: a failed dispatch warns and never fails the
+      # release; the site's weekly run is the backstop.
+      - name: Org bot token (for the site dispatch)
+        id: bot
+        uses: swarm-routing/.github/.github/actions/bot-token@5e529b1ac20898ece1b52b37d9b71de7c8c3e2d9 # main 2026-11-13
+        continue-on-error: true
+        timeout-minutes: 2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.ORG_BOT_TOKEN }}
+      - name: Tell the site a release is published (org-release, report-only)
+        continue-on-error: true   # a last guard: nothing here may fail publish (images needs it)
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          warn() {
+            echo "::warning::org-release not sent to swarm-routing/swarm-routing.github.io: $1"
+            echo "- org-release for ${TAG} not sent to the site: $1 (its weekly release-sync run will catch up)" >> "$GITHUB_STEP_SUMMARY"
+          }
+          if [ -z "$GH_TOKEN" ]; then
+            warn "no org bot token (BOT_APP_ID/BOT_APP_PRIVATE_KEY or ORG_BOT_TOKEN)"; exit 0
+          fi
+          # The release tag just below this one (version order), if any.
+          # Each network call is bounded well below the step's timeout, so a stall
+          # ends in warn, not in a killed step.
+          # The lookup's own failure (or timeout) is reported, and the event
+          # goes without previous_tag: the site then finds the previous
+          # release itself.
+          prev=""
+          if tags=$(timeout 30 git ls-remote --tags --refs origin 'refs/tags/v*' 2>/dev/null); then
+            prev=$(printf '%s\n' "$tags" | sed 's#.*refs/tags/##' | { cat; echo "$TAG"; } | sort -uV \
+              | grep -x -B1 -F "$TAG" | grep -v -x -F "$TAG" || true)
+          else
+            echo "::warning::the release tags could not be listed (failed or timed out); org-release goes without previous_tag"
+          fi
+          args=(-f event_type=org-release
+                -f "client_payload[repository]=${GITHUB_REPOSITORY}"
+                -f "client_payload[tag]=${TAG}"
+                -f "client_payload[commit]=${COMMIT}")
+          if [ -n "$prev" ]; then args+=(-f "client_payload[previous_tag]=${prev}"); fi
+          if timeout 45 gh api -X POST repos/swarm-routing/swarm-routing.github.io/dispatches "${args[@]}"; then
+            echo "- org-release sent to the site: ${TAG} (previous: ${prev:-none}, commit ${COMMIT})" >> "$GITHUB_STEP_SUMMARY"
+          else
+            warn "the dispatch request failed or timed out"
+          fi
 
   # Release images on ns3-containers (#866, swarm-routing/.github#107):
   # ghcr.io/swarm-routing/anthocnet:<tag>-{optimized,debug}, each FROM the
