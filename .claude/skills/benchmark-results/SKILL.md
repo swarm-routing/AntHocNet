@@ -87,7 +87,8 @@ it was dispatched at, fails unless HEAD is that commit, and stamps it as
   (`<first>-<last>`, optional), `cell`, `label`. This is the path for every
   new number.
 - **no `image`** (the legacy in-job build): builds `source_sha` inside
-  `ghcr.io/swarm-routing/ns3:<version>` or `legacy_image` (by digest). Only for
+  `legacy_image`, required, by digest (an image of record in `docker/README.md`;
+  the `ns3:<version>` fallback was retired, #987). Only for
   replay traces (`replay`, `published`) and a control's legacy arm (#867).
 
 A single run: `mcp__github__actions_run_trigger` on `benchmark-cell.yml` with

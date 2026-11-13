@@ -22,13 +22,13 @@ run-name: ${{ inputs.label || inputs.cell || 'benchmark cell' }}
 #   source_sha, harness, args, cell, label and `key`, the cell key over every
 #   pinned input, so a re-dispatched campaign reuses a cell already run
 #   (swarm-routing/ns3-tools#155).
-# - no `image` (the legacy in-job build): the job `legacy` runs in this repo's
-#   historical ghcr.io/swarm-routing/ns3:<version> image (3.36, 3.41, 3.42,
-#   3.42-opt, 3.47, 3.48; frozen since images.yml was retired), or in
-#   `legacy_image` given by digest (a control re-running a published cell in
-#   the image its ##PROV## names, ghcr.io/danieljoppi/ns3@sha256:..., #867),
-#   and installs, configures and builds the module from `source_sha` in the
-#   job. Those images hold ns-3 only. It is the path for replay traces (#641)
+# - no `image` (the legacy in-job build): the job `legacy` runs in
+#   `legacy_image`, given by digest: the image a published cell's ##PROV##
+#   names, ghcr.io/danieljoppi/ns3@sha256:... (docker/README.md "Images of
+#   record"; #867). The fallback to this repo's ghcr.io/swarm-routing/ns3:<version>
+#   was retired with that package (#987), which no published cell names.
+#   The job installs, configures and builds the module from `source_sha`;
+#   those images hold ns-3 only. It is the path for replay traces (#641)
 #   and for the legacy arm of a control; `tools/bench/campaign.py` dispatches
 #   it for plans with legacy images, and nothing else.
 #
@@ -84,10 +84,10 @@ on:
         description: 'Cell key (64 hex) ns3-campaign computes over every pinned input; written into ##PROV## and the artifact name, so a later campaign reuses the cell; empty = none'
         default: ''
       version:
-        description: 'Legacy path only (no image): ghcr.io/swarm-routing/ns3:<version>, e.g. 3.42-opt; 3.48 for leo-walker'
+        description: 'Legacy path only (no image): the ns-3 version legacy_image holds, e.g. 3.42-opt (its -opt suffix sets the release profile when the image records none); 3.48 for leo-walker'
         default: '3.42-opt'
       legacy_image:
-        description: 'Legacy path only (#867): run in this image instead of ns3:<version>, by digest (ghcr.io/<owner>/<name>@sha256:...)'
+        description: 'Legacy path only, required there (#867, #987): the image to build in, by digest (ghcr.io/<owner>/<name>@sha256:...), e.g. an image of record from docker/README.md'
         default: ''
       title:
         description: "With open_pr: one line for the cell's header, e.g. 'static mesh (paper field, pause=900, disk) 20 seeds'"
@@ -151,12 +151,13 @@ jobs:
           else
             [ -z "$SEEDS" ] \
               || { echo "::error::seeds is the image path only; give --firstRun/--runs in args"; exit 1; }
-            if [ -n "$LEGACY_IMAGE" ]; then
-              # A control's image is pinned by digest, never by a tag (#867).
-              [[ "$LEGACY_IMAGE" =~ ^ghcr\.io/[a-z0-9._-]+/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$ ]] \
-                || { echo "::error::legacy_image must be ghcr.io/<owner>/<name>@sha256:<64 hex> (got '$LEGACY_IMAGE')"; exit 1; }
-            fi
-            echo "legacy path in ${LEGACY_IMAGE:-ns3:<version>} at $SOURCE_SHA"
+            # The legacy image is pinned by digest, never by a tag (#867); the
+            # fallback to ghcr.io/swarm-routing/ns3:<version> is retired (#987).
+            [ -n "$LEGACY_IMAGE" ] \
+              || { echo "::error::the legacy path (no image) needs legacy_image by digest, e.g. an image of record in docker/README.md"; exit 1; }
+            [[ "$LEGACY_IMAGE" =~ ^ghcr\.io/[a-z0-9._-]+/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$ ]] \
+              || { echo "::error::legacy_image must be ghcr.io/<owner>/<name>@sha256:<64 hex> (got '$LEGACY_IMAGE')"; exit 1; }
+            echo "legacy path in $LEGACY_IMAGE at $SOURCE_SHA"
           fi
 
   # The image path: the org's reusable cell (swarm-routing/.github#157).
@@ -220,7 +221,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 360   # the hosted-runner ceiling (#121)
     container:
-      image: ${{ inputs.legacy_image || format('ghcr.io/swarm-routing/ns3:{0}', inputs.version) }}
+      image: ${{ inputs.legacy_image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -322,12 +323,11 @@ jobs:
         env:
           HARNESS: ${{ inputs.harness }}
           ARGS: ${{ inputs.args }}
-          VERSION_TAG: ${{ inputs.version }}
           LEGACY_IMAGE: ${{ inputs.legacy_image }}
         run: |
           # Append-only (methodology "Measuring commit"): commit= is
           # source_sha, the commit this job checked out and built (#905).
-          prov="##PROV## commit=$SOURCE_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=${LEGACY_IMAGE:-ghcr.io/swarm-routing/ns3:$VERSION_TAG} profile=$NS3_PROFILE harness=$HARNESS"
+          prov="##PROV## commit=$SOURCE_SHA ref=$GITHUB_REF_NAME run_id=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT image=$LEGACY_IMAGE profile=$NS3_PROFILE harness=$HARNESS"
           echo "AHN_PROV=$prov" >> "$GITHUB_ENV"
           if [ -f "$GITHUB_WORKSPACE/results.txt" ]; then
             echo "##ARGS## $HARNESS $ARGS" >> "$GITHUB_WORKSPACE/results.txt"
@@ -464,7 +464,6 @@ jobs:
           TITLE: ${{ inputs.title }}
           HARNESS: ${{ inputs.harness }}
           ARGS: ${{ inputs.args }}
-          VERSION: ${{ inputs.version }}
           IMAGE: ${{ inputs.image }}
           LEGACY_IMAGE: ${{ inputs.legacy_image }}
           SOURCE_SHA: ${{ inputs.source_sha }}
@@ -505,7 +504,7 @@ jobs:
           check=$(cat "$dir/replay-check.txt" 2>/dev/null || echo "no replay recorded")
           body=$(printf '%s\n' \
             "Adds ${added} from [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})." \
-            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-${LEGACY_IMAGE:-ghcr.io/swarm-routing/ns3:${VERSION}}}\` at ${measured} (workflow ${GITHUB_SHA})." \
+            "" "**Dispatch:** \`${HARNESS} ${ARGS}\` on \`${IMAGE:-$LEGACY_IMAGE}\` at ${measured} (workflow ${GITHUB_SHA})." \
             "" "**scenario_check results:**" '```' "$verdict" '```' \
             "" "**check-viz-trace (#641):**" '```' "$check" '```' \
             "" "$(if [ "$APP_TOKEN" = true ]; then echo "Opened by benchmark-cell.yml (#612) with the app token (#705); CI runs on this PR."; else echo "Opened by benchmark-cell.yml (#612). CI does not run on a workflow-opened PR (no app token configured, #705); close and reopen it to run checks."; fi)")
