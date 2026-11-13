@@ -562,6 +562,17 @@ def _plan_releases():
     expect("warning: sat: the arms run different ns-3 releases (control 3.42, quiet 3.48)"
            in err.getvalue() and "warning: grid" not in err.getvalue(), "plan-mixed", err.getvalue())
     # offline: the image's release is not read, and the cell is flagged as unread
+    # a malformed registry answer (a list, not a config) is a warning and ?, not a crash
+    cp._NS3.clear()
+    cp.registry_config = lambda ref: ["not", "a", "config"]
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as bad, \
+                contextlib.redirect_stderr(io.StringIO()) as baderr:
+            cp.cmd_plan(plan, argparse.Namespace(offline=False))
+    finally:
+        cp.registry_config = real
+    expect("\tns-3 ?\t" + image in bad.getvalue()
+           and "cannot read" in baderr.getvalue(), "plan-malformed", baderr.getvalue())
     expect("\tns-3 ?\t" + image in off.getvalue()
            and "(control 3.42, quiet ?) (? = not read)" in offerr.getvalue(), "plan-offline",
            offerr.getvalue())
