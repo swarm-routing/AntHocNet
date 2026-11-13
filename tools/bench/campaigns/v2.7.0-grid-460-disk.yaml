@@ -1,0 +1,90 @@
+# #460: the gap decomposition's reference oracle, re-measured on the 300 m
+# disk (maintainer decision 2026-11-13 on #460). Pre-registered on #460 before
+# dispatch.
+#
+# This plan is tools/bench/campaigns/v2.7.0-grid-460.yaml (generation g460)
+# with ONE change: every cell appends
+#   --ns3::oracle::Topology::LinkRangeM=300
+# which holds the oracle's adjacency to the scenario's configured 300 m
+# --range, a channel-independent disk (##ORACLE## mode=disk-approx approx=1
+# range=300.0), instead of the radius #457 derives from the PHY
+# (decode-approx 423.3 m on two-ray, p50-approx 373.4 m on Nakagami). Same
+# source_sha, same image digest, same six cells, same seeds 1-20 in two blocks
+# of 10, same five arms in one run. The attribute is the oracle's alone
+# (ns3::oracle::Topology), so the four real arms must reproduce their g460
+# ##RUN## rows byte for byte; that is the control which lets this cell's
+# oracle PDR be composed with them (checked by script before any number is
+# read).
+#
+# Why: grid.md's gap decomposition (channel = 100 - oracle_pdr, routing =
+# oracle_pdr - arm_pdr) is still the v1.5.0 / pre-#464 table. The maintainer
+# chose the fixed 300 m disk as its reference (channel-independent; its links
+# are solidly in range), with the derived radius (the g460 cells) reported only
+# as a sensitivity row, and metrics.md stating that under fading no disk is
+# exact (the oracle is then a reference, not a bound).
+#
+# Reading, fixed before dispatch (tools/bench/gap_decomposition.py, per cell,
+# 20 seeds, from the ##RUN## pdr column; scenario_check.py results first):
+#   1. Control: anthocnet, aodv, olsr and dsdv ##RUN## rows identical to the
+#      g460 cells' (all 80 rows per cell). If not, nothing is composed.
+#   2. Decomposition on the disk oracle: oracle PDR (mean, 95 % t interval),
+#      and for anthocnet and aodv total, channel and routing pp and the routing
+#      share, with routing's per-seed paired 95 % t interval.
+#   3. Sensitivity row: the same script on the g460 (derived-radius) cells.
+#   Expectation (not a gate): the disk oracle delivers more than the derived
+#   one (fewer marginal links), so the channel term falls and the routing
+#   share rises against the 96.00-98.20 % / 67.0-88.4 % of the derived
+#   radius; routing dominates the gap in every cell either way.
+#   Known in advance: scenario_check's matched-set hop gate FAILs on these
+#   cells (disk-approx claims the hop bound, and the 300 m disk the radios
+#   outreach is exactly #431's defect class); the hop and latency tables stay
+#   the g460 ones, and nothing about hops is read from these cells.
+#
+# Image: the g460 image (campaign-image.yml run 43039521796), by digest.
+# 6 cells x 2 blocks = 12 jobs, ~4 h each, --cap 6.
+#
+#   P=tools/bench/campaigns/v2.7.0-grid-460-disk.yaml
+#   ns3-campaign plan     $P
+#   ns3-campaign dispatch $P --cap 6
+#   ns3-campaign status   $P --brief
+#   ns3-campaign collect  $P --out results/cells
+generation: g460d
+ref: main
+repo: swarm-routing/AntHocNet
+source_sha: 00ae02f5b0c16fc2800d060b01c7ecc70b4e3439
+image: ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:65cd973a7dfa3b8b2809e3b0059a483a1109c022f6e0a309e1651fe761f327e9
+program: routing-compare
+cap: 6
+control: main
+
+arms:
+  main: ""
+
+cells:
+  grid-rwp-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --diag --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+  grid-rwp-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=nakagami --diag --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+  grid-ssrwp-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --diag --mobility=ssrwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+  grid-ssrwp-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=nakagami --diag --mobility=ssrwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+  grid-gaussmarkov-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=0 --propagation=tworay --diag --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+  grid-gaussmarkov-nakagami:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=0 --propagation=nakagami --diag --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,oracle --ns3::oracle::Topology::LinkRangeM=300"}
+    blocks: [1, 11]
+
+jobs:
+  - {arms: [main], cells: "*"}
