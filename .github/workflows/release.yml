@@ -528,6 +528,7 @@ jobs:
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
           fallback-token: ${{ secrets.ORG_BOT_TOKEN }}
       - name: Tell the site a release is published (org-release, report-only)
+        continue-on-error: true   # a last guard: nothing here may fail publish (images needs it)
         timeout-minutes: 2
         env:
           GH_TOKEN: ${{ steps.bot.outputs.token }}
@@ -541,7 +542,9 @@ jobs:
             warn "no org bot token (BOT_APP_ID/BOT_APP_PRIVATE_KEY or ORG_BOT_TOKEN)"; exit 0
           fi
           # The release tag just below this one (version order), if any.
-          prev=$(git ls-remote --tags --refs origin 'refs/tags/v*' 2>/dev/null \
+          # Each network call is bounded well below the step's timeout, so a stall
+          # ends in warn, not in a killed step.
+          prev=$(timeout 30 git ls-remote --tags --refs origin 'refs/tags/v*' 2>/dev/null \
             | sed 's#.*refs/tags/##' | { cat; echo "$TAG"; } | sort -uV \
             | grep -x -B1 -F "$TAG" | grep -v -x -F "$TAG" || true)
           args=(-f event_type=org-release
@@ -549,10 +552,10 @@ jobs:
                 -f "client_payload[tag]=${TAG}"
                 -f "client_payload[commit]=${COMMIT}")
           if [ -n "$prev" ]; then args+=(-f "client_payload[previous_tag]=${prev}"); fi
-          if gh api -X POST repos/swarm-routing/swarm-routing.github.io/dispatches "${args[@]}"; then
+          if timeout 45 gh api -X POST repos/swarm-routing/swarm-routing.github.io/dispatches "${args[@]}"; then
             echo "- org-release sent to the site: ${TAG} (previous: ${prev:-none}, commit ${COMMIT})" >> "$GITHUB_STEP_SUMMARY"
           else
-            warn "the dispatch request failed"
+            warn "the dispatch request failed or timed out"
           fi
 
   # Release images on ns3-containers (#866, swarm-routing/.github#107):
