@@ -8,6 +8,43 @@ Note: the **software release version** (below) is distinct from the **on-wire
 protocol version** (`kWireVersion`, see [docs/wire-format.md](docs/wire-format.md)),
 which gates packet compatibility independently.
 
+## v2.7.0 (2026-11-13)
+
+### Feat
+
+- **release**: the release images are anthocnet, not anthocnet-ns3 (#988)
+- **bench**: the cell forwards ns3-campaign's key; campaign.py plan shows each job's release, image and commit (#984)
+- **observer**: report swarm-core's router-observer events (#922)
+- **bench**: run a control campaign on two images (#889)
+- **release**: ship routing-bench and adaptive as their own packages (#832)
+- **bench**: report the routing bytes the BeeAdHoc arm's data packets carry (##INPKT##) (#814)
+- **bench**: pre-register the BeeAdHoc sensitivity, with switches for its repository choices (#810)
+- **bench**: emit ##HOLD## for the adaptive arms, so their delay can be explained (#809)
+- **bench**: read each hop's battery for the BeeAdHoc arm from the harness's energy accounting (#804)
+- **bench**: the BeeAdHoc comparator arm, written from the PG 460 report (#799)
+
+### Fix
+
+- audit follow-ups (wire-format page at 0x04, check-site-links without web/, job timeouts) (#985)
+- **ci**: settle the restored ns-3 tree before the gates run (#958)
+- **bench**: hold each seed block's oracle refusals against its own drop row (#936)
+- **bench**: ci gates read marker fields through bench_parse, not awk position (#829)
+- **bench**: stop the BeeAdHoc arm delivering duplicate copies above one packet per on-period (#831)
+- **docker**: pin the ns-3 image's base by digest and cmake by hash (#827)
+- **release**: publish the slsa provenance as *.intoto.jsonl too (#818)
+- **ci**: install pip and npm tooling by hash (#817)
+- **ci**: run codeql on every pull request (#803)
+- **ci**: no workflow grants a write scope at the top level (#802)
+- **ci**: run scorecard with file_mode: git; roadmap rows match the live issues (#796)
+
+### Refactor
+
+- **bench**: consume routing-bench and the readers from ns3-tools v0.1.0, delete the in-repo copies (#927)
+
+### Perf
+
+- **core**: pheromone rows, in-place evaporation and a memcpy decoder (#920)
+
 ## v2.6.1 (2026-10-29)
 
 ### Fix
