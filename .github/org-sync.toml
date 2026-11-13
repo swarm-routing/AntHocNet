@@ -8,6 +8,8 @@ cxx = "14"
 zenodo_concept = "20981979"
 docs_url = "https://swarm-routing.github.io/AntHocNet/docs/"
 licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"
+# bestpractices.dev project (OpenSSF Best Practices badge, #790)
+bestpractices_project = "16656"
 # AntHocNet's golden rules 1-10 are the source of the org's (this repository is
 # the reference implementation, and other repositories cite "golden rule N" by
 # their numbers), so the org-rules section is not managed here; the other
@@ -18,7 +20,7 @@ skip = ["AGENTS.md#org-rules", "docs/adr/0000-template.md"]
 # CodeRabbit skips generated data: committed benchmark results, the charts
 # charts.yml renders, and the hash-pinned uv lockfiles (#838).
 coderabbit_path_filters = ["!results/**", "!docs/benchmarks/charts/*.png", "!docs/benchmarks/sweep-*.png", "!requirements/*.txt"]
-badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "release", "doi", "cite", "licence", "cxx", "ns3", "ns3dev", "conventional", "arena", "docs"]
+badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "bestpractices", "release", "doi", "cite", "licence", "cxx", "ns3", "ns3dev", "conventional", "arena", "docs"]
 
 
 [settings]

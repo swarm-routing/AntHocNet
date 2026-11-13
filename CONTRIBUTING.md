@@ -386,34 +386,29 @@ simulation (the security profile of
 [ADR-0020](docs/adr/0020-security-is-a-default-off-profile.md) would be the
 trigger), since that is what would change the answer.
 
-### OpenSSF Best Practices badge — **maintainer action required**
+### OpenSSF Best Practices badge
 
-The repo very likely already qualifies for the *passing* level (CI on every PR,
-a unit-test suite, sanitizer + fuzz jobs, `SECURITY.md`, a documented release
-process, an OSI licence, a public issue tracker), but the badge is a
-questionnaire tied to a **personal account** — an agent cannot obtain it, and
-the badge URL embeds a project ID that does not exist until the project is
-registered. **Do not invent one.** Steps:
+AntHocNet is registered at bestpractices.dev as
+[project 16656](https://www.bestpractices.dev/en/projects/16656) (#790). Its
+badge sits in the README's badge block right after the OpenSSF Scorecard badge,
+rendered by org-sync from `bestpractices_project = "16656"` in
+`.github/org-sync.toml` (the `bestpractices` badge kind); it shows the
+project's live level, *in progress* until the questionnaire is answered.
 
-1. Sign in at <https://www.bestpractices.dev/> with the GitHub account that owns
-   the repository.
-2. *Projects → Add a project*, entering
-   `https://github.com/swarm-routing/AntHocNet` as the repository URL. The form
-   pre-fills much of the metadata from GitHub.
-3. Answer the criteria. The evidence links to reach *passing* are all in-tree:
-   `README.md` (description, install), `CONTRIBUTING.md` (contribution process,
-   this file), `SECURITY.md` (vulnerability reporting), `LICENSE` (GPL-2.0-only) and
-   `LICENSING.md` (`core/` and the tooling are `MIT OR GPL-2.0-only`, ADR-0028),
-   `.github/workflows/ci.yml` (automated build + test on every change),
-   `CHANGELOG.md` (release notes), and the release checksums documented above.
-4. Note the numeric **project ID** shown in the project's URL
-   (`https://www.bestpractices.dev/projects/<ID>`).
-5. Add this line to the badge block at the top of `README.md`, directly after
-   the OpenSSF Scorecard badge, substituting the real `<ID>`:
+The remaining step is the maintainer's, since the questionnaire is tied to the
+account that owns the project: answer the passing criteria at
+<https://www.bestpractices.dev/en/projects/16656/passing>. The repo very likely
+already qualifies for *passing* (CI on every PR, a unit-test suite, sanitizer +
+fuzz jobs, `SECURITY.md`, a documented release process, an OSI licence, a
+public issue tracker). The evidence links are all in-tree:
 
-   ```markdown
-   [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/<ID>/badge)](https://www.bestpractices.dev/projects/<ID>)
-   ```
+- `README.md` (description, install);
+- `CONTRIBUTING.md` (contribution process, this file);
+- `SECURITY.md` (vulnerability reporting);
+- `LICENSE` (GPL-2.0-only) and `LICENSING.md` (`core/` and the tooling are
+  `MIT OR GPL-2.0-only`, ADR-0028);
+- `.github/workflows/ci.yml` (automated build + test on every change);
+- `CHANGELOG.md` (release notes), and the release checksums documented above.
 
 ## AI review
 
