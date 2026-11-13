@@ -414,7 +414,7 @@ on what the row names.
 | Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`python3 tools/ns3_tools.py run bench_parse`: ns3-tools' reader at the pin) |
 | Build, test or screenshot the learn site | the `learn-site` skill in `swarm-routing/swarm-routing.github.io` (parity, smoke, README figures) |
 | Change the site's top bar, places or the docs/API look | the site repo's `site/anthocnet/shell/`, `docs/places/`, the nav in `mkdocs.yml` |
-| Add a world, a mission or a core class | it needs its docs links: `python3 tools/checks/check-site-links.py` says what is missing |
+| Add a world, a mission or a core class | it needs its docs links: `python3 tools/checks/check-site-links.py` says what is missing (fetch `web/` first: `tools/checks/fetch-site-web.sh`) |
 | Summarize / export campaign sweep CSVs | `benchmark-results` skill (`python3 tools/ns3_tools.py run sweep_summary`; `--export-sweeps` feeds the paper drafts' plot data) |
 | Validate a scenario config or result plausibility | `benchmark-results` skill (`tools/bench/scenario_check.py`: `preflight`, then `results`) |
 | Pre-push invariant check on a diff | `anthocnet-review` skill (`.claude/skills/anthocnet-review/check_invariants.sh`) |

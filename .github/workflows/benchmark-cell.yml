@@ -375,6 +375,7 @@ jobs:
     needs: [cell, verdict, legacy]
     if: ${{ always() && inputs.open_pr && (needs.legacy.result == 'success' || (needs.cell.result == 'success' && needs.verdict.result == 'success')) }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 15  # no green run in the last 100 to size it from: tokens, a checkout, one artifact, a commit and a PR (#982)
     permissions:
       contents: write
       pull-requests: write

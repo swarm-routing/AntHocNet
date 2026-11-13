@@ -140,6 +140,7 @@ jobs:
   codec-fuzz:
     name: codec fuzz (libFuzzer, 60s)
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 1.6 min; the backstop if -max_total_time is ever dropped (#982)
     # The codec is the only parser of untrusted network bytes (item 12), so fuzz
     # its decode path against a small seed corpus. ubuntu-24.04's clang ships
     # the libFuzzer/ASan runtimes; a crash/UB/over-read fails the job.

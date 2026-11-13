@@ -145,6 +145,12 @@ jobs:
         run: |
           python3 docs/tools/check-headers.py --self-test
           python3 docs/tools/check-headers.py .
+      - name: Wire-format page names the codec's version (#981)
+        # Golden rule 4: a kWireVersion bump updates docs/wire-format.md. The
+        # 0x04 bump did not, and nothing noticed. Stdlib-only, <1 s.
+        run: |
+          python3 tools/checks/check-wire-doc.py --self-test
+          python3 tools/checks/check-wire-doc.py
       - name: Game <-> docs links and the Nest's coverage (#631, #635)
         # Every world and Academy mission links its docs page, every family
         # results page links its world, every target exists, every public core
@@ -160,6 +166,7 @@ jobs:
   clang-format:
     name: C++ formatting (clang-format)
     runs-on: ubuntu-24.04
+    timeout-minutes: 10  # longest green run: 1.4 min (#982)
     # #35: the project's own C++ -- core/, the browser adapter and the ns-3
     # module -- is formatted by .clang-format (clang-format-18, the version on
     # ubuntu-24.04 runners). ns3/baselines/ is excluded by .clang-format-ignore:

@@ -61,6 +61,7 @@ jobs:
   # merge is re-measured within a day (#365, #864).
   changed:
     runs-on: ubuntu-24.04
+    timeout-minutes: 5  # longest green run: 0.1 min (#982)
     outputs:
       run: ${{ steps.diff.outputs.run }}
     steps:
@@ -121,6 +122,7 @@ jobs:
     needs: [changed, image]
     if: needs.changed.outputs.run == 'true'
     runs-on: ubuntu-24.04
+    timeout-minutes: 360  # the hosted-runner ceiling: the longest green run took 236 min (#982)
     # Read-only: the regenerated table + charts reach main through the publish
     # job's PR (#789); packages to pull the campaign image.
     permissions:
