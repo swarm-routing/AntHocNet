@@ -97,6 +97,11 @@ jobs:
         # tables from ##COMMON## rows. A synthetic cell with known answers,
         # no simulator, ~1 s.
         run: python3 tools/bench/test_common_tables.py
+      - name: Gap-decomposition self-test (#460)
+        # gap_decomposition.py computes grid.md's oracle gap decomposition
+        # from ##RUN## rows. A synthetic cell with known answers, no
+        # simulator, ~1 s.
+        run: python3 tools/bench/test_gap_decomposition.py
       - name: Gate field-query self-test (#791)
         # The CI gates in tools/checks/ read marker fields through the pinned
         # ns3_tool bench_parse --get. On every committed cell the query must return
