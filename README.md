@@ -157,9 +157,11 @@ With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
 each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
 it into your bake checkout's `contrib/` directory, then run
 `./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
-Any ns-3 from 3.40 works. This builds AntHocNet alone, without the
-comparison modules. The recipe is built end to end weekly
-([bake.yml](.github/workflows/bake.yml)).
+The module builds on any ns-3 from 3.40, but bake only offers the releases
+its own catalogue has: up to ns-3.44 at the bake revision
+[bake.yml](.github/workflows/bake.yml) pins. This builds AntHocNet alone,
+without the comparison modules. bake.yml builds the recipe end to end
+(ns-3.42) on packaging changes and on demand; it has no schedule (#864).
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
 release ns-3 supports (3.49 today); ns-3.40 to 3.48 on demand.
