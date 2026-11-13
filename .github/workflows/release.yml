@@ -544,9 +544,16 @@ jobs:
           # The release tag just below this one (version order), if any.
           # Each network call is bounded well below the step's timeout, so a stall
           # ends in warn, not in a killed step.
-          prev=$(timeout 30 git ls-remote --tags --refs origin 'refs/tags/v*' 2>/dev/null \
-            | sed 's#.*refs/tags/##' | { cat; echo "$TAG"; } | sort -uV \
-            | grep -x -B1 -F "$TAG" | grep -v -x -F "$TAG" || true)
+          # The lookup's own failure (or timeout) is reported, and the event
+          # goes without previous_tag: the site then finds the previous
+          # release itself.
+          prev=""
+          if tags=$(timeout 30 git ls-remote --tags --refs origin 'refs/tags/v*' 2>/dev/null); then
+            prev=$(printf '%s\n' "$tags" | sed 's#.*refs/tags/##' | { cat; echo "$TAG"; } | sort -uV \
+              | grep -x -B1 -F "$TAG" | grep -v -x -F "$TAG" || true)
+          else
+            echo "::warning::the release tags could not be listed (failed or timed out); org-release goes without previous_tag"
+          fi
           args=(-f event_type=org-release
                 -f "client_payload[repository]=${GITHUB_REPOSITORY}"
                 -f "client_payload[tag]=${TAG}"
