@@ -8,6 +8,7 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=swarm-routing_AntHocNet&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=swarm-routing_AntHocNet)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/swarm-routing/AntHocNet?utm_source=oss&utm_medium=github&utm_campaign=swarm-routing%2FAntHocNet&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/swarm-routing/AntHocNet/badge)](https://scorecard.dev/viewer/?uri=github.com/swarm-routing/AntHocNet)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16656/badge)](https://www.bestpractices.dev/projects/16656)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20981979.svg)](https://doi.org/10.5281/zenodo.20981979)
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
 [![Licence: GPL-2.0, core and tools MIT OR GPL-2.0](https://img.shields.io/badge/licence-GPL--2.0%2C%20core%20and%20tools%20MIT%20OR%20GPL--2.0-blue)](LICENSING.md)
