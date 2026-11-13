@@ -1,0 +1,12 @@
+routing-bench 0.1.0 (swarm-routing/ns3-tools): the protocol-agnostic ns-3
+comparison harness (routing-compare) with the stock ns-3 arms (AODV, OLSR,
+DSDV, HWMP). GPL-2.0-only (LICENSE). It links stock ns-3 only.
+
+  tar -xzf routing-bench-0.1.0.tar.gz -C /path/to/ns-3/contrib
+  cd /path/to/ns-3
+  ./ns3 configure --enable-examples --enable-tests && ./ns3 build
+  ./test.py -s routing-bench && ./ns3 run "routing-compare --PrintHelp"
+
+Arm modules from other repositories register with it through their
+helper/<module>-bench-arms.cc when installed beside it (README.md).
+Source: https://github.com/swarm-routing/ns3-tools/tree/v0.1.0/ns3/routing-bench
