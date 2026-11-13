@@ -106,7 +106,7 @@ gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
 ```
 
 **Container images.** From #866 a release publishes
-`ghcr.io/swarm-routing/anthocnet-ns3:<tag>-optimized` and `:<tag>-debug`, and
+`ghcr.io/swarm-routing/anthocnet:<tag>-optimized` and `:<tag>-debug`, and
 each campaign `ghcr.io/swarm-routing/anthocnet-ns3-campaign:<commit7>-<base7>-optimized`.
 They are built by swarm-routing/.github's shared `reusable-ns3-image.yml`
 `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest, and signed with cosign
@@ -117,11 +117,11 @@ the certificate's workflow-repository extension (log in first with
 on an `oci://` image needs registry credentials):
 
 ```bash
-cosign verify ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+cosign verify ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized \
   --certificate-identity-regexp '^https://github\.com/swarm-routing/\.github/\.github/workflows/reusable-ns3-image\.yml@refs/heads/main$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-github-workflow-repository swarm-routing/AntHocNet
-gh attestation verify oci://ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized --owner swarm-routing \
+gh attestation verify oci://ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized --owner swarm-routing \
   --signer-workflow swarm-routing/.github/.github/workflows/reusable-ns3-image.yml
 ```
 

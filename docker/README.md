@@ -19,15 +19,20 @@ label `io.github.swarm-routing.ns3-dev.digest`, its commit in
 | Image | Tags | Built by | Use |
 |-------|------|----------|-----|
 | `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | ns3-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` / `3.48` |
-| `ghcr.io/swarm-routing/anthocnet-ns3` | `<release>-optimized`, `<release>-debug` (e.g. `v2.7.0-optimized`) | `release.yml` | ns-3 with every module of a release built and tested; tags never move |
+| `ghcr.io/swarm-routing/anthocnet` | `<release>-optimized`, `<release>-debug` (e.g. `v2.7.0-optimized`) | `release.yml` | ns-3 with every module of a release built and tested; tags never move |
 | `ghcr.io/swarm-routing/anthocnet-ns3-campaign` | `<commit7>-<base7>-optimized` | `campaign-image.yml` | one image per campaign; cells pull it by digest |
 
 ```bash
-docker run --rm ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+docker run --rm ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized \
   ./ns3 run --no-build anthocnet-example
-docker buildx imagetools inspect ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+docker buildx imagetools inspect ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized \
   --format '{{ index .Image.Config.Labels "io.github.swarm-routing.ns3-dev.digest" }}'
 ```
+
+The release images are named after the repository, `anthocnet`, from the first
+release built by `reusable-ns3-image.yml` on (swarm-routing/.github#370, #987);
+`anthocnet-ns3` holds only the frozen pre-#866 rebuilds below and receives
+nothing new.
 
 `SECURITY.md` has the `cosign verify` and `gh attestation verify` commands.
 

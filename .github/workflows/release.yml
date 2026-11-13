@@ -484,7 +484,7 @@ jobs:
             Termite, Q-routing and BeeAdHoc arms; unpack it into `ns-3/contrib` next to the
             harness from the ns3-tools release above. It is covered by the same provenance attestation.
 
-            **Container images** (see `docker/README.md`): `ghcr.io/swarm-routing/anthocnet-ns3:${{ env.TAG }}-optimized`
+            **Container images** (see `docker/README.md`): `ghcr.io/swarm-routing/anthocnet:${{ env.TAG }}-optimized`
             and `:${{ env.TAG }}-debug`, ns-3 with every module of this release built and tested,
             `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest (label `io.github.swarm-routing.ns3-dev.digest`).
 
@@ -511,7 +511,7 @@ jobs:
             [SECURITY.md](https://github.com/${{ github.repository }}/blob/${{ env.TAG }}/SECURITY.md#verifying-a-release).
 
   # Release images on ns3-containers (#866, swarm-routing/.github#107):
-  # ghcr.io/swarm-routing/anthocnet-ns3:<tag>-{optimized,debug}, each FROM the
+  # ghcr.io/swarm-routing/anthocnet:<tag>-{optimized,debug}, each FROM the
   # digest of ns3-dev:<version>-<profile>, built with swarm-routing/.github's
   # reusable-ns3-image.yml (test.py suites on the built image, then push, cosign
   # signature, provenance + CycloneDX SBOM, signature verified). No ns-3 is
@@ -553,6 +553,6 @@ jobs:
       test-suites: anthocnet oracle adaptive routing-bench
       ns3-version: '3.48'
       profiles: '["optimized", "debug"]'
-      image: anthocnet-ns3
+      image: anthocnet  # the release image is named after the repository (swarm-routing/.github#370)
       tag: ${{ needs.release.outputs.tag }}
       push: ${{ inputs.mode != 'dryrun' }}

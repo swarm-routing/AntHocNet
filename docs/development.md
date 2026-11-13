@@ -101,7 +101,7 @@ results.
   `paper-benchmark` / `scenario-matrix` / `satellite-benchmark`, removed in
   v2.5.0, #746),
   `release.yml` (Commitizen bump + install-bundle; its images job publishes
-  `anthocnet-ns3:<tag>-{optimized,debug}` through swarm-routing/.github's
+  `anthocnet:<tag>-{optimized,debug}` through swarm-routing/.github's
   `reusable-ns3-image.yml`, FROM a pinned ns3-dev digest; this repo builds no
   ns-3 images of its own, `images.yml` was retired in #866), `campaign-image.yml` (one campaign
   image per commit; dispatch it with `commit=<40 hex>` and put the digest in

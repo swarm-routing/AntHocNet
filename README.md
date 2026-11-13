@@ -186,14 +186,14 @@ calibration loop (sweep one knob → A/B → noise verdict) are in
 
 Prefer not to install a simulator yourself? From the first release after
 #866 (v2.6.1 and earlier have only the older images below), each release publishes
-`ghcr.io/swarm-routing/anthocnet-ns3:<release>-optimized` and `-debug`: ns-3 with
+`ghcr.io/swarm-routing/anthocnet:<release>-optimized` and `-debug`: ns-3 with
 every module of the release built and tested, built `FROM` a pinned digest of the
 org's ns-3 image [`ghcr.io/swarm-routing/ns3-dev`](https://github.com/swarm-routing/ns3-containers)
 (which is also the clean baseline: plain ns-3 with AODV/OLSR/DSDV/…). Tags never
 move.
 
 ```bash
-docker run --rm ghcr.io/swarm-routing/anthocnet-ns3:vX.Y.Z-optimized \
+docker run --rm ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized \
   ./ns3 run --no-build anthocnet-example
 ```
 

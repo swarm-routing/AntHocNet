@@ -144,7 +144,7 @@ These were latent in the original NS-2 module and are fixed in `core/`:
   `workflow_dispatch`, running the module test suite and an **asserted end-to-end delivery
   smoke** — AntHocNet must deliver a non-zero PDR in a small connected scenario.
 - The **codec decode path is fuzzed** (libFuzzer, 60 s, `codec-fuzz` job).
-- Container images: each release publishes `ghcr.io/swarm-routing/anthocnet-ns3:<tag>-{optimized,debug}`
+- Container images: each release publishes `ghcr.io/swarm-routing/anthocnet:<tag>-{optimized,debug}`
   `FROM` a pinned `ns3-dev` digest, and each campaign builds one image per commit
   (`campaign-image.yml`); this repo builds no ns-3 images of its own since #866 (`docker/README.md`).
 - **Observability**: the core exposes ant/route counters + an optional

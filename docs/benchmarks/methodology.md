@@ -1371,7 +1371,7 @@ biggest cost lever on the campaign budget ([#121](https://github.com/swarm-routi
 | profile | `./ns3 configure` | what it compiles | published as |
 |---|---|---|---|
 | `default` | no `-d` flag (ns-3's own fallback) | `NS3_ASSERT=ON`, `NS3_LOG=ON`, `-O2 -g` | `ns3-dev:<ver>` (`-d default`), `ns3-dev:<ver>-debug` (`-d debug`); historically `ns3:<ver>`, `anthocnet-ns3:<ver>` |
-| `release` | `-d release` | `NS3_ASSERT=OFF`, `NS3_LOG=OFF`, `-O3`, **no** `-march=native` | `ns3-dev:<ver>-optimized`, `anthocnet-ns3:<release>-optimized`, every campaign image; historically `ns3:<ver>-opt` (ns-3.42 only) |
+| `release` | `-d release` | `NS3_ASSERT=OFF`, `NS3_LOG=OFF`, `-O3`, **no** `-march=native` | `ns3-dev:<ver>-optimized`, `anthocnet:<release>-optimized`, every campaign image; historically `ns3:<ver>-opt` (ns-3.42 only) |
 
 **The optimized image is for numbers, never for CI.** CI (`ci.yml`) keeps
 running in `default`/`debug` images on purpose: those assertions have caught
