@@ -25,6 +25,10 @@ reviews:
       - "dependabot[bot]"
   path_filters:
     - "!**/*.pdf"
+    - "!results/**"
+    - "!docs/benchmarks/charts/*.png"
+    - "!docs/benchmarks/sweep-*.png"
+    - "!requirements/*.txt"
   path_instructions:
     - path: "**/*"
       instructions: >-
@@ -59,14 +63,6 @@ reviews:
         numbers, DOIs or citations; paywalled papers never committed to public
         repositories.
 # org-sync:end coderabbit-head
-    # AntHocNet: generated data are not reviewed line by line (the org head has
-    # no extension point for path_filters, so they are instructions, not filters;
-    # CodeRabbit already skips images and CSVs by default).
-    - path: "{results/**,requirements/*.txt}"
-      instructions: >-
-        Committed benchmark data and hash-pinned lockfiles
-        (uv pip compile): do not review line by line; check only that the PR
-        says how they were regenerated.
     # AntHocNet: the golden rules (AGENTS.md) a reviewer has to check by reading.
     - path: "core/**"
       instructions: >-

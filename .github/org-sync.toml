@@ -15,6 +15,9 @@ licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"
 # ADRs predate it and its NNNN-title.md placeholder link fails the docs build
 # (mkdocs --strict) and check-links.py.
 skip = ["AGENTS.md#org-rules", "docs/adr/0000-template.md"]
+# CodeRabbit skips generated data: committed benchmark results, the charts
+# charts.yml renders, and the hash-pinned uv lockfiles (#838).
+coderabbit_path_filters = ["!results/**", "!docs/benchmarks/charts/*.png", "!docs/benchmarks/sweep-*.png", "!requirements/*.txt"]
 badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "release", "doi", "cite", "licence", "cxx", "ns3", "ns3dev", "conventional", "arena", "docs"]
 
 
