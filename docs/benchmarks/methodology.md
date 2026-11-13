@@ -1300,7 +1300,9 @@ runs on every PR (`lint.yml`). It fails any committed cell with a spliced
 line, a non-numeric `##RUN##`, `##BENCH##` or `# stddev` field, a duplicated
 row, or an arm (in a `##RUN##` row or the `##CONFIG##` `protocols=` list)
 without a `##RUN##` row for exactly the seeds the `##CONFIG##`
-`runs=`/`firstRun=` lines declare. The 16 cells are listed in it line by line,
+`runs=`/`firstRun=` lines declare. A cell without those keys (the 74 `isl-grid`
+satellite and lens cells) is checked against the union of its arms' seeds, so there
+a seed missing from every arm goes unseen. The 16 cells are listed in it line by line,
 and they pass only while every recorded splice has its intact copy.
 `check_cells.py --inventory CELL…` prints the table #976 publishes. To read
 one of these cells with a strict `bench_parse`, pass `--lenient`, or drop the
