@@ -148,7 +148,8 @@ a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
 image once: `campaign-image.yml` builds the AntHocNet modules of one commit
 `FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized` (3.48
 while the ns-3.49 AODV livelock #843 is open), tests them and pushes
-`anthocnet-ns3-campaign:<commit7>-<base7>-optimized`; the campaign plan
+`anthocnet-dev:<commit7>-<base7>-optimized` (`anthocnet-ns3-campaign` before
+#987); the campaign plan
 pins that digest and the commit (`image`, `source_sha`), and `ns3-campaign`
 passes both to every cell as `benchmark-cell.yml`'s inputs, which hand them to
 swarm-routing/.github's `reusable-benchmark-cell.yml` (#905). Each cell then

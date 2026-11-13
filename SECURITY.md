@@ -107,7 +107,9 @@ gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
 
 **Container images.** From #866 a release publishes
 `ghcr.io/swarm-routing/anthocnet:<tag>-optimized` and `:<tag>-debug`, and
-each campaign `ghcr.io/swarm-routing/anthocnet-ns3-campaign:<commit7>-<base7>-optimized`.
+each campaign `ghcr.io/swarm-routing/anthocnet-dev:<commit7>-<base7>-optimized`
+(`anthocnet-ns3-campaign` before #987, frozen; a campaign image not pinned by
+a committed file is deleted after 2 days).
 They are built by swarm-routing/.github's shared `reusable-ns3-image.yml`
 `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest, and signed with cosign
 (keyless) by digest, with build provenance and a CycloneDX SBOM in the

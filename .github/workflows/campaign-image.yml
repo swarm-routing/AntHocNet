@@ -5,7 +5,15 @@ name: Campaign image
 # so every cell of the campaign pulls the same binary by digest and none of
 # them builds anything.
 #
-#   ghcr.io/swarm-routing/anthocnet-ns3-campaign:<commit7>-<base7>-optimized
+#   ghcr.io/swarm-routing/anthocnet-dev:<commit7>-<base7>-optimized
+#
+# anthocnet-dev is a development package (swarm-routing/.github#370, #987):
+# ci.yml's dev-images job, on main, deletes its versions older than 2 days
+# that no committed file and no open swarm-routing/benchmarks pull request
+# pins (a campaign plan and its results pin the image by digest, so commit
+# the plan's `image:` before the image is 2 days old). Images built before
+# the rename stay in anthocnet-ns3-campaign, frozen: the v2.7.x plans and
+# results pin them.
 #
 # The build is swarm-routing/.github's reusable-ns3-image.yml: it resolves
 # ns3-dev:<ns3-version>-optimized to its digest once, builds FROM that digest
@@ -47,7 +55,7 @@ on:
         default: ''
     outputs:
       image:
-        description: "ghcr.io/<owner>/anthocnet-ns3-campaign@sha256:..."
+        description: "ghcr.io/<owner>/anthocnet-dev@sha256:..."
         value: ${{ jobs.record.outputs.image }}
       commit:
         description: "The 40-char commit built into the image"
@@ -116,7 +124,7 @@ jobs:
       test-suites: anthocnet oracle adaptive routing-bench
       ns3-version: ${{ needs.resolve.outputs.version }}
       profiles: '["optimized"]'
-      image: anthocnet-ns3-campaign
+      image: anthocnet-dev
       tag: ${{ needs.resolve.outputs.commit7 }}-{base7}
       push: true
       skip-existing: true
@@ -141,7 +149,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
-          [[ "$IMAGE" =~ ^ghcr\.io/${OWNER,,}/anthocnet-ns3-campaign@sha256:[0-9a-f]{64}$ ]] \
+          [[ "$IMAGE" =~ ^ghcr\.io/${OWNER,,}/anthocnet-dev@sha256:[0-9a-f]{64}$ ]] \
             || { echo "::error::no campaign image digest from the build (got '$IMAGE')"; exit 1; }
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "$IMAGE" > image.txt

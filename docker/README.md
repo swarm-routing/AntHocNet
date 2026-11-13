@@ -20,7 +20,7 @@ label `io.github.swarm-routing.ns3-dev.digest`, its commit in
 |-------|------|----------|-----|
 | `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | ns3-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` / `3.48` |
 | `ghcr.io/swarm-routing/anthocnet` | `<release>-optimized`, `<release>-debug` (e.g. `v2.7.0-optimized`) | `release.yml` | ns-3 with every module of a release built and tested; tags never move |
-| `ghcr.io/swarm-routing/anthocnet-ns3-campaign` | `<commit7>-<base7>-optimized` | `campaign-image.yml` | one image per campaign; cells pull it by digest |
+| `ghcr.io/swarm-routing/anthocnet-dev` | `<commit7>-<base7>-optimized` | `campaign-image.yml` | one image per campaign; cells pull it by digest. Deleted after 2 days unless a committed file pins it (`ci.yml`'s `dev-images` job, #987); `anthocnet-ns3-campaign` holds the images before #987, frozen |
 
 ```bash
 docker run --rm ghcr.io/swarm-routing/anthocnet:vX.Y.Z-optimized \
@@ -102,7 +102,7 @@ control campaign) or by digest (the control campaign, #867).
 The other tags (`3.41`, `3.47`, the `-<release>` pins) are no published cell's
 image; they stay for the same reason. A `:latest` tag on these repositories is
 not a pin: use the digest. The campaign images of new numbers are a separate
-set (`ghcr.io/swarm-routing/anthocnet-ns3-campaign@sha256:...`, built by
+set (`ghcr.io/swarm-routing/anthocnet-dev@sha256:...`, `anthocnet-ns3-campaign` before #987, built by
 `campaign-image.yml`), recorded in each run's `##PROV##` line.
 
 No workflow on `main` pushes to `ghcr.io/danieljoppi/`, and none pulls from it
