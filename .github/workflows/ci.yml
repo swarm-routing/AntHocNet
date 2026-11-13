@@ -147,6 +147,20 @@ jobs:
       gate-version: ${{ inputs.ns3-gate-version || '3.48' }}
 
 
+  # The campaign images' 2-day retention (swarm-routing/.github#370, #987):
+  # anthocnet-dev versions older than 2 days that no committed file and no open
+  # swarm-routing/benchmarks pull request pins are deleted, on a push to main
+  # only. Not in the gate's needs: it never runs on a pull request or a merge
+  # group, and a failed sweep must not hold a merge.
+  dev-images:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    uses: swarm-routing/.github/.github/workflows/reusable-dev-image-cleanup.yml@main
+    with:
+      packages: anthocnet-dev
+
   # The one check to require in branch protection (#607): passes when every
   # job above passed or was skipped (docs-only PRs), fails on any failure or
   # cancellation.
