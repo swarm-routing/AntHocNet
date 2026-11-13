@@ -29,7 +29,7 @@ until the cap is reached and exits, and the label -> run id log makes it
 resumable.
 
 Usage:
-    campaign.py plan     PLAN                   # list the jobs; dispatches nothing
+    campaign.py plan     PLAN [--offline]       # list the jobs; dispatches nothing
     campaign.py dispatch PLAN --log RUNS.tsv --arm ARM [--cap 12] [--wait]
     campaign.py status   PLAN --log RUNS.tsv [--arm ARM]
     campaign.py collect  PLAN --log RUNS.tsv --out results/cells [--from DIR] [--arm ARM]
@@ -103,8 +103,18 @@ whose value depends on the cell, such as a radio range).
 Every job is dispatched to benchmark-cell.yml (#746). A cell naming
 paper-benchmark.yml or satellite-benchmark.yml (the committed v2.2.0-v2.4.0
 plans) is translated into the command line that workflow built from the same
-inputs, flag for flag, so an old plan re-runs the same cells. `plan` prints
-each job's image and command line.
+inputs, flag for flag, so an old plan re-runs the same cells.
+
+`plan` prints one line per job: the label, the ns-3 release it runs, its
+image, its source_sha and its command line (swarm-routing/ns3-tools#89, #155;
+the view `ns3-campaign plan` prints). A legacy job runs the release its cell's
+`version` names; an arm pinned to an image runs the release that image was
+built on, read from its labels (`io.github.swarm-routing.ns3-dev.tag`, else
+the `NS3_VERSION` its ns3-dev base sets) through the registry's anonymous pull
+API; `--offline` (or NS3_TOOL_OFFLINE=1) prints `?`. A cell whose arms run
+different releases gets a warning on stderr, the confound #867's image control
+had (3.42 legacy cells against a 3.48 image); arms that all print `?` are not
+compared.
 """
 
 import argparse
@@ -115,6 +125,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
 import zipfile
 
 REPO = os.environ.get("AHN_REPO", "swarm-routing/AntHocNet")
@@ -326,17 +337,87 @@ def runs_titled(title):
     return {r["id"] for r in data["workflow_runs"] if r.get("display_title") == title}
 
 
-def cmd_plan(plan, _a):
-    for label, _c, arm, wf, inp in jobs(plan):
+NS3_LABEL = "io.github.swarm-routing.ns3-dev.tag"
+
+
+def release(version):
+    """The ns-3 release of a version string ('3.42-opt', '3.48-optimized'), or None."""
+    m = re.match(r"(?:ns-)?(\d+\.\d+(?:\.\d+)?)", str(version or ""))
+    return m.group(1) if m else None
+
+
+def registry_config(image):
+    """An image's config (labels, env), read anonymously from its registry."""
+    ref, digest = image.split("@", 1)
+    host, repo = ref.split("/", 1)
+    with urllib.request.urlopen(f"https://{host}/token?scope=repository:{repo}:pull",
+                                timeout=20) as r:
+        token = json.load(r)["token"]
+
+    def get(path, accept):
+        req = urllib.request.Request(f"https://{host}/v2/{repo}/{path}",
+                                     headers={"Authorization": f"Bearer {token}",
+                                              "Accept": accept})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.load(r)
+
+    single = ("application/vnd.oci.image.manifest.v1+json,"
+              "application/vnd.docker.distribution.manifest.v2+json")
+    manifest = get(f"manifests/{digest}",
+                   "application/vnd.oci.image.index.v1+json,"
+                   "application/vnd.docker.distribution.manifest.list.v2+json," + single)
+    if "manifests" in manifest:  # an index: the linux/amd64 image
+        one = next(m for m in manifest["manifests"]
+                   if m.get("platform", {}).get("architecture") == "amd64")
+        manifest = get(f"manifests/{one['digest']}", single)
+    return get(f"blobs/{manifest['config']['digest']}", "*/*").get("config") or {}
+
+
+_NS3 = {}
+
+
+def image_ns3(image, offline=False):
+    """The ns-3 release an image was built on ('?' when it cannot be read)."""
+    if offline or not image or not IMAGE_RE.fullmatch(image):
+        return "?"
+    if image not in _NS3:
+        try:
+            config = registry_config(image)
+        except (OSError, ValueError, KeyError, StopIteration) as e:
+            print(f"warning: cannot read {image}'s labels: {e}", file=sys.stderr)
+            config = {}
+        tag = (config.get("Labels") or {}).get(NS3_LABEL, "")
+        env = dict(v.split("=", 1) for v in config.get("Env") or [] if "=" in v)
+        _NS3[image] = (release(tag.rsplit(":", 1)[-1]) or release(env.get("NS3_VERSION"))
+                       or "?")
+    return _NS3[image]
+
+
+def cmd_plan(plan, a):
+    releases = {}  # cell -> arm -> {ns-3 release}
+    for label, cell, arm, wf, inp in jobs(plan):
         harness, args, version = legacy_command(wf, inp, plan.get("program", PROGRAM))
         images = legacy_images(plan, arm)
-        image = (images.get(version, f"(no legacy image for {version})") if images else
-                 plan.get("pins", {}).get(arm, {}).get("image", plan.get("image"))
-                 or "(ns3-campaign)")
-        print(f"{label}\t{image}\t{harness} {args}")
+        if images:  # the legacy in-job build: the cell's version picks the image
+            image = images.get(version, f"(no legacy image for {version})")
+            ns3 = release(version) or "?"
+        else:
+            image = (plan.get("pins", {}).get(arm, {}).get("image", plan.get("image"))
+                     or "(ns3-campaign)")
+            ns3 = image_ns3(image, a.offline)
+        releases.setdefault(cell, {}).setdefault(arm, set()).add(ns3)
+        print(f"{label}\tns-3 {ns3}\t{image}\t{source_sha(plan, arm) or '-'}\t"
+              f"{harness} {args}")
     shas = sorted({source_sha(plan, arm) or "-" for arm in plan["arms"]})
     print(f"{len(jobs(plan))} job(s), cap {plan['cap']}, ref {plan['ref']}, "
           f"source_sha {', '.join(shas)}", file=sys.stderr)
+    for cell, arms in releases.items():
+        values = {arm: ", ".join(sorted(v)) for arm, v in arms.items()}
+        if len(set(values.values())) > 1:
+            shown = ", ".join(f"{arm} {v}" for arm, v in values.items())
+            unread = " (? = not read)" if "?" in values.values() else ""
+            print(f"warning: {cell}: the arms run different ns-3 releases ({shown}){unread}; "
+                  "a comparison of them also measures the release", file=sys.stderr)
 
 
 def cmd_dispatch(plan, a):
@@ -569,6 +650,10 @@ def main(argv=None):
         if name in ("dispatch", "status", "collect"):
             s.add_argument("--log", required=True)
             s.add_argument("--arm", help="only this arm's jobs (one log per arm)")
+        if name == "plan":
+            s.add_argument("--offline", action="store_true",
+                           default=os.environ.get("NS3_TOOL_OFFLINE") == "1",
+                           help="do not read an image's ns-3 release from its registry (prints ?)")
         if name == "status":
             s.add_argument("--brief", action="store_true",
                            help="list only the labels not yet successful")
