@@ -71,10 +71,14 @@ What they published stays pullable and is never rebuilt:
   and no workflow pulls them.
 - `ghcr.io/swarm-routing/ns3:<ver>` (`3.36`, `3.41`, `3.42`, `3.42-opt`, `3.47`,
   `3.48`) and `ghcr.io/swarm-routing/anthocnet-ns3:<ver>`, the same recipe
-  built after the transfer. `benchmark-cell.yml` without an `image` (the
-  legacy replay path) and `ci-ns3.yml`'s on-demand 3.36 leg pull
-  `ns3:<ver>` from here; same Dockerfile and ns-3 release as the
-  `danieljoppi` tags, but a later build, so not byte-identical to them.
+  built after the transfer: same Dockerfile and ns-3 release as the
+  `danieljoppi` tags, but a later build, so not byte-identical to them. No
+  published cell names them. **`ns3` is retired (#987, epic
+  swarm-routing/.github#370):** no workflow pulls it any more (the on-demand
+  3.36 leg of `ci-ns3.yml` is gone, and `benchmark-cell.yml`'s legacy path
+  needs `legacy_image` by digest), and the maintainer deletes the package, so
+  that `ghcr.io/swarm-routing/ns3` becomes ns3-containers' official base.
+  `anthocnet-ns3` stays frozen.
 - NS-2 images (`ns2`, `anthocnet-ns2` at `2.34` / `2.35`), built through
   v1.9.0; see [docs/ns2-support.md](../docs/ns2-support.md).
 
@@ -82,6 +86,9 @@ What they published stays pullable and is never rebuilt:
 
 Frozen means: never pushed again, never deleted, still pullable
 ([swarm-routing/.github#110](https://github.com/swarm-routing/.github/issues/110)).
+The one exception is `ghcr.io/swarm-routing/ns3`, retired and deleted by
+maintainer decision (#987): no published cell names its images, and its name
+goes to ns3-containers' official base. The digests below stay as the record.
 Digests read from the registry on 2026-11-11. The `##PROV##` line of a
 published cell names the image as `image=<repo>:<tag>` (cells before the
 control campaign) or by digest (the control campaign, #867).
@@ -93,9 +100,9 @@ control campaign) or by digest (the control campaign, #867).
 | `ghcr.io/danieljoppi/ns3:3.36` | `sha256:8d5ec48981810473613cbec96a0ee855a85827c57151ae89f08d96985d524bac` | none | the NS-3 3.36 compatibility leg, until this change |
 | `ghcr.io/danieljoppi/anthocnet-ns3:3.48` (`:latest`) | `sha256:404485ca9a37c1e49afab41bde6dd85ced3a236ef2dcdc28a3f3eeb79db626cb` | none | the release image of v2.x through v2.6.1 |
 | `ghcr.io/danieljoppi/anthocnet-ns3:3.36` | `sha256:0e29faac52f7aa30024d33a8a1465f307ab2691df8a814978ddc03d385dcc366` | none | the 3.36 release image |
-| `ghcr.io/swarm-routing/ns3:3.42-opt` | `sha256:735c52a7605d36f5a92fde95e17e29cbd77bc2529b31806be898749b41b81127` | none | the post-transfer rebuild (legacy replay path); not byte-identical to the `danieljoppi` tag |
-| `ghcr.io/swarm-routing/ns3:3.48` | `sha256:b1ff6fab12600beee57e453f468d72b49c7a967ff868e6aac4a143697760e690` | none | as above |
-| `ghcr.io/swarm-routing/ns3:3.36` | `sha256:938d9bb6ba74dba0af3e2dfc1af748621887ffc0f81a74bf859f1b2bd28c43e9` | none | the on-demand 3.36 leg of `ci-ns3.yml` |
+| `ghcr.io/swarm-routing/ns3:3.42-opt` | `sha256:735c52a7605d36f5a92fde95e17e29cbd77bc2529b31806be898749b41b81127` | none | the post-transfer rebuild, not byte-identical to the `danieljoppi` tag; retired with the package (#987) |
+| `ghcr.io/swarm-routing/ns3:3.48` | `sha256:b1ff6fab12600beee57e453f468d72b49c7a967ff868e6aac4a143697760e690` | none | as above; retired (#987) |
+| `ghcr.io/swarm-routing/ns3:3.36` | `sha256:938d9bb6ba74dba0af3e2dfc1af748621887ffc0f81a74bf859f1b2bd28c43e9` | none | the on-demand 3.36 leg of `ci-ns3.yml` until #987; retired |
 | `ghcr.io/swarm-routing/anthocnet-ns3:3.48` (`:latest`) | `sha256:0671d73f2092181a25f39cc5ae7f4f985a43bdfa2b5d09319513c9c3b2795edc` | none | the post-transfer rebuild |
 | `ghcr.io/swarm-routing/anthocnet-ns3:3.36` | `sha256:a6290ff0586fa35d91995e304094b6bd33e54664718f0791c03ef96ad144ca6e` | none | as above |
 

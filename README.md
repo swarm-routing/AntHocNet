@@ -56,8 +56,8 @@ on the [learn site](https://swarm-routing.github.io/AntHocNet/); the project's f
 [project page](https://swarm-routing.github.io/projects/AntHocNet/)).
 
 The repository does not bundle a copy of any simulator. You install AntHocNet
-onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.36+, with a
-`wscript` for older waf builds).
+onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.40+, the
+oldest release CI builds; a `wscript` is kept for older waf builds, untested).
 
 > [!NOTE]
 > **NS-2 support was removed in v2.0.0**
@@ -157,12 +157,12 @@ With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
 each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
 it into your bake checkout's `contrib/` directory, then run
 `./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
-Any ns-3 from 3.36 works. This builds AntHocNet alone, without the
+Any ns-3 from 3.40 works. This builds AntHocNet alone, without the
 comparison modules. The recipe is built end to end weekly
 ([bake.yml](.github/workflows/bake.yml)).
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
-release ns-3 supports (3.49 today); ns-3.36 to 3.48 on demand.
+release ns-3 supports (3.49 today); ns-3.40 to 3.48 on demand.
 Details in [ns3/README.md](ns3/README.md).
 
 The NS-3 module also ships `anthocnet-compare`, which benchmarks AntHocNet

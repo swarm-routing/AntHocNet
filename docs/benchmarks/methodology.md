@@ -155,11 +155,12 @@ passes both to every cell as `benchmark-cell.yml`'s inputs, which hand them to
 swarm-routing/.github's `reusable-benchmark-cell.yml` (#905). Each cell then
 runs in that image by digest, builds nothing (`./ns3 run --no-build`), and its `##PROV##` line names
 the image digest, the base digest and the modules' commits. Without `image`, a
-cell takes the older path, kept to replay published cells: a `version` input
-naming this repo's historical `ghcr.io/swarm-routing/ns3:<version>` image
-(`3.42-opt` was the campaign pin) and an in-job module build. The published
-cells name `ghcr.io/danieljoppi/ns3:<version>`, the same recipe built before
-the org transfer and now frozen ([`docker/README.md`](../../docker/README.md)).
+cell takes the older path, kept to replay published cells: `legacy_image`, the
+image a published cell names, by digest (`ghcr.io/danieljoppi/ns3@sha256:...`,
+the same recipe built before the org transfer and now frozen; `3.42-opt` was
+the campaign pin), and an in-job module build. Its fallback to this repo's
+`ghcr.io/swarm-routing/ns3:<version>` rebuilds, which no published cell names,
+was retired (#987; [`docker/README.md`](../../docker/README.md)).
 The move changes the toolchain (gcc-11/ns-3.42 to gcc-13/ns-3.48), and the
 control campaign [#867](https://github.com/swarm-routing/AntHocNet/issues/867)
 measured what that does ([results](v2.7.x-image-control.md)).
