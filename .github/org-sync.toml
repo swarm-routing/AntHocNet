@@ -4,7 +4,7 @@
 kind = "protocol"
 title = "AntHocNet"
 dual = ["core/", "tools/", "ns3/tools/", "docs/tools/"]
-cxx = "14"
+cxx = "23"
 zenodo_concept = "20981979"
 docs_url = "https://swarm-routing.github.io/AntHocNet/docs/"
 licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"

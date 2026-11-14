@@ -1,4 +1,4 @@
-# AntHocNet ns-3 module (ns-3.36+ CMake build).
+# AntHocNet ns-3 module (ns-3.46+ CMake build: the core is C++23).
 #
 # Installed into $(NS3DIR)/contrib/anthocnet by `make install-ns3`. The shared
 # algorithm core/ is copied alongside and compiled into the module; its headers
@@ -14,6 +14,9 @@ include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/include>)
 
 # Adapt to ns-3 API drift by release. NS3_VER is set by ns-3 (e.g. "3.41");
 # anything non-numeric (e.g. "3-dev") falls through to the modern defaults.
+# The floor is ns-3.46 (the core is C++23, swarm-routing/ns3-swarm-core#14), so
+# the branches below 3.46 no longer run anywhere supported; they are kept as
+# they were until a cleanup removes them with the macros they define.
 # These definitions are directory-scoped, so the library, the examples/
 # subdirectory and the test target all see a consistent API.
 #  - RouteInput callbacks went from by-value to const-reference in ns-3.37.

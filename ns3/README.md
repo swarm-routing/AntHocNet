@@ -5,8 +5,8 @@ A native, additive NS-3 module implementing AntHocNet as an
 [`core/`](../core). No core ns-3 files are edited — installing just drops the
 module (and `core/`) into `contrib/anthocnet`.
 
-Targets ns-3.36+ (CMake). A `wscript` is included for older waf-based ns-3
-(< 3.36).
+Targets ns-3.46+ (CMake): the core is C++23, the standard of ns-3.46 onward.
+The `wscript` for waf-based ns-3 (< 3.36) is kept from the waf era, unsupported.
 
 ## Layout
 
@@ -37,7 +37,7 @@ cd /path/to/ns-3-dev
 ./ns3 build
 ```
 
-`make doctor` checks that the tree is ns-3.36–3.49 with CMake, a C++17
+`make doctor` checks that the tree is ns-3.46–3.49 with CMake, a C++23
 compiler, Python and a writable `contrib/`, and reports what is installed. It
 ends with one machine-readable `##DOCTOR##` line (versioned, fields only ever
 added). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
@@ -301,8 +301,8 @@ ns3/
   examples/leo-walker.cc               moving Walker shell, GSL handover, failures
                                        (ns-3.48+, ADR-0022)
   test/anthocnet-test-suite.cc         header round-trip + multi-hop delivery
-  CMakeLists.txt                       ns-3.36+ build
-  wscript                              ns-3 < 3.36 build
+  CMakeLists.txt                       ns-3.46+ build
+  wscript                              ns-3 < 3.36 build (unsupported)
   aomdv/                               vendored AOMDV baseline module (#296;
                                        provenance + license in aomdv/README.md)
   adaptive/                            ARA, Termite and Q-routing, written from their

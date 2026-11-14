@@ -116,7 +116,7 @@ static_assert(fieldCount<Config>(0) == kListed,
               "add or remove the field in ANTHOCNET_CONFIG_FIELDS");
 
 // A double prints as the shortest decimal that reads back as the same value
-// (C++14 has no std::to_chars), so 0.7 prints as 0.7 and not
+// (written when the core was C++14, which has no std::to_chars), so 0.7 prints as 0.7 and not
 // 0.69999999999999996. A whole number keeps its ".0", so a double field reads
 // back as a float and an integer field as an int.
 std::string number(double v) {
