@@ -139,8 +139,8 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 - **NS-3 module** builds and tests on **the ns-3 release ns-3 supports** (its
   latest, 3.49 as of 2026-11) on every push/PR, inside the prebuilt
   `ghcr.io/swarm-routing/ns3-dev:latest` image (the gates, package checks and
-  kits on `ns3-dev:3.48` until the ns-3.49 AODV livelock is fixed, #843); older releases (3.42–3.48;
-  3.42 is the floor since the core moved to C++20, swarm-routing/ns3-swarm-core#14) run on demand through ci.yml's manual
+  kits on `ns3-dev:3.48` until the ns-3.49 AODV livelock is fixed, #843); older releases (3.46–3.48;
+  3.46 is the floor since the core moved to C++23, swarm-routing/ns3-swarm-core#14) run on demand through ci.yml's manual
   `workflow_dispatch`, running the module test suite and an **asserted end-to-end delivery
   smoke** — AntHocNet must deliver a non-zero PDR in a small connected scenario.
 - The **codec decode path is fuzzed** (libFuzzer, 60 s, `codec-fuzz` job).

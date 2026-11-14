@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       ns3-versions:
-        description: 'On demand: JSON list of older ns-3 releases to build and test, e.g. ["3.42","3.46"]; 3.42 is the floor, the core is C++20 (empty = the release ns-3 supports)'
+        description: 'On demand: JSON list of older ns-3 releases to build and test, e.g. ["3.46","3.48"]; 3.46 is the floor, the core is C++23 (empty = the release ns-3 supports)'
         required: false
         default: ''
       ns3-gate-version:

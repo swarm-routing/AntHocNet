@@ -16,7 +16,7 @@
 -->
 <configuration>
   <modules>
-    <module name="anthocnet" type="ns-contrib" min_version="ns-3.42">
+    <module name="anthocnet" type="ns-contrib" min_version="ns-3.36">
       <source type="archive">
         <attribute name="url" value="@URL@"/>
         <attribute name="extract_directory" value="anthocnet"/>

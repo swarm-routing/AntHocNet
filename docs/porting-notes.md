@@ -141,8 +141,9 @@ change bumps `kWireVersion`.**
 
 ## Version caveats
 
-- The core uses C++20 (swarm-routing/ns3-swarm-core#14 Q1, accepted 2026-11-14:
-  swarm-core's `core/` is C++20). Building it alone needs CMake 3.12+ and a C++20
-  compiler (GCC 11+ or Clang 14+).
-- NS-3 module targets 3.42+ (CMake, C++20); the `wscript` from waf-era ns-3 is
+- The core uses C++23: it follows the C++ standard of the ns-3 release we
+  support (ns-3's `CMAKE_CXX_STANDARD_MINIMUM`, 23 from ns-3.46; maintainer
+  decision 2026-11-14, swarm-routing/ns3-swarm-core#14). Building it alone needs
+  CMake 3.20+ and a C++23 compiler (GCC 11+ or Clang 14+).
+- NS-3 module targets 3.46+ (CMake, C++23); the `wscript` from waf-era ns-3 is
   unsupported.

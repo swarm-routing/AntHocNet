@@ -26,11 +26,11 @@ warn() { say warn "$1"; warns=$((warns + 1)); }
 fail() { say FAIL "$1"; fails=$((fails + 1)); }
 
 # Tested range: automatic CI runs the ns-3 release ns-3 supports (its latest,
-# 3.49 as of 2026-11); 3.42 to the one before it can be re-checked on demand
-# (ci.yml workflow_dispatch `ns3-versions`). 3.42 is the floor: the core is
-# C++20 (swarm-routing/ns3-swarm-core#14). Raise MAX_MINOR when CI moves to a
+# 3.49 as of 2026-11); 3.46 to the one before it can be re-checked on demand
+# (ci.yml workflow_dispatch `ns3-versions`). 3.46 is the floor: the core is
+# C++23, ns-3's own standard from 3.46 (swarm-routing/ns3-swarm-core#14). Raise MAX_MINOR when CI moves to a
 # new ns-3 release.
-MIN_MINOR=42
+MIN_MINOR=46
 MAX_MINOR=49
 
 ns3=unknown cmake=missing cxx=missing python=missing contrib=missing
@@ -56,7 +56,7 @@ else
             if [ "$minor" -lt 36 ]; then
                 fail "ns-3 $ns3 is waf-based; the module needs ns-3.$MIN_MINOR+ (CMake)"
             elif [ "$minor" -lt "$MIN_MINOR" ]; then
-                fail "ns-3 $ns3 is older than 3.$MIN_MINOR; the module needs ns-3.$MIN_MINOR+ (the core is C++20)"
+                fail "ns-3 $ns3 is older than 3.$MIN_MINOR; the module needs ns-3.$MIN_MINOR+ (the core is C++23)"
             elif [ "$minor" -gt "$MAX_MINOR" ]; then
                 warn "ns-3 $ns3 is newer than the tested range 3.$MIN_MINOR-3.$MAX_MINOR"
             else
@@ -122,7 +122,7 @@ if command -v "$CXXBIN" >/dev/null 2>&1; then
     esac
     major=$(printf '%s' "$num" | cut -d. -f1)
     if [ -n "$major" ] && [ "$major" -lt "$need" ]; then
-        warn "C++ compiler $cxx: the core needs C++20 (g++ 11+ or clang 14+)"
+        warn "C++ compiler $cxx: the core needs C++23 (g++ 11+ or clang 14+)"
     else
         ok "C++ compiler $cxx"
     fi

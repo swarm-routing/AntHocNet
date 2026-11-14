@@ -13,7 +13,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20981979.svg)](https://doi.org/10.5281/zenodo.20981979)
 [![Cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff)
 [![Licence: GPL-2.0, core and tools MIT OR GPL-2.0](https://img.shields.io/badge/licence-GPL--2.0%2C%20core%20and%20tools%20MIT%20OR%20GPL--2.0-blue)](LICENSING.md)
-[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue?logo=cplusplus)](AGENTS.md)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue?logo=cplusplus)](AGENTS.md)
 [![Runs on ns-3](https://img.shields.io/badge/runs%20on-ns--3-informational)](https://www.nsnam.org)
 [![Built on: ns3-dev](https://img.shields.io/badge/built%20on-ns3--dev%20image-blue?logo=docker)](https://github.com/orgs/swarm-routing/packages/container/package/ns3-dev)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org)
@@ -57,9 +57,9 @@ on the [learn site](https://swarm-routing.github.io/AntHocNet/); the project's f
 [project page](https://swarm-routing.github.io/projects/AntHocNet/)).
 
 The repository does not bundle a copy of any simulator. You install AntHocNet
-onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.42+: the core
-is C++20, swarm-routing/ns3-swarm-core#14; a `wscript` from the waf era is kept,
-unsupported).
+onto *your own* NS-3 tree as an additive `contrib/` module (ns-3.46+: the core
+is C++23, the standard of the ns-3 release we support; a `wscript` from the
+waf era is kept, unsupported).
 
 > [!NOTE]
 > **NS-2 support was removed in v2.0.0**
@@ -138,7 +138,7 @@ make test
 ```
 
 (Builds `core/` with CMake and runs the ctest suite — no simulator needed. The
-core is C++20: it needs CMake 3.12+ and a C++20 compiler, GCC 11+ or Clang 14+.)
+core is C++23: it needs CMake 3.20+ and a C++23 compiler, GCC 11+ or Clang 14+.)
 
 ### Install on NS-3
 
@@ -160,14 +160,16 @@ With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
 each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
 it into your bake checkout's `contrib/` directory, then run
 `./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
-The module builds on any ns-3 from 3.42, but bake only offers the releases
-its own catalogue has: up to ns-3.44 at the bake revision
-[bake.yml](.github/workflows/bake.yml) pins. This builds AntHocNet alone,
+The module's floor is ns-3.46 (the core is C++23), but bake only offers the
+releases its own catalogue has: up to ns-3.44 at the bake revision
+[bake.yml](.github/workflows/bake.yml) pins, bake's newest. The recipe still
+builds there while the core's code stays within C++20, and stops once it uses
+a C++23 feature, unless bake ships ns-3.46 or newer first. This builds AntHocNet alone,
 without the comparison modules. bake.yml builds the recipe end to end
 (ns-3.42) on packaging changes and on demand; it has no schedule (#864).
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
-release ns-3 supports (3.49 today); ns-3.42 to 3.48 on demand.
+release ns-3 supports (3.49 today); ns-3.46 to 3.48 on demand.
 Details in [ns3/README.md](ns3/README.md).
 
 The NS-3 module also ships `anthocnet-compare`, which benchmarks AntHocNet

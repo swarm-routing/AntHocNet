@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.20)
 # Keep VERSION in sync with the top-level VERSION file (the release workflow
 # checks the git tag against it).
 project(anthocnet_core VERSION 2.7.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -22,7 +22,7 @@ if(ANTHOCNET_COVERAGE)
   # -O0 keeps line/branch attribution honest (inlining smears it); the options
   # are appended after CMAKE_CXX_FLAGS_<CONFIG>, so this wins over Release's -O3.
   add_compile_options(--coverage -O0 -g)
-  # add_link_options() needs CMake 3.13 and this project declares 3.12;
+  # add_link_options() needs CMake 3.13 and this project declares 3.20;
   # link_libraries() is directory-scoped, propagates into tests/, and CMake
   # passes a leading-dash entry through to the link line verbatim.
   link_libraries(--coverage)
