@@ -11,14 +11,15 @@
 # for the layout), then archiving its contrib/. Deterministic: sorted entries,
 # fixed owner and mtime, so two builds of one commit are byte-identical.
 #
-# The same run also writes the package that stands alone (#770), for users who
-# want the adaptive arms without AntHocNet:
+# The same run also writes the package that stands alone (#770):
 #
 #   adaptive-<ver>.tar.gz        contrib/adaptive (ARA, Termite, Q-routing, BeeAdHoc)
 #
 # It unpacks into contrib/ with its README, the licence and an install note,
 # builds alone, and registers its arms with routing-bench when both are
-# installed. It carries the AntHocNet release version. The harness itself,
+# installed. It is no longer a release asset (#1010; v2.7.0 was the only one
+# to ship it): tools/checks/check-packages.sh builds it to check that the
+# module stands alone, until it moves to swarm-routing/ns3-tools#34. The harness itself,
 # routing-bench, is swarm-routing/ns3-tools' release asset
 # (routing-bench-<ver>.tar.gz; ns3-tools#29): the drop-in tarball carries the
 # version ns3-tools.lock pins, as `make install-ns3` lays it out.
