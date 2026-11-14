@@ -12,8 +12,10 @@ name: CI / ns-3
 # `gate-version` leg. Older ns-3 releases run only on demand: ci.yml's manual
 # workflow_dispatch passes `versions` (e.g. ["3.42","3.46"]); their images are
 # ns3-dev:<ver>, which swarm-routing/ns3-containers builds for 3.40 to 3.49 (on
-# demand for the older ones). 3.40 is the floor: the 3.36 leg, the last user of
-# this repo's frozen ghcr.io/swarm-routing/ns3 package, was retired (#987).
+# demand for the older ones). 3.42 is the floor: the core is C++20
+# (swarm-routing/ns3-swarm-core#14), 3.40 builds at C++17 and 3.41 is below
+# swarm-core's floor. The 3.36 leg, the last user of this repo's frozen
+# ghcr.io/swarm-routing/ns3 package, was retired (#987).
 # Published numbers do not run here: they pin an ns3-dev digest and a campaign
 # image digest (campaign-image.yml), never a rolling tag.
 #

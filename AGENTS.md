@@ -120,7 +120,8 @@ Read [`docs/development.md`](docs/development.md) before:
 
 ## Conventions
 
-- C++14 for `core/` (aggregate init with default member initializers).
+- C++20 for `core/` (swarm-routing/ns3-swarm-core#14 Q1, accepted 2026-11-14:
+  swarm-core's `core/` is C++20); the ns-3 module needs ns-3.42+.
 - Namespace `anthocnet::core` for shared code.
 <!-- org-sync:begin conventions -->
 - Issues follow the org taxonomy ([CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues), from

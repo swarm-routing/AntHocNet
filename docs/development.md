@@ -55,10 +55,12 @@ results.
   `ghcr.io/swarm-routing/ns3-dev:latest`, built by
   [`swarm-routing/ns3-containers`](https://github.com/swarm-routing/ns3-containers) and moved to each new
   ns-3 release (ns-3 maintains only its latest; org CONTRIBUTING invariant 7). Older releases
-  (3.40–3.48, the `ns3-dev` images ns3-containers builds) run **on demand**: `ci.yml`
+  (3.42–3.48) run **on demand**: `ci.yml`
   `workflow_dispatch` with `ns3-versions` (e.g. `["3.42","3.46"]`) and optionally
-  `ns3-gate-version`. 3.40 is the floor: the 3.36 leg was retired with this repo's frozen
-  `ghcr.io/swarm-routing/ns3` package (#987). **Temporary exception (#843, option A):** ns-3.49's stock AODV
+  `ns3-gate-version`. 3.42 is the floor: the core is C++20 (swarm-routing/ns3-swarm-core#14
+  Q1, accepted 2026-11-14), the standard swarm-core's glue already needs; 3.40 builds at
+  C++17 and 3.41 is below swarm-core's floor. The 3.36 leg was retired earlier with this
+  repo's frozen `ghcr.io/swarm-routing/ns3` package (#987). **Temporary exception (#843, option A):** ns-3.49's stock AODV
   and the vendored AOMDV livelock, and nearly every gate, the package checks and the kits run
   an AODV-family arm, so those run on `ns3-dev:3.48` (the `gate-version` leg) until a fixed
   ns-3 release reaches `latest`; the `latest` leg keeps the build, unit tests and the

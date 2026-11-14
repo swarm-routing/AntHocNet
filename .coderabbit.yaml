@@ -77,7 +77,7 @@ reviews:
         Golden rules 1, 3, 5, 7, 8: no simulator header (ns-3, emscripten) anywhere
         in core/; randomness only through IRng and time only through IClock, never
         rand() or a clock read; the visited path and the (src,seq) history stay
-        capped by Config::maxPathLength / maxHistory; C++14. A core logic change
+        capped by Config::maxPathLength / maxHistory; C++20. A core logic change
         comes with a unit test in core/tests/. A new mechanism ships behind a
         default-off Config switch and leaves the default path byte-identical
         (ADR-0019, ADR-0020); never a per-network preset.
