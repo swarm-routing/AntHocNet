@@ -282,10 +282,11 @@ vendored comparator modules move into ns3-tools after its 1.0
 **Transition.** AntHocNet consumes the ns3-tools release since #927
 (`ns3-tools.lock`, `tools/ns3_tools.py`;
 [ns3-tools#29](https://github.com/swarm-routing/ns3-tools/issues/29)), so
-`routing-bench-<ver>.tar.gz` is no longer cut here. Until the release
-workflow drops the `adaptive` asset as well, `tools/release/module-tarball.sh`
-still cuts `adaptive-<ver>.tar.gz` and `ci-ns3.yml`'s `packages` job still
-checks it. The module-and-registration boundary this ADR decides does not
+`routing-bench-<ver>.tar.gz` is no longer cut here. The release workflow
+dropped the `adaptive-<ver>.tar.gz` asset after v2.7.0 (#1010: one package,
+one owner); `tools/release/module-tarball.sh` still cuts it, so that
+`ci-ns3.yml`'s `packages` job keeps checking that the module builds on its
+own until it moves to ns3-tools. The module-and-registration boundary this ADR decides does not
 change.
 
 ## Consequences

@@ -68,9 +68,6 @@ gh attestation verify anthocnet-X.Y.Z.zip --repo swarm-routing/AntHocNet \
   --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 gh attestation verify anthocnet-ns3-modules-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
   --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
-# from v2.7.0, the standalone adaptive-arms package (#770):
-gh attestation verify adaptive-X.Y.Z.tar.gz --repo swarm-routing/AntHocNet \
-  --signer-workflow swarm-routing/AntHocNet/.github/workflows/release.yml
 ```
 
 The comparison harness (`routing-bench-<ver>.tar.gz`) and the `ns3_tool`

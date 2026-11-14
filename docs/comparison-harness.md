@@ -257,8 +257,10 @@ two vendored arms once compiled, passed CI and forwarded nothing
   `gpsr`, `oracle` and `adaptive`. Keep `routing-bench` and drop the rest to
   run the harness on the stock arms alone, or add your own arm module beside
   it.
-- `adaptive-<ver>.tar.gz` is the `adaptive` module on its own, for any ns-3
-  ≥ 3.36 tree. Install it beside `routing-bench` to get its arms in
+- The `adaptive` module is not released on its own (v2.7.0 was the only
+  release with an `adaptive-<ver>.tar.gz`; dropped in
+  [#1010](https://github.com/swarm-routing/AntHocNet/issues/1010)): take it
+  from the module tarball above, beside `routing-bench`, to get its arms in
   `routing-compare`, or use `AdaptiveHelper` in your own program.
 
 **Planned:** the bring-your-own-protocol tutorial with an arm template is
