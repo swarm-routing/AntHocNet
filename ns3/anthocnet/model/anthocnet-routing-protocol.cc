@@ -1270,8 +1270,8 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     // Every send goes through one of the base's control sockets:
     if (dest == Ipv4Address("255.255.255.255")) {
         // a broadcast: on each interface in device order (#362), whatever the
-        // order the interfaces came up in, and on each even when two share a
-        // subnet (BroadcastControlOn, swarm-routing/ns3-swarm-core#166).
+        // order the interfaces came up in (BroadcastControlOn,
+        // swarm-routing/ns3-swarm-core#166).
         for (const auto& kv : m_ifaces) {
             BroadcastControlOn(packet->Copy(), kv.second.interface);
         }
