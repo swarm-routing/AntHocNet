@@ -135,11 +135,18 @@ jobs:
         # a file outside --root); the tracefiles are then renamed to
         # checkout-relative real paths, so a core file compiled in both builds
         # is merged into one entry.
+        # The branches gcov adds for exception edges, and those gcovr's
+        # heuristic judges unreachable, are not counted, as reusable-ns3-ci.yml's
+        # `coverage-branch-filter` does (swarm-routing/.github#446, decision of
+        # 2026-11-15 in swarm-routing/.github#425; CONTRIBUTING "Quality gates").
+        # gcovr applies them when it reads the gcov data, not when it merges
+        # tracefiles, so they go on the two reading calls.
         run: |
           filters=(--filter 'core/src/' --filter 'core/include/'
                    --filter 'ns3/anthocnet/model/' --filter 'ns3/anthocnet/helper/')
-          gcovr --root . core/build-coverage "${filters[@]}" --json /tmp/cov-core.json
-          gcovr --root /opt/ns-3 /opt/ns-3/cmake-cache "${filters[@]}" --json /tmp/cov-ns3.json
+          branch_args=(--exclude-throw-branches --exclude-unreachable-branches)
+          gcovr --root . core/build-coverage "${filters[@]}" "${branch_args[@]}" --json /tmp/cov-core.json
+          gcovr --root /opt/ns-3 /opt/ns-3/cmake-cache "${filters[@]}" "${branch_args[@]}" --json /tmp/cov-ns3.json
           python3 - /tmp/cov-core.json=. /tmp/cov-ns3.json=/opt/ns-3 <<'EOF'
           import json, os, sys
           for arg in sys.argv[1:]:
