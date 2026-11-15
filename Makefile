@@ -22,11 +22,12 @@
 # verifies the names, the recipes are this repository's own.
 NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 
-# swarm-core's core/ at the commit core/CMakeLists.txt pins (one SHA in every
-# place, checked by `swarm-core / pin`); SWARM_CORE_DIR=<checkout>/core builds
-# against a local swarm-core instead (offline).
-SWARM_CORE_REF ?= 2987cfbc202596c657e58f7be6a6bd09112fe2a8
-CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release -DSWARM_CORE_REF=$(SWARM_CORE_REF) \
+# swarm-core's core/ comes from the release swarm-core.lock names, which
+# core/CMakeLists.txt reads; SWARM_CORE_REF is that release's tag, as every
+# place that names swarm-core must (checked by `swarm-core / pin`).
+# SWARM_CORE_DIR=<checkout>/core builds against a local swarm-core instead.
+SWARM_CORE_REF ?= v0.4.0
+CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release \
   -DSWARM_CORE_DIR=$(if $(SWARM_CORE_DIR),$(abspath $(SWARM_CORE_DIR)))
 
 help: ## list the targets

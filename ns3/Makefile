@@ -73,8 +73,8 @@ install: require-ns3dir
 	cp $(CORE)/include/anthocnet/core/*.h "$(DEST)/core/include/anthocnet/core/"
 	cp $(CORE)/src/*.cpp "$(DEST)/core/src/"
 	cp $(CORE)/LICENSE "$(DEST)/core/"   # MIT OR GPL-2.0-only (ADR-0028)
-	# swarm-core's core/ at the commit core/CMakeLists.txt pins (SWARM_CORE_REF,
-	# swarm-routing/ns3-swarm-core#14): the core's headers include it, so the
+	# swarm-core's core/ at the release swarm-core.lock names
+	# (swarm-routing/ns3-swarm-core#14): the core's headers include it, so the
 	# module carries it beside core/ as it carries core/ (MIT OR GPL-2.0-only,
 	# its LICENSE). tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core
 	# uses a local one.

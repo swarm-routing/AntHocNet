@@ -1,0 +1,14 @@
+# The swarm-core release this repository builds on (swarm-routing/ns3-swarm-core#134):
+# core/CMakeLists.txt fetches its tarball by URL and checks it against the
+# SHA256 below, read from the release's SHA256SUMS. The Makefile and every
+# workflow name the same release (the tag, or in benchmark-cell.yml the
+# commit it names). Never edit it by hand: org-bot's swarm-core-pin task opens
+# the bump PR when a newer release is out (swarm-routing/.github
+# tools/checks/check-swarm-core-pin.py --bump, which writes it with
+# tools/checks/release_lock.py), and the `swarm-core / pin` check verifies it.
+SWARM_CORE_REPO=swarm-routing/ns3-swarm-core
+SWARM_CORE_TAG=v0.4.0
+SWARM_CORE_COMMIT=111a67385fbcdaecff5efa49cbdd66b20a355a09
+SWARM_CORE_VERSION=0.4.0
+SWARM_CORE_ASSET=swarm-core-0.4.0.tar.gz
+SWARM_CORE_SHA256=28df546260152d6dae3440d6c367821b525ab40d6bf49050b8a1c75967e393ea
