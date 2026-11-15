@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+# SPDX-License-Identifier: MIT OR GPL-2.0-only
+#
+# find_package(anthocnet-core CONFIG REQUIRED): the imported static library
+# anthocnet::core, which links swarm::core from an installed swarm-core package.
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+# the swarm-core this package was built against (the core holds its types by
+# value; swarm-core accepts its own 0.y only before 1.0)
+find_dependency(swarm-core @swarm-core_VERSION@ CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/anthocnet-coreTargets.cmake")
+check_required_components(anthocnet-core)
