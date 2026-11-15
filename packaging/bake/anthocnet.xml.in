@@ -7,16 +7,20 @@
   builds it against a served tarball. Usage, from a bake checkout:
 
     mkdir -p contrib && cp anthocnet-<version>.bakeconf.xml contrib/
-    ./bake.py configure -e ns-3.42 -e anthocnet
+    ./bake.py configure -e ns-3.46 -e anthocnet
     ./bake.py download && ./bake.py build
 
   The source is the release's drop-in module tarball. It also carries the
   comparison modules (aomdv, gpsr, oracle); extract_directory keeps only
   contrib/anthocnet, the build its README calls "AntHocNet alone".
+
+  The floor is ns-3.46 (the core is C++23; #1026): bake's catalogue has no
+  release that new yet (ns-3.44 at bake 0eaa7058), so the recipe offers none
+  until it does.
 -->
 <configuration>
   <modules>
-    <module name="anthocnet" type="ns-contrib" min_version="ns-3.36">
+    <module name="anthocnet" type="ns-contrib" min_version="ns-3.46">
       <source type="archive">
         <attribute name="url" value="@URL@"/>
         <attribute name="extract_directory" value="anthocnet"/>

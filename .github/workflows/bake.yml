@@ -16,10 +16,16 @@ name: Bake
 # below (checked 2026-11-10). A weekly ns-3.42 build was an automatic run on an
 # old release. Bring the schedule back on the supported release once bake
 # ships its components.
+#
+# Paused (#1026): the module's floor is ns-3.46 (the core is C++23, and the
+# swarm-core module it links needs a C++23 tree: #1019), below which no bake
+# release exists. A build on ns-3.42 stops in the ns-3 build (Bake run
+# 43723912416, S10a of #1019). So it runs on demand only, and the first step
+# checks bake's catalogue: until it has $NS, the run ends green with a notice
+# and builds nothing. Bump BAKE_SHA to a bake revision with ns-3.46 or newer,
+# and the pull_request trigger can come back.
 on:
   workflow_dispatch:
-  pull_request:
-    paths: ['packaging/bake/**', 'tools/release/module-tarball.sh', '.github/workflows/bake.yml']
 
 permissions:
   contents: read
@@ -30,13 +36,13 @@ concurrency:
 
 jobs:
   bake:
-    name: bake configure + download + build (ns-3.42)
+    name: bake configure + download + build (ns-3.46)
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     env:
       # bake has no tagged releases; pin the commit the recipe was tested with.
       BAKE_SHA: 0eaa70588c9bdba17d5054b92fcc4b6df3f1e93b
-      NS: ns-3.42
+      NS: ns-3.46
     steps:
       - name: Harden the runner (audit egress)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -52,23 +58,37 @@ jobs:
         run: |
           git clone -q https://gitlab.com/nsnam/bake.git "$RUNNER_TEMP/bake"
           git -C "$RUNNER_TEMP/bake" checkout -q "$BAKE_SHA"
+      - name: Does bake's catalogue have the floor? (#1026)
+        id: catalogue
+        run: |
+          if grep -q "<module name=\"$NS\"" "$RUNNER_TEMP/bake/bakeconf.xml"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::bake at $BAKE_SHA has no $NS (the module's floor, #1026); nothing to build. Bump BAKE_SHA once bake ships it."
+          fi
       - name: Install the recipe
+        if: steps.catalogue.outputs.ready == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/bake/contrib"
           sed -e 's|@URL@|http://127.0.0.1:8765/anthocnet-ns3-modules-0.0.0-bake.tar.gz|' \
               -e 's|@VERSION@|0.0.0-bake|' packaging/bake/anthocnet.xml.in \
               > "$RUNNER_TEMP/bake/contrib/anthocnet-0.0.0-bake.xml"
       - name: bake configure
+        if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
         run: ./bake.py configure -e "$NS" -e anthocnet
       - name: bake download
+        if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
         run: |
           ./bake.py download
           test -f "source/$NS/contrib/anthocnet/CMakeLists.txt"
       - name: bake build
+        if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
         run: ./bake.py build -j "$(nproc)"
       - name: The module's test suite, in the bake-built tree
+        if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake/source/${{ env.NS }}
         run: ./test.py --no-build -s anthocnet

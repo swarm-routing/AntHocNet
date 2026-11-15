@@ -472,9 +472,10 @@ jobs:
             no checkout needed, `tar -xzf anthocnet-ns3-modules-${{ env.VER }}.tar.gz -C /path/to/ns-3/contrib`,
             then configure and build ns-3. The same files are on the generated
             `ns3-module` branch. SHA-256: `${{ env.MOD_SHA256 }}`.
-            **With bake** (ns-3's installer): copy `anthocnet-${{ env.VER }}.bakeconf.xml`
+            **With bake** (ns-3's installer), once bake's catalogue ships ns-3.46, the
+            module's floor (#1026): copy `anthocnet-${{ env.VER }}.bakeconf.xml`
             into your bake checkout's `contrib/`, then
-            `./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
+            `./bake.py configure -e ns-3.46 -e anthocnet && ./bake.py download && ./bake.py build`.
 
             **Comparison harness and readers**: built with ${{ env.NS3_TOOLS_PIN }},
             the version `ns3-tools.lock` pins. The harness (`routing-bench`) and the benchmark
