@@ -144,8 +144,9 @@ Without a checkout: download `anthocnet-ns3-modules-<version>.tar.gz` from the
 build as above. The same files are on the generated `ns3-module` branch.
 
 With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
-each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`, a
-recipe for `./bake.py configure -e ns-3.46 -e anthocnet && ./bake.py download && ./bake.py build`.
+each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
+it into your bake checkout's `contrib/` directory, then run
+`./bake.py configure -e ns-3.46 -e anthocnet && ./bake.py download && ./bake.py build`.
 **Not usable yet:** the module's floor is ns-3.46 (the core is C++23), and
 bake's own catalogue stops at ns-3.44 (at the bake revision
 [bake.yml](.github/workflows/bake.yml) pins, bake's newest; #1026). The recipe
