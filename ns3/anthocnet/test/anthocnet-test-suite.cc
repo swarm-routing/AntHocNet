@@ -556,77 +556,90 @@ public:
     }
 };
 
-// #918: the pending queue's in-place DequeueAll/Purge. Every backward ant at
-// every node flushes its origin, so a flush for a destination with nothing
-// queued must leave the queue exactly as it was; a real flush hands out that
-// destination's packets in queue order and keeps the others' order; an aged
-// entry is still purged first, through its error callback.
+// #918: the pending queue's in-place flush, now swarm-core's DeferredPacketQueue
+// configured as AntHocNet's (ConfigurePendingQueue; S10b of #1019). Every
+// backward ant at every node flushes its origin, so a flush for a destination
+// with nothing queued must leave the queue exactly as it was; a real flush
+// hands out that destination's packets in queue order and keeps the others'
+// order; an aged entry is still purged first, through its error callback, and
+// counted against its hold reason.
 class RequestQueueInPlaceTestCase : public TestCase {
 public:
     RequestQueueInPlaceTestCase()
         : TestCase("Pending queue: in-place, order-preserving flush (#918)") {}
 
     void DoRun() override {
-        using ns3::anthocnet::QueueEntry;
-        using ns3::anthocnet::RequestQueue;
-        RequestQueue q(64, Seconds(10));
+        using ns3::DeferredPacket;
+        using ns3::DeferredPacketQueue;
+        Ptr<DeferredPacketQueue> q = CreateObject<DeferredPacketQueue>();
+        ns3::anthocnet::ConfigurePendingQueue(*q, Seconds(10), Seconds(0.2), Seconds(0));
         const char* dsts[] = {"10.0.0.1", "10.0.0.2", "10.0.0.1", "10.0.0.3", "10.0.0.2"};
         std::vector<uint64_t> uids;
         for (const char* d : dsts) {
-            QueueEntry e;
+            DeferredPacket e;
             e.packet = Create<Packet>(8);
             e.header.SetDestination(Ipv4Address(d));
             uids.push_back(e.packet->GetUid());
-            q.Enqueue(e);
+            q->Enqueue(e);
         }
 
         // No match: nothing out, nothing moved.
-        std::vector<QueueEntry> out;
-        q.DequeueAll(Ipv4Address("10.0.0.9"), out);
+        std::vector<DeferredPacket> out = q->Release(Ipv4Address("10.0.0.9"));
         NS_TEST_ASSERT_MSG_EQ(out.size(), 0u, "a flush with no match dequeues nothing");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 5u, "a flush with no match keeps every entry");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 5u, "a flush with no match keeps every entry");
 
         // A match: that destination's packets, in queue order.
-        q.DequeueAll(Ipv4Address("10.0.0.1"), out);
+        out = q->Release(Ipv4Address("10.0.0.1"));
         NS_TEST_ASSERT_MSG_EQ(out.size(), 2u, "both packets for 10.0.0.1");
         NS_TEST_ASSERT_MSG_EQ(out[0].packet->GetUid(), uids[0], "queue order kept (1st)");
         NS_TEST_ASSERT_MSG_EQ(out[1].packet->GetUid(), uids[2], "queue order kept (2nd)");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 3u, "the other three stay");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 3u, "the other three stay");
 
         // The rest kept their order: drain them one destination at a time.
-        std::vector<QueueEntry> rest;
-        q.DequeueAll(Ipv4Address("10.0.0.2"), rest);
-        q.DequeueAll(Ipv4Address("10.0.0.3"), rest);
+        std::vector<DeferredPacket> rest = q->Release(Ipv4Address("10.0.0.2"));
+        for (DeferredPacket& e : q->Release(Ipv4Address("10.0.0.3"))) rest.push_back(e);
         NS_TEST_ASSERT_MSG_EQ(rest.size(), 3u, "three left");
         NS_TEST_ASSERT_MSG_EQ(rest[0].packet->GetUid(), uids[1], "kept order (10.0.0.2 first)");
         NS_TEST_ASSERT_MSG_EQ(rest[1].packet->GetUid(), uids[4], "kept order (10.0.0.2 second)");
         NS_TEST_ASSERT_MSG_EQ(rest[2].packet->GetUid(), uids[3], "kept order (10.0.0.3)");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 0u, "empty");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 0u, "empty");
 
         // Aging: an expired entry leaves through its error callback on the
-        // next flush, even one that matches nothing; a live one stays.
+        // next flush, even one that matches nothing; a live one stays. A
+        // reconvergence hold also expires at its cap (0.2 s here).
         m_errors = 0;
-        RequestQueue aging(64, Seconds(1));
-        QueueEntry old;
+        Ptr<DeferredPacketQueue> aging = CreateObject<DeferredPacketQueue>();
+        ns3::anthocnet::ConfigurePendingQueue(*aging, Seconds(1), Seconds(0.2), Seconds(0));
+        DeferredPacket old;
         old.packet = Create<Packet>(8);
         old.header.SetDestination(Ipv4Address("10.0.0.1"));
         old.ecb = MakeCallback(&RequestQueueInPlaceTestCase::OnError, this);
-        aging.Enqueue(old);
+        aging->Enqueue(old);
+        DeferredPacket reconv = old;
+        reconv.header.SetDestination(Ipv4Address("10.0.0.4"));
+        reconv.holdClass = ns3::anthocnet::HOLD_RECONV;
+        aging->Enqueue(reconv);
         Simulator::Schedule(Seconds(0.5), [&aging]() {
-            QueueEntry young;
+            DeferredPacket young;
             young.packet = Create<Packet>(8);
             young.header.SetDestination(Ipv4Address("10.0.0.2"));
-            aging.Enqueue(young);
+            aging->Enqueue(young);
         });
-        std::vector<QueueEntry> none;
+        std::vector<DeferredPacket> none;
         Simulator::Schedule(Seconds(1.2),
-                            [&aging, &none]() { aging.DequeueAll(Ipv4Address("10.0.0.9"), none); });
+                            [&aging, &none]() { none = aging->Release(Ipv4Address("10.0.0.9")); });
         Simulator::Run();
         Simulator::Destroy();
         NS_TEST_ASSERT_MSG_EQ(none.size(), 0u, "nothing matched");
-        NS_TEST_ASSERT_MSG_EQ(m_errors, 1u, "the aged entry was purged through its ecb");
-        NS_TEST_ASSERT_MSG_EQ(aging.Stats().droppedCount[ns3::anthocnet::HOLD_SETUP], 1u,
-                              "and counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ(m_errors, 2u, "the aged entries were purged through their ecb");
+        NS_TEST_ASSERT_MSG_EQ(aging->Size(), 1u, "the live one stays");
+        const ns3::anthocnet::HoldStats h = ns3::anthocnet::HoldStatsOf(aging->Stats());
+        NS_TEST_ASSERT_MSG_EQ(h.droppedCount[ns3::anthocnet::HOLD_SETUP], 1u,
+                              "the setup hold counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ(h.droppedCount[ns3::anthocnet::HOLD_RECONV], 1u,
+                              "the reconvergence hold counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ_TOL(h.droppedSumS[ns3::anthocnet::HOLD_RECONV], 0.5, 1e-9,
+                                  "dropped when the queue was next used (0.5 s), not at its cap");
     }
 
 private:

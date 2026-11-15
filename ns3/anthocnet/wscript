@@ -9,7 +9,6 @@ def build(bld):
     module.source = [
         'model/anthocnet-routing-protocol.cc',
         'model/anthocnet-packet.cc',
-        'model/anthocnet-rqueue.cc',
         'helper/anthocnet-helper.cc',
         'core/src/pheromone_table.cpp',
         'core/src/pheromone_engine.cpp',

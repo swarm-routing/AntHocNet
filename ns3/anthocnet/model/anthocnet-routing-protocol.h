@@ -233,7 +233,7 @@ public:
     /// repair) pending-queue hold-time stats accumulated over the run, read by
     /// the comparison harness under --diag to locate the delay tail's dominant
     /// hold path.
-    const HoldStats& HoldTimeStats() const { return m_queue.Stats(); }
+    HoldStats HoldTimeStats() const { return HoldStatsOf(GetDeferredQueue()->Stats()); }
 
     /// Issue #215 drop-cause breakdown, the AntHocNet-specific causes. The
     /// generic ones (channel, MAC, TTL, interface queue) are measured
@@ -267,6 +267,7 @@ protected:
     Ipv4Address SelectNextHop(Ipv4Address dst, Ipv4Address src, Ipv4Address prev,
                               Ptr<const Packet> p) override;
     void StartDiscovery(Ipv4Address dst) override;
+    uint8_t HoldClassFor(Ipv4Address dst) override;
     void RecvControl(Ptr<Packet> p, Ipv4Address from, Ipv4Address receiver) override;
 
 public:
@@ -384,8 +385,6 @@ private:
     ::anthocnet::core::Config m_config;
     std::unique_ptr<::anthocnet::core::AntRouterLogic> m_logic;
     bool m_started;
-
-    RequestQueue m_queue;
 
     Timer m_helloTimer;
     Timer m_proactiveTimer;

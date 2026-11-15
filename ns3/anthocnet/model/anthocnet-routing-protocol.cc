@@ -52,7 +52,6 @@ const uint16_t RoutingProtocol::ANT_PORT = 6900;
 
 RoutingProtocol::RoutingProtocol()
     : m_started(false),
-      m_queue(64, Seconds(3)),
       m_helloInterval(Seconds(1.0)),
       m_proactiveInterval(Seconds(10.0)),
       m_alpha(0.7),
@@ -743,11 +742,14 @@ void RoutingProtocol::DoInitialize() {
     m_config.antAcceptanceFactorNewHop = m_antAcceptanceFactorNewHop;
     m_config.linkfailNotifyInterval = m_linkfailNotifyInterval;
     m_config.enableMacMetric = m_enableMacMetric;
-    m_queue.SetTimeout(m_queueTimeout);  // attribute lands after construction (#21)
+    // The pending queue is the base's DeferredPacketQueue (S10b of #1019),
+    // configured as AntHocNet's RequestQueue was: QueueTimeout re-armed at
+    // each enqueue, the per-reason caps (#21), and no purge on a timer, so an
+    // expired packet is dropped when the queue is next used, as before.
     // Issue #21 L2: per-reason hold caps (default 0 == disabled). SETUP stays
     // uncapped on QueueTimeout; only the tail-dominant RECONV/REPAIR holds cap.
-    m_queue.SetHoldCap(HOLD_RECONV, m_reconvHoldCap);
-    m_queue.SetHoldCap(HOLD_REPAIR, m_repairHoldCap);
+    ConfigurePendingQueue(*GetDeferredQueue(), m_queueTimeout, m_reconvHoldCap, m_repairHoldCap);
+    SetAttribute("PeriodicPurge", BooleanValue(false));
     // The ControlTx/ControlRx kind names, for the base's GetKindName (#917).
     SetKindNames(GetTypeId(), ::anthocnet::core::kControlKindNames);
     SwarmRoutingBase::DoInitialize();
@@ -1224,20 +1226,18 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
     return true;
 }
 
-void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header& header,
-                                          UnicastForwardCallback ucb, ErrorCallback ecb) {
-    QueueEntry entry;
-    entry.packet = p;
-    entry.header = header;
-    entry.ucb = ucb;
-    entry.ecb = ecb;
+uint8_t RoutingProtocol::HoldClassFor(Ipv4Address dst) {
     // #21 attribution: a deferred packet is either a first-time reactive setup
     // (this dest was never routed) or a reconvergence wait (route was known and
-    // lost). NotifyTxError's re-injection path tags its own entries HOLD_REPAIR.
-    entry.holdReason =
-        m_everRouted.count(ToCore(header.GetDestination())) ? HOLD_RECONV : HOLD_SETUP;
-    m_queue.Enqueue(entry);
-    StartDiscovery(header.GetDestination());
+    // lost). NotifyTxError's re-injection path holds its own as HOLD_REPAIR.
+    return m_everRouted.count(ToCore(dst)) ? HOLD_RECONV : HOLD_SETUP;
+}
+
+void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header& header,
+                                          UnicastForwardCallback ucb, ErrorCallback ecb) {
+    // The base holds it in the class HoldClassFor names, then calls
+    // StartDiscovery: the core's onDataPacket.
+    Defer(p, header, ucb, ecb);
 }
 
 void RoutingProtocol::StartDiscovery(Ipv4Address dst) {
@@ -1408,15 +1408,18 @@ void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
     // timer or a MAC re-injection either (#974 adds the protocol's hooks).
     if (IsDown()) return;
     Ipv4Address dst = ToIpv4(coreDest);
-    std::vector<QueueEntry> pending;
-    m_queue.DequeueAll(dst, pending);
+    // Expired packets go first (through their error callbacks), then every
+    // packet to `dst`, in queue order.
+    std::vector<DeferredPacket> pending = GetDeferredQueue()->Release(dst);
     if (pending.empty()) return;  // #918: the usual case on a backward ant
 
-    for (QueueEntry& e : pending) {
+    std::vector<DeferredPacket> back;
+    for (DeferredPacket& e : pending) {
         NodeAddress next = m_logic->nextHopForData(coreDest);
         if (next == kInvalidAddress) {
-            // Route vanished again; re-queue.
-            m_queue.Enqueue(e);
+            // Route vanished again; re-queue (below, in order, keeping its
+            // first enqueue time and hold class).
+            back.push_back(std::move(e));
             continue;
         }
         Ipv4Address gateway;
@@ -1429,25 +1432,29 @@ void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
         route->SetSource(e.header.GetSource());
         route->SetOutputDevice(dev);
         if (!e.ucb.IsNull()) {
-            m_everRouted.insert(coreDest);  // #21: this dest has been routed
-            m_queue.NoteDelivered(e);       // #21: attribute this packet's hold
+            m_everRouted.insert(coreDest);         // #21: this dest has been routed
+            GetDeferredQueue()->NoteForwarded(e);  // #21: attribute this packet's hold
             onDataDecision(coreDest, RouteAction::Unicast);
             e.ucb(route, e.packet, e.header);
         }
     }
+    if (!back.empty()) GetDeferredQueue()->Requeue(std::move(back));
 }
 
 void RoutingProtocol::DiscardQueue(NodeAddress coreDest) {
-    std::vector<QueueEntry> pending;
-    m_queue.DequeueAll(ToIpv4(coreDest), pending);
+    // Expired packets go first, as aged-out drops (#21), as they did when the
+    // queue was AntHocNet's own; the rest to `coreDest` are discarded through
+    // their error callbacks.
+    Ptr<DeferredPacketQueue> q = GetDeferredQueue();
+    q->Purge();
+    const uint32_t before = q->Size();
+    DiscardDeferred(ToIpv4(coreDest));
+    const uint32_t discarded = before - q->Size();
     // #215: count the packets, not just the event — the core counts the events
     // (repairDiscards()), but only the adapter owns the queue and so knows how
     // many packets each expired repair released.
-    m_repairDiscardedPackets += pending.size();
-    for (std::size_t k = 0; k < pending.size(); ++k) onDataDecision(coreDest, RouteAction::Drop);
-    for (QueueEntry& e : pending) {
-        if (!e.ecb.IsNull()) e.ecb(e.packet, e.header, Socket::ERROR_NOROUTETOHOST);
-    }
+    m_repairDiscardedPackets += discarded;
+    for (uint32_t k = 0; k < discarded; ++k) onDataDecision(coreDest, RouteAction::Drop);
 }
 
 // --- timers -----------------------------------------------------------------
@@ -1516,7 +1523,9 @@ void RoutingProtocol::ReactiveRetryTimerExpire() {
     // QueueTimeout. Mirrors the core's own reactive emission (createForwardAnt +
     // Broadcast), so the ant is the same bounded expanding-ring flood.
     if (m_logic) {
-        for (Ipv4Address dst : m_queue.PendingDestinations()) {
+        // Expired packets go first, then the destinations still held.
+        GetDeferredQueue()->Purge();
+        for (Ipv4Address dst : GetDeferredQueue()->Destinations()) {
             const NodeAddress coreDst = ToCore(dst);
             if (m_logic->nextHopForData(coreDst) == kInvalidAddress) {
                 AntMessage refa = m_logic->createForwardAnt(AntType::Reactive, coreDst);
@@ -1664,18 +1673,20 @@ void RoutingProtocol::NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI
             else
                 pkt->AddPacketTag(tag);
         }
-        QueueEntry entry;
+        DeferredPacket entry;
         entry.packet = pkt;
         entry.header = ipHeader;
         entry.ucb = m_cachedUcb;
         entry.ecb = m_cachedEcb;
-        entry.holdReason = HOLD_REPAIR;  // #21: held during local repair (#46)
-        ++m_macReinjectedPackets;        // #215: this MAC failure was not terminal
+        entry.holdClass = HOLD_REPAIR;  // #21: held during local repair (#46)
+        ++m_macReinjectedPackets;       // #215: this MAC failure was not terminal
         // #386: same site as the counter, so a listener's event count and
         // MacReinjectedPackets() agree by construction (scenario_check asserts
         // events == reinjected on exactly that ground).
         m_macReinjectTrace(ipHeader, pkt);
-        m_queue.Enqueue(entry);
+        // Into the base's queue directly, not Defer: no discovery here, the
+        // flush below retries at once.
+        GetDeferredQueue()->Enqueue(entry);
         FlushQueue(dataDest);
     }
 }
