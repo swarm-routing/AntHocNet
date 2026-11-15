@@ -1,0 +1,28 @@
+name: Licence
+
+# The org licence gate (swarm-routing/.github reusable-licence-check.yml), next
+# to this repository's own docs/tools/check-headers.py (lint.yml): SPDX lines
+# per directory (LICENSING.md) and the one-way include rule, checked against
+# swarm-core: a core/ file includes only the C++ standard library, other core/
+# files and swarm-core's dual-licensed core/ at the commit core/CMakeLists.txt
+# pins (SWARM_CORE_REF; bump it, the Makefile's and this core-deps together:
+# `swarm-core / pin` checks they agree). swarm-routing/ns3-swarm-core#14, S1.
+# .claude/ and .devcontainer/ carry no SPDX line (not source that ships).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  headers:
+    uses: swarm-routing/.github/.github/workflows/reusable-licence-check.yml@main
+    with:
+      dual-roots: core/ tools/ ns3/tools/ docs/tools/
+      core-roots: core/
+      gpl-only: docs/tools/mkdocs_hooks.py
+      exclude: '^(\.claude|\.devcontainer)/'
+      core-deps: swarm-routing/ns3-swarm-core@2987cfbc202596c657e58f7be6a6bd09112fe2a8:core

@@ -35,6 +35,12 @@ jobs:
           sudo apt-get install -y cmake g++
       - name: Build and test core
         run: make test
+      - name: Primitives still defined both here and in swarm-core (report-only until S9)
+        # swarm-routing/ns3-swarm-core#14: the list each slice S2-S8 shortens;
+        # make test fetched swarm-core at the pin into core/build/_deps.
+        run: |
+          python3 -I tools/checks/check-swarm-core-dupes.py --self-test
+          python3 -I tools/checks/check-swarm-core-dupes.py --swarm-core core/build/_deps/swarm_core_src-src/core
   core-sanitizers:
     name: core under ASan + UBSan
     runs-on: ubuntu-24.04

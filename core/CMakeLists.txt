@@ -28,6 +28,32 @@ if(ANTHOCNET_COVERAGE)
   link_libraries(--coverage)
 endif()
 
+# swarm-core's dual-licensed core/ (swarm-routing/ns3-swarm-core), the shared
+# primitives every protocol builds on (org golden rule 4), as a subproject: it
+# defines the library target swarm::core and nothing else (no tests, no ctest
+# entry, no -Werror on our sources; its README "Use core/ from another CMake
+# project"). swarm-routing/ns3-swarm-core#14 slice S1: linked, nothing used
+# yet. SWARM_CORE_DIR names a local swarm-core core/ directory (an offline
+# build); empty fetches SWARM_CORE_REF, a full commit SHA bumped by PR together
+# with the Makefile's and every workflow's core-deps (`swarm-core / pin`).
+# After the coverage options, so swarm-core's sources are built the same way.
+set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch SWARM_CORE_REF")
+set(SWARM_CORE_REF "2987cfbc202596c657e58f7be6a6bd09112fe2a8" CACHE STRING
+    "swarm-routing/ns3-swarm-core commit to fetch when SWARM_CORE_DIR is empty")
+if(SWARM_CORE_DIR)
+  if(NOT EXISTS "${SWARM_CORE_DIR}/swarm-ports.h")
+    message(FATAL_ERROR "SWARM_CORE_DIR=${SWARM_CORE_DIR} is not swarm-core's core/ directory")
+  endif()
+  add_subdirectory(${SWARM_CORE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/swarm-core)
+else()
+  include(FetchContent)
+  FetchContent_Declare(swarm_core_src
+    GIT_REPOSITORY https://github.com/swarm-routing/ns3-swarm-core.git
+    GIT_TAG ${SWARM_CORE_REF}
+    SOURCE_SUBDIR core)
+  FetchContent_MakeAvailable(swarm_core_src)
+endif()
+
 add_library(anthocnet_core STATIC
   src/pheromone_table.cpp
   src/pheromone_engine.cpp
@@ -41,6 +67,7 @@ add_library(anthocnet_core STATIC
   src/shortest_path.cpp
 )
 target_include_directories(anthocnet_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(anthocnet_core PUBLIC swarm::core)
 
 # The core has no simulator dependency, so it builds and tests standalone.
 enable_testing()

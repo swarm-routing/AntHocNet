@@ -27,7 +27,8 @@ removed in v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)
 v1.2.0–v1.9.0 tags.
 
 ```
-core/    simulator-agnostic C++ (no simulator headers) + unit tests
+core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm-core's core/ at the pinned
+         SWARM_CORE_REF (core/CMakeLists.txt = Makefile = licence.yml core-deps; swarm-routing/ns3-swarm-core#14)
 ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
@@ -46,6 +47,8 @@ make test                                  # build core (CMake) + run ctest — 
 make doctor       NS3DIR=/path/to/ns-3-dev # check the tree (##DOCTOR## line)
 make install-ns3  NS3DIR=/path/to/ns-3-dev # install onto a real NS-3 tree (BASELINES=0: alone)
 make clean                                 # remove core/build
+make test SWARM_CORE_DIR=../ns3-swarm-core/core   # offline / a local swarm-core instead of the pin
+python3 tools/checks/check-swarm-core-dupes.py --swarm-core core/build/_deps/swarm_core_src-src/core  # primitives in both (S1-S9)
 ```
 
 `make test` is the check CI runs on every push and PR and the one that runs
@@ -73,6 +76,33 @@ Read [`docs/development.md`](docs/development.md) before:
 - pushing a docs or packaging change: the link, mermaid, header, mkdocs,
   bundle, format and clang-tidy commands (§ Docs and release-package checks);
 - reading or producing coverage numbers (§ Test coverage).
+
+<!-- org-sync:begin dependencies -->
+## How this repository gets swarm-core and ns3-tools
+
+- **swarm-core's `core/`**: `core/CMakeLists.txt` fetches it with CMake
+  `FetchContent` at one commit, `SWARM_CORE_REF`. The `Makefile`, every
+  workflow's swarm-core `core-deps` and the `swarm-core=` dependency of
+  `.github/workflows/benchmark-cell.yml` name the same commit; the
+  `swarm-core / pin` check (swarm-routing/.github
+  `tools/checks/check-swarm-core-pin.py`) fails when they disagree or when
+  swarm-core `main` changed `core/` since the pin. org-bot's `swarm-core-pin`
+  task then opens the bump PR (`org-bot/swarm-core-pin`), touching only those
+  lines, `benchmark-cell.yml` included; review it and let it merge rather than bumping by hand.
+- **The ns-3 build**: the `dependencies` input of
+  `reusable-ns3-ci.yml` names the swarm-core and ns3-tools (`routing-bench`)
+  refs the module builds on. A ref is a branch or a tag (`@vX.Y.Z`).
+- **Working against an unreleased swarm-core**: `-DSWARM_CORE_DIR=<checkout>/core`
+  builds `core/` on a local checkout instead of the pin (development only).
+- **Next, from swarm-core v0.3.0** (swarm-routing/ns3-swarm-core#134): the
+  commit pin becomes a release lock, `swarm-core.lock` (tag, commit and the
+  release tarball's SHA256, every value read from the release), fetched by
+  `URL` + `URL_HASH`; the ns-3 `dependencies` name release tags and
+  `canary-dependencies` names `@main`, a non-blocking leg outside PRs
+  (swarm-routing/.github#411). The `protocol-review` check warns about a new
+  dependency on a moving ref. Later: `find_package(swarm-core CONFIG)` from
+  an installed release, then a vcpkg registry (swarm-routing/ns3-swarm-core#135).
+<!-- org-sync:end dependencies -->
 
 ## Golden rules (invariants — do not break)
 
