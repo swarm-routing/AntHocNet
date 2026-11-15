@@ -82,7 +82,7 @@ int main() {
             AntRouterLogic node(addr, cfg, c, r);
             return node.onReceiveAnt(ant, prevHop);
         };
-        refa.visited = {{1, 0.0}};
+        refa.visited = anthocnet::test::path({{1, 0.0}});
         auto d1 = step(refa, 11, 1);
         CHECK(d1[0].action == RouteAction::Broadcast);
         CHECK_EQ(d1[0].message->broadcastBudget, 1);

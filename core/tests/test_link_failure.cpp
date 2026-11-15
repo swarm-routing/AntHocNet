@@ -156,7 +156,7 @@ int main() {
         rep.dst = 99;
         rep.seqNum = 1;
         rep.broadcastBudget = 2;
-        rep.visited = {{3, 0.0}};
+        rep.visited = anthocnet::test::path({{3, 0.0}});
 
         auto step = [&](AntMessage ant, NodeAddress addr, NodeAddress prevHop) {
             FakeClock clock;
@@ -342,8 +342,8 @@ int main() {
         back.src = 9;
         back.dst = 0;
         back.seqNum = 7;
-        back.visited = {{0, 0.0}};
-        back.history = {{9, 0.05}};
+        back.visited = anthocnet::test::path({{0, 0.0}});
+        back.history = anthocnet::test::path({{9, 0.05}});
         auto decs = router.onReceiveAnt(back, /*prevHop*/ 9);
         CHECK_EQ(decs.size(), static_cast<std::size_t>(1));
         CHECK(decs[0].action == RouteAction::Deliver);  // route to 9 restored

@@ -28,7 +28,7 @@ double walk(AntRouterLogic& r, const std::vector<double>& deltas) {
     b.direction = AntDirection::Down;
     b.src = 5;
     for (std::size_t i = 0; i < deltas.size(); ++i) {
-        b.history.push_back({static_cast<NodeAddress>(i + 1), deltas[i]});
+        b.history.push(static_cast<NodeAddress>(i + 1), deltas[i]);
     }
     return r.backAntPheromone(b);
 }

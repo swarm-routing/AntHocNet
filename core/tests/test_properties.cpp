@@ -128,11 +128,15 @@ void propCodecRoundTrip(std::mt19937& g) {
         m.broadcastBudget = static_cast<int>(g() % 10) - 1;  // [-1, 8]
 
         const int nv = static_cast<int>(g() % (codec::kMaxVisitedOnWire + 1));
-        for (int k = 0; k < nv; ++k)
-            m.visited.push_back({static_cast<NodeAddress>(g()), 100.0 * unit(g)});
+        for (int k = 0; k < nv; ++k) {
+            const auto node = static_cast<NodeAddress>(g());  // draw order: node, then time
+            m.visited.push(node, 100.0 * unit(g));
+        }
         const int nh = static_cast<int>(g() % (codec::kMaxHistoryOnWire + 1));
-        for (int k = 0; k < nh; ++k)
-            m.history.push_back({static_cast<NodeAddress>(g()), 100.0 * unit(g)});
+        for (int k = 0; k < nh; ++k) {
+            const auto node = static_cast<NodeAddress>(g());  // draw order: node, then time
+            m.history.push(node, 100.0 * unit(g));
+        }
         const int nd = static_cast<int>(g() % (codec::kMaxHelloOnWire + 1));
         for (int k = 0; k < nd; ++k)
             m.helloDests.push_back({static_cast<NodeAddress>(g()), unit(g)});
@@ -155,8 +159,8 @@ void propCodecRoundTrip(std::mt19937& g) {
         CHECK_EQ(out.history.size(), m.history.size());
         CHECK_EQ(out.helloDests.size(), m.helloDests.size());
         for (std::size_t i = 0; i < m.visited.size(); ++i) {
-            CHECK_EQ(out.visited[i].node, m.visited[i].node);
-            CHECK_NEAR(out.visited[i].time, m.visited[i].time, 1e-9);
+            CHECK_EQ(out.visited.hops()[i].node, m.visited.hops()[i].node);
+            CHECK_NEAR(out.visited.hops()[i].time, m.visited.hops()[i].time, 1e-9);
         }
         for (std::size_t i = 0; i < m.helloDests.size(); ++i) {
             CHECK_EQ(out.helloDests[i].node, m.helloDests[i].node);

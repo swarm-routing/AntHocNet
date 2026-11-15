@@ -13,21 +13,29 @@
 #ifndef ANTHOCNET_CORE_VISITED_PATH_H
 #define ANTHOCNET_CORE_VISITED_PATH_H
 
-#include <vector>
+#include <cstddef>
 
 #include "anthocnet/core/types.h"
+#include "swarm-visited-path.h"
 
 namespace anthocnet {
 namespace core {
 
 /// One entry on an ant's visited-node stack: a node and the trip time the ant
-/// took to reach it from the previous hop.
-struct AntHop {
-    NodeAddress node = kInvalidAddress;
-    Time time = 0.0;
-};
+/// took to reach it from the previous hop. swarm-core's Hop
+/// (swarm-routing/ns3-swarm-core#14, S5), the same two fields.
+using AntHop = swarm::core::Hop;
 
-using VisitedPath = std::vector<AntHop>;
+/// The stack itself: swarm-core's bounded VisitedPath (push/pop/back,
+/// setBackTime to re-time the last hop, range-for over hops()).
+using VisitedPath = swarm::core::VisitedPath;
+
+/// The capacity of an ant's stacks. Config::maxPathLength bounds the forward
+/// stack (the router drops an ant that reaches it) and the codec refuses more
+/// than kMaxVisitedOnWire on the wire; the stack's own cap is swarm-core's
+/// largest, so it never refuses a hop the router lets through, whatever
+/// maxPathLength is configured: no behaviour changes with S5.
+constexpr std::size_t kHopStackCapacity = VisitedPath::kMaxCapacity;
 
 }  // namespace core
 }  // namespace anthocnet

@@ -45,7 +45,7 @@ AntMessage inTransit(NodeAddress src, NodeAddress dst) {
     a.dst = dst;
     a.seqNum = 1;
     a.timeStart = 0.0;
-    a.visited = {{src, 0.0}};
+    a.visited = anthocnet::test::path({{src, 0.0}});
     return a;
 }
 
@@ -217,7 +217,7 @@ int main() {
             ls.tmac = 0.02;
             AntRouterLogic r(/*addr*/ 9, cfg, clock, rng, nullptr, &ls);
             AntMessage a = inTransit(3, /*dst*/ 9);
-            a.visited = {{3, 0.0}, {4, 0.01}};
+            a.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
             auto decisions = r.onReceiveAnt(a, /*prevHop*/ 4);
             CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
             CHECK(decisions[0].action == RouteAction::Unicast);  // backward ant home

@@ -78,13 +78,13 @@ int main() {
         back.src = 9;  // the destination that answered
         back.dst = 0;  // back at the origin after this hop
         back.seqNum = 1;
-        back.history.push_back({9, 1.0});    // link 8 -> 9, written at node 8
-        back.history.push_back({8, 1.0});    // link 7 -> 8, written at node 7
-        back.history.push_back({7, 0.002});  // link 0 -> 7: still a wall-clock delta
+        back.history.push(9, 1.0);    // link 8 -> 9, written at node 8
+        back.history.push(8, 1.0);    // link 7 -> 8, written at node 7
+        back.history.push(7, 0.002);  // link 0 -> 7: still a wall-clock delta
         router.onReceiveAnt(back, 7);
         // Route 0 -> 7 -> 8 -> 9 costs 3 + 1 + 1 = 5, so the deposit is 1/5.
         AntMessage probe = back;
-        probe.history.back().time = 3.0;
+        probe.history.setBackTime(3.0);
         CHECK_NEAR(router.backAntPheromone(probe), 0.2, 1e-12);
         CHECK(router.table().getPheromoneRegular(9, 7) > 0.0);
 

@@ -186,7 +186,7 @@ int main() {
         fwd.dst = 9;  // this node is the destination
         fwd.seqNum = 1;
         fwd.timeStart = 0.0;
-        fwd.visited = {{3, 0.0}, {4, 0.01}};
+        fwd.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
 
         router.onReceiveAnt(fwd, /*prevHop*/ 4);
         // The destination unicasts a backward ant home -> one send, direction Down.
@@ -289,7 +289,7 @@ int main() {
         fwd.src = 3;
         fwd.dst = 9;
         fwd.seqNum = 1;
-        fwd.visited = {{3, 0.0}, {4, 0.01}};
+        fwd.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
         router.onReceiveAnt(fwd, /*prevHop*/ 4);
         CHECK_EQ(obs.received[0].kind, static_cast<std::uint8_t>(0x02));
         CHECK_EQ(obs.sent.size(), static_cast<std::size_t>(1));

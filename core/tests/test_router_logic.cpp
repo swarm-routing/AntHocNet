@@ -58,7 +58,7 @@ int main() {
         fwd.dst = 9;
         fwd.seqNum = 1;
         fwd.timeStart = 0.0;
-        fwd.visited = {{3, 0.0}, {4, 0.01}};
+        fwd.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
 
         auto decisions = router.onReceiveAnt(fwd, /*prevHop*/ 4);
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
@@ -78,7 +78,8 @@ int main() {
         // filter would admit — is dropped by strict (src,seq) dedup
         // (pre-#96 single-path setup).
         AntMessage worse = fwd;
-        worse.visited = {{3, 0.0}, {5, 0.005}, {6, 0.005}};  // comparable 3-hop path
+        worse.visited =
+            anthocnet::test::path({{3, 0.0}, {5, 0.005}, {6, 0.005}});  // comparable 3-hop path
         auto dropped = router.onReceiveAnt(worse, 6);
         CHECK_EQ(dropped.size(), static_cast<std::size_t>(1));
         CHECK(dropped[0].action == RouteAction::Drop);
@@ -100,7 +101,7 @@ int main() {
         a.src = 3;
         a.dst = 9;
         a.seqNum = 42;
-        a.visited = {{3, 0.0}, {4, 0.01}};
+        a.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
         auto first = router.onReceiveAnt(a, 4);
         CHECK_EQ(first.size(), static_cast<std::size_t>(1));
         CHECK(first[0].action == RouteAction::Unicast);  // back ant for path 1
@@ -114,7 +115,7 @@ int main() {
         b.dst = 9;
         b.seqNum = 42;  // same generation
         // 3 hops (<= 1.5*2) and total time 0.01 (<= 1.5*0.01): within the band.
-        b.visited = {{3, 0.0}, {5, 0.005}, {6, 0.005}};
+        b.visited = anthocnet::test::path({{3, 0.0}, {5, 0.005}, {6, 0.005}});
         auto second = router.onReceiveAnt(b, 6);
         CHECK_EQ(second.size(), static_cast<std::size_t>(1));
         CHECK(second[0].action == RouteAction::Unicast);  // back ant for path 2
@@ -125,8 +126,9 @@ int main() {
         c.type = AntType::Reactive;
         c.src = 3;
         c.dst = 9;
-        c.seqNum = 42;                                            // same generation
-        c.visited = {{3, 0.0}, {5, 0.05}, {6, 0.05}, {7, 0.05}};  // 4 hops vs 2
+        c.seqNum = 42;  // same generation
+        c.visited =
+            anthocnet::test::path({{3, 0.0}, {5, 0.05}, {6, 0.05}, {7, 0.05}});  // 4 hops vs 2
         auto dropped = router.onReceiveAnt(c, 7);
         CHECK_EQ(dropped.size(), static_cast<std::size_t>(1));
         CHECK(dropped[0].action == RouteAction::Drop);
@@ -143,7 +145,7 @@ int main() {
         fwd.src = 3;
         fwd.dst = 9;
         fwd.seqNum = 7;
-        fwd.visited = {{3, 0.0}};
+        fwd.visited = anthocnet::test::path({{3, 0.0}});
 
         auto decisions = router.onReceiveAnt(fwd, 3);
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
@@ -186,7 +188,7 @@ int main() {
         overCap.src = 3;
         overCap.dst = 9;  // not us, so the drop is the hop cap, not delivery
         overCap.seqNum = 11;
-        overCap.visited = {{3, 0.0}, {5, 0.0}, {6, 0.0}};  // size 3 == cap
+        overCap.visited = anthocnet::test::path({{3, 0.0}, {5, 0.0}, {6, 0.0}});  // size 3 == cap
         auto dropped = router.onReceiveAnt(overCap, 6);
         CHECK_EQ(dropped.size(), static_cast<std::size_t>(1));
         CHECK(dropped[0].action == RouteAction::Drop);
@@ -197,7 +199,7 @@ int main() {
         underCap.src = 3;
         underCap.dst = 9;
         underCap.seqNum = 12;
-        underCap.visited = {{3, 0.0}, {5, 0.0}};  // size 2 < cap
+        underCap.visited = anthocnet::test::path({{3, 0.0}, {5, 0.0}});  // size 2 < cap
         auto forwarded = router.onReceiveAnt(underCap, 5);
         CHECK_EQ(forwarded.size(), static_cast<std::size_t>(1));
         CHECK(forwarded[0].action == RouteAction::Broadcast);

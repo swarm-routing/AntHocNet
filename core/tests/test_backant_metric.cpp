@@ -24,7 +24,7 @@ double fullPathPheromone(AntRouterLogic& router, const std::vector<double>& delt
     back.src = 5;  // the destination that originated the back ant
     back.dst = 0;
     for (std::size_t i = 0; i < deltas.size(); ++i) {
-        back.history.push_back({static_cast<NodeAddress>(i + 1), deltas[i]});
+        back.history.push(static_cast<NodeAddress>(i + 1), deltas[i]);
     }
     return router.backAntPheromone(back);
 }
@@ -76,8 +76,8 @@ int main() {
         clock.set(0.05);
         router.stampForward(fwd, kInvalidAddress);  // delta 0.03 (cumulative 0.05 - prior 0.02)
         CHECK_EQ(fwd.visited.size(), static_cast<std::size_t>(3));
-        CHECK_NEAR(fwd.visited[1].time, 0.02, 1e-9);
-        CHECK_NEAR(fwd.visited[2].time, 0.03, 1e-9);
+        CHECK_NEAR(fwd.visited.hops()[1].time, 0.02, 1e-9);
+        CHECK_NEAR(fwd.visited.hops()[2].time, 0.03, 1e-9);
     }
 
     // 5. #185, thesis eq. 4.2: the hop count is smoothed per (dest, next hop)

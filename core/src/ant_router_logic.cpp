@@ -576,7 +576,7 @@ AntMessage AntRouterLogic::createForwardAnt(AntType type, NodeAddress dest) {
         m.broadcastBudget = -1;  // see above
     else
         m.broadcastBudget = config_.proactiveMaxBroadcasts;
-    m.visited.push_back({address_, 0.0});  // source node enters the stack
+    m.visited.push(address_, 0.0);  // source node enters the stack
     return m;
 }
 
@@ -695,7 +695,7 @@ NodeAddress AntRouterLogic::randomDestination() { return table_.randomDestinatio
 
 void AntRouterLogic::stampForward(AntMessage& ant, NodeAddress nextHop) const {
     if (ant.visited.size() >= config_.maxPathLength) return;
-    ant.visited.push_back({address_, localHopCost(ant, nextHop)});
+    ant.visited.push(address_, localHopCost(ant, nextHop));
 }
 
 double AntRouterLogic::localHopCost(const AntMessage& ant, NodeAddress nextHop) const {
@@ -746,8 +746,8 @@ NodeAddress AntRouterLogic::advanceBackAnt(AntMessage& ant) const {
     // (prevHop/hops/pathTime/pheromone) is recomputed at the receiver from
     // `history`, not carried on the wire.
     const AntHop current = ant.visited.back();
-    ant.history.push_back(current);
-    ant.visited.pop_back();
+    ant.history.push(current.node, current.time);
+    ant.visited.pop();
 
     if (ant.visited.empty()) return kInvalidAddress;
     return ant.visited.back().node;  // next hop (left for it to pop)
@@ -835,7 +835,7 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(AntMessage&& incoming,
         // address. Both readings agree that distinct branches out of the source
         // get distinct first hops, which is all the a2 rule needs.
         const NodeAddress firstHop =
-            incoming.visited.size() >= 2 ? incoming.visited[1].node : address_;
+            incoming.visited.size() >= 2 ? incoming.visited.hops()[1].node : address_;
         if (!genQuality_.accept(incoming.src, incoming.seqNum, hops, travel, firstHop,
                                 config_.antAcceptanceFactor, config_.antAcceptanceFactorNewHop)) {
             return {RouteDecision::drop()};
@@ -956,7 +956,7 @@ std::vector<RouteDecision> AntRouterLogic::onReceiveAnt(AntMessage&& incoming,
     // is coming from". The retraced path then sums each node's estimate of
     // its own downstream link, and nodes upstream read the corrected values.
     if (metric_->usesLinkQuality() && !ant.history.empty()) {
-        ant.history.back().time = linkCost(ant.history.back().node);
+        ant.history.setBackTime(linkCost(ant.history.back().node));
     }
     computeBackAntState(ant);
     reinforceFromBackAnt(ant);

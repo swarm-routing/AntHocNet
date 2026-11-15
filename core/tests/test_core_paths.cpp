@@ -71,7 +71,7 @@ int main() {
         fwd.dst = 9;
         fwd.seqNum = 1;
         fwd.timeStart = 0.0;
-        fwd.visited = {{3, 0.0}, {4, 0.01}};
+        fwd.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
 
         auto d = router.onReceiveAnt(fwd, /*prevHop*/ 4);
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
@@ -94,7 +94,7 @@ int main() {
         rrfa.dst = 9;
         rrfa.seqNum = 5;
         rrfa.lifeAnt = 2.0;
-        rrfa.visited = {{3, 0.0}};
+        rrfa.visited = anthocnet::test::path({{3, 0.0}});
 
         auto d = router.onReceiveAnt(rrfa, 3);
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
@@ -114,7 +114,7 @@ int main() {
         rrfa.src = 3;
         rrfa.dst = 9;
         rrfa.seqNum = 6;
-        rrfa.visited = {{3, 0.0}, {4, 0.01}};
+        rrfa.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}});
 
         auto d = router.onReceiveAnt(rrfa, 4);
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
