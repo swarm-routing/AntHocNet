@@ -86,7 +86,12 @@ takes no direct push (#789, #882). Don't bump the version by hand.
    nothing.
 3. Merge that PR when `CI gate` is green. The merge starts the workflow again:
    it builds, attests and verifies the merged commit, tags it `v<version>`
-   and publishes the install bundle. If `main` moved before the merge,
+   and publishes the install bundle; its `vcpkg` job then opens (or updates)
+   the `anthocnet-core` port PR in
+   [swarm-routing/vcpkg-registry](https://github.com/swarm-routing/vcpkg-registry)
+   (`feat(ports): anthocnet-core <version>`, from `bot/vcpkg-AntHocNet`),
+   rendered by the registry's `tools/port_bump.py` (#1037); the dry run of
+   step 1 renders the same bump and opens nothing. If `main` moved before the merge,
    dispatch `mode: bump` again first, so the changelog covers it. (The `major_version_zero` gate in `.cz.toml` was flipped to
 `false` at v1.0.0, so from 1.0 on a breaking `feat!`/`fix!` bumps the **major**.)
 
