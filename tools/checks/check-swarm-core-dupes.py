@@ -13,9 +13,10 @@ replaces it). For each row it reports whether core/ still defines the symbol
 of, or a class derived from, the swarm::core one is a use, not a definition)
 and, with --swarm-core, that swarm-core still defines the counterpart.
 
-Report-only until S9, which runs it with --gate (exit 1 while any row is
-still defined here). Output: one line per row, then a summary line
-(ADR-0014: CI reads the verdict, not the headers).
+From S9 CI runs it with --gate (ci-core.yml): it exits 1 if any row is
+defined here again, or a counterpart is missing from swarm-core. Output: one
+line per row, then a summary line (ADR-0014: CI reads the verdict, not the
+headers).
 
 Usage:
   check-swarm-core-dupes.py [--core core] [--swarm-core DIR] [--gate]
@@ -174,7 +175,7 @@ def main() -> int:
     summary = f"swarm-core dupes: {dupes} of {len(MAPPING)} primitive(s) still defined in both"
     if swarm is not None:
         summary += f"; {missing} swarm-core counterpart(s) not found"
-    print(summary + ("" if a.gate else " (report-only until S9)"))
+    print(summary + (" (gate)" if a.gate else " (report only)"))
     if a.gate and (dupes or missing):
         return 1
     return 0
