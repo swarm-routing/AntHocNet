@@ -42,6 +42,7 @@
 #include "ns3/nstime.h"
 
 #include <sstream>
+#include <vector>
 #include <string>
 #include <vector>
 
@@ -278,6 +279,95 @@ private:
         while ((p = s->Recv())) m_rxBytes += p->GetSize();
     }
     uint32_t m_rxBytes;
+};
+
+// #362, S10b of #1019 — a broadcast leaves on every interface in device order,
+// whatever order the interfaces came up in.
+//
+// Node 0 has two devices, each on its own channel and subnet: node 1 on the
+// first (10.1.1.0/24), node 2 on the second (10.1.2.0/24). After its first
+// interface goes down and comes back up, SwarmRoutingBase lists that
+// interface's sockets last, so BroadcastControl would send on interface 2
+// first. Every hello must still leave on interface 1, then interface 2, in the
+// same instant (BroadcastControlOn in device order), and reach both
+// neighbours. (Two interfaces on one subnet, the case the review of #1054
+// raised, cannot be tested here: ns-3 sends a subnet-directed broadcast from
+// either of them out of the same interface, so the second neighbour hears
+// nothing whichever socket sends it.)
+class DeviceOrderBroadcastTestCase : public TestCase {
+public:
+    DeviceOrderBroadcastTestCase()
+        : TestCase("Broadcasts leave in device order after an interface down/up (#362)") {}
+
+    void DoRun() override {
+        RngSeedManager::SetSeed(1);
+        RngSeedManager::SetRun(1);
+        NodeContainer nodes;
+        nodes.Create(3);
+        SimpleNetDeviceHelper devHelper;
+        NetDeviceContainer a = devHelper.Install(NodeContainer(nodes.Get(0), nodes.Get(1)),
+                                                 CreateObject<SimpleChannel>());
+        NetDeviceContainer b = devHelper.Install(NodeContainer(nodes.Get(0), nodes.Get(2)),
+                                                 CreateObject<SimpleChannel>());
+        AntHocNetHelper anthocnet;
+        InternetStackHelper internet;
+        internet.SetRoutingHelper(anthocnet);
+        internet.Install(nodes);
+        Ipv4AddressHelper address;
+        address.SetBase("10.1.1.0", "255.255.255.0");
+        address.Assign(a);  // node 0's interface 1
+        address.SetBase("10.1.2.0", "255.255.255.0");
+        address.Assign(b);  // node 0's interface 2
+
+        Ptr<Ipv4> ip0 = nodes.Get(0)->GetObject<Ipv4>();
+        ip0->GetObject<Ipv4L3Protocol>()->TraceConnectWithoutContext(
+            "Tx", MakeCallback(&DeviceOrderBroadcastTestCase::Tx, this));
+        for (uint32_t n = 1; n < 3; ++n) {
+            nodes.Get(n)->GetObject<Ipv4>()->GetRoutingProtocol()->TraceConnectWithoutContext(
+                "Rx", MakeBoundCallback(&DeviceOrderBroadcastTestCase::Rx, &m_hellosAt[n]));
+        }
+        Simulator::Schedule(Seconds(3.0), [ip0]() { ip0->SetDown(1); });
+        Simulator::Schedule(Seconds(4.0), [ip0]() { ip0->SetUp(1); });
+        Simulator::Stop(Seconds(12.0));
+        Simulator::Run();
+        Simulator::Destroy();
+
+        NS_TEST_ASSERT_MSG_GT(m_ticksAfter, 3u, "node 0 sent hellos after the down/up cycle");
+        NS_TEST_ASSERT_MSG_EQ(m_badOrder, 0u, "a hello left in another order than interface 1, 2");
+        NS_TEST_ASSERT_MSG_GT(m_hellosAt[1], 3u, "node 1 (interface 1) heard node 0's hellos");
+        NS_TEST_ASSERT_MSG_GT(m_hellosAt[2], 3u, "node 2 (interface 2) heard node 0's hellos");
+    }
+
+private:
+    // Node 0's control broadcasts after the cycle, grouped by the instant they
+    // left: each group must be exactly interfaces 1, 2.
+    void Tx(Ptr<const Packet> p, Ptr<Ipv4>, uint32_t iface) {
+        const Time now = Simulator::Now();
+        if (now < Seconds(5.0)) return;
+        Ipv4Header ip;
+        p->PeekHeader(ip);
+        if (!ip.GetDestination().IsSubnetDirectedBroadcast(Ipv4Mask("255.255.255.0"))) return;
+        if (now != m_groupAt) {
+            Close();
+            m_groupAt = now;
+        }
+        m_group.push_back(iface);
+    }
+    void Close() {
+        if (m_group.empty()) return;
+        ++m_ticksAfter;
+        if (m_group != std::vector<uint32_t>{1, 2}) ++m_badOrder;
+        m_group.clear();
+    }
+    static void Rx(uint32_t* count, uint8_t type, uint8_t) {
+        if (Simulator::Now() >= Seconds(5.0) && type == 1) ++*count;  // AntType::Hello
+    }
+
+    Time m_groupAt;
+    std::vector<uint32_t> m_group;
+    uint32_t m_ticksAfter = 0;
+    uint32_t m_badOrder = 0;
+    uint32_t m_hellosAt[3] = {0, 0, 0};
 };
 
 // #204 — hellos on point-to-point links every N ticks, liveness from the up
@@ -1009,6 +1099,7 @@ public:
         AddTestCase(new AddressMappingTestCase(), AHN_TEST_QUICK);
         AddTestCase(new AntHocNetDeliveryTestCase(), AHN_TEST_QUICK);
         AddTestCase(new MultiInterfaceDeliveryTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new DeviceOrderBroadcastTestCase(), AHN_TEST_QUICK);
         AddTestCase(new P2pHelloThrottleTestCase(), AHN_TEST_QUICK);
         AddTestCase(new StrongestNextHopTestCase(), AHN_TEST_QUICK);
         AddTestCase(new PerHopCongestionSignalTestCase(), AHN_TEST_QUICK);

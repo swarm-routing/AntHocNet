@@ -289,8 +289,6 @@ public:
 private:
     /// Starts the periodic timers, once (the first interface up).
     void StartTimers();
-    /// No two control interfaces share a subnet (SendAnt's per-interface fan-out).
-    bool SubnetsDistinct() const;
     Ptr<Ipv4Route> LoopbackRoute(const Ipv4Header& header, Ptr<NetDevice> oif) const;
 
     // ant I/O

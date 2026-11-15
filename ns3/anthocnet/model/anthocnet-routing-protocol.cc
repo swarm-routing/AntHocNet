@@ -1267,23 +1267,13 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     AntHeader header(msg);
     packet->AddHeader(header);
 
-    // Every send goes through one of the base's control sockets with
-    // UnicastControl, which sends out of the interface whose subnet holds the
-    // address it is given (its first rule; the second, the peer map, is
-    // empty here, and the third is the first interface). Each address below
-    // is chosen so that rule picks the socket this adapter always used:
+    // Every send goes through one of the base's control sockets:
     if (dest == Ipv4Address("255.255.255.255")) {
-        // a broadcast: the interface's subnet broadcast, on each interface in
-        // device order (#362). Two interfaces on one subnet would both resolve
-        // to the first of them, so a node with such a pair broadcasts with
-        // BroadcastControl instead (every interface, in the order they came
-        // up), until the base's per-interface broadcast (S10b) replaces both.
-        if (!SubnetsDistinct()) {
-            BroadcastControl(packet);
-            return;
-        }
+        // a broadcast: on each interface in device order (#362), whatever the
+        // order the interfaces came up in, and on each even when two share a
+        // subnet (BroadcastControlOn, swarm-routing/ns3-swarm-core#166).
         for (const auto& kv : m_ifaces) {
-            UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
+            BroadcastControlOn(packet->Copy(), kv.second.interface);
         }
         return;
     }
@@ -1292,10 +1282,10 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     // addressed to where it is reachable on that link (#203). A backward ant
     // retraces a path made of canonical addresses, so on a multi-interface
     // node the ant's next hop is routinely NOT on the subnet it must be sent
-    // over. The gateway is on the chosen interface's subnet; when that
-    // interface has no socket (it went down) or the hop is unknown, the
-    // gateway is on no subnet of a socket and the first interface sends it,
-    // as before.
+    // over. UnicastControl sends to the gateway out of the interface whose
+    // subnet holds it, the chosen one; when that interface has no socket (it
+    // went down) or the hop is unknown, the gateway is on no subnet of a
+    // socket and the first interface sends it, as before.
     Ipv4Address gateway;
     Ptr<NetDevice> dev;
     uint32_t ifIdx;
@@ -1466,9 +1456,7 @@ void RoutingProtocol::HelloTimerExpire() {
         // LinkFail broadcasts and repair-timeout DiscardPending actions (D6).
         ExecuteDecisions(m_logic->onMaintenanceTick(), kInvalidAddress);
         AntMessage hello = m_logic->createHelloAnt();
-        // A node with two interfaces on one subnet cannot send on one of them
-        // alone yet (S10b), so it sends every hello on every interface.
-        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0 || !SubnetsDistinct();
+        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0;
         if (p2pTick) {
             SendAnt(hello, Ipv4Address("255.255.255.255"));
         } else {
@@ -1488,8 +1476,7 @@ void RoutingProtocol::HelloTimerExpire() {
                     for (NodeAddress n : nit->second) m_logic->learnNeighbor(n);
                     continue;
                 }
-                // This interface's subnet broadcast, as SendAnt sends one.
-                UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
+                BroadcastControlOn(packet->Copy(), kv.second.interface);
             }
         }
     }
@@ -1722,20 +1709,6 @@ bool RoutingProtocol::MapMacToCore(const Mac48Address& mac, NodeAddress& out) co
 }
 
 // --- helpers ----------------------------------------------------------------
-
-bool RoutingProtocol::SubnetsDistinct() const {
-    for (auto a = m_ifaces.begin(); a != m_ifaces.end(); ++a) {
-        const Ipv4InterfaceAddress& x = a->second.address;
-        for (auto b = std::next(a); b != m_ifaces.end(); ++b) {
-            const Ipv4InterfaceAddress& y = b->second.address;
-            if (x.GetLocal().CombineMask(x.GetMask()) == y.GetLocal().CombineMask(x.GetMask()) ||
-                x.GetLocal().CombineMask(y.GetMask()) == y.GetLocal().CombineMask(y.GetMask())) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 int64_t RoutingProtocol::AssignStreams(int64_t stream) {
     return SwarmRoutingBase::AssignStreams(stream);  // the Rng() port's one stream
