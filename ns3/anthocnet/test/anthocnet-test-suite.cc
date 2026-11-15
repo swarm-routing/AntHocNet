@@ -71,8 +71,10 @@ public:
         m.timeStart = 1.25;
         m.lifeAnt = 2.0;
         m.broadcastBudget = 2;
-        m.visited = {{3, 0.0}, {4, 0.01}, {7, 0.02}};
-        m.history = {{17, 0.05}};
+        m.visited.push(3, 0.0);  // swarm-core's VisitedPath (S5): no brace list
+        m.visited.push(4, 0.01);
+        m.visited.push(7, 0.02);
+        m.history.push(17, 0.05);
         m.helloDests = {{8, 1.0}, {9, 0.5}};
 
         Ptr<Packet> packet = Create<Packet>();
@@ -93,8 +95,8 @@ public:
         NS_TEST_ASSERT_MSG_EQ_TOL(r.timeStart, 1.25, 1e-9, "timeStart");
         NS_TEST_ASSERT_MSG_EQ(r.broadcastBudget, 2, "broadcastBudget");
         NS_TEST_ASSERT_MSG_EQ(r.visited.size(), 3u, "visited size");
-        NS_TEST_ASSERT_MSG_EQ(r.visited[2].node, 7, "visited node");
-        NS_TEST_ASSERT_MSG_EQ_TOL(r.visited[1].time, 0.01, 1e-9, "visited time");
+        NS_TEST_ASSERT_MSG_EQ(r.visited.hops()[2].node, 7, "visited node");
+        NS_TEST_ASSERT_MSG_EQ_TOL(r.visited.hops()[1].time, 0.01, 1e-9, "visited time");
         NS_TEST_ASSERT_MSG_EQ(r.history.size(), 1u, "history size");
         NS_TEST_ASSERT_MSG_EQ(r.helloDests.size(), 2u, "hello size");
         NS_TEST_ASSERT_MSG_EQ(r.helloDests[1].node, 9, "hello node");
