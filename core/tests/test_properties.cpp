@@ -168,7 +168,7 @@ void propCodecRoundTrip(std::mt19937& g) {
 // --- Dedup history stays bounded and evicts FIFO ---------------------------
 void propDedupBound() {
     const std::size_t cap = 8;
-    AntHistoryTracker tracker(cap);
+    swarm::core::DedupHistory tracker(dedupCapacity(cap));
     const std::uint32_t total = 3 * static_cast<std::uint32_t>(cap);
     for (std::uint32_t i = 0; i < total; ++i) {
         CHECK(tracker.record(/*src=*/1, i));  // each (src,seq) is new

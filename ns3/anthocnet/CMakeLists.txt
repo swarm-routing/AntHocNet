@@ -13,7 +13,8 @@
 include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/include>)
 # swarm-core's core/ (swarm-routing/ns3-swarm-core#14), which core/'s headers
 # include ("swarm-ports.h", ...): `make install-ns3` copies it here at the
-# release swarm-core.lock names. Only its headers are used so far.
+# release swarm-core.lock names; the sources the core calls are compiled into
+# the module below.
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/swarm-core/swarm-ports.h)
   message(FATAL_ERROR "anthocnet: swarm-core/ is missing; install with `make install-ns3`")
 endif()
@@ -78,6 +79,8 @@ build_lib(
     core/src/ant_message_codec.cpp
     core/src/ant_router_logic.cpp
     core/src/link_metric_registry.cpp
+    # swarm-core's sources the core calls (S4 on), from swarm-core/ (above)
+    swarm-core/swarm-dedup-history.cc
   HEADER_FILES
     model/anthocnet-routing-protocol.h
     model/anthocnet-packet.h
