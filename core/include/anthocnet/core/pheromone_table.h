@@ -11,11 +11,12 @@
  *   - the probabilistic selection helpers are const-correct and take the
  *     config so BETA is not a compile-time constant.
  *
- * Storage (#918): one row per destination, holding a {neighbour, regular,
- * virtual} entry per neighbour that has pheromone toward it, in neighbour
- * order. Next-hop selection, best*() and evaporation walk one contiguous row
+ * Storage (#918, swarm-routing/ns3-swarm-core#14 S7): two swarm-core
+ * PheromoneTables, regular and virtual, each one row per destination holding
+ * a {neighbour, value} entry per neighbour that has pheromone toward it, in
+ * neighbour order. Next-hop selection, best*() and evaporation walk those rows
  * beside the (ordered) neighbour set instead of looking every (neighbour,
- * destination) pair up in a map. A row is dropped when its last entry is.
+ * destination) pair up. A row is dropped when its last entry is.
  * What the table answers is unchanged: entries of a node that is no longer a
  * neighbour stay (as they did in the maps) and are skipped by every walk, and
  * the destination sets keep their never-shrinking meaning, because callers
@@ -27,14 +28,17 @@
 
 #include <cstddef>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <set>
+#include <span>
 #include <utility>
 #include <vector>
 
 #include "anthocnet/core/config.h"
 #include "anthocnet/core/ports.h"
 #include "anthocnet/core/types.h"
+#include "swarm-pheromone-table.h"
 
 namespace anthocnet {
 namespace core {
@@ -63,19 +67,19 @@ public:
     void setPheromoneRegular(NodeAddress dest, NodeAddress neighbor, double value);
     void setPheromoneVirtual(NodeAddress dest, NodeAddress neighbor, double value);
 
-    bool isEmptyRegular() const { return numRegular_ == 0; }
-    bool isEmptyVirtual() const { return numVirtual_ == 0; }
+    bool isEmptyRegular() const { return regular_.empty(); }
+    bool isEmptyVirtual() const { return virtual_.empty(); }
 
     /// Size gauge (issue #133): current (neighbor, dest) entry counts. The
     /// table grows with destinations x neighbours (regular + virtual) and only
     /// evaporation / link-failure removal shrink it, so adapters export these
     /// to observe growth over long runs. Read-only; no routing behaviour.
-    std::size_t numEntriesRegular() const { return numRegular_; }
-    std::size_t numEntriesVirtual() const { return numVirtual_; }
-    std::size_t numEntries() const { return numRegular_ + numVirtual_; }
+    std::size_t numEntriesRegular() const { return regular_.size(); }
+    std::size_t numEntriesVirtual() const { return virtual_.size(); }
+    std::size_t numEntries() const { return regular_.size() + virtual_.size(); }
     /// Destinations that currently hold a row, i.e. at least one regular or
     /// virtual entry (#918). Unlike the destination sets, this shrinks.
-    std::size_t numRows() const { return rows_.size(); }
+    std::size_t numRows() const;
 
     /// Calls f(dest, bestRegular(dest)) for every regular destination, in
     /// destination order: the same values as calling bestRegular() per
@@ -138,25 +142,10 @@ public:
 private:
     /// One neighbour's pheromone toward a row's destination. An absent value
     /// is has* == false (and reads as 0), as a missing map key used to.
-    struct Entry {
-        NodeAddress neighbor;
-        double regular;
-        double virt;
-        bool hasRegular;
-        bool hasVirtual;
-    };
-    using Row = std::vector<Entry>;  ///< sorted by neighbour
-    using Rows = std::map<NodeAddress, Row>;
+    using Row = std::span<const swarm::core::PheromoneTable::Entry>;  ///< by neighbour
 
-    const Entry* find(NodeAddress dest, NodeAddress neighbor) const;
-    Entry& upsert(NodeAddress dest, NodeAddress neighbor);
-    /// Clears one value; erases the entry, and the row, once nothing is left.
-    void erase(NodeAddress dest, NodeAddress neighbor, bool regular);
-    /// The largest regular value a current neighbour holds in `row`, or 0.
-    double bestRegularIn(const Row& row) const;
-    double bestVirtualIn(const Row& row) const;
+    double bestIn(Row row) const;
 
-    /// One candidate's selection weight, pow(pheromone, beta) (#655).
     struct Term {
         NodeAddress neighbor;
         double pow;
@@ -176,9 +165,12 @@ private:
     /// decision. Not part of the table's state.
     mutable std::vector<Term> terms_;
 
-    Rows rows_;
-    std::size_t numRegular_ = 0;
-    std::size_t numVirtual_ = 0;
+    // Unbounded in effect, as the maps before S7 were: the table holds at most
+    // destinations x neighbours entries, and the destinations and neighbours
+    // are the network's nodes.
+    static constexpr std::size_t kCapacity = std::numeric_limits<std::size_t>::max();
+    swarm::core::PheromoneTable regular_{kCapacity};
+    swarm::core::PheromoneTable virtual_{kCapacity};
     NeighborSet neighborTable_;
     DestinationSet destRegular_;
     DestinationSet destVirtual_;
@@ -186,51 +178,35 @@ private:
 
 template <typename F>
 void PheromoneTable::forEachBestRegular(F f) const {
-    auto row = rows_.begin();
-    for (NodeAddress dest : destRegular_) {
-        while (row != rows_.end() && row->first < dest) ++row;
-        const bool has = row != rows_.end() && row->first == dest;
-        f(dest, has ? bestRegularIn(row->second) : 0.0);
-    }
+    for (NodeAddress dest : destRegular_) f(dest, bestIn(regular_.row(dest)));
 }
 
 template <typename FactorFor>
 void PheromoneTable::ageEntries(FactorFor factorFor, double minPheromone) {
-    for (auto row = rows_.begin(); row != rows_.end();) {
-        const double f = factorFor(row->first);
-        Row& entries = row->second;
+    // swarm-core's evaporation with a per-destination retain over current
+    // neighbours (swarm-routing/ns3-swarm-core#124): an entry of a current
+    // neighbour with a value > 0 is multiplied by factorFor(dest) and removed
+    // below minPheromone; others are left alone. factorFor is pure, so asking
+    // it once per table changes nothing.
+    // The rows come in destination order and each row's entries in neighbour
+    // order, so the neighbour set is walked beside them (a merge, reset per
+    // row) rather than searched per entry.
+    auto age = [&](swarm::core::PheromoneTable& table) {
+        NodeAddress row = kInvalidAddress;
+        bool first = true;
         auto nb = neighborTable_.begin();
-        std::size_t out = 0;
-        for (std::size_t i = 0; i < entries.size(); ++i) {
-            Entry e = entries[i];
-            while (nb != neighborTable_.end() && *nb < e.neighbor) ++nb;
-            if (nb != neighborTable_.end() && *nb == e.neighbor) {
-                if (e.hasRegular && !(e.regular <= 0.0)) {
-                    const double aged = e.regular * f;
-                    if (aged < minPheromone) {
-                        e.hasRegular = false;
-                        e.regular = 0.0;
-                        --numRegular_;
-                    } else {
-                        e.regular = aged;
-                    }
-                }
-                if (e.hasVirtual && !(e.virt <= 0.0)) {
-                    const double aged = e.virt * f;
-                    if (aged < minPheromone) {
-                        e.hasVirtual = false;
-                        e.virt = 0.0;
-                        --numVirtual_;
-                    } else {
-                        e.virt = aged;
-                    }
-                }
+        table.evaporate(factorFor, minPheromone, [&](NodeAddress dest, NodeAddress neighbor) {
+            if (first || dest != row) {
+                row = dest;
+                first = false;
+                nb = neighborTable_.begin();
             }
-            if (e.hasRegular || e.hasVirtual) entries[out++] = e;
-        }
-        entries.resize(out);
-        row = entries.empty() ? rows_.erase(row) : std::next(row);
-    }
+            while (nb != neighborTable_.end() && *nb < neighbor) ++nb;
+            return nb != neighborTable_.end() && *nb == neighbor;
+        });
+    };
+    age(regular_);
+    age(virtual_);
 }
 
 }  // namespace core

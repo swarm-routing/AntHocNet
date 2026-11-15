@@ -5,7 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <type_traits>
+#include <vector>
 
 namespace anthocnet {
 namespace core {
@@ -20,165 +20,105 @@ void PheromoneTable::addNeighbor(NodeAddress neighbor) {
 
 void PheromoneTable::removeNeighbor(NodeAddress neighbor) { neighborTable_.erase(neighbor); }
 
-// --- rows (#918) -------------------------------------------------------------
+// --- rows (#918; swarm-core's tables, S7) -----------------------------------
 
-namespace {
-template <typename Row>
-auto lowerBound(Row& row, NodeAddress neighbor) -> decltype(row.begin()) {
-    return std::lower_bound(
-        row.begin(), row.end(), neighbor,
-        [](const typename std::remove_reference<decltype(*row.begin())>::type& e, NodeAddress n) {
-            return e.neighbor < n;
-        });
-}
-}  // namespace
-
-const PheromoneTable::Entry* PheromoneTable::find(NodeAddress dest, NodeAddress neighbor) const {
-    auto row = rows_.find(dest);
-    if (row == rows_.end()) return nullptr;
-    auto it = lowerBound(row->second, neighbor);
-    return it != row->second.end() && it->neighbor == neighbor ? &*it : nullptr;
-}
-
-PheromoneTable::Entry& PheromoneTable::upsert(NodeAddress dest, NodeAddress neighbor) {
-    Row& row = rows_[dest];
-    auto it = lowerBound(row, neighbor);
-    if (it == row.end() || it->neighbor != neighbor)
-        it = row.insert(it, Entry{neighbor, 0.0, 0.0, false, false});
-    return *it;
-}
-
-void PheromoneTable::erase(NodeAddress dest, NodeAddress neighbor, bool regular) {
-    auto row = rows_.find(dest);
-    if (row == rows_.end()) return;
-    auto it = lowerBound(row->second, neighbor);
-    if (it == row->second.end() || it->neighbor != neighbor) return;
-    if (regular && it->hasRegular) {
-        it->hasRegular = false;
-        it->regular = 0.0;
-        --numRegular_;
-    } else if (!regular && it->hasVirtual) {
-        it->hasVirtual = false;
-        it->virt = 0.0;
-        --numVirtual_;
+std::size_t PheromoneTable::numRows() const {
+    // Destinations with a regular or a virtual entry: the union of the two
+    // tables' rows (both ascending by destination).
+    const std::vector<NodeAddress> r = regular_.destinations();
+    const std::vector<NodeAddress> v = virtual_.destinations();
+    std::size_t n = 0;
+    auto i = r.begin();
+    auto j = v.begin();
+    while (i != r.end() || j != v.end()) {
+        if (j == v.end() || (i != r.end() && *i < *j)) {
+            ++i;
+        } else if (i == r.end() || *j < *i) {
+            ++j;
+        } else {
+            ++i;
+            ++j;
+        }
+        ++n;
     }
-    if (it->hasRegular || it->hasVirtual) return;
-    row->second.erase(it);
-    if (row->second.empty()) rows_.erase(row);
+    return n;
 }
 
-double PheromoneTable::bestRegularIn(const Row& row) const {
+// The best value among the row's entries whose neighbour is a current
+// neighbour (0 when none): entries of a former neighbour stay in the table
+// and are skipped, as before S7.
+double PheromoneTable::bestIn(Row row) const {
     double best = 0.0;
     auto nb = neighborTable_.begin();
-    for (const Entry& e : row) {
+    for (const auto& e : row) {
         while (nb != neighborTable_.end() && *nb < e.neighbor) ++nb;
         if (nb == neighborTable_.end()) break;
-        if (*nb != e.neighbor || !e.hasRegular) continue;
-        if (e.regular > best) best = e.regular;
+        if (*nb != e.neighbor) continue;
+        if (e.value > best) best = e.value;
     }
     return best;
 }
-
-double PheromoneTable::bestVirtualIn(const Row& row) const {
-    double best = 0.0;
-    auto nb = neighborTable_.begin();
-    for (const Entry& e : row) {
-        while (nb != neighborTable_.end() && *nb < e.neighbor) ++nb;
-        if (nb == neighborTable_.end()) break;
-        if (*nb != e.neighbor || !e.hasVirtual) continue;
-        if (e.virt > best) best = e.virt;
-    }
-    return best;
-}
-
-// --- entry management -------------------------------------------------------
 
 void PheromoneTable::addPheromoneRegular(NodeAddress dest, NodeAddress neighbor, double value) {
     destRegular_.insert(dest);
-    Entry& e = upsert(dest, neighbor);
-    if (!e.hasRegular) ++numRegular_;
-    e.hasRegular = true;
-    e.regular = value;
+    regular_.set(dest, neighbor, value);
 }
 
 void PheromoneTable::addPheromoneVirtual(NodeAddress dest, NodeAddress neighbor, double value) {
     destVirtual_.insert(dest);
-    Entry& e = upsert(dest, neighbor);
-    if (!e.hasVirtual) ++numVirtual_;
-    e.hasVirtual = true;
-    e.virt = value;
+    virtual_.set(dest, neighbor, value);
 }
 
 void PheromoneTable::removePheromoneRegular(NodeAddress dest, NodeAddress neighbor) {
-    erase(dest, neighbor, true);
+    regular_.erase(dest, neighbor);
 }
 
 void PheromoneTable::removePheromoneVirtual(NodeAddress dest, NodeAddress neighbor) {
-    erase(dest, neighbor, false);
+    virtual_.erase(dest, neighbor);
 }
 
 double PheromoneTable::getPheromoneRegular(NodeAddress dest, NodeAddress neighbor) const {
-    const Entry* e = find(dest, neighbor);
-    return e && e->hasRegular ? e->regular : 0.0;
+    return regular_.get(dest, neighbor);
 }
 
 double PheromoneTable::getPheromoneVirtual(NodeAddress dest, NodeAddress neighbor) const {
-    const Entry* e = find(dest, neighbor);
-    return e && e->hasVirtual ? e->virt : 0.0;
+    return virtual_.get(dest, neighbor);
 }
 
-double PheromoneTable::bestRegular(NodeAddress dest) const {
-    auto row = rows_.find(dest);
-    return row == rows_.end() ? 0.0 : bestRegularIn(row->second);
-}
+double PheromoneTable::bestRegular(NodeAddress dest) const { return bestIn(regular_.row(dest)); }
 
-double PheromoneTable::bestVirtual(NodeAddress dest) const {
-    auto row = rows_.find(dest);
-    return row == rows_.end() ? 0.0 : bestVirtualIn(row->second);
-}
+double PheromoneTable::bestVirtual(NodeAddress dest) const { return bestIn(virtual_.row(dest)); }
 
 void PheromoneTable::setPheromoneRegular(NodeAddress dest, NodeAddress neighbor, double value) {
     destRegular_.insert(dest);
     addNeighbor(neighbor);
-    Entry& e = upsert(dest, neighbor);
-    if (!e.hasRegular) ++numRegular_;
-    e.hasRegular = true;
-    e.regular = value;
+    regular_.set(dest, neighbor, value);
 }
 
 void PheromoneTable::setPheromoneVirtual(NodeAddress dest, NodeAddress neighbor, double value) {
     addPheromoneVirtual(dest, neighbor, value);
 }
 
-// #655: both functions below used to look every neighbour's pheromone up and
-// raise it to beta twice -- once in the normaliser (the former sumProbability /
-// sumMaxProbability) and again in the sampling loop. They now do it once, into
-// a small buffer, and sum and sample from it. The floating-point operations
-// and their order are exactly the old ones: the normaliser adds the same
-// pow() values in neighbour order (skipping, for data, the neighbours with no
-// regular entry, as sumProbability did), and the sampler subtracts the same
-// pow(w)/phSum. Selection is therefore bit-identical, which the WASM parity
-// and determinism gates check.
 void PheromoneTable::selectionTerms(NodeAddress dest, bool isProactiveAnt, double beta,
                                     NodeAddress exclude, std::vector<Term>& terms,
                                     double& phSum) const {
     terms.clear();
     phSum = 0.0;
-    // #918: walk dest's row beside the neighbour set (both in neighbour order)
-    // instead of looking each (neighbour, dest) pair up in a map. A neighbour
-    // without an entry reads 0, as a missing key did.
-    static const Row kNoRow;
-    auto rowIt = rows_.find(dest);
-    const Row& row = rowIt == rows_.end() ? kNoRow : rowIt->second;
-    auto e = row.begin();
+    // #918: walk dest's rows beside the neighbour set (all in neighbour order)
+    // instead of looking each (neighbour, dest) pair up. A neighbour without
+    // an entry reads 0, as a missing key did.
+    const Row reg = regular_.row(dest);
+    const Row vir = virtual_.row(dest);
+    auto r = reg.begin();
+    auto v = vir.begin();
     for (NodeAddress neighbor : neighborTable_) {
-        while (e != row.end() && e->neighbor < neighbor) ++e;
+        while (r != reg.end() && r->neighbor < neighbor) ++r;
+        while (v != vir.end() && v->neighbor < neighbor) ++v;
         if (neighbor == exclude) continue;
-        const bool here = e != row.end() && e->neighbor == neighbor;
-        const bool useR = here && e->hasRegular;
+        const bool useR = r != reg.end() && r->neighbor == neighbor;
         double phV = 0.0;
-        if (isProactiveAnt && here && e->hasVirtual) phV = e->virt;
-        const double phR = useR ? e->regular : 0.0;
+        if (isProactiveAnt && v != vir.end() && v->neighbor == neighbor) phV = v->value;
+        const double phR = useR ? r->value : 0.0;
         const double p = std::pow(weighted(neighbor, phR > phV ? phR : phV), beta);
         // sumMaxProbability counted every neighbour; sumProbability only those
         // with a regular entry.

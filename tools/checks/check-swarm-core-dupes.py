@@ -59,6 +59,15 @@ MAPPING = [
 ]
 
 
+# Rows whose AntHocNet class stays (it holds protocol logic, the plan's "what
+# stays AntHocNet's") while its storage moves to swarm-core: the primitive is
+# still defined here while this marker of the private storage is in the file.
+STORAGE = {
+    # S7: next-hop selection stays; the (dest, neighbour) storage was a map of rows
+    "PheromoneTable": re.compile(r"^\s*using\s+Rows\s*=\s*std::map<", re.MULTILINE),
+}
+
+
 def defines(text: str, name: str) -> bool:
     """True when text defines name: class/struct/enum/union, an alias, a constant.
 
@@ -84,7 +93,9 @@ def scan(core: pathlib.Path, swarm: pathlib.Path | None) -> tuple[list[str], int
     lines, dupes, missing = [], 0, 0
     for ours, path, theirs, header, slice_ in MAPPING:
         f = core / path
-        here = f.is_file() and defines(f.read_text(encoding="utf-8"), ours)
+        text = f.read_text(encoding="utf-8") if f.is_file() else ""
+        marker = STORAGE.get(ours)
+        here = bool(marker.search(text)) if marker else defines(text, ours)
         there = ""
         if swarm is not None:
             h = swarm / header
@@ -119,6 +130,10 @@ def self_test() -> int:
     check(defines("enum class RouteAction {", "RouteAction"), "enum class")
     check(defines("template <typename M>\nstruct RouteDecision {", "RouteDecision"), "template struct (next line)")
     check(not defines("struct RouteDecisionX {", "RouteDecision"), "prefix name")
+    check(
+        bool(STORAGE["PheromoneTable"].search("    using Rows = std::map<NodeAddress, Row>;")),
+        "the private pheromone storage marker",
+    )
     with tempfile.TemporaryDirectory() as d:
         core = pathlib.Path(d, "core")
         swarm = pathlib.Path(d, "swc")
