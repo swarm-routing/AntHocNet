@@ -144,16 +144,14 @@ Without a checkout: download `anthocnet-ns3-modules-<version>.tar.gz` from the
 build as above. The same files are on the generated `ns3-module` branch.
 
 With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
-each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
-it into your bake checkout's `contrib/` directory, then run
-`./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
-The module's floor is ns-3.46 (the core is C++23), but bake only offers the
-releases its own catalogue has: up to ns-3.44 at the bake revision
-[bake.yml](.github/workflows/bake.yml) pins, bake's newest. The recipe still
-builds there while the core's code stays within C++20, and stops once it uses
-a C++23 feature, unless bake ships ns-3.46 or newer first. This builds AntHocNet alone,
-without the comparison modules. bake.yml builds the recipe end to end
-(ns-3.42) on packaging changes and on demand; it has no schedule (#864).
+each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`, a
+recipe for `./bake.py configure -e ns-3.46 -e anthocnet && ./bake.py download && ./bake.py build`.
+**Not usable yet:** the module's floor is ns-3.46 (the core is C++23), and
+bake's own catalogue stops at ns-3.44 (at the bake revision
+[bake.yml](.github/workflows/bake.yml) pins, bake's newest; #1026). The recipe
+asks for ns-3.46 or newer, and bake.yml is paused: run on demand, it builds
+nothing until bake ships ns-3.46. Until then, install with `make install-ns3`
+or the drop-in tarball above.
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
 release ns-3 supports (3.49 today); ns-3.46 to 3.48 on demand.
