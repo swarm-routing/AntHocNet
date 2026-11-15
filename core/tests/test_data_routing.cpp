@@ -85,11 +85,11 @@ int main() {
         refa.visited = {{1, 0.0}};
         auto d1 = step(refa, 11, 1);
         CHECK(d1[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d1[0].message.broadcastBudget, 1);
-        auto d2 = step(d1[0].message, 12, 11);
+        CHECK_EQ(d1[0].message->broadcastBudget, 1);
+        auto d2 = step(*d1[0].message, 12, 11);
         CHECK(d2[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d2[0].message.broadcastBudget, 0);
-        auto d3 = step(d2[0].message, 13, 12);
+        CHECK_EQ(d2[0].message->broadcastBudget, 0);
+        auto d3 = step(*d2[0].message, 13, 12);
         CHECK(d3[0].action == RouteAction::Drop);
     }
 

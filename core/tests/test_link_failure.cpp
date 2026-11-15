@@ -75,8 +75,8 @@ int main() {
         auto decs = router.onMaintenanceTick();
         bool found = false;
         for (const RouteDecision& d : decs) {
-            if (d.action == RouteAction::Broadcast && d.message.type == AntType::LinkFail) {
-                for (const HelloDest& a : d.message.helloDests) {
+            if (d.action == RouteAction::Broadcast && d.message->type == AntType::LinkFail) {
+                for (const HelloDest& a : d.message->helloDests) {
                     if (a.node == 9) {
                         found = true;
                         CHECK_NEAR(a.pheromone, 0.0, 1e-12);
@@ -106,7 +106,7 @@ int main() {
         auto decs = router.onReceiveAnt(note, /*prevHop*/ 5);
         CHECK_EQ(decs.size(), static_cast<std::size_t>(1));
         CHECK(decs[0].action == RouteAction::Broadcast);
-        CHECK(decs[0].message.type == AntType::LinkFail);
+        CHECK(decs[0].message->type == AntType::LinkFail);
         CHECK_NEAR(router.table().getPheromoneRegular(9, 5), 0.0, 1e-12);
         // Issue #20: the re-broadcast is counted as a propagation, not an origin.
         CHECK_EQ(router.linkfailPropagations(), static_cast<std::uint64_t>(1));
@@ -168,13 +168,13 @@ int main() {
         auto d1 = step(rep, 11, 3);
         CHECK_EQ(d1.size(), static_cast<std::size_t>(1));
         CHECK(d1[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d1[0].message.broadcastBudget, 1);
+        CHECK_EQ(d1[0].message->broadcastBudget, 1);
 
-        auto d2 = step(d1[0].message, 12, 11);
+        auto d2 = step(*d1[0].message, 12, 11);
         CHECK(d2[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d2[0].message.broadcastBudget, 0);
+        CHECK_EQ(d2[0].message->broadcastBudget, 0);
 
-        auto d3 = step(d2[0].message, 13, 12);
+        auto d3 = step(*d2[0].message, 13, 12);
         CHECK(d3[0].action == RouteAction::Drop);
     }
 
@@ -196,11 +196,11 @@ int main() {
         bool linkFail = false, repair = false;
         for (const RouteDecision& d : decs) {
             if (d.action != RouteAction::Broadcast) continue;
-            if (d.message.type == AntType::LinkFail) linkFail = true;
-            if (d.message.type == AntType::Repair) {
+            if (d.message->type == AntType::LinkFail) linkFail = true;
+            if (d.message->type == AntType::Repair) {
                 repair = true;
-                CHECK_EQ(d.message.dst, static_cast<NodeAddress>(9));
-                CHECK_EQ(d.message.broadcastBudget, cfg1.repairMaxBroadcasts - 1);
+                CHECK_EQ(d.message->dst, static_cast<NodeAddress>(9));
+                CHECK_EQ(d.message->broadcastBudget, cfg1.repairMaxBroadcasts - 1);
             }
         }
         CHECK(linkFail);
@@ -221,7 +221,7 @@ int main() {
 
         auto decs = router.reportTxFailure(/*next*/ 5);
         for (const RouteDecision& d : decs) {
-            CHECK(d.message.type != AntType::Repair);
+            CHECK(!d.message || d.message->type != AntType::Repair);
         }
         CHECK_EQ(router.antsSent(AntType::Repair), static_cast<std::uint64_t>(0));
         CHECK_EQ(router.table().numNeighbors(), static_cast<std::size_t>(0));
@@ -300,8 +300,8 @@ int main() {
                 discard = true;
                 CHECK_EQ(d.nextHop, static_cast<NodeAddress>(9));
             }
-            if (d.action == RouteAction::Broadcast && d.message.type == AntType::LinkFail) {
-                for (const HelloDest& a : d.message.helloDests) {
+            if (d.action == RouteAction::Broadcast && d.message->type == AntType::LinkFail) {
+                for (const HelloDest& a : d.message->helloDests) {
                     if (a.node == 9) {
                         notified = true;
                         CHECK_NEAR(a.pheromone, 0.0, 1e-12);
@@ -382,7 +382,7 @@ int main() {
         AntRouterLogic router(/*addr*/ 0, cfg, clock, rng);  // interval = 1.0 default
         auto hasLinkFail = [](const std::vector<RouteDecision>& decs) {
             for (const RouteDecision& d : decs) {
-                if (d.action == RouteAction::Broadcast && d.message.type == AntType::LinkFail)
+                if (d.action == RouteAction::Broadcast && d.message->type == AntType::LinkFail)
                     return true;
             }
             return false;
@@ -423,7 +423,7 @@ int main() {
         mp.enableMultipath = true;
         auto hasLinkFail = [](const std::vector<RouteDecision>& decs) {
             for (const RouteDecision& d : decs) {
-                if (d.action == RouteAction::Broadcast && d.message.type == AntType::LinkFail)
+                if (d.action == RouteAction::Broadcast && d.message->type == AntType::LinkFail)
                     return true;
             }
             return false;

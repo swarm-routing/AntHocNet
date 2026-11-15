@@ -1333,10 +1333,10 @@ void RoutingProtocol::ExecuteDecisions(const std::vector<RouteDecision>& decisio
     for (const RouteDecision& d : decisions) {
         switch (d.action) {
             case RouteAction::Unicast:
-                SendAnt(d.message, ToIpv4(d.nextHop));
+                SendAnt(*d.message, ToIpv4(d.nextHop));
                 break;
             case RouteAction::Broadcast:
-                SendAnt(d.message, Ipv4Address("255.255.255.255"));
+                SendAnt(*d.message, Ipv4Address("255.255.255.255"));
                 break;
             case RouteAction::Deliver:
                 // handled by caller (FlushQueue), nothing to send

@@ -187,7 +187,7 @@ int main() {
             CHECK_EQ(decisions[0].nextHop, 5);
             CHECK(!ls.queried.empty());
             for (NodeAddress qh : ls.queried) CHECK_EQ(qh, 5);
-            CHECK_NEAR(decisions[0].message.visited.back().time, (2 + 1) * 0.02, 1e-9);
+            CHECK_NEAR(decisions[0].message->visited.back().time, (2 + 1) * 0.02, 1e-9);
         }
 
         // 7b. Broadcast (no route): no single outgoing interface — the stamp
@@ -225,9 +225,9 @@ int main() {
             for (NodeAddress qh : ls.queried) CHECK_EQ(qh, kInvalidAddress);
             // The destination's own stamp is on the retraced path: after
             // advanceBackAnt moved node 9 onto history, its cost is there.
-            CHECK_EQ(decisions[0].message.history.size(), static_cast<std::size_t>(1));
-            CHECK_EQ(decisions[0].message.history.back().node, 9);
-            CHECK_NEAR(decisions[0].message.history.back().time, (2 + 1) * 0.02, 1e-9);
+            CHECK_EQ(decisions[0].message->history.size(), static_cast<std::size_t>(1));
+            CHECK_EQ(decisions[0].message->history.back().node, 9);
+            CHECK_NEAR(decisions[0].message->history.back().time, (2 + 1) * 0.02, 1e-9);
         }
     }
 

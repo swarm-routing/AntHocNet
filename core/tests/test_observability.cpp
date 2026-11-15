@@ -244,7 +244,7 @@ int main() {
         CHECK(obs.sent[0].broadcast);
         CHECK_EQ(out.size(), static_cast<std::size_t>(2));
         CHECK_EQ(obs.sent[0].bytes,
-                 static_cast<std::uint32_t>(codec::serializedSize(out[1].message)));
+                 static_cast<std::uint32_t>(codec::serializedSize(*out[1].message)));
 
         AntMessage hello = router.createHelloAnt();
         CHECK_EQ(obs.sent.size(), static_cast<std::size_t>(2));

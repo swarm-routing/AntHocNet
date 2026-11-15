@@ -56,10 +56,10 @@ struct Network {
         for (const RouteDecision& d : decisions) {
             switch (d.action) {
                 case RouteAction::Unicast:
-                    queue.push_back({d.nextHop, d.message, from});
+                    queue.push_back({d.nextHop, *d.message, from});
                     break;
                 case RouteAction::Broadcast:
-                    for (int nb : adj[from]) queue.push_back({nb, d.message, from});
+                    for (int nb : adj[from]) queue.push_back({nb, *d.message, from});
                     break;
                 case RouteAction::Deliver:
                     delivered = true;

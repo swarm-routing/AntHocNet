@@ -136,10 +136,10 @@ int main() {
         auto d1 = hop1.onReceiveAnt(ant, /*prevHop*/ 3);
         CHECK_EQ(d1.size(), static_cast<std::size_t>(1));
         CHECK(d1[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d1[0].message.broadcastBudget, 0);
+        CHECK_EQ(d1[0].message->broadcastBudget, 0);
 
         AntRouterLogic hop2(/*addr*/ 5, cfg, clock, rng);  // no route either
-        auto d2 = hop2.onReceiveAnt(d1[0].message, /*prevHop*/ 4);
+        auto d2 = hop2.onReceiveAnt(*d1[0].message, /*prevHop*/ 4);
         CHECK_EQ(d2.size(), static_cast<std::size_t>(1));
         CHECK(d2[0].action == RouteAction::Drop);
     }

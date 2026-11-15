@@ -77,8 +77,8 @@ int main() {
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
         CHECK(d[0].action == RouteAction::Unicast);
         CHECK_EQ(d[0].nextHop, 4);
-        CHECK(d[0].message.direction == AntDirection::Down);
-        CHECK(d[0].message.type == AntType::Proactive);
+        CHECK(d[0].message->direction == AntDirection::Down);
+        CHECK(d[0].message->type == AntType::Proactive);
     }
 
     // --- repair forward ant in transit with no route broadcasts -----------
@@ -99,7 +99,7 @@ int main() {
         auto d = router.onReceiveAnt(rrfa, 3);
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
         CHECK(d[0].action == RouteAction::Broadcast);
-        CHECK_EQ(d[0].message.visited.back().node, 4);  // stamped self
+        CHECK_EQ(d[0].message->visited.back().node, 4);  // stamped self
     }
 
     // --- repair forward ant reaching its destination spawns a back ant ----
@@ -120,8 +120,8 @@ int main() {
         CHECK_EQ(d.size(), static_cast<std::size_t>(1));
         CHECK(d[0].action == RouteAction::Unicast);
         CHECK_EQ(d[0].nextHop, 4);
-        CHECK(d[0].message.type == AntType::Repair);
-        CHECK(d[0].message.direction == AntDirection::Down);
+        CHECK(d[0].message->type == AntType::Repair);
+        CHECK(d[0].message->direction == AntDirection::Down);
     }
 
     return RUN_TESTS();
