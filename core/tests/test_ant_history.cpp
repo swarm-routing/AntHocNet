@@ -8,7 +8,7 @@ using namespace anthocnet::core;
 
 int main() {
     // Dedup: first sighting is new, repeats are not.
-    AntHistoryTracker h(/*maxEntries*/ 0);  // unbounded
+    swarm::core::DedupHistory h(dedupCapacity(/*maxHistory*/ 0));  // unbounded
     CHECK(h.record(5, 1));
     CHECK(!h.record(5, 1));  // duplicate
     CHECK(h.seen(5, 1));
@@ -24,7 +24,7 @@ int main() {
     CHECK(!h.seen(5, 0));
 
     // Bounded tracker evicts oldest entries (FIFO) once over capacity.
-    AntHistoryTracker bounded(/*maxEntries*/ 3);
+    swarm::core::DedupHistory bounded(dedupCapacity(/*maxHistory*/ 3));
     bounded.record(1, 1);
     bounded.record(1, 2);
     bounded.record(1, 3);
@@ -39,7 +39,7 @@ int main() {
     // ---------------------------------------------------------------------
     // GenerationTracker's bound (#166).
     //
-    // Golden rule 5 applies to both trackers, but only AntHistoryTracker's cap
+    // Golden rule 5 applies to both trackers, but only the dedup history's cap
     // was exercised above. GenerationTracker has *two* eviction sites --
     // accept() and allowBroadcast() -- and neither was reachable from any test:
     // every scenario stayed far under the cap. The bound could have been
@@ -117,7 +117,7 @@ int main() {
     }
 
     // maxEntries == 0 means unbounded for GenerationTracker too, matching
-    // AntHistoryTracker -- the `maxEntries_ != 0` guard, not a 0-sized cap that
+    // the dedup history's dedupCapacity(0) -- the `maxEntries_ != 0` guard, not a 0-sized cap that
     // would evict every entry immediately.
     {
         GenerationTracker g(/*maxEntries*/ 0);

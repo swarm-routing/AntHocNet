@@ -264,12 +264,12 @@ private:
     IRng& rng_;
     PheromoneTable table_;
     PheromoneEngine engine_;
-    ClassicMetric defaultMetric_;      ///< used when no metric is injected
-    const ILinkMetric* metric_;        ///< pheromone strategy (item 16)
-    const ILinkState* linkState_;      ///< MAC congestion signals (item 10/A2), optional
-    const ILinkQuality* linkQuality_;  ///< per-neighbour SINR (#181), optional
-    AntHistoryTracker history_;
-    GenerationTracker genQuality_;  ///< multipath acceptance filter (#96)
+    ClassicMetric defaultMetric_;        ///< used when no metric is injected
+    const ILinkMetric* metric_;          ///< pheromone strategy (item 16)
+    const ILinkState* linkState_;        ///< MAC congestion signals (item 10/A2), optional
+    const ILinkQuality* linkQuality_;    ///< per-neighbour SINR (#181), optional
+    swarm::core::DedupHistory history_;  ///< (src, seq) duplicates, bounded
+    GenerationTracker genQuality_;       ///< multipath acceptance filter (#96)
     std::uint32_t seqNum_ = 0;
     std::map<NodeAddress, double> activeSessions_;  ///< dest -> last data-send time
     std::map<NodeAddress, double> lastSeen_;        ///< neighbor -> last reception time

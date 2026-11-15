@@ -2,11 +2,13 @@
 // Copyright (C) 2026 Daniel Henrique Joppi
 
 /**
- * AntHistoryTracker: (src, seqNum) duplicate detection.
+ * Duplicate and generation tracking for ants.
  *
- * Replaces the unbounded std::set<AntHistory> that lived in AntNest. The set
- * grew for the entire run; here it is capped (FIFO eviction) so memory stays
- * bounded on long simulations.
+ * (src, seqNum) duplicate detection is swarm-core's DedupHistory
+ * (swarm-routing/ns3-swarm-core#14, S4), the bounded FIFO set AntHocNet's own
+ * AntHistoryTracker was (it replaced the unbounded std::set<AntHistory> of the
+ * original AntNest). GenerationTracker, the multipath acceptance filter, stays
+ * here: it is protocol logic.
  */
 #ifndef ANTHOCNET_CORE_ANT_HISTORY_H
 #define ANTHOCNET_CORE_ANT_HISTORY_H
@@ -14,45 +16,31 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <limits>
 #include <map>
 #include <set>
 #include <utility>
 #include <vector>
 
 #include "anthocnet/core/types.h"
+#include "swarm-dedup-history.h"
 
 namespace anthocnet {
 namespace core {
 
-class AntHistoryTracker {
-public:
-    /// maxEntries == 0 means unbounded.
-    explicit AntHistoryTracker(std::size_t maxEntries) : maxEntries_(maxEntries) {}
-
-    /// Record (src, seq). Returns true if it was new, false if already seen
-    /// (i.e. a looping/duplicate ant that should be dropped).
-    bool record(NodeAddress src, std::uint32_t seqNum);
-
-    /// Read-only membership test.
-    bool seen(NodeAddress src, std::uint32_t seqNum) const;
-
-    std::size_t size() const { return entries_.size(); }
-    void clear();
-
-private:
-    using Key = std::pair<NodeAddress, std::uint32_t>;
-
-    std::size_t maxEntries_;
-    std::set<Key> entries_;
-    std::deque<Key> insertionOrder_;  // for FIFO eviction
-};
+/// The capacity of the (src, seqNum) DedupHistory for Config::maxHistory. 0
+/// keeps the meaning it had for AntHistoryTracker, unbounded, where
+/// DedupHistory would clamp it to 1 (golden rule 5: the default, 4096, bounds it).
+inline std::size_t dedupCapacity(std::size_t maxHistory) {
+    return maxHistory == 0 ? std::numeric_limits<std::size_t>::max() : maxHistory;
+}
 
 /// Multipath acceptance filter for reactive forward ants ([1] §3.1, issue #96).
 /// Tracks, per (src, seq) generation, the best (fewest-hop / least-time) ant
 /// seen, and admits a later same-generation ant only when both its hops and its
 /// travel time are within an acceptance factor of that best — so several *good*
 /// paths get laid down instead of only the first-arriving one. Bounded FIFO like
-/// AntHistoryTracker (golden rule 5).
+/// the (src, seqNum) DedupHistory (golden rule 5).
 ///
 /// The factor is not a single number (#177). The 2007 thesis applies a
 /// *low* base factor a1 (0.9) to ants whose first hop has already been seen, and
@@ -106,7 +94,7 @@ public:
     /// which is a hop limit on discovery (#169).
     bool allowBroadcast(NodeAddress src, std::uint32_t seqNum, int maxBroadcasts);
 
-    /// Generations currently resident. Mirrors AntHistoryTracker::size(); the
+    /// Generations currently resident. Mirrors DedupHistory::size(); the
     /// cap it is checked against is the golden-rule-5 bound (#166).
     std::size_t size() const { return best_.size(); }
 

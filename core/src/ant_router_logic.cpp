@@ -24,7 +24,7 @@ AntRouterLogic::AntRouterLogic(NodeAddress address, const Config& config, IClock
       metric_(metric ? metric : &defaultMetric_),
       linkState_(linkState),
       linkQuality_(linkQuality),
-      history_(config_.maxHistory),
+      history_(dedupCapacity(config_.maxHistory)),
       genQuality_(config_.maxHistory) {}
 
 // --- neighbour learning -----------------------------------------------------

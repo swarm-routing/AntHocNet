@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
     // 4. History dedup at steady state: a full tracker (Config::maxHistory)
     //    recording a new (src, seq) evicts the oldest one each time.
     {
-        AntHistoryTracker h(cfg.maxHistory);
+        swarm::core::DedupHistory h(dedupCapacity(cfg.maxHistory));
         std::uint32_t seq = 0;
         for (std::size_t i = 0; i < cfg.maxHistory; ++i)
             h.record(static_cast<NodeAddress>(i % 32), seq++);
