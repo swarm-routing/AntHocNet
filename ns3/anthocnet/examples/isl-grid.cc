@@ -243,11 +243,11 @@ double g_tDetect = -1.0;                 // s after the break; -1 = never fired
 std::set<uint32_t> g_breakPeerAddrs;     // every Ipv4 address of both endpoints
 std::vector<double> g_flowFirstRxAfter;  // abs time; -1 = nothing after break
 
-void FailcellRouteChanged(uint32_t /*dest*/, uint32_t neighbor, bool added) {
+void FailcellRouteChanged(Ipv4Address /*dest*/, Ipv4Address neighbor, bool added) {
     if (added || g_tDetect >= 0.0 || g_breakAt <= 0.0) return;
     const double now = Simulator::Now().GetSeconds();
     if (now < g_breakAt) return;
-    if (g_breakPeerAddrs.count(neighbor)) g_tDetect = now - g_breakAt;
+    if (g_breakPeerAddrs.count(neighbor.Get())) g_tDetect = now - g_breakAt;
 }
 
 void FailcellSinkRx(uint32_t flow, Ptr<const Packet>, const Address&) {

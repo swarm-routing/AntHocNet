@@ -39,7 +39,7 @@ public:
     /// canonical ClassicMetric. `linkState` supplies MAC-layer congestion
     /// signals for the item-10/A2 metric (nullptr => wall-clock per-hop time).
     /// Both default to null, so existing adapter call sites are unchanged.
-    AntRouterLogic(NodeAddress address, const Config& config, IClock& clock, IRng& rng,
+    AntRouterLogic(NodeAddress address, const Config& config, const IClock& clock, IRng& rng,
                    const ILinkMetric* metric = nullptr, const ILinkState* linkState = nullptr,
                    const ILinkQuality* linkQuality = nullptr);
     // metric_ may point at this object's own defaultMetric_, sinrMetric_ or
@@ -271,7 +271,7 @@ private:
 
     NodeAddress address_;
     Config config_;
-    IClock& clock_;
+    const IClock& clock_;
     IRng& rng_;
     PheromoneTable table_;
     PheromoneEngine engine_;

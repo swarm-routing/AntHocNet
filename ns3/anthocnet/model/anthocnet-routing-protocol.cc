@@ -110,7 +110,7 @@ RoutingProtocol::~RoutingProtocol() = default;
 TypeId RoutingProtocol::GetTypeId() {
     static TypeId tid =
         TypeId("ns3::anthocnet::RoutingProtocol")
-            .SetParent<Ipv4RoutingProtocol>()
+            .SetParent<SwarmRoutingBase>()
             .SetGroupName("AntHocNet")
             .AddConstructor<RoutingProtocol>()
             .AddAttribute("HelloInterval", "Hello-ant beacon interval.", TimeValue(Seconds(1.0)),
@@ -501,34 +501,6 @@ TypeId RoutingProtocol::GetTypeId() {
                             "processed (type, direction).",
                             MakeTraceSourceAccessor(&RoutingProtocol::m_rxAntTrace),
                             "ns3::anthocnet::RoutingProtocol::AntRxCallback")
-            .AddTraceSource("RouteChanged",
-                            "A neighbour/route entry was added or removed "
-                            "(dest, neighbour, added).",
-                            MakeTraceSourceAccessor(&RoutingProtocol::m_routeChangedTrace),
-                            "ns3::anthocnet::RoutingProtocol::RouteChangedCallback")
-            .AddTraceSource("ControlTx",
-                            "swarm-core's router observer (#917): a control "
-                            "message of `kind` (GetKindName) was put on the "
-                            "medium, `bytes` long as encoded (kind, broadcast, "
-                            "bytes).",
-                            MakeTraceSourceAccessor(&RoutingProtocol::m_controlTxTrace),
-                            "ns3::anthocnet::RoutingProtocol::ControlTxCallback")
-            .AddTraceSource("ControlRx",
-                            "swarm-core's router observer (#917): a non-duplicate "
-                            "control message was processed (kind, bytes).",
-                            MakeTraceSourceAccessor(&RoutingProtocol::m_controlRxTrace),
-                            "ns3::anthocnet::RoutingProtocol::ControlRxCallback")
-            .AddTraceSource("DataDecision",
-                            "swarm-core's router observer (#917): what was decided "
-                            "for a data packet (dest, action: 1 Unicast, 3 Queue, "
-                            "4 Deliver, 5 Drop).",
-                            MakeTraceSourceAccessor(&RoutingProtocol::m_dataDecisionTrace),
-                            "ns3::anthocnet::RoutingProtocol::DataDecisionCallback")
-            .AddTraceSource("StateSize",
-                            "swarm-core's router observer (#917): the pheromone "
-                            "table's footprint changed (entries, bytes).",
-                            MakeTraceSourceAccessor(&RoutingProtocol::m_stateSizeTrace),
-                            "ns3::anthocnet::RoutingProtocol::StateSizeCallback")
             .AddTraceSource("MacReinject",
                             "A MAC retry-limit-dropped data packet was "
                             "re-injected into the pending queue (#46/#386). "
@@ -561,26 +533,28 @@ void RoutingProtocol::onAntReceived(::anthocnet::core::AntType type,
     m_rxAntTrace(static_cast<uint8_t>(type), static_cast<uint8_t>(dir));
 }
 
+// swarm-core's events go to the base's observer: its trace sources
+// (RouteChanged, ControlTx, ControlRx, DataDecision, StateSize) and counters.
 void RoutingProtocol::onRouteChanged(::anthocnet::core::NodeAddress dest,
                                      ::anthocnet::core::NodeAddress nb, bool added) {
-    m_routeChangedTrace(static_cast<uint32_t>(dest), static_cast<uint32_t>(nb), added);
+    Observer().onRouteChanged(dest, nb, added);
 }
 
 void RoutingProtocol::onControlSent(uint8_t kind, bool broadcast, uint32_t bytes) {
-    m_controlTxTrace(kind, broadcast, bytes);
+    Observer().onControlSent(kind, broadcast, bytes);
 }
 
 void RoutingProtocol::onControlReceived(uint8_t kind, uint32_t bytes) {
-    m_controlRxTrace(kind, bytes);
+    Observer().onControlReceived(kind, bytes);
 }
 
 void RoutingProtocol::onDataDecision(::anthocnet::core::NodeAddress dest,
                                      ::anthocnet::core::RouteAction action) {
-    m_dataDecisionTrace(ToIpv4(dest), static_cast<uint8_t>(action));
+    Observer().onDataDecision(dest, action);
 }
 
 void RoutingProtocol::onStateSize(uint32_t entries, uint32_t bytes) {
-    m_stateSizeTrace(entries, bytes);
+    Observer().onStateSize(entries, bytes);
 }
 
 std::string RoutingProtocol::GetKindName(uint8_t kind) {
@@ -633,7 +607,7 @@ int RoutingProtocol::macQueueLength(NodeAddress nextHop) const {
         }
         return static_cast<int>(total);
     }
-    if (m_socketAddresses.empty()) return 0;  // ResolveNextHop needs an iface
+    if (m_ifaces.empty()) return 0;  // ResolveNextHop needs an iface
     Ipv4Address gateway;
     Ptr<NetDevice> dev;
     uint32_t iface = 0;
@@ -654,7 +628,7 @@ int RoutingProtocol::macQueueLength(NodeAddress nextHop) const {
     // only, never propagation (an ISL's 3-18 ms is real delay but not
     // congestion; folding it in would swamp the signal's dynamic range).
     if (nextHop != kInvalidAddress) {
-        if (m_socketAddresses.empty()) return 0.0;
+        if (m_ifaces.empty()) return 0.0;
         Ipv4Address gateway;
         Ptr<NetDevice> dev;
         uint32_t iface = 0;
@@ -725,6 +699,7 @@ void RoutingProtocol::NotifyAckedMpdu(Ptr<const AHN_WIFI_MPDU>) {
 void RoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4) {
     NS_ASSERT(ipv4);
     m_ipv4 = ipv4;
+    SwarmRoutingBase::SetIpv4(ipv4);
 }
 
 void RoutingProtocol::DoInitialize() {
@@ -773,24 +748,19 @@ void RoutingProtocol::DoInitialize() {
     // uncapped on QueueTimeout; only the tail-dominant RECONV/REPAIR holds cap.
     m_queue.SetHoldCap(HOLD_RECONV, m_reconvHoldCap);
     m_queue.SetHoldCap(HOLD_REPAIR, m_repairHoldCap);
-    Ipv4RoutingProtocol::DoInitialize();
+    // The ControlTx/ControlRx kind names, for the base's GetKindName (#917).
+    SetKindNames(GetTypeId(), ::anthocnet::core::kControlKindNames);
+    SwarmRoutingBase::DoInitialize();
 }
 
 void RoutingProtocol::DoDispose() {
     m_ipv4 = nullptr;
-    for (auto& kv : m_socketAddresses) {
-        kv.first->Close();
-    }
-    m_socketAddresses.clear();
-    for (auto& kv : m_socketSubnetBroadcast) {
-        kv.first->Close();
-    }
-    m_socketSubnetBroadcast.clear();
+    m_ifaces.clear();
     m_logic.reset();
-    Ipv4RoutingProtocol::DoDispose();
+    SwarmRoutingBase::DoDispose();  // closes the control sockets
 }
 
-void RoutingProtocol::Start() {
+void RoutingProtocol::StartTimers() {
     if (m_started) return;
     m_started = true;
 
@@ -887,6 +857,9 @@ bool RoutingProtocol::self(::anthocnet::core::Kinematics& out) const {
 }
 
 void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
+    // The base opens this interface's control sockets (one on the unicast
+    // address, one on the subnet broadcast; the same checks as below).
+    SwarmRoutingBase::NotifyInterfaceUp(interface);
     Ptr<Ipv4L3Protocol> l3 = m_ipv4->GetObject<Ipv4L3Protocol>();
     if (l3->GetNAddresses(interface) == 0) return;
     Ipv4InterfaceAddress iface = m_ipv4->GetAddress(interface, 0);
@@ -946,33 +919,18 @@ void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
                            << "\"; valid: " << ::anthocnet::core::metrics::registeredNames());
         }
         m_logic.reset(new ::anthocnet::core::AntRouterLogic(
-            ToCore(iface.GetLocal()), m_config, m_clock, m_rng, metric, /*linkState*/ this,
+            ToCore(iface.GetLocal()), m_config, Clock(), Rng(), metric, /*linkState*/ this,
             /*linkQuality*/ this));
         m_logic->setObserver(this);    // fan core events to the trace sources
         m_logic->setKinematics(this);  // ADR-0025; read only with ShareKinematics
         m_logic->setEnergy(this);      // #145; read only by the energy metric
     }
 
-    // One UDP socket per interface for ant control traffic.
-    Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(), UdpSocketFactory::GetTypeId());
-    NS_ASSERT(socket);
-    socket->SetRecvCallback(MakeCallback(&RoutingProtocol::RecvAnt, this));
-    socket->BindToNetDevice(l3->GetNetDevice(interface));
-    socket->Bind(InetSocketAddress(iface.GetLocal(), ANT_PORT));
-    socket->SetAllowBroadcast(true);
-    socket->SetIpRecvTtl(true);
-    m_socketAddresses[socket] = iface;
-
-    // Second socket bound to the subnet-broadcast address so this interface
-    // actually receives the broadcast hello / forward ants.
-    Ptr<Socket> bcast = Socket::CreateSocket(GetObject<Node>(), UdpSocketFactory::GetTypeId());
-    NS_ASSERT(bcast);
-    bcast->SetRecvCallback(MakeCallback(&RoutingProtocol::RecvAnt, this));
-    bcast->BindToNetDevice(l3->GetNetDevice(interface));
-    bcast->Bind(InetSocketAddress(iface.GetBroadcast(), ANT_PORT));
-    bcast->SetAllowBroadcast(true);
-    bcast->SetIpRecvTtl(true);
-    m_socketSubnetBroadcast[bcast] = iface;
+    // The base opened its control sockets above; keep the interface in
+    // device order for SendAnt's fan-out (#362).
+    ControlIface& ci = m_ifaces[l3->GetNetDevice(interface)->GetIfIndex()];
+    ci.interface = interface;
+    ci.address = iface;
 
     // ADR-0008 detector D: subscribe to the WifiMac transmit-failure trace so a
     // failed unicast to a next hop is reported immediately (NS-2 parity). Only
@@ -1022,22 +980,15 @@ void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
         }
     }
 
-    Start();
+    StartTimers();
 }
 
 void RoutingProtocol::NotifyInterfaceDown(uint32_t interface) {
     Ipv4InterfaceAddress iface = m_ipv4->GetAddress(interface, 0);
-    Ptr<Socket> socket = FindSocketWithInterfaceAddress(iface);
-    if (socket) {
-        // Erase before Close: the map's comparator reads the bound device
-        // (#362), so look the key up while the socket is still intact.
-        m_socketAddresses.erase(socket);
-        socket->Close();
-    }
-    for (auto it = m_socketSubnetBroadcast.begin(); it != m_socketSubnetBroadcast.end(); ++it) {
-        if (it->second == iface) {
-            it->first->Close();
-            m_socketSubnetBroadcast.erase(it);
+    SwarmRoutingBase::NotifyInterfaceDown(interface);  // closes its control sockets
+    for (auto it = m_ifaces.begin(); it != m_ifaces.end(); ++it) {
+        if (it->second.address == iface) {
+            m_ifaces.erase(it);
             break;
         }
     }
@@ -1082,8 +1033,12 @@ void RoutingProtocol::NotifyInterfaceDown(uint32_t interface) {
     }
 }
 
-void RoutingProtocol::NotifyAddAddress(uint32_t, Ipv4InterfaceAddress) {}
-void RoutingProtocol::NotifyRemoveAddress(uint32_t, Ipv4InterfaceAddress) {}
+void RoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address) {
+    SwarmRoutingBase::NotifyAddAddress(interface, address);
+}
+void RoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address) {
+    SwarmRoutingBase::NotifyRemoveAddress(interface, address);
+}
 
 // --- routing ----------------------------------------------------------------
 
@@ -1094,8 +1049,8 @@ void RoutingProtocol::ResolveNextHop(NodeAddress next, Ipv4Address& gateway, Ptr
     // 1. Directly attached: the next hop is on one of our own subnets. Every
     //    single-interface topology takes this path, so the common case keeps
     //    exactly its pre-#203 gateway/device.
-    for (const auto& kv : m_socketAddresses) {
-        const Ipv4InterfaceAddress& addr = kv.second;
+    for (const auto& kv : m_ifaces) {
+        const Ipv4InterfaceAddress& addr = kv.second.address;
         if (addr.GetLocal().CombineMask(addr.GetMask()) == nextIp.CombineMask(addr.GetMask())) {
             const int32_t i = m_ipv4->GetInterfaceForAddress(addr.GetLocal());
             if (i < 0) continue;
@@ -1120,7 +1075,7 @@ void RoutingProtocol::ResolveNextHop(NodeAddress next, Ipv4Address& gateway, Ptr
     // 3. Unknown next hop: degrade to the first interface exactly as before.
     gateway = nextIp;
     iface = static_cast<uint32_t>(
-        m_ipv4->GetInterfaceForAddress(m_socketAddresses.begin()->second.GetLocal()));
+        m_ipv4->GetInterfaceForAddress(m_ifaces.begin()->second.address.GetLocal()));
     dev = m_ipv4->GetNetDevice(iface);
 }
 
@@ -1129,8 +1084,8 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
     route->SetDestination(header.GetDestination());
     route->SetGateway(Ipv4Address("127.0.0.1"));
     // Pick a source address on an available interface.
-    for (const auto& kv : m_socketAddresses) {
-        Ipv4InterfaceAddress addr = kv.second;
+    for (const auto& kv : m_ifaces) {
+        Ipv4InterfaceAddress addr = kv.second.address;
         if (!oif || m_ipv4->GetInterfaceForDevice(oif) ==
                         (int)m_ipv4->GetInterfaceForAddress(addr.GetLocal())) {
             route->SetSource(addr.GetLocal());
@@ -1138,8 +1093,7 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
         }
     }
     if (route->GetSource() == Ipv4Address()) {
-        if (!m_socketAddresses.empty())
-            route->SetSource(m_socketAddresses.begin()->second.GetLocal());
+        if (!m_ifaces.empty()) route->SetSource(m_ifaces.begin()->second.address.GetLocal());
     }
     route->SetOutputDevice(m_ipv4->GetNetDevice(0));  // loopback device
     return route;
@@ -1148,7 +1102,9 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
 Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header& header,
                                             Ptr<NetDevice> oif, Socket::SocketErrno& sockerr) {
     sockerr = Socket::ERROR_NOTERROR;
-    if (!m_logic || m_socketAddresses.empty()) {
+    // A node the base's lifecycle took down routes nothing (#974 adds the
+    // protocol's own shutdown, crash and restart hooks).
+    if (!m_logic || m_ifaces.empty() || IsDown()) {
         sockerr = Socket::ERROR_NOROUTETOHOST;
         return nullptr;
     }
@@ -1210,7 +1166,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
                                  AHN_RI_CB(MulticastForwardCallback) mcb,
                                  AHN_RI_CB(LocalDeliverCallback) lcb,
                                  AHN_RI_CB(ErrorCallback) ecb) {
-    if (!m_logic || m_socketAddresses.empty()) return false;
+    if (!m_logic || m_ifaces.empty() || IsDown()) return false;
 
     // Ipv4L3Protocol passes the same bound callbacks on every call; cache them
     // so NotifyTxError can re-inject a MAC-dropped data packet (issue #46).
@@ -1281,51 +1237,70 @@ void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header&
     entry.holdReason =
         m_everRouted.count(ToCore(header.GetDestination())) ? HOLD_RECONV : HOLD_SETUP;
     m_queue.Enqueue(entry);
+    StartDiscovery(header.GetDestination());
+}
 
+void RoutingProtocol::StartDiscovery(Ipv4Address dst) {
     // Ask the core what to do; it returns Queue + a reactive forward ant.
     // #918: into the kept vector. Taken out of the member while it runs, so a
     // packet routed from inside ExecuteDecisions gets a vector of its own.
     std::vector<RouteDecision> decisions;
     decisions.swap(m_dataDecisions);
-    m_logic->onDataPacket(ToCore(header.GetDestination()), kInvalidAddress, decisions);
+    m_logic->onDataPacket(ToCore(dst), kInvalidAddress, decisions);
     ExecuteDecisions(decisions, kInvalidAddress);
     decisions.clear();
     m_dataDecisions.swap(decisions);
 }
 
+Ipv4Address RoutingProtocol::SelectNextHop(Ipv4Address dst, Ipv4Address, Ipv4Address,
+                                           Ptr<const Packet>) {
+    const NodeAddress next = m_logic ? m_logic->nextHopForData(ToCore(dst)) : kInvalidAddress;
+    return next == kInvalidAddress ? Ipv4Address() : ToIpv4(next);
+}
+
 // --- ant I/O ----------------------------------------------------------------
 
 void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
-    if (m_socketAddresses.empty()) return;
+    if (m_ifaces.empty()) return;
     const AntSendScope sending(m_sendingAnt);
     Ptr<Packet> packet = Create<Packet>();
     AntHeader header(msg);
     packet->AddHeader(header);
 
+    // Every send goes through one of the base's control sockets with
+    // UnicastControl, which sends out of the interface whose subnet holds the
+    // address it is given (its first rule; the second, the peer map, is
+    // empty here, and the third is the first interface). Each address below
+    // is chosen so that rule picks the socket this adapter always used:
     if (dest == Ipv4Address("255.255.255.255")) {
-        for (auto& kv : m_socketAddresses) {
-            kv.first->SendTo(packet->Copy(), 0,
-                             InetSocketAddress(kv.second.GetBroadcast(), ANT_PORT));
+        // a broadcast: the interface's subnet broadcast, on each interface in
+        // device order (#362). Two interfaces on one subnet would both resolve
+        // to the first of them, so a node with such a pair broadcasts with
+        // BroadcastControl instead (every interface, in the order they came
+        // up), until the base's per-interface broadcast (S10b) replaces both.
+        if (!SubnetsDistinct()) {
+            BroadcastControl(packet);
+            return;
+        }
+        for (const auto& kv : m_ifaces) {
+            UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
         }
         return;
     }
 
-    // Unicast: out of the interface that actually reaches this next hop, and
+    // a unicast: out of the interface that actually reaches this next hop,
     // addressed to where it is reachable on that link (#203). A backward ant
-    // retraces a path made of canonical addresses, so on a multi-interface node
-    // the ant's next hop is routinely NOT on the subnet it must be sent over.
+    // retraces a path made of canonical addresses, so on a multi-interface
+    // node the ant's next hop is routinely NOT on the subnet it must be sent
+    // over. The gateway is on the chosen interface's subnet; when that
+    // interface has no socket (it went down) or the hop is unknown, the
+    // gateway is on no subnet of a socket and the first interface sends it,
+    // as before.
     Ipv4Address gateway;
     Ptr<NetDevice> dev;
     uint32_t ifIdx;
     ResolveNextHop(ToCore(dest), gateway, dev, ifIdx);
-    for (auto& kv : m_socketAddresses) {
-        if (m_ipv4->GetInterfaceForAddress(kv.second.GetLocal()) == static_cast<int32_t>(ifIdx)) {
-            kv.first->SendTo(packet->Copy(), 0, InetSocketAddress(gateway, ANT_PORT));
-            return;
-        }
-    }
-    m_socketAddresses.begin()->first->SendTo(packet->Copy(), 0,
-                                             InetSocketAddress(gateway, ANT_PORT));
+    UnicastControl(packet->Copy(), gateway);
 }
 
 void RoutingProtocol::ExecuteDecisions(const std::vector<RouteDecision>& decisions,
@@ -1363,12 +1338,7 @@ void RoutingProtocol::ExecuteDecisions(const std::vector<RouteDecision>& decisio
     }
 }
 
-void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
-    Address sourceAddress;
-    Ptr<Packet> packet = socket->RecvFrom(sourceAddress);
-    InetSocketAddress inetSource = InetSocketAddress::ConvertFrom(sourceAddress);
-    Ipv4Address sender = inetSource.GetIpv4();
-
+void RoutingProtocol::RecvControl(Ptr<Packet> packet, Ipv4Address sender, Ipv4Address receiver) {
     AntHeader header;
     packet->RemoveHeader(header);
     AntMessage incoming = std::move(header.Message());  // #918: the header is done with it
@@ -1380,22 +1350,9 @@ void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
     // interface, which is precisely the case ResolveNextHop needs help with.
     if (incoming.type == AntType::Hello && incoming.src != kInvalidAddress) {
         const Ipv4Address canonical = ToIpv4(incoming.src);
-        // A hello arrives on the subnet-broadcast socket; check the unicast
-        // map too so the mapping is still learned if that ever changes.
-        bool known = false;
-        Ipv4InterfaceAddress ifaceAddr;
-        auto bit = m_socketSubnetBroadcast.find(socket);
-        if (bit != m_socketSubnetBroadcast.end()) {
-            ifaceAddr = bit->second;
-            known = true;
-        } else {
-            auto uit = m_socketAddresses.find(socket);
-            if (uit != m_socketAddresses.end()) {
-                ifaceAddr = uit->second;
-                known = true;
-            }
-        }
-        const int32_t i = known ? m_ipv4->GetInterfaceForAddress(ifaceAddr.GetLocal()) : -1;
+        // The interface it arrived on: the base names it by its address (the
+        // subnet-broadcast socket's or the unicast one's, the same interface).
+        const int32_t i = receiver == Ipv4Address() ? -1 : m_ipv4->GetInterfaceForAddress(receiver);
         if (i >= 0) {
             // #260: record both names the core may hold this neighbour under
             // (learnNeighbor sees the link-local prevHop on every ant and the
@@ -1447,6 +1404,9 @@ void RoutingProtocol::RecvAnt(Ptr<Socket> socket) {
 }
 
 void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
+    // A node the base's lifecycle took down forwards nothing, from the retry
+    // timer or a MAC re-injection either (#974 adds the protocol's hooks).
+    if (IsDown()) return;
     Ipv4Address dst = ToIpv4(coreDest);
     std::vector<QueueEntry> pending;
     m_queue.DequeueAll(dst, pending);
@@ -1499,7 +1459,9 @@ void RoutingProtocol::HelloTimerExpire() {
         // LinkFail broadcasts and repair-timeout DiscardPending actions (D6).
         ExecuteDecisions(m_logic->onMaintenanceTick(), kInvalidAddress);
         AntMessage hello = m_logic->createHelloAnt();
-        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0;
+        // A node with two interfaces on one subnet cannot send on one of them
+        // alone yet (S10b), so it sends every hello on every interface.
+        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0 || !SubnetsDistinct();
         if (p2pTick) {
             SendAnt(hello, Ipv4Address("255.255.255.255"));
         } else {
@@ -1510,8 +1472,8 @@ void RoutingProtocol::HelloTimerExpire() {
             Ptr<Packet> packet = Create<Packet>();
             packet->AddHeader(AntHeader(hello));
             const AntSendScope sending(m_sendingAnt);
-            for (auto& kv : m_socketAddresses) {
-                const int32_t i = m_ipv4->GetInterfaceForAddress(kv.second.GetLocal());
+            for (const auto& kv : m_ifaces) {
+                const int32_t i = m_ipv4->GetInterfaceForAddress(kv.second.address.GetLocal());
                 if (i >= 0 && m_ipv4->GetNetDevice(i)->IsPointToPoint()) {
                     if (!m_ipv4->IsUp(i)) continue;
                     auto nit = m_ifaceNeighbors.find(static_cast<uint32_t>(i));
@@ -1519,8 +1481,8 @@ void RoutingProtocol::HelloTimerExpire() {
                     for (NodeAddress n : nit->second) m_logic->learnNeighbor(n);
                     continue;
                 }
-                kv.first->SendTo(packet->Copy(), 0,
-                                 InetSocketAddress(kv.second.GetBroadcast(), ANT_PORT));
+                // This interface's subnet broadcast, as SendAnt sends one.
+                UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
             }
         }
     }
@@ -1614,7 +1576,7 @@ void RoutingProtocol::NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI
     // Detector D is a latency optimisation over the mandatory hello-timeout
     // detector A (ADR-0008); it can be gated off for ablation (issue #46).
     if (!m_enableMacFailureDetector) return;
-    if (!m_logic || m_socketAddresses.empty() || !mpdu) return;
+    if (!m_logic || m_ifaces.empty() || !mpdu) return;
     // Only a retry-limit drop is a real broken link; other drop reasons
     // (queue full, lifetime expiry) are congestion, not topology.
     if (reason != WIFI_MAC_DROP_REACHED_RETRY_LIMIT) return;
@@ -1750,37 +1712,22 @@ bool RoutingProtocol::MapMacToCore(const Mac48Address& mac, NodeAddress& out) co
 
 // --- helpers ----------------------------------------------------------------
 
-bool RoutingProtocol::IsMyOwnAddress(Ipv4Address src) const {
-    for (const auto& kv : m_socketAddresses) {
-        if (kv.second.GetLocal() == src) return true;
+bool RoutingProtocol::SubnetsDistinct() const {
+    for (auto a = m_ifaces.begin(); a != m_ifaces.end(); ++a) {
+        const Ipv4InterfaceAddress& x = a->second.address;
+        for (auto b = std::next(a); b != m_ifaces.end(); ++b) {
+            const Ipv4InterfaceAddress& y = b->second.address;
+            if (x.GetLocal().CombineMask(x.GetMask()) == y.GetLocal().CombineMask(x.GetMask()) ||
+                x.GetLocal().CombineMask(y.GetMask()) == y.GetLocal().CombineMask(y.GetMask())) {
+                return false;
+            }
+        }
     }
-    return false;
-}
-
-bool RoutingProtocol::SocketByBoundDevice::operator()(const Ptr<Socket>& a,
-                                                      const Ptr<Socket>& b) const {
-    // Issue #362: every socket is bound to its interface's device before it is
-    // inserted, and there is one socket per device in each map, so the device
-    // index is a unique, heap-independent key. The pointer tie-break only
-    // keeps the ordering strict if that invariant were ever broken.
-    const Ptr<NetDevice> da = a->GetBoundNetDevice();
-    const Ptr<NetDevice> db = b->GetBoundNetDevice();
-    const uint32_t ia = da ? da->GetIfIndex() : UINT32_MAX;
-    const uint32_t ib = db ? db->GetIfIndex() : UINT32_MAX;
-    if (ia != ib) return ia < ib;
-    return PeekPointer(a) < PeekPointer(b);
-}
-
-Ptr<Socket> RoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const {
-    for (const auto& kv : m_socketAddresses) {
-        if (kv.second == addr) return kv.first;
-    }
-    return nullptr;
+    return true;
 }
 
 int64_t RoutingProtocol::AssignStreams(int64_t stream) {
-    m_rng.Stream()->SetStream(stream);
-    return 1;
+    return SwarmRoutingBase::AssignStreams(stream);  // the Rng() port's one stream
 }
 
 int64_t RoutingProtocol::AssignTimerStreams(int64_t stream) {

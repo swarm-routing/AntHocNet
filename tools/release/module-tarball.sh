@@ -45,8 +45,8 @@ AntHocNet $ver — drop-in ns-3 modules
   ./test.py -s anthocnet && ./ns3 run anthocnet-example
 
 Contents: contrib/anthocnet (the module + harnesses; it carries the algorithm
-core/ and swarm-core's core/ at the commit core/CMakeLists.txt pins,
-$(python3 "$repo/tools/swarm_core.py" pin)) and the comparison
+core/), contrib/swarm-core (the module it links, at the release
+swarm-core.lock names, $(python3 "$repo/tools/swarm_core.py" pin)) and the comparison
 modules contrib/aomdv, contrib/gpsr, contrib/oracle, contrib/adaptive and the harness
 module contrib/routing-bench ($(python3 "$repo/tools/ns3_tools.py" pin), from
 ns3-tools.lock). Delete those five to

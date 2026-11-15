@@ -146,13 +146,14 @@ build as above. The same files are on the generated `ns3-module` branch.
 With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
 each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
 it into your bake checkout's `contrib/` directory, then run
-`./bake.py configure -e ns-3.46 -e anthocnet && ./bake.py download && ./bake.py build`.
+`./bake.py configure -e ns-3.46 -e swarm-core -e anthocnet && ./bake.py download && ./bake.py build`.
 **Not usable yet:** the module's floor is ns-3.46 (the core is C++23), and
 bake's own catalogue stops at ns-3.44 (at the bake revision
 [bake.yml](.github/workflows/bake.yml) pins, bake's newest; #1026). The recipe
 asks for ns-3.46 or newer, and bake.yml is paused: run on demand, it builds
 nothing until bake ships ns-3.46. Until then, install with `make install-ns3`
-or the drop-in tarball above.
+or the drop-in tarball above. The recipe builds AntHocNet alone, with
+swarm-core (the module it links) and without the comparison modules.
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
 release ns-3 supports (3.49 today); ns-3.46 to 3.48 on demand.

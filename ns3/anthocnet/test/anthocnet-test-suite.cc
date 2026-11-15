@@ -836,7 +836,8 @@ private:
         m_events << Simulator::Now().GetNanoSeconds() << " tx " << unsigned(type) << ' '
                  << unsigned(dir) << ' ' << broadcast << "\n";
     }
-    void Route(uint32_t dest, uint32_t nb, bool added) {
+    // SwarmRoutingBase's RouteChanged and DataDecision signatures (S10 of #1019).
+    void Route(Ipv4Address dest, Ipv4Address nb, bool added) {
         m_events << Simulator::Now().GetNanoSeconds() << " route " << dest << ' ' << nb << ' '
                  << added << "\n";
     }
@@ -852,11 +853,11 @@ private:
             ++m_unnamedKinds;
         if (bytes == 0) ++m_zeroBytes;
     }
-    void Decision(Ipv4Address /*dest*/, uint8_t action) {
+    void Decision(Ipv4Address /*dest*/, ::anthocnet::core::RouteAction action) {
         using ::anthocnet::core::RouteAction;
-        if (action == static_cast<uint8_t>(RouteAction::Unicast)) ++m_forwarded;
-        if (action == static_cast<uint8_t>(RouteAction::Deliver)) ++m_delivered;
-        if (action == static_cast<uint8_t>(RouteAction::Queue)) ++m_queued;
+        if (action == RouteAction::Unicast) ++m_forwarded;
+        if (action == RouteAction::Deliver) ++m_delivered;
+        if (action == RouteAction::Queue) ++m_queued;
     }
     void State(uint32_t entries, uint32_t bytes) {
         ++m_stateReports;

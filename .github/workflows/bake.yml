@@ -3,7 +3,7 @@ name: Bake
 # AntHocNet through ns-3's own installer (#613): the bake recipe that
 # release.yml attaches to every release (packaging/bake/anthocnet.xml.in),
 # exercised end to end the way a user runs it:
-#   ./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build
+#   ./bake.py configure -e ns-3.46 -e swarm-core -e anthocnet && ./bake.py download && ./bake.py build
 # The recipe's URL points at this commit's drop-in module tarball, served on
 # localhost, so a change to the tarball or the recipe is tested before it
 # ships. Bake builds ns-3 from scratch with its default configuration (all
@@ -77,13 +77,14 @@ jobs:
       - name: bake configure
         if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
-        run: ./bake.py configure -e "$NS" -e anthocnet
+        run: ./bake.py configure -e "$NS" -e swarm-core -e anthocnet
       - name: bake download
         if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
         run: |
           ./bake.py download
           test -f "source/$NS/contrib/anthocnet/CMakeLists.txt"
+          test -f "source/$NS/contrib/swarm-core/CMakeLists.txt"   # the module anthocnet links
       - name: bake build
         if: steps.catalogue.outputs.ready == 'true'
         working-directory: ${{ runner.temp }}/bake
