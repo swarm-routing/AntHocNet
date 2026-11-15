@@ -147,6 +147,7 @@ int main() {
     AntMessage bad;
     CHECK(!codec::deserialize(bytes.data(), bytes.size() - 1, bad));
     CHECK(!codec::deserialize(bytes.data(), 3, bad));
+    CHECK(!codec::deserialize(bytes.data(), 0, bad));  // not even the version byte
 
     // Item 12 — trust-boundary hardening on the untrusted decode path.
 
@@ -184,6 +185,52 @@ int main() {
         std::vector<std::uint8_t> v = codec::serialize(big);
         AntMessage out2;
         CHECK(!codec::deserialize(v, out2));
+    }
+    // The same cap on the history and on the hello adverts, each section
+    // checked on its own (swarm-routing/.github#425: these branches were
+    // untested).
+    {
+        AntMessage big;
+        big.type = AntType::Reactive;
+        big.direction = AntDirection::Down;
+        big.visited = {{1, 0.0}};
+        for (std::size_t i = 0; i <= codec::kMaxHistoryOnWire; ++i) {
+            big.history.push_back({static_cast<NodeAddress>(i), 0.0});
+        }
+        AntMessage out2;
+        CHECK(!codec::deserialize(codec::serialize(big), out2));
+        big.history.pop_back();  // exactly at the cap: accepted
+        CHECK(codec::deserialize(codec::serialize(big), out2));
+        CHECK_EQ(out2.history.size(), static_cast<std::size_t>(codec::kMaxHistoryOnWire));
+    }
+    {
+        AntMessage big;
+        big.type = AntType::Hello;
+        big.direction = AntDirection::Up;
+        for (std::size_t i = 0; i <= codec::kMaxHelloOnWire; ++i) {
+            big.helloDests.push_back({static_cast<NodeAddress>(i), 1.0});
+        }
+        AntMessage out2;
+        CHECK(!codec::deserialize(codec::serialize(big), out2));
+        big.helloDests.pop_back();
+        CHECK(codec::deserialize(codec::serialize(big), out2));
+        CHECK_EQ(out2.helloDests.size(), static_cast<std::size_t>(codec::kMaxHelloOnWire));
+    }
+    // A count within the cap that the buffer does not back is rejected in
+    // every section, not read past the end: cut `m` (3 visited, 1 history,
+    // 2 adverts) inside its visited and inside its history entries.
+    {
+        AntMessage empty;
+        empty.type = m.type;
+        empty.direction = m.direction;
+        const std::size_t visitedAt = codec::serializedSize(empty) - 4;  // after the visited count
+        const std::size_t historyAt = visitedAt + 3 * 12 + 2;            // after the history count
+        AntMessage out2;
+        CHECK(!codec::deserialize(bytes.data(), visitedAt + 12, out2));
+        CHECK(!codec::deserialize(bytes.data(), historyAt + 5, out2));
+        // the offsets are right: the history section starts where computed
+        CHECK_EQ(bytes[historyAt - 2], static_cast<std::uint8_t>(1));
+        CHECK_EQ(bytes[historyAt], static_cast<std::uint8_t>(17));
     }
 
     return RUN_TESTS();
