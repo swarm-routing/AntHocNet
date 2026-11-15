@@ -32,7 +32,7 @@ core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm
 ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
-tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
+tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (swarm-core's core/ at SWARM_CORE_REF, for make install-ns3), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
 api/     Doxygen config for the API reference (/api/)

@@ -13,18 +13,19 @@
 
 #include <cstdint>
 
+#include "swarm-types.h"
+
 namespace anthocnet {
 namespace core {
 
-/// Network-layer node address. Matches the width of ns-2's nsaddr_t and
-/// ns-3's 32-bit IPv4 address payload.
-using NodeAddress = std::int32_t;
-
-/// Simulation time, in seconds.
-using Time = double;
-
-/// "No such node / no route" sentinel, mirroring the legacy use of -1.
-constexpr NodeAddress kInvalidAddress = -1;
+// swarm-core's fundamental types (swarm-routing/ns3-swarm-core#14, S2): the
+// same types and value as AntHocNet's own until S2, now defined once there.
+/// Network-layer node address (std::int32_t: ns-3's 32-bit IPv4 payload).
+using swarm::core::NodeAddress;
+/// Simulation time, in seconds (double).
+using swarm::core::Time;
+/// "No such node / no route" sentinel (-1).
+using swarm::core::kInvalidAddress;
 
 /// A node's position (m) and velocity (m/s) in the adapter's Cartesian frame
 /// (ADR-0025). Only ever compared between nodes of one simulation, so the

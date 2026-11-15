@@ -43,6 +43,11 @@ ends with one machine-readable `##DOCTOR##` line (versioned, fields only ever
 added). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
 comparison modules: the module, its test suite and `anthocnet-example` build as usual,
 and ns-3 skips the comparison harnesses that link those modules.
+The module carries swarm-core's `core/` beside the algorithm core, at the
+commit `core/CMakeLists.txt` pins (`contrib/anthocnet/swarm-core/`; the core's
+headers include it, swarm-routing/ns3-swarm-core#14): `make install-ns3`
+downloads it (`tools/swarm_core.py`), or copies a local one with
+`SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.
 
 No checkout? Each release ships `anthocnet-ns3-modules-<version>.tar.gz`,
 the four modules exactly as installed:
