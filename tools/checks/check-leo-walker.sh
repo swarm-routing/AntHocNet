@@ -34,7 +34,12 @@
 # 5. Every arm delivers. oracle-delay first: its delivery shows the moving
 #    topology stays routable before AntHocNet or AODV is judged on it.
 #    AODV is the arm that used to abort here (interface-down race in stock
-#    AODV, see SetLink in leo-walker.cc), so it is part of the smoke.
+#    AODV, see SetLink in leo-walker.cc), so it is part of the smoke. It runs
+#    in its own invocation (#1039): stock AODV keys its per-interface socket
+#    maps on heap addresses, so on these multi-interface satellites its
+#    jitter draws, and its row, followed what the arms before it had
+#    allocated (swarm-routing/ns3-tools#198). Alone in a process, its row is
+#    a function of the seed only.
 # 6. The delay oracle reports mode=wired+delay: the latency bound is really
 #    the Dijkstra-on-channel-delay mode, not the hop-count one. geo-greedy
 #    (the idealised geographic comparator) sends no control packet.
@@ -49,7 +54,7 @@
 #    when it ran after oracle-delay in one process. The unpinned CSMA backoff
 #    on the GSL segments broke exactly this before it was pinned. AntHocNet
 #    only: stock AODV keys its socket maps on heap addresses (#362), the same
-#    exemption check-seed-independence.py makes.
+#    exemption check-seed-independence.py makes; it runs alone (item 5).
 # 9. The opspf anchor (#707): with no unpredicted failure, OPSPF-style link
 #    state on the predicted schedule IS the hop oracle -- it differs only in
 #    what it can know -- so its per-seed ##RUN## rows must equal the oracle's
@@ -77,12 +82,17 @@ cd "$NS3DIR"
 fail=0
 say() { printf '%s\n' "$*"; }
 
-ARMS=oracle-delay,anthocnet,aodv,geo-greedy,opspf
+ARMS=oracle-delay,anthocnet,geo-greedy,opspf
+ALONE=aodv  # in its own process (#1039)
 SHELL_ARGS="--planes=16 --sats=16 --altitude=1150 --inclination=53 --minElevation=25
             --time=60 --islDown=0.02 --massFailAt=30 --massFailFrac=0.05"
 
 out=$(./ns3 run "$(echo leo-walker --csv --protocols=$ARMS $SHELL_ARGS)" 2>/dev/null)
 printf '%s\n' "$out" | grep -E '^# (anchor|visibility|handover)|^##ORACLE##|^##RUN##|class=(scheduled|massfail)' || true
+alone_out=$(./ns3 run "$(echo leo-walker --csv --protocols=$ALONE $SHELL_ARGS)" 2>/dev/null)
+printf '%s\n' "$alone_out" | grep -E '^# handover|^##RUN##|class=(scheduled|massfail)' || true
+# The output an arm's checks read: its own invocation's, or the shared one.
+arm_out() { if [ "$1" = "$ALONE" ]; then printf '%s\n' "$alone_out"; else printf '%s\n' "$out"; fi; }
 
 # --- 1. geometry anchors ----------------------------------------------------
 anchor=$(printf '%s\n' "$out" | grep '^# anchor' || true)
@@ -137,19 +147,19 @@ if [ -z "$vis" ] || [ -n "$zero" ]; then
 fi
 
 # --- 3/4. handovers, failures, mass failure ---------------------------------
-for arm in ${ARMS//,/ }; do
-    ho=$(printf '%s\n' "$out" | grep "^# handover $arm " || true)
+for arm in ${ARMS//,/ } $ALONE; do
+    ho=$(arm_out "$arm" | grep "^# handover $arm " || true)
     sched=$(printf '%s\n' "$ho" | sed -n 's/.* scheduled=\([0-9]*\).*/\1/p')
     islf=$(printf '%s\n' "$ho" | sed -n 's/.* islFailures=\([0-9]*\).*/\1/p')
     [ "${sched:-0}" -gt 0 ] || { say "FAIL: $arm: no scheduled handover in 60 s"; fail=1; }
     [ "${islf:-0}" -gt 0 ] || { say "FAIL: $arm: the ISL failure overlay never fired"; fail=1; }
-    printf '%s\n' "$out" | grep -q "^# outage $arm .* class=massfail " \
+    arm_out "$arm" | grep -q "^# outage $arm .* class=massfail " \
         || { say "FAIL: $arm: no massfail outage class reported"; fail=1; }
 done
 
 # --- 5. every arm delivers ----------------------------------------------------
-for arm in ${ARMS//,/ }; do
-    pdr=$(printf '%s\n' "$out" | field pdr run "$arm")
+for arm in ${ARMS//,/ } $ALONE; do
+    pdr=$(arm_out "$arm" | field pdr run "$arm")
     say "$arm PDR% = ${pdr:-<none>}"
     awk -v p="${pdr:-0}" 'BEGIN { exit (p+0 > 0) ? 0 : 1 }' \
         || { say "FAIL: $arm delivered nothing on the moving constellation"; fail=1; }
@@ -165,14 +175,16 @@ printf '%s\n' "$out" | grep -q '^# geo geo-greedy seed=1 ' \
 # --- 6b. the #297 scenario_check rules on this output --------------------------
 SC="$REPO/tools/bench/scenario_check.py"
 cell=$(mktemp)
-printf '%s\n' "$out" > "$cell"
-if python3 "$SC" results "$cell" > "$cell.check" 2>&1; then
-    say "ok: scenario_check.py #297 rules (handover clock, outage books) pass"
-else
-    say "FAIL: scenario_check.py on the smoke output:"
-    grep '^FAIL' "$cell.check" || cat "$cell.check"
-    fail=1
-fi
+for which in shared alone; do
+    if [ "$which" = shared ]; then printf '%s\n' "$out" > "$cell"; else printf '%s\n' "$alone_out" > "$cell"; fi
+    if python3 "$SC" results "$cell" > "$cell.check" 2>&1; then
+        say "ok: scenario_check.py #297 rules (handover clock, outage books) pass ($which run)"
+    else
+        say "FAIL: scenario_check.py on the smoke output ($which run):"
+        grep '^FAIL' "$cell.check" || cat "$cell.check"
+        fail=1
+    fi
+done
 rm -f "$cell" "$cell.check"
 
 # --- 7. determinism ------------------------------------------------------------
