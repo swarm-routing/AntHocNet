@@ -22,11 +22,18 @@
 # verifies the names, the recipes are this repository's own.
 NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 
+# swarm-core's core/ at the commit core/CMakeLists.txt pins (one SHA in every
+# place, checked by `swarm-core / pin`); SWARM_CORE_DIR=<checkout>/core builds
+# against a local swarm-core instead (offline).
+SWARM_CORE_REF ?= 2987cfbc202596c657e58f7be6a6bd09112fe2a8
+CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release -DSWARM_CORE_REF=$(SWARM_CORE_REF) \
+  -DSWARM_CORE_DIR=$(if $(SWARM_CORE_DIR),$(abspath $(SWARM_CORE_DIR)))
+
 help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## build the core (the ns-3 module builds on a tree: make install-ns3)
-	cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
+	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
 	cmake --build core/build -j
 
 test: core-test ## the fast tests CI runs on every PR (core, no simulator)
@@ -44,12 +51,12 @@ shell: ## an interactive shell in the dev image with this repo at /src
 
 
 core-test:
-	cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
+	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
 	cmake --build core/build -j
 	cd core/build && ctest --output-on-failure
 
 bench-core:
-	cmake -S core -B core/build -DCMAKE_BUILD_TYPE=Release
+	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
 	cmake --build core/build -j --target bench_core
 	core/build/bench_core $(BENCH_ARGS)
 

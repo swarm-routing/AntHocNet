@@ -1,0 +1,21 @@
+name: swarm-core pin
+
+# core/ builds on swarm-core's core/ at the commit core/CMakeLists.txt pins
+# (SWARM_CORE_REF; swarm-routing/ns3-swarm-core#14, S1). This check
+# (swarm-routing/.github reusable-swarm-core-pin.yml) fails unless the Makefile
+# and every workflow's swarm-core core-deps (licence.yml) name that same
+# commit, and when swarm-core main's core/ differs from the pinned core/: then
+# bump the pin in all of them in one PR. The check is named `swarm-core / pin`;
+# it is report-only here (not in the ruleset's required checks).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  swarm-core:
+    uses: swarm-routing/.github/.github/workflows/reusable-swarm-core-pin.yml@main
