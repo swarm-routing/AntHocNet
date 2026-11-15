@@ -1328,15 +1328,29 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
                                              InetSocketAddress(gateway, ANT_PORT));
 }
 
+namespace {
+
+// The ant a decision carries. A data Unicast (onDataPacket with a route, from
+// DeferredRouteOutput) carries none; before swarm-core's RouteDecision (S3 of
+// swarm-routing/ns3-swarm-core#14) its `message` was a default-constructed
+// AntMessage, and ExecuteDecisions sent that. This keeps sending exactly that,
+// so S3 changes no output; #1038 tracks sending the data instead.
+const AntMessage& AntOf(const RouteDecision& d) {
+    static const AntMessage kNoAnt{};
+    return d.message ? *d.message : kNoAnt;
+}
+
+}  // namespace
+
 void RoutingProtocol::ExecuteDecisions(const std::vector<RouteDecision>& decisions,
                                        NodeAddress /*flushDest*/) {
     for (const RouteDecision& d : decisions) {
         switch (d.action) {
             case RouteAction::Unicast:
-                SendAnt(*d.message, ToIpv4(d.nextHop));
+                SendAnt(AntOf(d), ToIpv4(d.nextHop));
                 break;
             case RouteAction::Broadcast:
-                SendAnt(*d.message, Ipv4Address("255.255.255.255"));
+                SendAnt(AntOf(d), Ipv4Address("255.255.255.255"));
                 break;
             case RouteAction::Deliver:
                 // handled by caller (FlushQueue), nothing to send
