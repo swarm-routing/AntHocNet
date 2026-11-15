@@ -68,7 +68,11 @@ def test_equivalence_on_committed_cells():
     for path in cells:
         with open(path) as fh:
             text = fh.read()
-        protos = set(bp.parse_runs(text)) | set(bp.parse_cell(text))
+        # Lenient: only to list the protocols. Some committed cells hold a
+        # ##RSS## line interleaved into a ##RUN## row (stderr and stdout
+        # mixed), which strict readers refuse since ns3-tools v0.2.0 (#58).
+        protos = (set(bp.parse_runs(text, bp.Reader(strict=False, where=path)))
+                  | set(bp.parse_cell(text, bp.Reader(strict=False, where=path))))
         for p in sorted(protos):
             want = awk(AWK_RUN_PDR, text, p=p)
             got = bp.query(text, p, "pdr", "run")
