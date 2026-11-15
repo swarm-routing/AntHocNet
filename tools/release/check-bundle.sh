@@ -8,7 +8,8 @@
 #   - a shipped script that reaches into .claude/ (it would break in the package)
 #   - the tools the shipped harness imports (tools/bench/*.py), and the
 #     ns3-tools pin the harness and the readers come from (ns3-tools.lock,
-#     tools/ns3_tools.py; swarm-routing/ns3-tools#29)
+#     tools/ns3_tools.py; swarm-routing/ns3-tools#29), and the swarm-core.lock
+#     core/ builds on (tools/swarm_core.py; swarm-routing/ns3-swarm-core#134)
 #   - the licence texts (LICENSE, LICENSE-MIT, LICENSING.md, core/LICENSE; ADR-0028)
 # It also checks that `git archive` (GitHub's "Source code" downloads, and what
 # Zenodo archives) honours the same exclusions via .gitattributes export-ignore.
@@ -30,7 +31,7 @@ refs=$(grep -rIlE '\.claude/skills/[^/"'"'"' ]+/[^/"'"'"' ]+\.(py|sh)|"\.claude"
        --include='*.py' --include='*.sh' --include='*.cc' --include='*.h' \
        --include='CMakeLists.txt' --include='Makefile' --exclude-dir=release . 2>/dev/null | head -5)
 [ -n "$refs" ] && bad "shipped code references .claude/ (breaks in the package): $refs"
-for f in tools/bench/scenario_check.py tools/ns3_tools.py ns3-tools.lock \
+for f in tools/bench/scenario_check.py tools/ns3_tools.py ns3-tools.lock swarm-core.lock tools/swarm_core.py \
          ns3/tools/anchors.yml core/CMakeLists.txt Makefile \
          LICENSE LICENSE-MIT LICENSING.md core/LICENSE; do
   [ -e "$f" ] || bad "bundle is missing $f"
