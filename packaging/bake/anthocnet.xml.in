@@ -11,17 +11,29 @@
     ./bake.py download && ./bake.py build
 
   The source is the release's drop-in module tarball. It also carries the
-  comparison modules (aomdv, gpsr, oracle); extract_directory keeps only
-  contrib/anthocnet, the build its README calls "AntHocNet alone".
+  comparison modules (aomdv, gpsr, oracle, adaptive, routing-bench);
+  extract_directory keeps only contrib/anthocnet and contrib/swarm-core, the
+  module it links (swarm-routing/ns3-swarm-core, at the release
+  swarm-core.lock names; #1019): the build its README calls "AntHocNet alone".
 -->
 <configuration>
   <modules>
+    <module name="swarm-core" type="ns-contrib" min_version="ns-3.36">
+      <source type="archive">
+        <attribute name="url" value="@URL@"/>
+        <attribute name="extract_directory" value="swarm-core"/>
+        <attribute name="module_directory" value="swarm-core"/>
+      </source>
+      <build type="none">
+      </build>
+    </module>
     <module name="anthocnet" type="ns-contrib" min_version="ns-3.36">
       <source type="archive">
         <attribute name="url" value="@URL@"/>
         <attribute name="extract_directory" value="anthocnet"/>
         <attribute name="module_directory" value="anthocnet"/>
       </source>
+      <depends_on name="swarm-core" optional="False"/>
       <build type="none">
       </build>
     </module>

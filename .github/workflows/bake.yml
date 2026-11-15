@@ -66,6 +66,7 @@ jobs:
         run: |
           ./bake.py download
           test -f "source/$NS/contrib/anthocnet/CMakeLists.txt"
+          test -f "source/$NS/contrib/swarm-core/CMakeLists.txt"   # the module anthocnet links
       - name: bake build
         working-directory: ${{ runner.temp }}/bake
         run: ./bake.py build -j "$(nproc)"

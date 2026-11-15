@@ -152,7 +152,7 @@ releases its own catalogue has: up to ns-3.44 at the bake revision
 [bake.yml](.github/workflows/bake.yml) pins, bake's newest. The recipe still
 builds there while the core's code stays within C++20, and stops once it uses
 a C++23 feature, unless bake ships ns-3.46 or newer first. This builds AntHocNet alone,
-without the comparison modules. bake.yml builds the recipe end to end
+with swarm-core (the module it links) and without the comparison modules. bake.yml builds the recipe end to end
 (ns-3.42) on packaging changes and on demand; it has no schedule (#864).
 
 Uninstall: `make uninstall-ns3 NS3DIR=...`. Tested: every PR on the ns-3
