@@ -150,8 +150,10 @@ These were latent in the original NS-2 module and are fixed in `core/`:
 - **Observability**: the core exposes ant/route counters + an optional
   `IRouterObserver`; the NS-3 module surfaces `Tx`/`Rx`/`RouteChanged` trace
   sources, read by `anthocnet-compare --diag` (item 15), and swarm-core's
-  router-observer events (`ControlTx`/`ControlRx`/`DataDecision`/`StateSize`,
-  #917), which the core reports through the same observer without linking swarm-core.
+  router-observer events (`ControlTx`/`ControlRx`/`RouteChanged`/`DataDecision`/`StateSize`,
+  #917), which the core reports through the same observer and the adapter
+  hands to `SwarmRoutingBase`'s trace sources and `GetRouterStats()`
+  (ADR-0029: the core builds on swarm-core's `core/`, the adapter on its base).
 - **Benchmarks run nightly**: a classified scenario taxonomy across all
   baselines (AODV/OLSR/DSDV) with the table + a chart auto-committed to
   `docs/benchmarks*`; the paper's area/pause/scale sweeps were the manual
