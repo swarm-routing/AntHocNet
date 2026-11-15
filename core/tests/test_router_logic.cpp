@@ -236,5 +236,52 @@ int main() {
         CHECK_NEAR(router.table().getPheromoneRegular(5, 5), 1.7 * tau1, 1e-6);
     }
 
+    // --- directed reactive discovery at the origin (enableDirectedReactive) --
+    // No regular route, but a virtual (diffused) entry: the origin's own
+    // reactive ant is unicast down that gradient instead of broadcast, and
+    // counted as a steer. With the gate off the same table broadcasts.
+    for (bool directed : {true, false}) {
+        Config dc = cfg;
+        dc.enableDirectedReactive = directed;
+        FakeClock clock;
+        ScriptedRng rng({0.5});
+        AntRouterLogic router(/*addr*/ 1, dc, clock, rng);
+        router.table().addNeighbor(5);
+        router.table().setPheromoneVirtual(/*dest*/ 9, /*neighbor*/ 5, 0.8);
+
+        auto decisions = router.onDataPacket(9);
+        CHECK_EQ(decisions.size(), static_cast<std::size_t>(2));
+        CHECK(decisions[0].action == RouteAction::Queue);
+        CHECK(decisions[1].message.has_value());
+        CHECK(decisions[1].message->type == AntType::Reactive);
+        CHECK_EQ(decisions[1].message->dst, 9);
+        if (directed) {
+            CHECK(decisions[1].action == RouteAction::Unicast);
+            CHECK_EQ(decisions[1].nextHop, 5);
+            CHECK_EQ(router.directedSteers(), static_cast<std::uint64_t>(1));
+        } else {
+            CHECK(decisions[1].action == RouteAction::Broadcast);
+            CHECK_EQ(router.directedSteers(), static_cast<std::uint64_t>(0));
+        }
+    }
+
+    // --- hello adverts skip a destination whose best is at the floor -------
+    {
+        FakeClock clock;
+        ScriptedRng rng({0.5});
+        AntRouterLogic router(/*addr*/ 1, cfg, clock, rng);
+        router.table().setPheromoneRegular(/*dest*/ 9, /*neighbor*/ 5, 0.8);
+        router.table().setPheromoneRegular(/*dest*/ 7, /*neighbor*/ 5, cfg.minPheromone);
+
+        AntMessage hello = router.createHelloAnt(10);
+        bool has9 = false, has7 = false;
+        for (const HelloDest& d : hello.helloDests) {
+            has9 = has9 || d.node == 9;
+            has7 = has7 || d.node == 7;
+        }
+        CHECK(has9);
+        CHECK(!has7);  // no usable path to 7: not advertised
+    }
+
     return RUN_TESTS();
 }

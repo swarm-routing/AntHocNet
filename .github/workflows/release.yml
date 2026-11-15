@@ -21,6 +21,11 @@ name: Release
 # nothing is pushed, proposed or published (#614). mode=baseline releases
 # the current VERSION at main's head as-is (once, for v0.1.0).
 #
+# After publish, the vcpkg job opens (or updates) the anthocnet-core port PR
+# in swarm-routing/vcpkg-registry with the org bot's token, as the org's
+# reusable-release.yml does for the repositories that call it (#1037); a dry
+# run renders and checks that bump from its own bundle and opens nothing.
+#
 # The tag pushed with the workflow token starts no other workflow, so the
 # images job is a direct dependency, not a tag trigger. Once the repo is
 # linked to Zenodo, each published release is archived + gets a DOI; add it to
@@ -324,8 +329,8 @@ jobs:
         if: ${{ inputs.mode != 'dryrun' }}
         run: |
           { echo "ver=${VER}"; echo "sha256=${SHA256}"; echo "mod_sha256=${MOD_SHA256}"; } >> "$GITHUB_OUTPUT"
+      # Also in a dry run: the vcpkg job renders the port from this bundle.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ inputs.mode != 'dryrun' }}
         with:
           name: release-dist
           path: dist/
@@ -467,9 +472,10 @@ jobs:
             no checkout needed, `tar -xzf anthocnet-ns3-modules-${{ env.VER }}.tar.gz -C /path/to/ns-3/contrib`,
             then configure and build ns-3. The same files are on the generated
             `ns3-module` branch. SHA-256: `${{ env.MOD_SHA256 }}`.
-            **With bake** (ns-3's installer): copy `anthocnet-${{ env.VER }}.bakeconf.xml`
+            **With bake** (ns-3's installer), once bake's catalogue ships ns-3.46, the
+            module's floor (#1026): copy `anthocnet-${{ env.VER }}.bakeconf.xml`
             into your bake checkout's `contrib/`, then
-            `./bake.py configure -e ns-3.42 -e swarm-core -e anthocnet && ./bake.py download && ./bake.py build`.
+            `./bake.py configure -e ns-3.46 -e swarm-core -e anthocnet && ./bake.py download && ./bake.py build`.
 
             **Comparison harness and readers**: built with ${{ env.NS3_TOOLS_PIN }},
             the version `ns3-tools.lock` pins. The harness (`routing-bench`) and the benchmark
@@ -555,6 +561,167 @@ jobs:
           else
             warn "the dispatch request failed or timed out"
           fi
+
+  # The anthocnet-core port bump in swarm-routing/vcpkg-registry (#1037,
+  # swarm-routing/.github#436): the same steps as the `vcpkg` job of
+  # swarm-routing/.github's reusable-release.yml (`vcpkg-ports`,
+  # swarm-routing/.github#439), which this workflow does not call. The
+  # registry's own tools/port_bump.py renders the bump from the published
+  # release (the asset the port's portfile names, checked against its
+  # `<asset>.sha256`, its SHA512, the version, the git-tree, versions/; the
+  # first time, ports/anthocnet-core comes from templates/anthocnet-core/),
+  # then `port_bump.py check`; the org bot pushes `bot/vcpkg-AntHocNet`
+  # (rebuilt on the registry's main) and opens or updates the PR
+  # `feat(ports): anthocnet-core X.Y.Z`. Never a push to the registry's main.
+  #
+  # A dry run renders the same bump from this run's own bundle (served from a
+  # file:// copy of the release download tree), checks it and shows the diff,
+  # and stops: no token, no push, no PR. No AntHocNet code runs here: the
+  # checkout is the registry's.
+  #
+  # After publish, and independent of the images: a failed port bump leaves
+  # the release published; re-run this job, or run the same port_bump.py
+  # command by hand (the registry's README, "How a port is bumped").
+  vcpkg:
+    needs: [release, publish]
+    if: ${{ !cancelled() && needs.release.result == 'success' && (inputs.mode == 'dryrun' || needs.publish.result == 'success') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15  # as the reusable workflow's vcpkg job: two downloads, the render and one PR
+    # Releases queue one after another; a dry run gets a group of its own, so
+    # it never replaces a release's pending vcpkg job (a pending job in a
+    # group is replaced by the next one).
+    concurrency:
+      group: ${{ inputs.mode == 'dryrun' && format('release-vcpkg-dryrun-{0}', github.run_id) || format('release-vcpkg-{0}', github.repository) }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+      PORT: anthocnet-core
+      REGISTRY: swarm-routing/vcpkg-registry
+      DRYRUN: ${{ inputs.mode == 'dryrun' }}
+    steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
+      - name: The registry at main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: swarm-routing/vcpkg-registry
+          ref: main
+          path: registry
+          persist-credentials: false
+      - name: This run's bundle (dry run only)
+        if: ${{ inputs.mode == 'dryrun' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist
+      - name: Render the bump (the registry's tools/port_bump.py)
+        working-directory: registry
+        env:
+          GH_TOKEN: ${{ github.token }}  # the repository description's API read (rate limit only)
+        run: |
+          set -euo pipefail
+          base=()
+          if [ "$DRYRUN" = true ]; then
+            # The release download tree port_bump.py reads, with this run's
+            # bundle in it: https://github.com/ becomes file://<tree>/, and
+            # the repository's description its API answer, read now.
+            tree="$RUNNER_TEMP/release-tree"
+            rel="$tree/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+            mkdir -p "$rel" "$tree/api/repos/${GITHUB_REPOSITORY%/*}"
+            cp "$GITHUB_WORKSPACE/dist/anthocnet-${TAG#v}.zip" "$GITHUB_WORKSPACE/dist/anthocnet-${TAG#v}.zip.sha256" "$rel/"
+            gh api "repos/${GITHUB_REPOSITORY}" > "$tree/api/repos/${GITHUB_REPOSITORY}"
+            base=(--base-url "file://${tree}")
+          fi
+          python3 -I tools/port_bump.py bump --port "$PORT" --tag "$TAG" "${base[@]}"
+          python3 -I tools/port_bump.py check
+          git status --short
+          if [ "$DRYRUN" = true ]; then
+            git add -A
+            {
+              echo "### Dry run: ${PORT} ${TAG#v} rendered, not proposed"
+              echo
+              echo '```'
+              git diff --cached --stat
+              echo '```'
+              echo
+              echo '```json'
+              cat "ports/${PORT}/vcpkg.json"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            git diff --cached -- "ports/${PORT}/portfile.cmake" versions/
+          fi
+      - name: Org bot token
+        id: bot
+        if: ${{ inputs.mode != 'dryrun' }}
+        uses: swarm-routing/.github/.github/actions/bot-token@5e529b1ac20898ece1b52b37d9b71de7c8c3e2d9 # main 2026-11-13
+        timeout-minutes: 2
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.ORG_BOT_TOKEN }}
+      - name: Push bot/vcpkg-AntHocNet and open or update the registry PR
+        if: ${{ inputs.mode != 'dryrun' }}
+        working-directory: registry
+        env:
+          BOT_TOKEN: ${{ steps.bot.outputs.token }}
+          BOT_NAME: ${{ steps.bot.outputs.git-name }}
+          BOT_EMAIL: ${{ steps.bot.outputs.git-email }}
+          VER: ${{ needs.release.outputs.ver }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "The registry already has ${PORT} ${VER}: nothing to propose." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -z "$BOT_TOKEN" ]; then
+            echo "::error::no bot token (neither the App secrets nor ORG_BOT_TOKEN): GITHUB_TOKEN cannot push to ${REGISTRY}. The release ${TAG} is published; re-run this job once the secrets are set, or open the PR by hand with tools/port_bump.py (swarm-routing/vcpkg-registry README \"How a port is bumped\")."
+            exit 1
+          fi
+          branch="bot/vcpkg-${GITHUB_REPOSITORY#*/}"
+          title="feat(ports): ${PORT} ${VER}"
+          export GH_TOKEN="$BOT_TOKEN"
+          # A re-run of an older release's job must not replace a newer
+          # release's open proposal (the branch is force-pushed below).
+          open_pr="$(gh pr list --repo "$REGISTRY" --head "$branch" --state open --json number,title --jq '.[0] // empty')"
+          n="$(jq -r '.number // empty' <<< "${open_pr:-null}")"
+          have="$(jq -r '.title // empty' <<< "${open_pr:-null}" | sed -n -E "s/^feat\(ports\): ${PORT} ([0-9][^ ]*)$/\1/p")"
+          if [ -n "$have" ] && [ "$have" != "$VER" ] && [ "$(printf '%s\n%s\n' "$have" "$VER" | sort -V | tail -n 1)" = "$have" ]; then
+            echo "The open registry PR #${n} proposes ${PORT} ${have}, newer than ${VER}: left as it is." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "${BOT_NAME:-github-actions[bot]}"
+          git config user.email "${BOT_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
+          git checkout -q -b "$branch"
+          git add -A
+          git commit -q -m "$title" -m "Rendered by tools/port_bump.py from ${GITHUB_REPOSITORY} ${TAG}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+          auth="$(printf 'x-access-token:%s' "$BOT_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          # bot/vcpkg-AntHocNet is the bot's branch, rebuilt on the registry's
+          # main each time: force-pushed.
+          git -c "http.${GITHUB_SERVER_URL}/.extraheader=AUTHORIZATION: basic $auth" \
+            push --force origin "HEAD:refs/heads/${branch}"
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "The port bump for **${GITHUB_REPOSITORY} ${TAG}** (${PORT}), rendered by \`tools/port_bump.py bump\` from the published release: the asset named in the port's portfile, checked against the release's \`anthocnet-${VER}.zip.sha256\`, its SHA512, the version, the git-tree and \`versions/\`; then \`port_bump.py check\`."
+            echo
+            echo "Release: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+            echo
+            echo "Opened by run [${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) (AntHocNet \`release.yml\`, the \`vcpkg\` job; swarm-routing/AntHocNet#1037). The registry's CI installs every port on x64-linux and wasm32-emscripten."
+          } > "$body"
+          if [ -n "$n" ]; then
+            gh pr edit "$n" --repo "$REGISTRY" --title "$title" --body-file "$body" > /dev/null
+            url="$(gh pr view "$n" --repo "$REGISTRY" --json url --jq .url)"
+            echo "Updated ${url}"
+          else
+            url="$(gh pr create --repo "$REGISTRY" --base main --head "$branch" --title "$title" --body-file "$body")"
+            echo "Opened ${url}"
+          fi
+          echo "### ${title}: ${url}" >> "$GITHUB_STEP_SUMMARY"
 
   # Release images on ns3-containers (#866, swarm-routing/.github#107):
   # ghcr.io/swarm-routing/anthocnet:<tag>-{optimized,debug}, each FROM the
