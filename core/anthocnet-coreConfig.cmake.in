@@ -6,6 +6,8 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(swarm-core CONFIG)
+# the swarm-core this package was built against (the core holds its types by
+# value; swarm-core accepts its own 0.y only before 1.0)
+find_dependency(swarm-core @swarm-core_VERSION@ CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/anthocnet-coreTargets.cmake")
 check_required_components(anthocnet-core)
