@@ -49,6 +49,16 @@ int main() {
     }
     CHECK_EQ(out.history.size(), m.history.size());
     CHECK_EQ(out.helloDests.size(), m.helloDests.size());
+    // A destination whose stack is smaller than the frame's (a caller's own
+    // VisitedPath) is refused, never decoded short (S5).
+    {
+        AntMessage small;
+        small.visited = VisitedPath(1);
+        CHECK(!codec::deserialize(bytes, small));
+        AntMessage roomy;
+        roomy.history = VisitedPath(1);  // the fixture's history has one hop
+        CHECK(codec::deserialize(bytes, roomy));
+    }
     CHECK_EQ(out.helloDests[1].node, 9);
     CHECK_NEAR(out.helloDests[1].pheromone, 0.5, 1e-12);
 

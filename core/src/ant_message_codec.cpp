@@ -121,7 +121,7 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     for (std::uint16_t k = 0; k < nVisited; ++k) {
         const NodeAddress node = r.i32();  // named: argument order is unspecified
         const Time time = r.f64();
-        msg.visited.push(node, time);
+        if (!msg.visited.push(node, time)) return false;  // a stack smaller than the frame
     }
 
     const std::uint16_t nHistory = r.u16();
@@ -132,7 +132,7 @@ bool deserialize(const std::uint8_t* bytes, std::size_t len, AntMessage& msg) {
     for (std::uint16_t k = 0; k < nHistory; ++k) {
         const NodeAddress node = r.i32();
         const Time time = r.f64();
-        msg.history.push(node, time);
+        if (!msg.history.push(node, time)) return false;  // a stack smaller than the frame
     }
 
     const std::uint16_t nHello = r.u16();
