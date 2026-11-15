@@ -73,6 +73,15 @@ install: require-ns3dir
 	cp $(CORE)/include/anthocnet/core/*.h "$(DEST)/core/include/anthocnet/core/"
 	cp $(CORE)/src/*.cpp "$(DEST)/core/src/"
 	cp $(CORE)/LICENSE "$(DEST)/core/"   # MIT OR GPL-2.0-only (ADR-0028)
+	# swarm-core's core/ at the commit core/CMakeLists.txt pins (SWARM_CORE_REF,
+	# swarm-routing/ns3-swarm-core#14): the core's headers include it, so the
+	# module carries it beside core/ as it carries core/ (MIT OR GPL-2.0-only,
+	# its LICENSE). tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core
+	# uses a local one.
+	@sc=$$(python3 $(ROOT)/tools/swarm_core.py path) && test -f "$$sc/swarm-ports.h" && \
+	  echo ">> swarm-core core/ at $$(python3 $(ROOT)/tools/swarm_core.py pin) -> $(DEST)/swarm-core" && \
+	  mkdir -p "$(DEST)/swarm-core" && \
+	  cp "$$sc"/*.h "$$sc"/*.cc "$$sc/LICENSE" "$(DEST)/swarm-core/"
 	@if [ "$(BASELINES)" = 0 ]; then \
 	  echo ">> BASELINES=0: skipping the aomdv, gpsr, oracle, adaptive and routing-bench comparison modules."; \
 	  echo "   ns-3 will skip anthocnet-compare, isl-grid and leo-walker (they link them);"; \

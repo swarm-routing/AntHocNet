@@ -94,6 +94,8 @@ jobs:
             for e in "$src"/*; do ln -s "$e" "$stage/$m/"; done
             ln -s "$ws/core/include" "$ws/core/src" "$stage/$m/core/"
           done
+          # swarm-core's core/ at the pin, where make install-ns3 puts it
+          ln -s "$(python3 tools/swarm_core.py path)" "$stage/anthocnet/swarm-core"
           bench=$(python3 tools/ns3_tools.py path routing-bench)   # ns3-tools.lock (ns3-tools#29)
           ns3-build-contrib --coverage --quality-modules 'anthocnet' \
             --suite anthocnet --suite routing-bench \

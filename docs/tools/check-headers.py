@@ -32,7 +32,10 @@ hold, so this gate checks them:
   purpose;
 - a ``core/`` C++ file includes nothing from outside ``core/``. Angle includes
   must be C++ standard-library headers, and quote includes must resolve to a
-  file under ``core/``. A ``core/`` file that pulled in an ns-3, ``web/`` or
+  file under ``core/``, or name a header of swarm-core's dual-licensed
+  ``core/`` (``"swarm-<name>.h"``, a bare name; swarm-routing/ns3-swarm-core#14),
+  which the org licence gate (``licence.yml``) resolves against swarm-core at
+  the pinned commit. A ``core/`` file that pulled in an ns-3, ``web/`` or
   vendored-baseline header would bind the whole core to GPL. Golden rule 1
   already forbids simulator headers; this check makes the licence boundary
   just as explicit;
@@ -61,6 +64,11 @@ HEAD_LINES = 5
 CORE = "core/"
 # Directories a core/ quote include may resolve against (besides the file's own).
 CORE_INCLUDE_DIRS = ("core/include", "core/tests", "core/bench")
+# swarm-core's dual-licensed core/ headers, by bare name ("swarm-ports.h"): the
+# one dependency core/ may include from (swarm-routing/ns3-swarm-core#14). This
+# script has no copy to resolve them against; licence.yml's org check does, at
+# the commit core/CMakeLists.txt pins.
+SWARM_CORE_HEADER = re.compile(r"swarm-[a-z0-9-]+\.h")
 # The C++ standard library: the only angle includes core/ may use.
 STD_HEADERS = frozenset([
     "algorithm", "any", "array", "atomic", "bitset", "cassert", "cctype",
@@ -172,6 +180,8 @@ def core_findings(text: str, display: str, exists=None) -> list[str]:
                            f"library with <...>, not <{name}> (ADR-0028)")
         elif target.startswith('"'):
             name = target[1:target.find('"', 1)]
+            if SWARM_CORE_HEADER.fullmatch(name):
+                continue
             dirs = ([here] if here else []) + list(CORE_INCLUDE_DIRS)
             hits = [f"{d}/{name}" for d in dirs]
             if exists is None or not any(
@@ -279,6 +289,7 @@ def self_test() -> int:
     core_ok = (
         "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n// Copyright (C) 2026 X\n\n"
         '#include "anthocnet/core/ports.h"\n#include "test_support.h"\n'
+        '#include "swarm-ports.h"\n'
         "#include <map>\n#include <cstdint>\n"
     )
     core_bad = {
@@ -296,6 +307,8 @@ def self_test() -> int:
         "quote include escaping core/ by ..":
             "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n"
             '#include "../../ns3/anthocnet/model/anthocnet-packet.h"\n',
+        "swarm-core header by a path":
+            "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n#include \"../swarm-ports.h\"\n",
         "quote include that resolves nowhere":
             "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n#include \"missing.h\"\n",
     }
