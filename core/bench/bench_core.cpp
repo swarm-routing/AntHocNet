@@ -130,7 +130,7 @@ AntMessage fullForwardAnt() {
         AntHop h;
         h.node = static_cast<NodeAddress>(100 + i);
         h.time = 0.001 * i;
-        m.visited.push_back(h);
+        m.visited.push(h.node, h.time);
     }
     return m;
 }

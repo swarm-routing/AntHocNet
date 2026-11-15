@@ -12,12 +12,27 @@
 #include <cstdio>
 #include <cstdlib>
 #include <deque>
+#include <initializer_list>
 #include <vector>
 
 #include "anthocnet/core/ports.h"
+#include "anthocnet/core/visited_path.h"
 
 namespace anthocnet {
 namespace test {
+
+/// A hop stack holding `hops` in order (swarm::core::VisitedPath takes no
+/// brace list; S5 of swarm-routing/ns3-swarm-core#14).
+inline core::VisitedPath path(std::initializer_list<core::AntHop> hops) {
+    core::VisitedPath p(core::kHopStackCapacity);
+    for (const core::AntHop& h : hops) p.push(h.node, h.time);
+    return p;
+}
+inline core::VisitedPath path(const std::vector<core::AntHop>& hops) {
+    core::VisitedPath p(core::kHopStackCapacity);
+    for (const core::AntHop& h : hops) p.push(h.node, h.time);
+    return p;
+}
 
 inline int& failureCount() {
     static int count = 0;

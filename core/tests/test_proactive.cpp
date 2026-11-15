@@ -24,7 +24,7 @@ AntMessage inTransit(AntType type, NodeAddress src, NodeAddress dst) {
     a.src = src;
     a.dst = dst;
     a.seqNum = 1;
-    a.visited = {{src, 0.0}};
+    a.visited = anthocnet::test::path({{src, 0.0}});
     return a;
 }
 

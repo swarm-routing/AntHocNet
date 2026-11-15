@@ -56,7 +56,7 @@ core::AntMessage forwardAnt(std::vector<core::AntHop> path) {
     m.dst = 9;
     m.seqNum = 42;
     m.timeStart = 0.0;
-    m.visited = std::move(path);
+    m.visited = anthocnet::test::path(path);
     return m;
 }
 

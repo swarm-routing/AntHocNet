@@ -119,16 +119,20 @@ uint32_t AntHeader::Deserialize(Buffer::Iterator start) {
     m.broadcastBudget = static_cast<int>(i.ReadU32());
 
     const uint16_t nv = i.ReadU16();
-    m.visited.resize(nv);
-    for (auto& h : m.visited) {
-        h.node = static_cast<int32_t>(i.ReadU32());
-        h.time = BitsToDouble(i.ReadU64());
+    // m_message's stacks hold kHopStackCapacity (65535) hops, the largest a
+    // uint16 count can name, so these pushes never refuse one.
+    m.visited.clear();
+    for (uint16_t k = 0; k < nv; ++k) {
+        const auto node = static_cast<int32_t>(i.ReadU32());  // named: argument order
+        const double time = BitsToDouble(i.ReadU64());
+        m.visited.push(node, time);
     }
     const uint16_t nh = i.ReadU16();
-    m.history.resize(nh);
-    for (auto& h : m.history) {
-        h.node = static_cast<int32_t>(i.ReadU32());
-        h.time = BitsToDouble(i.ReadU64());
+    m.history.clear();
+    for (uint16_t k = 0; k < nh; ++k) {
+        const auto node = static_cast<int32_t>(i.ReadU32());
+        const double time = BitsToDouble(i.ReadU64());
+        m.history.push(node, time);
     }
     const uint16_t nd = i.ReadU16();
     m.helloDests.resize(nd);

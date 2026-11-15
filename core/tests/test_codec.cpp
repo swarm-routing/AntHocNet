@@ -17,8 +17,8 @@ int main() {
     m.timeStart = 1.25;
     m.lifeAnt = 2.0;
     m.broadcastBudget = 2;
-    m.visited = {{3, 0.0}, {4, 0.01}, {7, 0.02}};
-    m.history = {{17, 0.05}};
+    m.visited = anthocnet::test::path({{3, 0.0}, {4, 0.01}, {7, 0.02}});
+    m.history = anthocnet::test::path({{17, 0.05}});
     m.helloDests = {{8, 1.0}, {9, 0.5}};
 
     std::vector<std::uint8_t> bytes;
@@ -44,11 +44,21 @@ int main() {
 
     CHECK_EQ(out.visited.size(), m.visited.size());
     for (std::size_t i = 0; i < m.visited.size(); ++i) {
-        CHECK_EQ(out.visited[i].node, m.visited[i].node);
-        CHECK_NEAR(out.visited[i].time, m.visited[i].time, 1e-12);
+        CHECK_EQ(out.visited.hops()[i].node, m.visited.hops()[i].node);
+        CHECK_NEAR(out.visited.hops()[i].time, m.visited.hops()[i].time, 1e-12);
     }
     CHECK_EQ(out.history.size(), m.history.size());
     CHECK_EQ(out.helloDests.size(), m.helloDests.size());
+    // A destination whose stack is smaller than the frame's (a caller's own
+    // VisitedPath) is refused, never decoded short (S5).
+    {
+        AntMessage small;
+        small.visited = VisitedPath(1);
+        CHECK(!codec::deserialize(bytes, small));
+        AntMessage roomy;
+        roomy.history = VisitedPath(1);  // the fixture's history has one hop
+        CHECK(codec::deserialize(bytes, roomy));
+    }
     CHECK_EQ(out.helloDests[1].node, 9);
     CHECK_NEAR(out.helloDests[1].pheromone, 0.5, 1e-12);
 
@@ -180,7 +190,7 @@ int main() {
         big.type = AntType::Reactive;
         big.direction = AntDirection::Up;
         for (std::size_t i = 0; i <= codec::kMaxVisitedOnWire; ++i) {
-            big.visited.push_back({static_cast<NodeAddress>(i), 0.0});
+            big.visited.push(static_cast<NodeAddress>(i), 0.0);
         }
         std::vector<std::uint8_t> v = codec::serialize(big);
         AntMessage out2;
@@ -193,13 +203,13 @@ int main() {
         AntMessage big;
         big.type = AntType::Reactive;
         big.direction = AntDirection::Down;
-        big.visited = {{1, 0.0}};
+        big.visited = anthocnet::test::path({{1, 0.0}});
         for (std::size_t i = 0; i <= codec::kMaxHistoryOnWire; ++i) {
-            big.history.push_back({static_cast<NodeAddress>(i), 0.0});
+            big.history.push(static_cast<NodeAddress>(i), 0.0);
         }
         AntMessage out2;
         CHECK(!codec::deserialize(codec::serialize(big), out2));
-        big.history.pop_back();  // exactly at the cap: accepted
+        big.history.pop();  // exactly at the cap: accepted
         CHECK(codec::deserialize(codec::serialize(big), out2));
         CHECK_EQ(out2.history.size(), static_cast<std::size_t>(codec::kMaxHistoryOnWire));
     }

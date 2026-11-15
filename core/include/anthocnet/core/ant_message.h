@@ -64,8 +64,8 @@ struct AntMessage {
     /// budget so exploration/propagation can't storm the network ([1] §3.5).
     int broadcastBudget = -1;
 
-    VisitedPath visited;  ///< Forward stack: nodes seen on the way out.
-    VisitedPath history;  ///< Back-ant stack: path being reinforced.
+    VisitedPath visited{kHopStackCapacity};  ///< Forward stack: nodes seen on the way out.
+    VisitedPath history{kHopStackCapacity};  ///< Back-ant stack: path being reinforced.
 
     std::vector<HelloDest> helloDests;  ///< Hello-ant adverts.
 
