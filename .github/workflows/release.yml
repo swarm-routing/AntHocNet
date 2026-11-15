@@ -586,8 +586,11 @@ jobs:
     if: ${{ !cancelled() && needs.release.result == 'success' && (inputs.mode == 'dryrun' || needs.publish.result == 'success') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15  # as the reusable workflow's vcpkg job: two downloads, the render and one PR
+    # Releases queue one after another; a dry run gets a group of its own, so
+    # it never replaces a release's pending vcpkg job (a pending job in a
+    # group is replaced by the next one).
     concurrency:
-      group: release-vcpkg-${{ github.repository }}
+      group: ${{ inputs.mode == 'dryrun' && format('release-vcpkg-dryrun-{0}', github.run_id) || format('release-vcpkg-{0}', github.repository) }}
       cancel-in-progress: false
     permissions:
       contents: read
@@ -680,6 +683,16 @@ jobs:
           fi
           branch="bot/vcpkg-${GITHUB_REPOSITORY#*/}"
           title="feat(ports): ${PORT} ${VER}"
+          export GH_TOKEN="$BOT_TOKEN"
+          # A re-run of an older release's job must not replace a newer
+          # release's open proposal (the branch is force-pushed below).
+          open_pr="$(gh pr list --repo "$REGISTRY" --head "$branch" --state open --json number,title --jq '.[0] // empty')"
+          n="$(jq -r '.number // empty' <<< "${open_pr:-null}")"
+          have="$(jq -r '.title // empty' <<< "${open_pr:-null}" | sed -n -E "s/^feat\(ports\): ${PORT} ([0-9][^ ]*)$/\1/p")"
+          if [ -n "$have" ] && [ "$have" != "$VER" ] && [ "$(printf '%s\n%s\n' "$have" "$VER" | sort -V | tail -n 1)" = "$have" ]; then
+            echo "The open registry PR #${n} proposes ${PORT} ${have}, newer than ${VER}: left as it is." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           git config user.name "${BOT_NAME:-github-actions[bot]}"
           git config user.email "${BOT_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
           git checkout -q -b "$branch"
@@ -699,8 +712,6 @@ jobs:
             echo
             echo "Opened by run [${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) (AntHocNet \`release.yml\`, the \`vcpkg\` job; swarm-routing/AntHocNet#1037). The registry's CI installs every port on x64-linux and wasm32-emscripten."
           } > "$body"
-          export GH_TOKEN="$BOT_TOKEN"
-          n="$(gh pr list --repo "$REGISTRY" --head "$branch" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$n" ]; then
             gh pr edit "$n" --repo "$REGISTRY" --title "$title" --body-file "$body" > /dev/null
             url="$(gh pr view "$n" --repo "$REGISTRY" --json url --jq .url)"
