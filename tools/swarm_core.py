@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-"""swarm-core's core/ at the commit core/CMakeLists.txt pins (SWARM_CORE_REF).
+"""swarm-core's core/ at the release swarm-core.lock names.
 
 core/ builds on swarm-routing/ns3-swarm-core's dual-licensed core/
-(swarm-routing/ns3-swarm-core#14). The core's own CMake build fetches it with
-FetchContent; the builds that compile core/'s sources by name (`make
-install-ns3`, which copies them into contrib/anthocnet, and the coverage job)
-get the same files from this script: it downloads swarm-core's source archive
-at the pinned commit and unpacks its core/ under .swarm-core/<sha>/
-(git-ignored).
+(swarm-routing/ns3-swarm-core#14), at the release swarm-core.lock locks
+(swarm-routing/ns3-swarm-core#134: tag, commit, the release tarball and its
+SHA256, every value read from the release by swarm-routing/.github
+tools/checks/release_lock.py). The core's own CMake build fetches that tarball
+with FetchContent (URL + URL_HASH); the builds that compile core/'s sources by
+name (`make install-ns3`, which copies them into contrib/anthocnet, and the
+coverage job) get the same files from this script: it downloads the tarball,
+checks its SHA256 against the lock, and unpacks its core/ under
+.swarm-core/<tag>/ (git-ignored).
 
 Usage:
     tools/swarm_core.py path      print swarm-core's core/ directory (fetches first)
-    tools/swarm_core.py pin       print the pinned commit
+    tools/swarm_core.py pin       print the locked repository, tag and commit
 
 Environment:
     SWARM_CORE_DIR=<swarm-core checkout>/core  use that directory instead
-                                               (offline, or a local change)
+                                               (offline, or an unreleased change)
     SWARM_CORE_CACHE=<dir>                     where to unpack (default
                                                <repo>/.swarm-core)
 
 Standard library only, so it runs in the ns-3 images and on a bare runner.
 """
 
+import hashlib
 import os
 import re
 import shutil
@@ -33,17 +37,22 @@ import tempfile
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CMAKE = os.path.join(ROOT, "core", "CMakeLists.txt")
-ARCHIVE = "https://codeload.github.com/swarm-routing/ns3-swarm-core/tar.gz/{sha}"
-PIN = re.compile(r'^\s*set\(\s*SWARM_CORE_REF\s+"([0-9a-f]{40})"', re.MULTILINE)
+LOCK = os.path.join(ROOT, "swarm-core.lock")
+URL = "https://github.com/{repo}/releases/download/{tag}/{asset}"
+KEY = re.compile(r"^(SWARM_CORE_[A-Z0-9_]+)=(.*)$")
 
 
-def pin():
-    with open(CMAKE, encoding="utf-8") as f:
-        m = PIN.search(f.read())
-    if not m:
-        sys.exit(f"swarm_core: no SWARM_CORE_REF in {CMAKE}")
-    return m.group(1)
+def lock():
+    vals = {}
+    with open(LOCK, encoding="utf-8") as f:
+        for line in f:
+            m = KEY.match(line.strip())
+            if m:
+                vals[m.group(1)] = m.group(2)
+    for k in ("REPO", "TAG", "COMMIT", "ASSET", "SHA256"):
+        if not vals.get("SWARM_CORE_" + k):
+            sys.exit(f"swarm_core: {LOCK} has no SWARM_CORE_{k}")
+    return {k[len("SWARM_CORE_") :]: v for k, v in vals.items()}
 
 
 def is_core(d):
@@ -57,16 +66,21 @@ def path():
         if not is_core(local):
             sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
         return local
-    sha = pin()
+    lk = lock()
     cache = os.path.abspath(os.environ.get("SWARM_CORE_CACHE") or os.path.join(ROOT, ".swarm-core"))
-    dest = os.path.join(cache, sha, "core")
+    dest = os.path.join(cache, lk["TAG"], "core")
     if is_core(dest):
         return dest
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     with tempfile.TemporaryDirectory(dir=os.path.dirname(dest)) as tmp:
-        arc = os.path.join(tmp, "src.tar.gz")
-        with urllib.request.urlopen(ARCHIVE.format(sha=sha), timeout=120) as r, open(arc, "wb") as f:
+        arc = os.path.join(tmp, lk["ASSET"])
+        url = URL.format(repo=lk["REPO"], tag=lk["TAG"], asset=lk["ASSET"])
+        with urllib.request.urlopen(url, timeout=120) as r, open(arc, "wb") as f:
             shutil.copyfileobj(r, f)
+        with open(arc, "rb") as f:
+            got = hashlib.sha256(f.read()).hexdigest()
+        if got != lk["SHA256"]:
+            sys.exit(f"swarm_core: {lk['ASSET']} has SHA256 {got}, the lock says {lk['SHA256']}")
         with tarfile.open(arc, "r:gz") as tar:
             members = []
             for m in tar.getmembers():
@@ -79,20 +93,21 @@ def path():
                     continue
                 members.append(m)
             if not members:
-                sys.exit(f"swarm_core: the archive of {sha} has no core/")
+                sys.exit(f"swarm_core: {lk['ASSET']} has no core/")
             safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}
             tar.extractall(tmp, members=members, **safe)
             top = members[0].name.split("/")[0]
-        got = os.path.join(tmp, top, "core")
-        if not is_core(got):
-            sys.exit(f"swarm_core: the archive of {sha} has no core/swarm-ports.h")
-        shutil.move(got, dest)
+        src = os.path.join(tmp, top, "core")
+        if not is_core(src):
+            sys.exit(f"swarm_core: {lk['ASSET']} has no core/swarm-ports.h")
+        shutil.move(src, dest)
     return dest
 
 
 def main(argv):
     if argv[1:] == ["pin"]:
-        print(pin())
+        lk = lock()
+        print(f"{lk['REPO']} {lk['TAG']} {lk['COMMIT']}")
     elif argv[1:] == ["path"]:
         print(path())
     else:

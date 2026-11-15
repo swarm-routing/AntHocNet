@@ -27,12 +27,13 @@ removed in v2.0.0 ([#307](https://github.com/swarm-routing/AntHocNet/issues/307)
 v1.2.0–v1.9.0 tags.
 
 ```
-core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm-core's core/ at the pinned
-         SWARM_CORE_REF (core/CMakeLists.txt = Makefile = licence.yml core-deps; swarm-routing/ns3-swarm-core#14)
+core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm-core's core/ at the release
+         swarm-core.lock names (core/CMakeLists.txt reads it; swarm-routing/ns3-swarm-core#14, #134)
+swarm-core.lock  the swarm-core release (tag, commit, tarball sha256) core/ builds on; written by org-bot, never by hand
 ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
-tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (swarm-core's core/ at SWARM_CORE_REF, for make install-ns3), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
+tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (swarm-core's core/ at the swarm-core.lock release, for make install-ns3), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
 api/     Doxygen config for the API reference (/api/)
@@ -80,28 +81,32 @@ Read [`docs/development.md`](docs/development.md) before:
 <!-- org-sync:begin dependencies -->
 ## How this repository gets swarm-core and ns3-tools
 
-- **swarm-core's `core/`**: `core/CMakeLists.txt` fetches it with CMake
-  `FetchContent` at one commit, `SWARM_CORE_REF`. The `Makefile`, every
-  workflow's swarm-core `core-deps` and the `swarm-core=` dependency of
-  `.github/workflows/benchmark-cell.yml` name the same commit; the
-  `swarm-core / pin` check (swarm-routing/.github
-  `tools/checks/check-swarm-core-pin.py`) fails when they disagree or when
-  swarm-core `main` changed `core/` since the pin. org-bot's `swarm-core-pin`
-  task then opens the bump PR (`org-bot/swarm-core-pin`), touching only those
-  lines, `benchmark-cell.yml` included; review it and let it merge rather than bumping by hand.
-- **The ns-3 build**: the `dependencies` input of
-  `reusable-ns3-ci.yml` names the swarm-core and ns3-tools (`routing-bench`)
-  refs the module builds on. A ref is a branch or a tag (`@vX.Y.Z`).
+- **swarm-core's `core/`**: `swarm-core.lock` names one swarm-core release
+  (repository, tag, the commit the tag names, version, and the SHA256 of
+  `swarm-core-<ver>.tar.gz` from the release's `SHA256SUMS`);
+  `core/CMakeLists.txt` reads it and fetches the tarball with CMake
+  `FetchContent` `URL` + `URL_HASH`. The `Makefile` and the ns-3
+  dependency name the lock's tag; `core-deps` (the licence boundary is pinned
+  by commit, org rule 2) and a benchmark cell's dependency (its build mode
+  takes a commit) name the commit the tag names.
+- **Bumping**: never by hand. The `swarm-core / pin` check (swarm-routing/.github
+  `tools/checks/check-swarm-core-pin.py`, lock mode) verifies the lock against
+  the release and fails when a newer swarm-core release is out; org-bot's
+  `swarm-core-pin` task then opens the bump PR (`org-bot/swarm-core-pin`) with
+  the lock written from that release and the tag and its commit moved on
+  every line above, the `swarm-core=` dependency of
+  `.github/workflows/benchmark-cell.yml` (the commit) included. Between releases nothing moves.
+  With swarm-routing/.github checked out next to this repository,
+  `python3 -I ../.github/tools/checks/release_lock.py verify swarm-core.lock`
+  checks it locally.
+- **The ns-3 build**: `dependencies` of `reusable-ns3-ci.yml` names release
+  tags; `canary-dependencies` names `@main`, one non-blocking leg on push,
+  schedule and dispatch, never on a PR (swarm-routing/.github#411). A red
+  canary on `main` means the next release of a dependency needs work here.
 - **Working against an unreleased swarm-core**: `-DSWARM_CORE_DIR=<checkout>/core`
-  builds `core/` on a local checkout instead of the pin (development only).
-- **Next, from swarm-core v0.3.0** (swarm-routing/ns3-swarm-core#134): the
-  commit pin becomes a release lock, `swarm-core.lock` (tag, commit and the
-  release tarball's SHA256, every value read from the release), fetched by
-  `URL` + `URL_HASH`; the ns-3 `dependencies` name release tags and
-  `canary-dependencies` names `@main`, a non-blocking leg outside PRs
-  (swarm-routing/.github#411). The `protocol-review` check warns about a new
-  dependency on a moving ref. Later: `find_package(swarm-core CONFIG)` from
-  an installed release, then a vcpkg registry (swarm-routing/ns3-swarm-core#135).
+  builds `core/` on a local checkout instead of the lock (development only).
+- **Later**: `find_package(swarm-core CONFIG)` from an installed release, then
+  a vcpkg registry (swarm-routing/ns3-swarm-core#135).
 <!-- org-sync:end dependencies -->
 
 ## Golden rules (invariants — do not break)

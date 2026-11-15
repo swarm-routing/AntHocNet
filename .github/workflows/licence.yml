@@ -4,9 +4,9 @@ name: Licence
 # to this repository's own docs/tools/check-headers.py (lint.yml): SPDX lines
 # per directory (LICENSING.md) and the one-way include rule, checked against
 # swarm-core: a core/ file includes only the C++ standard library, other core/
-# files and swarm-core's dual-licensed core/ at the commit core/CMakeLists.txt
-# pins (SWARM_CORE_REF; bump it, the Makefile's and this core-deps together:
-# `swarm-core / pin` checks they agree). swarm-routing/ns3-swarm-core#14, S1.
+# files and swarm-core's dual-licensed core/ at the release swarm-core.lock
+# names (this core-deps is the commit its tag names; `swarm-core / pin` checks
+# that every place agrees). swarm-routing/ns3-swarm-core#14.
 # .claude/ and .devcontainer/ carry no SPDX line (not source that ships).
 on:
   push:
@@ -25,4 +25,4 @@ jobs:
       core-roots: core/
       gpl-only: docs/tools/mkdocs_hooks.py
       exclude: '^(\.claude|\.devcontainer)/'
-      core-deps: swarm-routing/ns3-swarm-core@2987cfbc202596c657e58f7be6a6bd09112fe2a8:core
+      core-deps: swarm-routing/ns3-swarm-core@111a67385fbcdaecff5efa49cbdd66b20a355a09:core
