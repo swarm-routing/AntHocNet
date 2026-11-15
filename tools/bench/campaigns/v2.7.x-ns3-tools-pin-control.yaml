@@ -84,4 +84,4 @@ cells:
     blocks: [1]
 
 jobs:
-  - {arms: [base, pin], cells: "static-mesh"}
+  - {arms: [base, pin], cells: [static-mesh]}
