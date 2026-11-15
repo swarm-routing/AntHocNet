@@ -27,7 +27,7 @@ NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 # against a local swarm-core instead (offline).
 SWARM_CORE_REF ?= 2987cfbc202596c657e58f7be6a6bd09112fe2a8
 CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release -DSWARM_CORE_REF=$(SWARM_CORE_REF) \
-  $(if $(SWARM_CORE_DIR),-DSWARM_CORE_DIR=$(abspath $(SWARM_CORE_DIR)))
+  -DSWARM_CORE_DIR=$(if $(SWARM_CORE_DIR),$(abspath $(SWARM_CORE_DIR)))
 
 help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)

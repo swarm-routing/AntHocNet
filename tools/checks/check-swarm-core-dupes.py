@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-# Copyright (C) 2026 Daniel Henrique Joppi
 """List the primitives core/ still defines that swarm-core's core/ provides.
 
 swarm-routing/ns3-swarm-core#14 moves this repository's core/ onto
@@ -150,7 +150,11 @@ def main() -> int:
     if swarm is not None and not (swarm / "swarm-ports.h").is_file():
         print(f"check-swarm-core-dupes: {swarm} is not swarm-core's core/ directory")
         return 2
-    lines, dupes, missing = scan(pathlib.Path(a.core), swarm)
+    core = pathlib.Path(a.core)
+    if not (core / "include/anthocnet/core").is_dir():
+        print(f"check-swarm-core-dupes: {core} is not AntHocNet's core/ directory")
+        return 2
+    lines, dupes, missing = scan(core, swarm)
     print("\n".join(lines))
     summary = f"swarm-core dupes: {dupes} of {len(MAPPING)} primitive(s) still defined in both"
     if swarm is not None:
