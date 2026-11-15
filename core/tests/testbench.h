@@ -174,13 +174,13 @@ private:
         for (const core::RouteDecision& d : decisions) {
             switch (d.action) {
                 case core::RouteAction::Unicast:
-                    if (d.hasMessage)
-                        macUnicast(at_node, d.nextHop, d.message);
+                    if (d.message.has_value())
+                        macUnicast(at_node, d.nextHop, *d.message);
                     else
                         macSendData(at_node, d.nextHop, dataDest);
                     break;
                 case core::RouteAction::Broadcast:
-                    macBroadcast(at_node, d.message);
+                    macBroadcast(at_node, *d.message);
                     break;
                 case core::RouteAction::Queue:
                     ++pending_[at_node][d.nextHop];  // nextHop carries the dest

@@ -21,11 +21,11 @@ int main() {
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(2));
         CHECK(decisions[0].action == RouteAction::Queue);
         CHECK(decisions[1].action == RouteAction::Broadcast);
-        CHECK(decisions[1].hasMessage);
-        CHECK(decisions[1].message.type == AntType::Reactive);
-        CHECK(decisions[1].message.direction == AntDirection::Up);
-        CHECK_EQ(decisions[1].message.src, 1);
-        CHECK_EQ(decisions[1].message.dst, 9);
+        CHECK(decisions[1].message.has_value());
+        CHECK(decisions[1].message->type == AntType::Reactive);
+        CHECK(decisions[1].message->direction == AntDirection::Up);
+        CHECK_EQ(decisions[1].message->src, 1);
+        CHECK_EQ(decisions[1].message->dst, 9);
     }
 
     // --- data packet with a known route: unicast --------------------------
@@ -39,7 +39,7 @@ int main() {
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
         CHECK(decisions[0].action == RouteAction::Unicast);
         CHECK_EQ(decisions[0].nextHop, 5);
-        CHECK(!decisions[0].hasMessage);  // route the original data, no ant
+        CHECK(!decisions[0].message.has_value());  // route the original data, no ant
     }
 
     // --- forward ant reaches its destination: spawn backward ant ----------
@@ -64,12 +64,12 @@ int main() {
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
         CHECK(decisions[0].action == RouteAction::Unicast);
         CHECK_EQ(decisions[0].nextHop, 4);  // back toward the path
-        CHECK(decisions[0].message.direction == AntDirection::Down);
-        CHECK_EQ(decisions[0].message.src, 9);
-        CHECK_EQ(decisions[0].message.dst, 3);
+        CHECK(decisions[0].message->direction == AntDirection::Down);
+        CHECK_EQ(decisions[0].message->src, 9);
+        CHECK_EQ(decisions[0].message->dst, 3);
         // The back ant carries the retraced path in `history` (the deposit
         // pheromone is reconstructed from it at each receiver, not carried).
-        CHECK(!decisions[0].message.history.empty());
+        CHECK(!decisions[0].message->history.empty());
 
         // The previous hop was learned as a neighbour.
         CHECK(router.table().numNeighbors() >= 1u);
@@ -149,8 +149,8 @@ int main() {
         CHECK_EQ(decisions.size(), static_cast<std::size_t>(1));
         CHECK(decisions[0].action == RouteAction::Broadcast);
         // This node appended itself to the visited stack before forwarding.
-        CHECK_EQ(decisions[0].message.visited.size(), static_cast<std::size_t>(2));
-        CHECK_EQ(decisions[0].message.visited.back().node, 4);
+        CHECK_EQ(decisions[0].message->visited.size(), static_cast<std::size_t>(2));
+        CHECK_EQ(decisions[0].message->visited.back().node, 4);
     }
 
     // --- hello ant is consumed and teaches a virtual route ----------------

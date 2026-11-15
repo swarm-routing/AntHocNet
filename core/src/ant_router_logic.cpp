@@ -124,7 +124,7 @@ std::vector<RouteDecision> AntRouterLogic::onMaintenanceTick() {
         it = repairDeadline_.erase(it);
         if (table_.bestRegular(dest) > config_.minPheromone) continue;
 
-        out.push_back({RouteAction::DiscardPending, dest, false, {}});
+        out.push_back(RouteDecision::discardPending(dest));
         ++repairDiscards_;  // #215 drop cause "repair discard" (event count)
 
         // Ablation gate: the DiscardPending above is the packets' fate and
@@ -171,7 +171,7 @@ RouteDecision AntRouterLogic::sendAnt(RouteAction action, NodeAddress nextHop, A
         observer_->onAntSent(ant.type, ant.direction, action == RouteAction::Broadcast);
     }
     reportControlSent(ant, action == RouteAction::Broadcast);
-    return {action, nextHop, true, std::move(ant)};
+    return {action, nextHop, std::move(ant)};
 }
 
 void AntRouterLogic::reportControlSent(const AntMessage& ant, bool broadcast) const {
@@ -980,7 +980,7 @@ void AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop,
         // No route: always hold the data, but launch at most one reactive ant
         // per destination per reactiveRetryInterval so a stream of packets to an
         // unreachable destination doesn't flood ants ([1] §4.2).
-        out.push_back({RouteAction::Queue, dest, false, {}});
+        out.push_back(RouteDecision::queue(dest));
         if (observer_) observer_->onDataDecision(dest, RouteAction::Queue);
         if (!config_.enableReactive) return;  // ablation gate: hold, never discover
         const double now = clock_.now();
@@ -1004,7 +1004,7 @@ void AntRouterLogic::onDataPacket(NodeAddress dest, NodeAddress prevHop,
         return;
     }
     if (observer_) observer_->onDataDecision(dest, RouteAction::Unicast);
-    out.push_back({RouteAction::Unicast, next, false, {}});
+    out.push_back({RouteAction::Unicast, next, std::nullopt});
 }
 
 }  // namespace core

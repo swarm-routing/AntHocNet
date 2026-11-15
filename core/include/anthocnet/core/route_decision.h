@@ -25,16 +25,12 @@ namespace core {
 /// D6): discard the data packets queued for destination `nextHop`.
 using swarm::core::RouteAction;
 
-struct RouteDecision {
-    RouteAction action = RouteAction::None;
-    NodeAddress nextHop = kInvalidAddress;
-    bool hasMessage = false;  ///< Whether `message` is populated.
-    AntMessage message;       ///< Ant to emit (Unicast/Broadcast).
-
-    static RouteDecision drop() { return {RouteAction::Drop, kInvalidAddress, false, {}}; }
-    static RouteDecision none() { return {RouteAction::None, kInvalidAddress, false, {}}; }
-    static RouteDecision deliver() { return {RouteAction::Deliver, kInvalidAddress, false, {}}; }
-};
+/// The verb with its optional ant: swarm-core's RouteDecision over AntMessage
+/// (swarm-routing/ns3-swarm-core#14, S3). The same fields and factories as
+/// AntHocNet's own had, with `message` a std::optional<AntMessage>: it holds the
+/// ant to emit for Unicast/Broadcast of an ant, and is empty for a data
+/// verdict (Queue, Deliver, Drop, DiscardPending, a data Unicast).
+using RouteDecision = swarm::core::RouteDecision<AntMessage>;
 
 }  // namespace core
 }  // namespace anthocnet
