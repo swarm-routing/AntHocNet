@@ -7,7 +7,7 @@
   builds it against a served tarball. Usage, from a bake checkout:
 
     mkdir -p contrib && cp anthocnet-<version>.bakeconf.xml contrib/
-    ./bake.py configure -e ns-3.42 -e anthocnet
+    ./bake.py configure -e ns-3.42 -e swarm-core -e anthocnet
     ./bake.py download && ./bake.py build
 
   The source is the release's drop-in module tarball. It also carries the
@@ -15,6 +15,10 @@
   extract_directory keeps only contrib/anthocnet and contrib/swarm-core, the
   module it links (swarm-routing/ns3-swarm-core, at the release
   swarm-core.lock names; #1019): the build its README calls "AntHocNet alone".
+  Enable swarm-core by name too (-e swarm-core, before anthocnet): bake puts a
+  contrib module under the ns-3 tree it is enabled with, and does so for a
+  contrib dependency only when it is enabled itself (bake 0eaa7058,
+  Bake._enable / resolve_contrib_dependencies).
 -->
 <configuration>
   <modules>

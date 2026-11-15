@@ -146,7 +146,7 @@ build as above. The same files are on the generated `ns3-module` branch.
 With ns-3's installer, [bake](https://www.nsnam.org/docs/bake/tutorial/html/):
 each release from v2.3.0 on attaches `anthocnet-<version>.bakeconf.xml`. Copy
 it into your bake checkout's `contrib/` directory, then run
-`./bake.py configure -e ns-3.42 -e anthocnet && ./bake.py download && ./bake.py build`.
+`./bake.py configure -e ns-3.42 -e swarm-core -e anthocnet && ./bake.py download && ./bake.py build`.
 The module's floor is ns-3.46 (the core is C++23), but bake only offers the
 releases its own catalogue has: up to ns-3.44 at the bake revision
 [bake.yml](.github/workflows/bake.yml) pins, bake's newest. The recipe still
