@@ -42,6 +42,13 @@ public:
     AntRouterLogic(NodeAddress address, const Config& config, IClock& clock, IRng& rng,
                    const ILinkMetric* metric = nullptr, const ILinkState* linkState = nullptr,
                    const ILinkQuality* linkQuality = nullptr);
+    // metric_ may point at this object's own defaultMetric_, sinrMetric_ or
+    // energyMetric_: a copied or moved router would price through a pointer
+    // into its source, so neither is allowed.
+    AntRouterLogic(const AntRouterLogic&) = delete;
+    AntRouterLogic& operator=(const AntRouterLogic&) = delete;
+    AntRouterLogic(AntRouterLogic&&) = delete;
+    AntRouterLogic& operator=(AntRouterLogic&&) = delete;
 
     NodeAddress address() const { return address_; }
     const Config& config() const { return config_; }

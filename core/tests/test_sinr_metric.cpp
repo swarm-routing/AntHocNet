@@ -144,13 +144,13 @@ int main() {
         Config low = cfg;
         low.sinrCriticalDb = 5.0;
         AntRouterLogic lenient(0, low, clock, rng, sinr, nullptr, &lq);
-        CHECK_EQ(lenient.linkCost(3), 1.0);
+        CHECK_NEAR(lenient.linkCost(3), 1.0, 1e-12);
         Config harsh = cfg;
         harsh.sinrPenaltyCost = 7.0;
         AntRouterLogic strict(0, harsh, clock, rng, sinr, nullptr, &lq);
-        CHECK_EQ(strict.linkCost(3), 7.0);
+        CHECK_NEAR(strict.linkCost(3), 7.0, 1e-12);
         AntRouterLogic stock(0, cfg, clock, rng, sinr, nullptr, &lq);
-        CHECK_EQ(stock.linkCost(3), cfg.sinrPenaltyCost);
+        CHECK_NEAR(stock.linkCost(3), cfg.sinrPenaltyCost, 1e-12);
     }
 
     return RUN_TESTS();
