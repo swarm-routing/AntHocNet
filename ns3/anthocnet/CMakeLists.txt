@@ -12,8 +12,8 @@
 # that pull in the module's public headers still resolve anthocnet/core/*.
 include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/include>)
 # swarm-core's core/ (swarm-routing/ns3-swarm-core#14), which core/'s headers
-# include ("swarm-ports.h", ...): `make install-ns3` copies it here at the commit
-# core/CMakeLists.txt pins (SWARM_CORE_REF). Only its headers are used so far.
+# include ("swarm-ports.h", ...): `make install-ns3` copies it here at the
+# release swarm-core.lock names. Only its headers are used so far.
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/swarm-core/swarm-ports.h)
   message(FATAL_ERROR "anthocnet: swarm-core/ is missing; install with `make install-ns3`")
 endif()

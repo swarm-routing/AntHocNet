@@ -123,8 +123,8 @@ make test
 (Builds `core/` with CMake and runs the ctest suite — no simulator needed. The
 core is C++23: it needs CMake 3.20+ and a C++23 compiler, GCC 11+ or Clang 14+.
 It builds on [swarm-core](https://github.com/swarm-routing/ns3-swarm-core)'s
-`core/`, which CMake fetches at the commit `core/CMakeLists.txt` pins
-(`SWARM_CORE_REF`); offline, pass a local checkout:
+`core/`, which CMake fetches as the release `swarm-core.lock` names (the
+tarball, checked by its SHA256); offline, pass a local checkout:
 `make test SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.)
 
 ### Install on NS-3
