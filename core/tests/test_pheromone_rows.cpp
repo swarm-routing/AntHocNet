@@ -306,5 +306,22 @@ int main() {
         CHECK_EQ(t.numEntriesVirtual(), static_cast<std::size_t>(0));
     }
 
+    // 8. numRows() is the union of the regular and the virtual destinations:
+    //    a destination on one side only, on both, and either side running out
+    //    first are each one row.
+    {
+        PheromoneTable t;
+        t.setPheromoneRegular(10, 1, 0.5);  // regular only
+        t.setPheromoneVirtual(20, 1, 0.5);  // virtual only, between two regular
+        t.setPheromoneRegular(30, 1, 0.5);  // both
+        t.setPheromoneVirtual(30, 1, 0.4);
+        t.setPheromoneVirtual(40, 1, 0.5);  // virtual only, after the last regular
+        CHECK_EQ(t.numRows(), static_cast<std::size_t>(4));
+        PheromoneTable v;
+        v.setPheromoneVirtual(5, 1, 0.5);  // no regular row at all
+        v.setPheromoneVirtual(6, 1, 0.5);
+        CHECK_EQ(v.numRows(), static_cast<std::size_t>(2));
+    }
+
     return RUN_TESTS();
 }
