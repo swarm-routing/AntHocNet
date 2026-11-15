@@ -1102,7 +1102,9 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
 Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header& header,
                                             Ptr<NetDevice> oif, Socket::SocketErrno& sockerr) {
     sockerr = Socket::ERROR_NOTERROR;
-    if (!m_logic || m_ifaces.empty()) {
+    // A node the base's lifecycle took down routes nothing (#974 adds the
+    // protocol's own shutdown, crash and restart hooks).
+    if (!m_logic || m_ifaces.empty() || IsDown()) {
         sockerr = Socket::ERROR_NOROUTETOHOST;
         return nullptr;
     }
@@ -1164,7 +1166,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
                                  AHN_RI_CB(MulticastForwardCallback) mcb,
                                  AHN_RI_CB(LocalDeliverCallback) lcb,
                                  AHN_RI_CB(ErrorCallback) ecb) {
-    if (!m_logic || m_ifaces.empty()) return false;
+    if (!m_logic || m_ifaces.empty() || IsDown()) return false;
 
     // Ipv4L3Protocol passes the same bound callbacks on every call; cache them
     // so NotifyTxError can re-inject a MAC-dropped data packet (issue #46).
@@ -1272,7 +1274,14 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     // is chosen so that rule picks the socket this adapter always used:
     if (dest == Ipv4Address("255.255.255.255")) {
         // a broadcast: the interface's subnet broadcast, on each interface in
-        // device order (#362);
+        // device order (#362). Two interfaces on one subnet would both resolve
+        // to the first of them, so a node with such a pair broadcasts with
+        // BroadcastControl instead (every interface, in the order they came
+        // up), until the base's per-interface broadcast (S10b) replaces both.
+        if (!SubnetsDistinct()) {
+            BroadcastControl(packet);
+            return;
+        }
         for (const auto& kv : m_ifaces) {
             UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
         }
@@ -1447,7 +1456,9 @@ void RoutingProtocol::HelloTimerExpire() {
         // LinkFail broadcasts and repair-timeout DiscardPending actions (D6).
         ExecuteDecisions(m_logic->onMaintenanceTick(), kInvalidAddress);
         AntMessage hello = m_logic->createHelloAnt();
-        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0;
+        // A node with two interfaces on one subnet cannot send on one of them
+        // alone yet (S10b), so it sends every hello on every interface.
+        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0 || !SubnetsDistinct();
         if (p2pTick) {
             SendAnt(hello, Ipv4Address("255.255.255.255"));
         } else {
@@ -1697,6 +1708,20 @@ bool RoutingProtocol::MapMacToCore(const Mac48Address& mac, NodeAddress& out) co
 }
 
 // --- helpers ----------------------------------------------------------------
+
+bool RoutingProtocol::SubnetsDistinct() const {
+    for (auto a = m_ifaces.begin(); a != m_ifaces.end(); ++a) {
+        const Ipv4InterfaceAddress& x = a->second.address;
+        for (auto b = std::next(a); b != m_ifaces.end(); ++b) {
+            const Ipv4InterfaceAddress& y = b->second.address;
+            if (x.GetLocal().CombineMask(x.GetMask()) == y.GetLocal().CombineMask(x.GetMask()) ||
+                x.GetLocal().CombineMask(y.GetMask()) == y.GetLocal().CombineMask(y.GetMask())) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
 int64_t RoutingProtocol::AssignStreams(int64_t stream) {
     return SwarmRoutingBase::AssignStreams(stream);  // the Rng() port's one stream
