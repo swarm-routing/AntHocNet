@@ -117,6 +117,7 @@ jobs:
         mkdir -p .stage/contrib && touch .stage/CMakeLists.txt &&
         make -s install-ns3 NS3DIR="$PWD/.stage" BASELINES=1
       modules: >-
+        swarm-core=.stage/contrib/swarm-core
         routing-bench=.stage/contrib/routing-bench oracle=.stage/contrib/oracle
         aomdv=.stage/contrib/aomdv gpsr=.stage/contrib/gpsr
         adaptive=.stage/contrib/adaptive anthocnet=.stage/contrib/anthocnet

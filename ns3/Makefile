@@ -23,6 +23,10 @@ CORE   := $(ROOT)/core
 ANT    := $(HERE)/anthocnet
 BASE   := $(HERE)/baselines
 DEST    = $(NS3DIR)/contrib/anthocnet
+# swarm-core, the module the adapter links (S10 of #1019); the marker file says
+# this installer put it there.
+SWARMDEST = $(NS3DIR)/contrib/swarm-core
+SWARMMARK = .installed-by-anthocnet
 # #296: the vendored GPSR baseline is a second, self-contained contrib module
 # (provenance: baselines/gpsr/README.md). Installed alongside so the comparison
 # harness's gpsr arm builds; the anthocnet module itself does not depend on it.
@@ -73,15 +77,25 @@ install: require-ns3dir
 	cp $(CORE)/include/anthocnet/core/*.h "$(DEST)/core/include/anthocnet/core/"
 	cp $(CORE)/src/*.cpp "$(DEST)/core/src/"
 	cp $(CORE)/LICENSE "$(DEST)/core/"   # MIT OR GPL-2.0-only (ADR-0028)
-	# swarm-core's core/ at the release swarm-core.lock names
-	# (swarm-routing/ns3-swarm-core#14): the core's headers include it, so the
-	# module carries it beside core/ as it carries core/ (MIT OR GPL-2.0-only,
-	# its LICENSE). tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core
-	# uses a local one.
-	@sc=$$(python3 $(ROOT)/tools/swarm_core.py path) && test -f "$$sc/swarm-ports.h" && \
-	  echo ">> swarm-core core/ at $$(python3 $(ROOT)/tools/swarm_core.py pin) -> $(DEST)/swarm-core" && \
-	  mkdir -p "$(DEST)/swarm-core" && \
-	  cp "$$sc"/*.h "$$sc"/*.cc "$$sc/LICENSE" "$(DEST)/swarm-core/"
+	# swarm-core, the ns-3 module the adapter derives from (SwarmRoutingBase) and
+	# whose core/ the algorithm core's headers include, at the release
+	# swarm-core.lock names (swarm-routing/ns3-swarm-core#14, S10 of #1019):
+	# installed as contrib/swarm-core, which the anthocnet module links.
+	# tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core uses a local
+	# one. A contrib/swarm-core this installer did not put there (another
+	# protocol's) is kept: at the same version silently, at another with a
+	# warning, never overwritten.
+	@sc=$$(python3 $(ROOT)/tools/swarm_core.py module) && test -f "$$sc/model/swarm-routing-base.h" && \
+	  want=$$(cat "$$sc/VERSION") && \
+	  if [ -d "$(SWARMDEST)" ] && [ ! -f "$(SWARMDEST)/$(SWARMMARK)" ]; then \
+	    have=$$(cat "$(SWARMDEST)/VERSION" 2>/dev/null || echo unknown); \
+	    if [ "$$have" = "$$want" ]; then echo ">> contrib/swarm-core $$have is already installed: kept"; \
+	    else echo ">> WARNING: contrib/swarm-core is $$have, swarm-core.lock names $$want: kept, not overwritten (AntHocNet is built and tested with $$want)"; fi; \
+	  else \
+	    echo ">> Installing swarm-core $$want ($$(python3 $(ROOT)/tools/swarm_core.py pin)) into $(SWARMDEST)"; \
+	    mkdir -p "$(SWARMDEST)" && cp -r "$$sc/." "$(SWARMDEST)/" && \
+	    echo "$$want" > "$(SWARMDEST)/$(SWARMMARK)"; \
+	  fi
 	@if [ "$(BASELINES)" = 0 ]; then \
 	  echo ">> BASELINES=0: skipping the aomdv, gpsr, oracle, adaptive and routing-bench comparison modules."; \
 	  echo "   ns-3 will skip anthocnet-compare, isl-grid and leo-walker (they link them);"; \
@@ -139,4 +153,5 @@ uninstall: require-ns3dir
 	rm -rf "$(ADAPTIVEDEST)"
 	@echo ">> Removing $(BENCHDEST)"
 	rm -rf "$(BENCHDEST)"
+	@echo ">> Kept $(SWARMDEST): other protocols' modules may link it; delete it yourself if none does."
 	@echo ">> Done. Reconfigure/build ns-3 to drop the modules."

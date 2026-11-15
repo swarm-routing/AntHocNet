@@ -43,11 +43,15 @@ ends with one machine-readable `##DOCTOR##` line (versioned, fields only ever
 added). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
 comparison modules: the module, its test suite and `anthocnet-example` build as usual,
 and ns-3 skips the comparison harnesses that link those modules.
-The module carries swarm-core's `core/` beside the algorithm core, at the
-release `swarm-core.lock` names (`contrib/anthocnet/swarm-core/`; the core's
-headers include it, swarm-routing/ns3-swarm-core#14): `make install-ns3`
-downloads it (`tools/swarm_core.py`), or copies a local one with
-`SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.
+The module links swarm-core, the shared ns-3 module whose `SwarmRoutingBase`
+the adapter derives from and whose `core/` the algorithm core's headers
+include (swarm-routing/ns3-swarm-core#14). `make install-ns3` installs it as
+`contrib/swarm-core` at the release `swarm-core.lock` names: it downloads it
+(`tools/swarm_core.py`), or copies a local checkout with
+`SWARM_CORE_DIR=/path/to/ns3-swarm-core/core` (its parent is the module). A
+`contrib/swarm-core` it did not install (another protocol's) is kept, with a
+warning when its version differs from the lock's; `make uninstall-ns3` keeps it
+too.
 
 No checkout? Each release ships `anthocnet-ns3-modules-<version>.tar.gz`,
 the four modules exactly as installed:
@@ -293,10 +297,10 @@ Attributes exposed on `ns3::anthocnet::RoutingProtocol`:
 ```
 ns3/
   model/
-    anthocnet-routing-protocol.{h,cc}  Ipv4RoutingProtocol over core
+    anthocnet-routing-protocol.{h,cc}  swarm-core's SwarmRoutingBase over core
+                                       (sockets, clock and RNG ports, observer)
     anthocnet-packet.{h,cc}            ns3::Header <-> core::AntMessage
     anthocnet-rqueue.{h,cc}            pending-packet queue (GC + cap)
-    anthocnet-adapters.{h,cc}          IClock/IRng ports over Simulator/RNG
   helper/anthocnet-helper.{h,cc}       Ipv4RoutingHelper
   helper/anthocnet-bench-arms.cc       AntHocNet's arm of the comparison harness
                                        (built only with routing-bench, ADR-0027)

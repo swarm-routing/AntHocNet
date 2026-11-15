@@ -13,8 +13,8 @@
 namespace anthocnet {
 namespace core {
 
-AntRouterLogic::AntRouterLogic(NodeAddress address, const Config& config, IClock& clock, IRng& rng,
-                               const ILinkMetric* metric, const ILinkState* linkState,
+AntRouterLogic::AntRouterLogic(NodeAddress address, const Config& config, const IClock& clock,
+                               IRng& rng, const ILinkMetric* metric, const ILinkState* linkState,
                                const ILinkQuality* linkQuality)
     : address_(address),
       config_(config),

@@ -4,15 +4,19 @@
 /*
  * AntHocNet routing protocol for NS-3.
  *
- * An additive Ipv4RoutingProtocol (mirroring src/aodv) that delegates all
- * routing decisions to the shared core::AntRouterLogic. Ant control packets
- * travel over a dedicated UDP port; data packets are routed/queued via
- * RouteOutput / RouteInput.
+ * An Ipv4RoutingProtocol on swarm-core's SwarmRoutingBase (S10 of #1019,
+ * swarm-routing/ns3-swarm-core#14) that delegates all routing decisions to the
+ * shared core::AntRouterLogic. The base owns the control sockets (one UDP
+ * socket per interface and one on its subnet broadcast, on ANT_PORT), the
+ * core's clock and randomness ports, and the router observer's trace sources;
+ * data packets are routed/queued via RouteOutput / RouteInput, which this
+ * adapter still overrides (the pending queue, the MAC hooks and the
+ * multi-interface peer routes move onto the base in the later S10 slices).
  */
 #ifndef ANTHOCNET_ROUTING_PROTOCOL_H
 #define ANTHOCNET_ROUTING_PROTOCOL_H
 
-#include "ns3/ipv4-routing-protocol.h"
+#include "ns3/swarm-routing-base.h"
 #include "ns3/ipv4-interface-address.h"
 #include "ns3/ipv4-l3-protocol.h"
 #include "ns3/socket.h"
@@ -45,7 +49,6 @@
 
 #include "anthocnet/core/ant_router_logic.h"
 #include "anthocnet/core/config.h"
-#include "anthocnet-adapters.h"
 #include "anthocnet-rqueue.h"
 
 // ns-3 changed Ipv4RoutingProtocol::RouteInput's forwarding-callback parameters
@@ -64,8 +67,11 @@ namespace anthocnet {
 // The protocol is also a core IRouterObserver (item 15): it forwards the core's
 // ant/route events to ns-3 trace sources so users can Config::Connect and so the
 // comparison harness can read ant-level diagnostics. The interface is all
-// no-op-default virtuals, so this adds no state to the core.
-class RoutingProtocol : public Ipv4RoutingProtocol,
+// no-op-default virtuals, so this adds no state to the core. swarm-core's
+// events (control, routes, data decisions, state size) go on to the base's
+// Observer(), which fires its trace sources and keeps GetRouterStats (#917);
+// the ant-level Tx and Rx stay this adapter's.
+class RoutingProtocol : public SwarmRoutingBase,
                         public ::anthocnet::core::IRouterObserver,
                         public ::anthocnet::core::ILinkState,
                         public ::anthocnet::core::ILinkQuality,
@@ -81,7 +87,6 @@ public:
     // Trace-source callback signatures (introspection names used in GetTypeId).
     typedef void (*AntTxCallback)(uint8_t type, uint8_t direction, bool broadcast);
     typedef void (*AntRxCallback)(uint8_t type, uint8_t direction);
-    typedef void (*RouteChangedCallback)(uint32_t dest, uint32_t neighbor, bool added);
     // #386: a MAC retry-limit-dropped data packet was re-injected into the
     // pending queue (#46). `header` is the packet's Ipv4 header as captured off
     // the failed MPDU; `packet` is the queued form (UDP header + payload, no IP
@@ -89,19 +94,18 @@ public:
     // same site that increments MacReinjectedPackets(), so a listener's event
     // count and that counter agree by construction.
     typedef void (*MacReinjectCallback)(const Ipv4Header& header, Ptr<const Packet> packet);
-    // #917: swarm-core's router-observer trace sources, same names and
-    // arguments (model/swarm-routing-base.h), except that DataDecision's
-    // action is the core RouteAction as uint8_t, numbered as
-    // swarm::core::RouteAction (Unicast 1, Queue 3, Deliver 4, Drop 5).
-    typedef void (*ControlTxCallback)(uint8_t kind, bool broadcast, uint32_t bytes);
-    typedef void (*ControlRxCallback)(uint8_t kind, uint32_t bytes);
-    typedef void (*DataDecisionCallback)(Ipv4Address dest, uint8_t action);
-    typedef void (*StateSizeCallback)(uint32_t entries, uint32_t bytes);
+    // ControlTx, ControlRx, RouteChanged, DataDecision and StateSize are
+    // SwarmRoutingBase's trace sources, with its signatures (Q3 of the plan on
+    // swarm-routing/ns3-swarm-core#14, maintainer decision 2026-11-15):
+    // RouteChanged is (Ipv4Address dest, Ipv4Address nextHop, bool added) and
+    // DataDecision (Ipv4Address dest, swarm::core::RouteAction action).
 
     /// The name of a ControlTx/ControlRx kind ("REACTIVE_BANT"), or the kind
-    /// in decimal when the table does not name it (as swarm-core's
-    /// SwarmRoutingBase::GetKindName).
+    /// in decimal when the table does not name it. The same table is
+    /// registered with SwarmRoutingBase::SetKindNames, so the base's
+    /// GetKindName(TypeId, kind) answers alike.
     static std::string GetKindName(uint8_t kind);
+    using SwarmRoutingBase::GetKindName;
 
     // core::IRouterObserver
     void onAntSent(::anthocnet::core::AntType type, ::anthocnet::core::AntDirection dir,
@@ -157,7 +161,7 @@ public:
     // when ShareKinematics is on.
     bool self(::anthocnet::core::Kinematics& out) const override;
 
-    // Ipv4RoutingProtocol
+    // Ipv4RoutingProtocol, over SwarmRoutingBase's
     Ptr<Ipv4Route> RouteOutput(Ptr<Packet> p, const Ipv4Header& header, Ptr<NetDevice> oif,
                                Socket::SocketErrno& sockerr) override;
     bool RouteInput(Ptr<const Packet> p, const Ipv4Header& header, Ptr<const NetDevice> idev,
@@ -171,8 +175,9 @@ public:
     void PrintRoutingTable(Ptr<OutputStreamWrapper> stream,
                            Time::Unit unit = Time::S) const override;
 
-    /// Seed the protocol's RNG; returns the number of streams used.
-    int64_t AssignStreams(int64_t stream);
+    /// Seed the protocol's RNG (the base's Rng() port, the core's decision
+    /// stream); returns the number of streams used.
+    int64_t AssignStreams(int64_t stream) override;
     /// #496: seed the hello/proactive timer-jitter stream (separate from the
     /// core's decision stream, so jitter draws never shift the core's
     /// sequence); returns the number of streams used. AntHocNetHelper assigns
@@ -254,6 +259,16 @@ protected:
     void DoInitialize() override;
     void DoDispose() override;
 
+    // SwarmRoutingBase hooks. RouteOutput and RouteInput above are this
+    // adapter's own (the core's decision vector and the pending queue), so
+    // the base calls SelectNextHop and StartDiscovery only from its own
+    // routing paths; DeferredRouteOutput uses StartDiscovery as well.
+    uint16_t ControlPort() const override { return ANT_PORT; }
+    Ipv4Address SelectNextHop(Ipv4Address dst, Ipv4Address src, Ipv4Address prev,
+                              Ptr<const Packet> p) override;
+    void StartDiscovery(Ipv4Address dst) override;
+    void RecvControl(Ptr<Packet> p, Ipv4Address from, Ipv4Address receiver) override;
+
 public:
     // Address mapping between core (int32 NodeAddress == the IP, opaque) and
     // ns-3 (ADR-0011). Broadcast is a RouteAction, never an identity, so the
@@ -271,13 +286,11 @@ public:
     }
 
 private:
-    void Start();
+    /// Starts the periodic timers, once (the first interface up).
+    void StartTimers();
     Ptr<Ipv4Route> LoopbackRoute(const Ipv4Header& header, Ptr<NetDevice> oif) const;
-    bool IsMyOwnAddress(Ipv4Address src) const;
-    Ptr<Socket> FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const;
 
     // ant I/O
-    void RecvAnt(Ptr<Socket> socket);
     void SendAnt(const ::anthocnet::core::AntMessage& msg, Ipv4Address dest);
     void ExecuteDecisions(const std::vector<::anthocnet::core::RouteDecision>& decisions,
                           ::anthocnet::core::NodeAddress flushDest);
@@ -329,21 +342,20 @@ private:
 
     // state
     Ptr<Ipv4> m_ipv4;
-    // Per-interface sockets: one bound to the unicast address (receives
-    // unicast ants), one bound to the subnet-broadcast address (receives
-    // broadcast hello/forward ants). A socket bound only to the unicast
-    // address does NOT receive broadcasts, so both are required.
-    //
-    // Issue #362: ordered by the index of the device each socket is bound to,
-    // NOT by Ptr<Socket> (whose operator< compares heap addresses). With more
-    // than one interface (the ISL mesh) the broadcast fan-out order and the
-    // `.begin()` "first interface" fallbacks otherwise depended on what the
-    // process had allocated earlier — i.e. on --protocols order.
-    struct SocketByBoundDevice {
-        bool operator()(const Ptr<Socket>& a, const Ptr<Socket>& b) const;
+    /// The interfaces the base holds control sockets on (one bound to the
+    /// unicast address, one to the subnet broadcast; S10 of #1019), and
+    /// their addresses, keyed by the index of the interface's device.
+    ///
+    /// Issue #362: in device order, NOT in the order the interfaces came up
+    /// or by a heap address. With more than one interface (the ISL mesh) the
+    /// broadcast fan-out order and the "first interface" fallbacks otherwise
+    /// depended on the run's history. SendAnt sends on each interface in
+    /// this order through the base's sockets.
+    struct ControlIface {
+        uint32_t interface = 0;  ///< the IPv4 interface index
+        Ipv4InterfaceAddress address;
     };
-    std::map<Ptr<Socket>, Ipv4InterfaceAddress, SocketByBoundDevice> m_socketAddresses;
-    std::map<Ptr<Socket>, Ipv4InterfaceAddress, SocketByBoundDevice> m_socketSubnetBroadcast;
+    std::map<uint32_t, ControlIface> m_ifaces;
 
     /// Issue #203: where a peer the core named actually is. `iface` is the ns-3
     /// interface index whose device shares a link with it; `linkLocal` is the
@@ -368,8 +380,6 @@ private:
     std::map<uint32_t, std::set<::anthocnet::core::NodeAddress>> m_ifaceNeighbors;
 
     ::anthocnet::core::Config m_config;
-    Ns3Clock m_clock;
-    Ns3Rng m_rng;
     std::unique_ptr<::anthocnet::core::AntRouterLogic> m_logic;
     bool m_started;
 
@@ -501,15 +511,10 @@ private:
     uint64_t m_repairDiscardedPackets = 0;
     uint64_t m_macReinjectedPackets = 0;
 
-    // trace sources (item 15): ant sent/received and route add/remove.
+    // trace sources (item 15): ant sent/received. Route add/remove and the
+    // rest of swarm-core's router-observer events are the base's (#917).
     TracedCallback<uint8_t, uint8_t, bool> m_txAntTrace;
     TracedCallback<uint8_t, uint8_t> m_rxAntTrace;
-    TracedCallback<uint32_t, uint32_t, bool> m_routeChangedTrace;
-    // #917: swarm-core's router-observer events (see ControlTxCallback above).
-    TracedCallback<uint8_t, bool, uint32_t> m_controlTxTrace;
-    TracedCallback<uint8_t, uint32_t> m_controlRxTrace;
-    TracedCallback<Ipv4Address, uint8_t> m_dataDecisionTrace;
-    TracedCallback<uint32_t, uint32_t> m_stateSizeTrace;
     // #917: true while this node's own ant sockets are sending, so the
     // RouteOutput lookup a unicast or subnet-broadcast ant triggers is not
     // reported as a data decision.

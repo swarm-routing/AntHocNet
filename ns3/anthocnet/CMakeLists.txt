@@ -11,14 +11,15 @@
 # The genex is inherited by the examples/ subdirectory, so examples and tests
 # that pull in the module's public headers still resolve anthocnet/core/*.
 include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/include>)
-# swarm-core's core/ (swarm-routing/ns3-swarm-core#14), which core/'s headers
-# include ("swarm-ports.h", ...): `make install-ns3` copies it here at the
-# release swarm-core.lock names; the sources the core calls are compiled into
-# the module below.
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/swarm-core/swarm-ports.h)
-  message(FATAL_ERROR "anthocnet: swarm-core/ is missing; install with `make install-ns3`")
+# swarm-core (swarm-routing/ns3-swarm-core#14): the ns-3 module the adapter
+# derives from (SwarmRoutingBase, S10 of #1019) and links below; `make
+# install-ns3` installs it as contrib/swarm-core at the release swarm-core.lock
+# names. core/'s headers include its core/ by bare name ("swarm-ports.h", as
+# in the core's own CMake build), so that directory is on the include path too.
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/contrib/swarm-core/core/swarm-ports.h)
+  message(FATAL_ERROR "anthocnet: contrib/swarm-core is missing; install with `make install-ns3`")
 endif()
-include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/swarm-core>)
+include_directories($<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/contrib/swarm-core/core>)
 
 # Adapt to ns-3 API drift by release. NS3_VER is set by ns-3 (e.g. "3.41");
 # anything non-numeric (e.g. "3-dev") falls through to the modern defaults.
@@ -70,7 +71,6 @@ build_lib(
     model/anthocnet-routing-protocol.cc
     model/anthocnet-packet.cc
     model/anthocnet-rqueue.cc
-    model/anthocnet-adapters.cc
     helper/anthocnet-helper.cc
     ${anthocnet_bench_sources}
     core/src/pheromone_table.cpp
@@ -79,20 +79,18 @@ build_lib(
     core/src/ant_message_codec.cpp
     core/src/ant_router_logic.cpp
     core/src/link_metric_registry.cpp
-    # swarm-core's sources the core calls (S4 on), from swarm-core/ (above)
-    swarm-core/swarm-dedup-history.cc
-    swarm-core/swarm-pheromone-table.cc
   HEADER_FILES
     model/anthocnet-routing-protocol.h
     model/anthocnet-packet.h
     model/anthocnet-rqueue.h
-    model/anthocnet-adapters.h
     helper/anthocnet-helper.h
     helper/anthocnet-viz-trace.h
   LIBRARIES_TO_LINK
     ${libcore}
     ${libnetwork}
     ${libinternet}
+    # swarm-core: SwarmRoutingBase and the core/ primitives the core calls.
+    ${libswarm-core}
     # wifi: the model subscribes to the WifiMac "DroppedMpdu" trace for the MAC
     # transmit-failure detector (ADR-0008 detector D). mobility: used by the
     # link-break test below to move a node out of range.
