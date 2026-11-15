@@ -6,6 +6,25 @@ project(anthocnet_core VERSION 2.7.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(_anthocnet_core_top ON)
+else()
+  set(_anthocnet_core_top OFF)
+endif()
+# ANTHOCNET_CORE_TESTS builds the tests and the speed benchmark (ON at the top
+# level). ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE takes swarm-core from an
+# installed package (find_package(swarm-core CONFIG), e.g. its vcpkg port)
+# instead of SWARM_CORE_REF; ANTHOCNET_CORE_INSTALL (which needs it) adds the
+# install rules and the CMake package anthocnet-core: find_package(anthocnet-core
+# CONFIG REQUIRED) gives the imported target anthocnet::core (#1037,
+# swarm-routing/.github#436, the vcpkg port).
+option(ANTHOCNET_CORE_TESTS "Build the tests and the speed benchmark" ${_anthocnet_core_top})
+option(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE "Take swarm-core from find_package(swarm-core CONFIG)" OFF)
+option(ANTHOCNET_CORE_INSTALL "Add the install rules and the CMake package anthocnet-core" OFF)
+if(ANTHOCNET_CORE_INSTALL AND NOT ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
+  message(FATAL_ERROR "ANTHOCNET_CORE_INSTALL needs ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE=ON: the package links an installed swarm-core")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -40,7 +59,9 @@ endif()
 set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch SWARM_CORE_REF")
 set(SWARM_CORE_REF "2987cfbc202596c657e58f7be6a6bd09112fe2a8" CACHE STRING
     "swarm-routing/ns3-swarm-core commit to fetch when SWARM_CORE_DIR is empty")
-if(SWARM_CORE_DIR)
+if(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
+  find_package(swarm-core CONFIG REQUIRED)
+elseif(SWARM_CORE_DIR)
   if(NOT EXISTS "${SWARM_CORE_DIR}/swarm-ports.h")
     message(FATAL_ERROR "SWARM_CORE_DIR=${SWARM_CORE_DIR} is not swarm-core's core/ directory")
   endif()
@@ -66,14 +87,44 @@ add_library(anthocnet_core STATIC
   # rule 7 wants a core test on it).
   src/shortest_path.cpp
 )
-target_include_directories(anthocnet_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(anthocnet::core ALIAS anthocnet_core)
+# The installed package's imported target is anthocnet::core too.
+set_target_properties(anthocnet_core PROPERTIES EXPORT_NAME core)
+include(GNUInstallDirs)
+target_include_directories(anthocnet_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(anthocnet_core PUBLIC swarm::core)
 
-# The core has no simulator dependency, so it builds and tests standalone.
-enable_testing()
-add_subdirectory(tests)
+if(ANTHOCNET_CORE_TESTS)
+  # The core has no simulator dependency, so it builds and tests standalone.
+  enable_testing()
+  add_subdirectory(tests)
 
-# Core speed benchmarks (#620): ns/op of the hot paths with no simulator.
-# Built with the library so it cannot rot; not a test. `make bench-core` runs it.
-add_executable(bench_core bench/bench_core.cpp)
-target_link_libraries(bench_core PRIVATE anthocnet_core)
+  # Core speed benchmarks (#620): ns/op of the hot paths with no simulator.
+  # Built with the library so it cannot rot; not a test. `make bench-core` runs it.
+  add_executable(bench_core bench/bench_core.cpp)
+  target_link_libraries(bench_core PRIVATE anthocnet_core)
+endif()
+
+if(ANTHOCNET_CORE_INSTALL)
+  include(CMakePackageConfigHelpers)
+  set(_anthocnet_core_cmake_dir ${CMAKE_INSTALL_LIBDIR}/cmake/anthocnet-core)
+  install(TARGETS anthocnet_core EXPORT anthocnet-coreTargets
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  # #include "anthocnet/core/<header>.h", as in the source tree
+  install(DIRECTORY include/anthocnet DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/anthocnet-core)
+  install(EXPORT anthocnet-coreTargets NAMESPACE anthocnet:: DESTINATION ${_anthocnet_core_cmake_dir})
+  configure_package_config_file(anthocnet-coreConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/anthocnet-coreConfig.cmake
+    INSTALL_DESTINATION ${_anthocnet_core_cmake_dir})
+  # AntHocNet is past 1.0: a release satisfies a request for any earlier
+  # version of its major (SemVer, docs/roadmap.md).
+  write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/anthocnet-coreConfigVersion.cmake
+    COMPATIBILITY SameMajorVersion)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/anthocnet-coreConfig.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/anthocnet-coreConfigVersion.cmake
+          DESTINATION ${_anthocnet_core_cmake_dir})
+endif()

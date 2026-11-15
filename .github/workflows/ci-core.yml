@@ -35,6 +35,19 @@ jobs:
           sudo apt-get install -y cmake g++
       - name: Build and test core
         run: make test
+      - name: The CMake package anthocnet-core (find_package, swarm-core from its package; #1037)
+        run: |
+          prefix="$PWD/core/build-pkg/prefix"
+          cmake -S core/build/_deps/swarm_core_src-src/core -B core/build-pkg/swarm-core -DSWARM_CORE_TESTS=OFF
+          cmake --build core/build-pkg/swarm-core -j && cmake --install core/build-pkg/swarm-core --prefix "$prefix"
+          cmake -S core -B core/build-pkg/core -DANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE=ON \
+            -DANTHOCNET_CORE_INSTALL=ON -DANTHOCNET_CORE_TESTS=OFF -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build core/build-pkg/core -j && cmake --install core/build-pkg/core --prefix "$prefix"
+          for f in lib/libanthocnet_core.a include/anthocnet/core/ant_message_codec.h lib/cmake/anthocnet-core/anthocnet-coreConfig.cmake lib/cmake/anthocnet-core/anthocnet-coreConfigVersion.cmake; do
+            test -f "$prefix/$f" || { echo "::error::the install has no $f"; exit 1; }
+          done
+          cmake -S core/tests/consumer-package -B core/build-pkg/consumer -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build core/build-pkg/consumer && core/build-pkg/consumer/consumer
       - name: Primitives still defined both here and in swarm-core (report-only until S9)
         # swarm-routing/ns3-swarm-core#14: the list each slice S2-S8 shortens;
         # make test fetched swarm-core at the pin into core/build/_deps.

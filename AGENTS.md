@@ -29,6 +29,8 @@ v1.2.0–v1.9.0 tags.
 ```
 core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm-core's core/ at the pinned
          SWARM_CORE_REF (core/CMakeLists.txt = Makefile = licence.yml core-deps; swarm-routing/ns3-swarm-core#14)
+         installs as the CMake package anthocnet-core (ANTHOCNET_CORE_INSTALL with swarm-core from its package,
+         ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE; core/tests/consumer-package/; #1037, the vcpkg port)
 ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
