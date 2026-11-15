@@ -29,14 +29,19 @@
 #   ns3-campaign dispatch $P --cap 4
 #   ns3-campaign status   $P --brief
 #   ns3-campaign collect  $P --out results/cells
-generation: pin111
+# Re-run (generation pin112, maintainer decision 2026-11-15): pin111 found
+# static mesh's ##COMMON## rows missing on v1.1.1 (swarm-routing/ns3-tools#218,
+# fixed in v1.1.2). The lock now pins v1.1.2 at 2000d6e (43a3def + this PR),
+# so only the static-mesh pair runs again, both arms, seeds 1-2, with the same
+# reading. pin111's files stay committed as the first run.
+generation: pin112
 ref: main
 repo: swarm-routing/AntHocNet
 isolates: source_sha
 source_sha: 43a3defc8268f8ae5a37c4468478f09c05bd0ee2
 image: ghcr.io/swarm-routing/anthocnet-dev@sha256:d26cc6af61200505963885bcbfbce528954fa2b9c0d11240cdac1ceddcf8fba0
 pins:
-  pin: {source_sha: 1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f, image: ghcr.io/swarm-routing/anthocnet-dev@sha256:45ddca249ebcef97ad18bfcb94dc4b3b49755abb083730835d91350a8318c5a5}
+  pin: {source_sha: 2000d6e8b4b5a15642f1f00b0b97680582400e9c, image: ghcr.io/swarm-routing/anthocnet-dev@sha256:afd95ffcd5749e9f44be8017e9a06402c102a24a4427874345bd6aed29909da7}
 program: routing-compare
 cap: 4
 control: base
@@ -79,4 +84,4 @@ cells:
     blocks: [1]
 
 jobs:
-  - {arms: [base, pin], cells: "*"}
+  - {arms: [base, pin], cells: "static-mesh"}
