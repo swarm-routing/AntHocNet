@@ -1404,6 +1404,9 @@ void RoutingProtocol::RecvControl(Ptr<Packet> packet, Ipv4Address sender, Ipv4Ad
 }
 
 void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
+    // A node the base's lifecycle took down forwards nothing, from the retry
+    // timer or a MAC re-injection either (#974 adds the protocol's hooks).
+    if (IsDown()) return;
     Ipv4Address dst = ToIpv4(coreDest);
     std::vector<QueueEntry> pending;
     m_queue.DequeueAll(dst, pending);
