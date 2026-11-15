@@ -561,6 +561,36 @@ jobs:
           else
             warn "the dispatch request failed or timed out"
           fi
+      # Tell org-bot too (swarm-routing/.github#479): the same `org-release`
+      # event to swarm-routing/.github, where org-bot.yml then runs its
+      # `release` task for this repository (release-aftercare: docs/roadmap.md's
+      # shipped block and the version-DOI rows) and `release-lock` in every
+      # repository, without waiting for an hourly slot. reusable-release.yml's
+      # `notify-org` job sends it for every other repository. Report-only: the
+      # hourly org-bot run is the backstop.
+      - name: Tell org-bot a release is published (org-release, report-only)
+        continue-on-error: true   # nothing here may fail publish (images needs it)
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          warn() {
+            echo "::warning::org-release not sent to swarm-routing/.github: $1"
+            echo "- org-release for ${TAG} not sent to org-bot: $1 (its hourly release run will catch up)" >> "$GITHUB_STEP_SUMMARY"
+          }
+          if [ -z "$GH_TOKEN" ]; then
+            warn "no org bot token (BOT_APP_ID/BOT_APP_PRIVATE_KEY or ORG_BOT_TOKEN)"; exit 0
+          fi
+          if timeout 45 gh api -X POST repos/swarm-routing/.github/dispatches \
+               -f event_type=org-release \
+               -f "client_payload[repository]=${GITHUB_REPOSITORY}" \
+               -f "client_payload[tag]=${TAG}" \
+               -f "client_payload[commit]=${COMMIT}" > /dev/null; then
+            echo "- org-release sent to org-bot (swarm-routing/.github): ${TAG}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            warn "the dispatch request failed or timed out"
+          fi
 
   # The anthocnet-core port bump in swarm-routing/vcpkg-registry (#1037,
   # swarm-routing/.github#436): the same steps as the `vcpkg` job of
