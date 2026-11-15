@@ -58,7 +58,7 @@ def path():
             sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
         return local
     sha = pin()
-    cache = os.environ.get("SWARM_CORE_CACHE") or os.path.join(ROOT, ".swarm-core")
+    cache = os.path.abspath(os.environ.get("SWARM_CORE_CACHE") or os.path.join(ROOT, ".swarm-core"))
     dest = os.path.join(cache, sha, "core")
     if is_core(dest):
         return dest
