@@ -20,7 +20,7 @@ skip = ["AGENTS.md#org-rules", "docs/adr/0000-template.md"]
 # CodeRabbit skips generated data: committed benchmark results, the charts
 # charts.yml renders, and the hash-pinned uv lockfiles (#838).
 coderabbit_path_filters = ["!results/**", "!docs/benchmarks/charts/*.png", "!docs/benchmarks/sweep-*.png", "!requirements/*.txt"]
-badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "bestpractices", "release", "doi", "cite", "licence", "cxx", "ns3", "ns3dev", "conventional", "arena", "docs", "codespaces"]
+badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "bestpractices", "release", "doi", "cite", "licence", "cxx", "ns3dev", "conventional", "arena", "docs", "codespaces"]
 
 
 [settings]
@@ -33,13 +33,9 @@ required_checks = ["CI gate", "check / org-sync", "review / coderabbit"]  # chec
 code_scanning = true  # CodeQL results come from codeql.yml
 merge_queue = true  # PRs merge through a merge queue; ci.yml, codeql.yml and org-sync.yml run on merge_group
 
-# AntHocNet's own README badges, in the managed table's groups (swarm-routing/.github#415)
-[[extra_badges]]
-group = "quality"
-alt = "Core coverage"
-image = "https://img.shields.io/endpoint?url=https%3A%2F%2Fswarm-routing.github.io%2FAntHocNet%2Fbadges%2Fcoverage.json"
-link = "https://github.com/swarm-routing/AntHocNet/actions/workflows/ci.yml"
-
+# AntHocNet's own README badges, in the managed table's groups (swarm-routing/.github#415).
+# One badge per metric: Simulators replaces the `ns3` kind (both read "runs on"), and
+# coverage is the codecov kind alone (the core-only gcov endpoint repeated it).
 [[extra_badges]]
 group = "stack"
 alt = "Simulators"
