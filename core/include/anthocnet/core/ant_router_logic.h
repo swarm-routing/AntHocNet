@@ -257,6 +257,10 @@ private:
     /// and available, else the ant's wall-clock transit delta since the
     /// previous stamp.
     double localHopCost(const AntMessage& ant, NodeAddress nextHop) const;
+    /// The metric this router prices with: ClassicMetric when none is
+    /// injected, this router's own SinrMetric/EnergyMetric (its Config's
+    /// thresholds) when one of those is, else the injected one.
+    const ILinkMetric* resolveMetric(const ILinkMetric* metric) const;
 
     NodeAddress address_;
     Config config_;
@@ -265,6 +269,8 @@ private:
     PheromoneTable table_;
     PheromoneEngine engine_;
     ClassicMetric defaultMetric_;        ///< used when no metric is injected
+    SinrMetric sinrMetric_;              ///< "sinr", with this Config's thresholds
+    EnergyMetric energyMetric_;          ///< "energy", with this Config's floor
     const ILinkMetric* metric_;          ///< pheromone strategy (item 16)
     const ILinkState* linkState_;        ///< MAC congestion signals (item 10/A2), optional
     const ILinkQuality* linkQuality_;    ///< per-neighbour SINR (#181), optional

@@ -41,7 +41,7 @@ int main() {
     s.residualEnergy = 0.25;
     CHECK_NEAR(energy->hopCost(s), 4.0, 1e-12);
     s.residualEnergy = 0.0;  // empty: the floor caps the cost
-    CHECK_NEAR(energy->hopCost(s), 1.0 / s.energyFloor, 1e-9);
+    CHECK_NEAR(energy->hopCost(s), 1.0 / Config{}.energyCostFloor, 1e-9);
     s.residualEnergy = nan;  // unknown: no evidence against the link
     CHECK_NEAR(energy->hopCost(s), 1.0, 1e-12);
 
@@ -50,7 +50,7 @@ int main() {
         HopSignals q;
         q.sinrDb = 10.0;
         q.residualEnergy = 0.1;  // ignored by SINR
-        CHECK_NEAR(metrics::get(metrics::kSinr).hopCost(q), q.sinrPenaltyCost, 1e-12);
+        CHECK_NEAR(metrics::get(metrics::kSinr).hopCost(q), Config{}.sinrPenaltyCost, 1e-12);
     }
 
     // 3. In the router: a drained node's one-hop entries are worth less, and
@@ -74,6 +74,19 @@ int main() {
         CHECK(half.table().getPheromoneRegular(2, 2) < full.table().getPheromoneRegular(2, 2));
         CHECK_NEAR(unknown.table().getPheromoneRegular(2, 2),
                    full.table().getPheromoneRegular(2, 2), 1e-12);
+    }
+
+    // 3b. The floor is the router's Config::energyCostFloor (S8).
+    {
+        Config floored = cfg;
+        floored.energyCostFloor = 0.2;
+        battery.e = 0.0;
+        AntRouterLogic r(1, floored, clock, rng, energy);
+        r.setEnergy(&battery);
+        CHECK_NEAR(r.linkCost(2), 5.0, 1e-12);
+        AntRouterLogic stock(1, cfg, clock, rng, energy);
+        stock.setEnergy(&battery);
+        CHECK_NEAR(stock.linkCost(2), 1.0 / cfg.energyCostFloor, 1e-9);
     }
 
     // 4. The classic metric never reads the port.

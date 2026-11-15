@@ -21,11 +21,26 @@ AntRouterLogic::AntRouterLogic(NodeAddress address, const Config& config, IClock
       clock_(clock),
       rng_(rng),
       engine_(config_),
-      metric_(metric ? metric : &defaultMetric_),
+      sinrMetric_(config_.sinrCriticalDb, config_.sinrPenaltyCost),
+      energyMetric_(config_.energyCostFloor),
+      metric_(resolveMetric(metric)),
       linkState_(linkState),
       linkQuality_(linkQuality),
       history_(dedupCapacity(config_.maxHistory)),
       genQuality_(config_.maxHistory) {}
+
+// The injected metric is a shared, stateless strategy (link_metric_registry.h).
+// The SINR and energy metrics price a link against thresholds this node's
+// Config sets (sinrCriticalDb, sinrPenaltyCost, energyCostFloor), which
+// AntHocNet's HopSignals used to carry per call; swarm-core's HopSignals carries
+// only the signals (swarm-routing/ns3-swarm-core#14, S8). So a SINR or energy
+// metric is swapped for this router's own instance holding its Config's values.
+const ILinkMetric* AntRouterLogic::resolveMetric(const ILinkMetric* metric) const {
+    if (metric == nullptr) return &defaultMetric_;
+    if (dynamic_cast<const SinrMetric*>(metric) != nullptr) return &sinrMetric_;
+    if (dynamic_cast<const EnergyMetric*>(metric) != nullptr) return &energyMetric_;
+    return metric;
+}
 
 // --- neighbour learning -----------------------------------------------------
 
@@ -720,9 +735,6 @@ double AntRouterLogic::linkCost(NodeAddress neighbor) const {
     HopSignals s;
     if (linkQuality_) s.sinrDb = linkQuality_->sinrDbFrom(neighbor);
     if (energy_) s.residualEnergy = energy_->residualEnergyFraction();
-    s.sinrCriticalDb = config_.sinrCriticalDb;
-    s.sinrPenaltyCost = config_.sinrPenaltyCost;
-    s.energyFloor = config_.energyCostFloor;
     return metric_->hopCost(s);
 }
 

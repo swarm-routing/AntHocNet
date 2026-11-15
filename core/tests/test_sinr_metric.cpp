@@ -132,5 +132,26 @@ int main() {
         CHECK_EQ(router.linkCost(3), cfg.hopTimeSec);
     }
 
+    // 8. The thresholds are the router's Config, not the shared registry
+    //    instance's defaults (swarm-routing/ns3-swarm-core#14 S8: swarm-core's
+    //    HopSignals carries no thresholds, so the router prices with its own
+    //    SinrMetric/EnergyMetric built from its Config).
+    {
+        FakeClock clock;
+        ScriptedRng rng({0.5});
+        FakeLinkQuality lq;
+        lq.sinr[3] = 10.0;  // below the default SINR_c (17 dB), above 5 dB
+        Config low = cfg;
+        low.sinrCriticalDb = 5.0;
+        AntRouterLogic lenient(0, low, clock, rng, sinr, nullptr, &lq);
+        CHECK_EQ(lenient.linkCost(3), 1.0);
+        Config harsh = cfg;
+        harsh.sinrPenaltyCost = 7.0;
+        AntRouterLogic strict(0, harsh, clock, rng, sinr, nullptr, &lq);
+        CHECK_EQ(strict.linkCost(3), 7.0);
+        AntRouterLogic stock(0, cfg, clock, rng, sinr, nullptr, &lq);
+        CHECK_EQ(stock.linkCost(3), cfg.sinrPenaltyCost);
+    }
+
     return RUN_TESTS();
 }
