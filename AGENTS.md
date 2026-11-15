@@ -51,7 +51,7 @@ make doctor       NS3DIR=/path/to/ns-3-dev # check the tree (##DOCTOR## line)
 make install-ns3  NS3DIR=/path/to/ns-3-dev # install onto a real NS-3 tree (BASELINES=0: alone)
 make clean                                 # remove core/build
 make test SWARM_CORE_DIR=../ns3-swarm-core/core   # offline / a local swarm-core instead of the pin
-python3 tools/checks/check-swarm-core-dupes.py --swarm-core core/build/_deps/swarm_core_src-src/core  # primitives in both (S1-S9)
+python3 tools/checks/check-swarm-core-dupes.py --gate --swarm-core core/build/_deps/swarm_core_src-src/core  # no primitive in both (CI gate, S9)
 ```
 
 `make test` is the check CI runs on every push and PR and the one that runs

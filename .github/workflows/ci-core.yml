@@ -48,12 +48,13 @@ jobs:
           done
           cmake -S core/tests/consumer-package -B core/build-pkg/consumer -DCMAKE_PREFIX_PATH="$prefix"
           cmake --build core/build-pkg/consumer && core/build-pkg/consumer/consumer
-      - name: Primitives still defined both here and in swarm-core (report-only until S9)
-        # swarm-routing/ns3-swarm-core#14: the list each slice S2-S8 shortens;
-        # make test fetched swarm-core at the pin into core/build/_deps.
+      - name: No primitive defined both here and in swarm-core (gate)
+        # swarm-routing/ns3-swarm-core#14 (S9): slices S2-S8 emptied the list;
+        # it stays empty. make test fetched swarm-core's release (swarm-core.lock)
+        # into core/build/_deps, the counterparts are checked against it.
         run: |
           python3 -I tools/checks/check-swarm-core-dupes.py --self-test
-          python3 -I tools/checks/check-swarm-core-dupes.py --swarm-core core/build/_deps/swarm_core_src-src/core
+          python3 -I tools/checks/check-swarm-core-dupes.py --gate --swarm-core core/build/_deps/swarm_core_src-src/core
   core-sanitizers:
     name: core under ASan + UBSan
     runs-on: ubuntu-24.04
