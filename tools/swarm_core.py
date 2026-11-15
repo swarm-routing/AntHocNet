@@ -35,7 +35,7 @@ import urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CMAKE = os.path.join(ROOT, "core", "CMakeLists.txt")
 ARCHIVE = "https://codeload.github.com/swarm-routing/ns3-swarm-core/tar.gz/{sha}"
-PIN = re.compile(r'^\s*set\(\s*SWARM_CORE_REF\s+"([0-9a-f]{40})"', re.M)
+PIN = re.compile(r'^\s*set\(\s*SWARM_CORE_REF\s+"([0-9a-f]{40})"', re.MULTILINE)
 
 
 def pin():
