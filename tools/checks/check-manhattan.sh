@@ -47,7 +47,8 @@ GRID="--nNodes=30 --area=1000 --blocksX=5 --blocksY=5 --mobility=manhattan
       --speedMin=10 --speed=20 --flows=4 --runs=1 --time=60"
 
 # --- 1-5: the urban run ----------------------------------------------------
-args="anthocnet-compare --csv --diag --protocols=$ARMS $GRID --propagation=urban"
+# --perf=0: ##PERF## (ns3-tools v0.2.0+, swarm-routing/ns3-tools#91) is CPU and wall time, different every run; the byte comparison is of what the protocols did.
+args="anthocnet-compare --csv --diag --perf=0 --protocols=$ARMS $GRID --propagation=urban"
 out=$(./ns3 run "$(echo $args)" 2>/dev/null)
 printf '%s\n' "$out" | grep -E '^# road|^##ORACLE##|^##CONFIG## scenario|^(anthocnet|aodv|olsr|dsdv|aomdv|gpsr|oracle),' || true
 
