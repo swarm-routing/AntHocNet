@@ -1,0 +1,40 @@
+# pin111 campaign sagin-walker16-anthocnet-pin111-pin: 1 run(s): 43754226732 (pin/sagin-walker16-anthocnet-s1); ref main; source_sha 1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f
+##CONFIG## harness=leo-walker planes=16 sats=16 phasing=1 altitude=1150 inclination=53 time=300 runs=2 firstRun=1 flows=4 cbrBps=2048 minElevation=25 clock=15 clockOffset=12 islDown=0.01 islMeanDown=2 massFailAt=-1 massFailFrac=0.1 delayUpdate=0.1 oracleInterval=0 protocols=anthocnet sagin=1 haps=3 hapsAltitude=20 hapsRing=150
+# anchor sagin haps=3 stationHapsKm=151.557 hapsHapsKm=260.599 limbKm=1009.634
+# anchor shell radiusKm=7521.000 altitudeKm(sphere)=1150.000 radiusSpreadM=0.000 chordKm=2934.549 chordErrM(t=0)=0.000 chordErrM(t=T/2)=0.000 periodMin=108.187
+# visibility minElevation=25.000 NewYork#0=14 NewYork#1=12 NewYork#2=14 London#0=9 London#1=9 London#2=10 SaoPaulo#0=6 SaoPaulo#1=6 SaoPaulo#2=7 Johannesburg#0=6 Johannesburg#1=7 Johannesburg#2=6 Tokyo#0=11 Tokyo#1=10 Tokyo#2=9 Sydney#0=8 Sydney#1=9 Sydney#2=8
+protocol        PDR%  delay(ms)  delay99(ms)  thrput(kbps)      NRL   NRLbytes  jitter(ms)
+# anchor isl crossShiftSlots=15 crossMeanKm=1838.432 sameSlotMeanKm=2527.281 inPlaneKm=2934.549
+# handover anthocnet seed=1 scheduled=33 forced=0 islFailures=790 ticks=20
+# account anthocnet seed=1 flow=0 offered=1183 refused=0 delivered=1155 received=1155 dup=0 outageLost=26 scatteredLost=2
+# account anthocnet seed=1 flow=1 offered=1181 refused=0 delivered=1098 received=1098 dup=0 outageLost=79 scatteredLost=4
+# account anthocnet seed=1 flow=2 offered=1190 refused=0 delivered=1066 received=1066 dup=0 outageLost=121 scatteredLost=3
+# account anthocnet seed=1 flow=3 offered=1192 refused=0 delivered=1119 received=1119 dup=0 outageLost=67 scatteredLost=6
+# outage anthocnet seed=1 class=startup n=0 lost=0 p50=nan p90=nan max=nan
+# outage anthocnet seed=1 class=scheduled n=14 lost=105 p50=2.000 p90=2.250 max=2.750
+# outage anthocnet seed=1 class=unplanned n=28 lost=188 p50=1.500 p90=2.500 max=3.250
+# outage anthocnet seed=1 class=massfail n=0 lost=0 p50=nan p90=nan max=nan
+# outage anthocnet seed=1 class=other n=0 lost=0 p50=nan p90=nan max=nan
+# churn anthocnet seed=1 flow=0 NewYork-London hopChangesPerMin=0.406 meanHops=7.191 delivered=1155
+# churn anthocnet seed=1 flow=1 London-Tokyo hopChangesPerMin=1.831 meanHops=12.772 delivered=1098
+# churn anthocnet seed=1 flow=2 SaoPaulo-Johannesburg hopChangesPerMin=2.019 meanHops=9.255 delivered=1066
+# churn anthocnet seed=1 flow=3 Tokyo-Sydney hopChangesPerMin=2.016 meanHops=8.670 delivered=1119
+##RUN## 1 anthocnet 93.51 58.18 114.00 10.89 114.47 204.77 1.70
+# handover anthocnet seed=2 scheduled=33 forced=0 islFailures=763 ticks=20
+# account anthocnet seed=2 flow=0 offered=1179 refused=0 delivered=1145 received=1145 dup=0 outageLost=33 scatteredLost=1
+# account anthocnet seed=2 flow=1 offered=1187 refused=0 delivered=1086 received=1086 dup=0 outageLost=92 scatteredLost=9
+# account anthocnet seed=2 flow=2 offered=1184 refused=0 delivered=1097 received=1097 dup=0 outageLost=83 scatteredLost=4
+# account anthocnet seed=2 flow=3 offered=1181 refused=0 delivered=1100 received=1100 dup=0 outageLost=74 scatteredLost=7
+# outage anthocnet seed=2 class=startup n=0 lost=0 p50=nan p90=nan max=nan
+# outage anthocnet seed=2 class=scheduled n=16 lost=126 p50=2.250 p90=3.000 max=3.000
+# outage anthocnet seed=2 class=unplanned n=22 lost=156 p50=1.750 p90=2.250 max=2.750
+# outage anthocnet seed=2 class=massfail n=0 lost=0 p50=nan p90=nan max=nan
+# outage anthocnet seed=2 class=other n=0 lost=0 p50=nan p90=nan max=nan
+# churn anthocnet seed=2 flow=0 NewYork-London hopChangesPerMin=0.815 meanHops=7.377 delivered=1145
+# churn anthocnet seed=2 flow=1 London-Tokyo hopChangesPerMin=4.454 meanHops=12.865 delivered=1086
+# churn anthocnet seed=2 flow=2 SaoPaulo-Johannesburg hopChangesPerMin=1.224 meanHops=10.085 delivered=1097
+# churn anthocnet seed=2 flow=3 Tokyo-Sydney hopChangesPerMin=1.630 meanHops=9.362 delivered=1100
+##RUN## 2 anthocnet 93.60 62.47 132.00 10.86 125.39 229.49 2.19
+anthocnet      93.55      60.33       123.00         10.88   119.93     217.13        1.94
+##ARGS## leo-walker --time=300 --runs=2 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --sagin --protocols=anthocnet --firstRun=1
+##PROV## commit=1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f ref=main run_id=43754226732 attempt=1 image=ghcr.io/swarm-routing/anthocnet-dev@sha256:45ddca249ebcef97ad18bfcb94dc4b3b49755abb083730835d91350a8318c5a5 profile=release harness=leo-walker base=ghcr.io/swarm-routing/ns3-dev:3.48-optimized-fb7596b@sha256:5585a93c5cea1980592539e2d26a4e111e0ff4b0cc63b3dfd6ea5de459d80d3f base_tag=ghcr.io/swarm-routing/ns3-dev:3.48-optimized build_profile=optimized modules=swarm-core@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,routing-bench@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,oracle@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,aomdv@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,gpsr@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,adaptive@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,anthocnet@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f key=78f7c3674a6d06ce1124d7241fbee28b74bff6c38a0b4b50f7a03fe743edc1a7
