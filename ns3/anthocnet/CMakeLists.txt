@@ -81,6 +81,7 @@ build_lib(
     core/src/link_metric_registry.cpp
     # swarm-core's sources the core calls (S4 on), from swarm-core/ (above)
     swarm-core/swarm-dedup-history.cc
+    swarm-core/swarm-pheromone-table.cc
   HEADER_FILES
     model/anthocnet-routing-protocol.h
     model/anthocnet-packet.h

@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <map>
 #include <utility>
 #include <vector>
@@ -288,6 +289,21 @@ int main() {
                 if (sum != 0.0) CHECK_EQ(j, dist.size());
             }
         }
+    }
+
+    // 7. S7 (swarm-core's tables): a non-finite value is refused, the entry
+    //    keeps what it held. The router only ever stores finite pheromone (an
+    //    inverse of a cost of at least one hop), so this never fires in a run;
+    //    the case pins what the table does if it ever did.
+    {
+        PheromoneTable t;
+        t.addNeighbor(2);
+        t.setPheromoneRegular(5, 2, 0.25);
+        t.setPheromoneRegular(5, 2, std::numeric_limits<double>::infinity());
+        CHECK_EQ(t.getPheromoneRegular(5, 2), 0.25);
+        t.setPheromoneVirtual(5, 2, std::numeric_limits<double>::quiet_NaN());
+        CHECK_EQ(t.getPheromoneVirtual(5, 2), 0.0);
+        CHECK_EQ(t.numEntriesVirtual(), static_cast<std::size_t>(0));
     }
 
     return RUN_TESTS();
