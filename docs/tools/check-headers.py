@@ -79,7 +79,7 @@ STD_HEADERS = frozenset([
     "initializer_list", "iomanip", "ios", "iosfwd", "iostream", "istream",
     "iterator", "limits", "list", "locale", "map", "memory", "mutex", "new",
     "numeric", "optional", "ostream", "queue", "random", "ratio", "regex",
-    "set", "sstream", "stack", "stdexcept", "streambuf", "string",
+    "set", "span", "sstream", "stack", "stdexcept", "streambuf", "string",
     "string_view", "system_error", "thread", "tuple", "type_traits",
     "typeindex", "typeinfo", "unordered_map", "unordered_set", "utility",
     "valarray", "variant", "vector",

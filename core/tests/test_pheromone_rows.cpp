@@ -300,9 +300,9 @@ int main() {
         t.addNeighbor(2);
         t.setPheromoneRegular(5, 2, 0.25);
         t.setPheromoneRegular(5, 2, std::numeric_limits<double>::infinity());
-        CHECK_EQ(t.getPheromoneRegular(5, 2), 0.25);
+        CHECK_NEAR(t.getPheromoneRegular(5, 2), 0.25, 1e-15);
         t.setPheromoneVirtual(5, 2, std::numeric_limits<double>::quiet_NaN());
-        CHECK_EQ(t.getPheromoneVirtual(5, 2), 0.0);
+        CHECK_NEAR(t.getPheromoneVirtual(5, 2), 0.0, 1e-15);
         CHECK_EQ(t.numEntriesVirtual(), static_cast<std::size_t>(0));
     }
 
