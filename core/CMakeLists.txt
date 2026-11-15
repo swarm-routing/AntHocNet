@@ -14,7 +14,7 @@ endif()
 # ANTHOCNET_CORE_TESTS builds the tests and the speed benchmark (ON at the top
 # level). ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE takes swarm-core from an
 # installed package (find_package(swarm-core CONFIG), e.g. its vcpkg port)
-# instead of SWARM_CORE_REF; ANTHOCNET_CORE_INSTALL (which needs it) adds the
+# instead of swarm-core.lock; ANTHOCNET_CORE_INSTALL (which needs it) adds the
 # install rules and the CMake package anthocnet-core: find_package(anthocnet-core
 # CONFIG REQUIRED) gives the imported target anthocnet::core (#1037,
 # swarm-routing/.github#436, the vcpkg port).
@@ -51,14 +51,13 @@ endif()
 # primitives every protocol builds on (org golden rule 4), as a subproject: it
 # defines the library target swarm::core and nothing else (no tests, no ctest
 # entry, no -Werror on our sources; its README "Use core/ from another CMake
-# project"). swarm-routing/ns3-swarm-core#14 slice S1: linked, nothing used
-# yet. SWARM_CORE_DIR names a local swarm-core core/ directory (an offline
-# build); empty fetches SWARM_CORE_REF, a full commit SHA bumped by PR together
-# with the Makefile's and every workflow's core-deps (`swarm-core / pin`).
+# project"). The release ../swarm-core.lock names (swarm-routing/ns3-swarm-core#134,
+# swarm-routing/.github CONTRIBUTING "Dependencies"): its tarball by URL,
+# checked against the lock's SHA256 (from the release's SHA256SUMS); CMake
+# strips the tarball's top directory. SWARM_CORE_DIR names a local swarm-core
+# core/ directory instead (offline, or an unreleased swarm-core change).
 # After the coverage options, so swarm-core's sources are built the same way.
-set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch SWARM_CORE_REF")
-set(SWARM_CORE_REF "2987cfbc202596c657e58f7be6a6bd09112fe2a8" CACHE STRING
-    "swarm-routing/ns3-swarm-core commit to fetch when SWARM_CORE_DIR is empty")
+set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch the release swarm-core.lock names")
 if(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
   find_package(swarm-core CONFIG REQUIRED)
 elseif(SWARM_CORE_DIR)
@@ -67,10 +66,29 @@ elseif(SWARM_CORE_DIR)
   endif()
   add_subdirectory(${SWARM_CORE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/swarm-core)
 else()
+  file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../swarm-core.lock _swarm_core_lock REGEX "^SWARM_CORE_[A-Z0-9_]+=")
+  # a lock bump re-runs the configure step
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/../swarm-core.lock)
+  foreach(_swarm_core_kv IN LISTS _swarm_core_lock)
+    string(REGEX MATCH "^([A-Z0-9_]+)=(.*)$" _swarm_core_m "${_swarm_core_kv}")
+    set(_LOCK_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
+  endforeach()
+  foreach(_swarm_core_key REPO TAG ASSET SHA256)
+    if(NOT _LOCK_SWARM_CORE_${_swarm_core_key})
+      message(FATAL_ERROR "swarm-core.lock: no SWARM_CORE_${_swarm_core_key}")
+    endif()
+  endforeach()
+  # Extracted files get the extraction time (CMake 3.24+), so a lock bump
+  # rebuilds every swarm-core object.
+  set(_swarm_core_timestamp)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+    set(_swarm_core_timestamp DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
+  endif()
   include(FetchContent)
   FetchContent_Declare(swarm_core_src
-    GIT_REPOSITORY https://github.com/swarm-routing/ns3-swarm-core.git
-    GIT_TAG ${SWARM_CORE_REF}
+    URL https://github.com/${_LOCK_SWARM_CORE_REPO}/releases/download/${_LOCK_SWARM_CORE_TAG}/${_LOCK_SWARM_CORE_ASSET}
+    URL_HASH SHA256=${_LOCK_SWARM_CORE_SHA256}
+    ${_swarm_core_timestamp}
     SOURCE_SUBDIR core)
   FetchContent_MakeAvailable(swarm_core_src)
 endif()
