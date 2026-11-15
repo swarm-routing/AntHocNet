@@ -1,0 +1,82 @@
+# swarm-routing/AntHocNet#1063: the control for moving ns3-tools.lock from
+# v0.1.0 to v1.1.1 (methodology.md, "Cross-image rule": a later build on the
+# same ns-3 release gets a byte-identity check, one control cell per family,
+# before its numbers are compared across builds).
+#
+# The pin is part of the source, so the two arms cannot share one commit.
+# They are the closest thing: `base` is main at 43a3def (lock at v0.1.0) and
+# `pin` is #1063's head 1a5f7ca, which is 43a3def merged plus only the lock,
+# tools/ns3_tools.py's wheel name, three gate scripts (--perf=0), one test and
+# docs: no core/, ns3/ or fixture file differs. Each arm runs a campaign image
+# built from its own commit on ns3-dev:3.48-optimized (3.48 while #843 is
+# open, since aodv is an arm), so the image differs only by the harness and
+# readers the lock fetches.
+#
+# Cells: one per family, the six of v2.7.x-image-control-348.yaml (grid,
+# static mesh, FANET, VANET, disaster, ISL) plus LEO and SAGIN, with their
+# committed flags and protocol lists; seeds 1-2 only (a run is a function of
+# its seed alone, #352).
+#
+# Reading, fixed before dispatch: per cell, `pin` vs `base`, every output line
+# compared. Accepted differences: the ##CONFIG## field isolateArms= (new in
+# v1.1.0) and ##PERF## lines (CPU and wall time, printed by default since
+# ns3-tools v0.2.0); ##PROV## names the commit and image, so it differs by
+# construction. Any other difference is explained on #1063 before the lock
+# moves; ##RUN##, ##ROUTE## and ##COMMON## must be byte-identical.
+#
+#   P=tools/bench/campaigns/v2.7.x-ns3-tools-pin-control.yaml
+#   ns3-campaign plan     $P
+#   ns3-campaign dispatch $P --cap 4
+#   ns3-campaign status   $P --brief
+#   ns3-campaign collect  $P --out results/cells
+generation: pin111
+ref: main
+repo: swarm-routing/AntHocNet
+isolates: source_sha
+source_sha: 43a3defc8268f8ae5a37c4468478f09c05bd0ee2
+image: ghcr.io/swarm-routing/anthocnet-dev@sha256:d26cc6af61200505963885bcbfbce528954fa2b9c0d11240cdac1ceddcf8fba0
+pins:
+  pin: {source_sha: 1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f, image: ghcr.io/swarm-routing/anthocnet-dev@sha256:45ddca249ebcef97ad18bfcb94dc4b3b49755abb083730835d91350a8318c5a5}
+program: routing-compare
+cap: 4
+control: base
+arms:
+  base: ""
+  pin: ""
+
+
+cells:
+  grid-rwp-tworay:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=2 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,aomdv,oracle"}
+    blocks: [1]
+  static-mesh:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=2 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=900 --propagation=range --mobility=rwp --transport=udp --standard=80211a --rateManager=constant6 --ns3::dot11s::PeerLink::MaxBeaconLoss=20 --protocols=anthocnet,olsr,hwmp,oracle"}
+    blocks: [1]
+  fanet-main:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=fanet --runs=2 --nNodes=30 --time=900 --areaX=1000 --areaY=1000 --pause=0 --speed=30 --range=350 --propagation=range --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,gpsr3d,oracle"}
+    blocks: [1]
+  vanet-sparse:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=vanet --runs=2 --nNodes=40 --time=900 --areaX=800 --areaY=800 --pause=0 --speed=20 --range=300 --propagation=urban --mobility=manhattan --transport=udp --protocols=anthocnet,aodv,gpsr,gpcr,oracle"}
+    blocks: [1]
+  disaster-main:
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=disaster --runs=2 --nNodes=47 --time=900 --areaX=1000 --areaY=500 --speed=20 --pause=30 --range=300 --propagation=urban --mobility=trace --transport=udp --traceFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.ns2 --flowsFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.flows --buildings=120,170,320,330;680,170,880,330 --protocols=anthocnet,aodv,olsr,oracle"}
+    blocks: [1]
+  sat-failcell:
+    workflow: benchmark-cell.yml
+    inputs: {harness: isl-grid, args: "--torus=true --islDelayMs=5 --islRate=10Mbps --time=900 --runs=2 --cbrBps=4096 --rows=4 --cols=4 --flows=8 --breakLink=0,0,3,0 --breakAt=450 --protocols=anthocnet,oracle"}
+  leo-walker16-anthocnet:
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=2 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --protocols=anthocnet"}
+    blocks: [1]
+  sagin-walker16-anthocnet:
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=2 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --sagin --protocols=anthocnet"}
+    blocks: [1]
+
+jobs:
+  - {arms: [base, pin], cells: "*"}
