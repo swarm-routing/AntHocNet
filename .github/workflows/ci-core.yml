@@ -1,6 +1,11 @@
 name: CI / core
 
 # The simulator-free core: unit tests, sanitizers, coverage, codec fuzzing.
+# swarm-core comes from its vcpkg port (swarm-routing/.github#489) in the
+# unit-test and sanitizer jobs, so CI builds against what the registry
+# publishes; the coverage and fuzz jobs compile the same release's sources
+# (tools/swarm_core.py path, the tarball swarm-core.lock names) with their
+# own instrumentation, as before.
 # Called by ci.yml (#610: ci.yml split by area behind the one CI gate, #607);
 # not triggered on its own. Same jobs, same checks as before the split.
 on:
@@ -33,28 +38,41 @@ jobs:
             sleep $((i * 15))
           done
           sudo apt-get install -y cmake g++
-      - name: Build and test core
+      - name: vcpkg (swarm-routing/.github#489)
+        id: vcpkg
+        uses: swarm-routing/.github/.github/actions/setup-vcpkg@main
+        timeout-minutes: 8
+        with:
+          # The NuGet cache needs mono on the runner (28-50 s to install); the
+          # three ports it would restore build in about 5 s, so here it costs
+          # more than it saves (measured on swarm-routing/ARA#176; the
+          # maintainer's decision on swarm-routing/.github#489).
+          binary-cache: 'off'
+      - name: Build and test core (swarm-core from its vcpkg port)
+        # setup-vcpkg exports VCPKG_ROOT; the Makefile then configures with
+        # vcpkg's toolchain (one vcpkg_installed under core/build)
         run: make test
-      - name: The CMake package anthocnet-core (find_package, swarm-core from its package; #1037)
+      - name: The CMake package anthocnet-core (find_package, on the swarm-core port; #1037)
+        env:
+          TOOLCHAIN: ${{ steps.vcpkg.outputs.toolchain }}
         run: |
           prefix="$PWD/core/build-pkg/prefix"
-          cmake -S core/build/_deps/swarm_core_src-src/core -B core/build-pkg/swarm-core -DSWARM_CORE_TESTS=OFF
-          cmake --build core/build-pkg/swarm-core -j && cmake --install core/build-pkg/swarm-core --prefix "$prefix"
-          cmake -S core -B core/build-pkg/core -DANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE=ON \
-            -DANTHOCNET_CORE_INSTALL=ON -DANTHOCNET_CORE_TESTS=OFF -DCMAKE_PREFIX_PATH="$prefix"
+          installed="$PWD/core/build/vcpkg_installed"
+          cmake -S core -B core/build-pkg/core -DANTHOCNET_CORE_INSTALL=ON -DANTHOCNET_CORE_TESTS=OFF \
+            -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" -DVCPKG_INSTALLED_DIR="$installed"
           cmake --build core/build-pkg/core -j && cmake --install core/build-pkg/core --prefix "$prefix"
           for f in lib/libanthocnet_core.a include/anthocnet/core/ant_message_codec.h lib/cmake/anthocnet-core/anthocnet-coreConfig.cmake lib/cmake/anthocnet-core/anthocnet-coreConfigVersion.cmake; do
             test -f "$prefix/$f" || { echo "::error::the install has no $f"; exit 1; }
           done
-          cmake -S core/tests/consumer-package -B core/build-pkg/consumer -DCMAKE_PREFIX_PATH="$prefix"
+          cmake -S core/tests/consumer-package -B core/build-pkg/consumer -DCMAKE_PREFIX_PATH="$prefix;$installed/x64-linux"
           cmake --build core/build-pkg/consumer && core/build-pkg/consumer/consumer
       - name: No primitive defined both here and in swarm-core (gate)
         # swarm-routing/ns3-swarm-core#14 (S9): slices S2-S8 emptied the list;
-        # it stays empty. make test fetched swarm-core's release (swarm-core.lock)
-        # into core/build/_deps, the counterparts are checked against it.
+        # it stays empty. The counterparts are checked against the sources of
+        # swarm-core's release (swarm-core.lock; tools/swarm_core.py unpacks it).
         run: |
           python3 -I tools/checks/check-swarm-core-dupes.py --self-test
-          python3 -I tools/checks/check-swarm-core-dupes.py --gate --swarm-core core/build/_deps/swarm_core_src-src/core
+          python3 -I tools/checks/check-swarm-core-dupes.py --gate --swarm-core "$(python3 -I tools/swarm_core.py path)"
   core-sanitizers:
     name: core under ASan + UBSan
     runs-on: ubuntu-24.04
@@ -75,10 +93,23 @@ jobs:
             sleep $((i * 15))
           done
           sudo apt-get install -y cmake g++
-      - name: Build core with sanitizers and run tests
+      - name: vcpkg (swarm-routing/.github#489)
+        id: vcpkg
+        uses: swarm-routing/.github/.github/actions/setup-vcpkg@main
+        timeout-minutes: 8
+        with:
+          # The NuGet cache needs mono on the runner (28-50 s to install); the
+          # three ports it would restore build in about 5 s, so here it costs
+          # more than it saves (measured on swarm-routing/ARA#176; the
+          # maintainer's decision on swarm-routing/.github#489).
+          binary-cache: 'off'
+      - name: Build core with sanitizers and run tests (AntHocNet instrumented, swarm-core the port as published)
+        env:
+          TOOLCHAIN: ${{ steps.vcpkg.outputs.toolchain }}
         run: |
           cmake -S core -B core/build-san -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -g"
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all -g" \
+            -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN"
           cmake --build core/build-san -j
           cd core/build-san && ctest --output-on-failure
   core-coverage:
@@ -129,7 +160,7 @@ jobs:
       - name: Build core with gcov instrumentation
         run: |
           cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug \
-            -DANTHOCNET_COVERAGE=ON
+            -DANTHOCNET_COVERAGE=ON -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build core/build-coverage -j
       - name: Run the unit tests (emits the .gcda counters)
         run: cd core/build-coverage && ctest --output-on-failure
@@ -173,7 +204,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build the codec fuzz target (clang + libFuzzer/ASan)
         run: |
-          cmake -S core -B core/build-fuzz -DANTHOCNET_FUZZ=ON -DCMAKE_CXX_COMPILER=clang++
+          cmake -S core -B core/build-fuzz -DANTHOCNET_FUZZ=ON -DCMAKE_CXX_COMPILER=clang++ \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build core/build-fuzz --target fuzz_codec
       - name: Fuzz the decode path for 60s
         run: |

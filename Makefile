@@ -22,13 +22,18 @@
 # verifies the names, the recipes are this repository's own.
 NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 
-# swarm-core's core/ comes from the release swarm-core.lock names, which
-# core/CMakeLists.txt reads; SWARM_CORE_REF is that release's tag, as every
-# place that names swarm-core must (checked by `swarm-core / pin`).
-# SWARM_CORE_DIR=<checkout>/core builds against a local swarm-core instead.
+# swarm-core's core/ comes from its vcpkg port (vcpkg.json, vcpkg-configuration.json;
+# swarm-routing/.github#489) at the release swarm-core.lock names; SWARM_CORE_REF
+# is that release's tag, as every place that names swarm-core must (checked by
+# `swarm-core / pin`). Where swarm-core comes from, first match:
+#   SWARM_CORE_DIR=<checkout>/core   a local swarm-core (an unreleased change)
+#   VCPKG_ROOT=<vcpkg checkout>      the vcpkg port, as CI's core job
+#   neither                          the lock's release, unpacked by tools/swarm_core.py
+#                                    (the same tarball the port builds; no vcpkg needed)
 SWARM_CORE_REF ?= v1.0.0
-CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release \
-  -DSWARM_CORE_DIR=$(if $(SWARM_CORE_DIR),$(abspath $(SWARM_CORE_DIR)))
+VCPKG_ROOT ?=
+CORE_SWARM_CORE = $(if $(SWARM_CORE_DIR),-DSWARM_CORE_DIR=$(abspath $(SWARM_CORE_DIR)),$(if $(VCPKG_ROOT),-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake -DSWARM_CORE_DIR=,-DSWARM_CORE_DIR=$(shell python3 tools/swarm_core.py path)))
+CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release $(CORE_SWARM_CORE)
 
 help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)

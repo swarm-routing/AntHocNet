@@ -1,0 +1,13 @@
+{
+  "$comment": "core/'s dependencies through vcpkg in manifest mode (swarm-routing/.github#489). The override pins swarm-core's exact version: the one swarm-core.lock names, whose tag the ns-3 build uses (the `swarm-core / pin` check keeps them equal). Bumped by org-bot, never by hand.",
+  "dependencies": [
+    "swarm-core"
+  ],
+  "overrides": [
+    {
+      "name": "swarm-core",
+      "version": "1.0.0",
+      "port-version": 0
+    }
+  ]
+}

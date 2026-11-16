@@ -43,8 +43,16 @@ them into a git-ignored `web/` when you need the browser checks (see
 
 ## Dependencies
 
-- **swarm-core's `core/`**: `swarm-core.lock` names one swarm-core release;
-  CMake downloads its tarball and checks its SHA256. Offline, or against an
+- **swarm-core's `core/`**: its vcpkg port, in manifest mode
+  (swarm-routing/.github#489): `vcpkg.json` pins the version `swarm-core.lock`
+  names, `vcpkg-configuration.json` the swarm-routing/vcpkg-registry
+  baseline, and `core/CMakeLists.txt` finds it with
+  `find_package(swarm-core CONFIG REQUIRED)`. CI's core job builds on the
+  port: `make test VCPKG_ROOT=/path/to/vcpkg` does the same locally (a
+  microsoft/vcpkg checkout, bootstrapped). Without `VCPKG_ROOT`, `make test`
+  compiles the same release's sources, which `tools/swarm_core.py` downloads
+  and checks against the lock's SHA256 (so does every other core build in CI:
+  coverage, fuzzing, CodeQL, clang-tidy, the speed benchmark). Against an
   unreleased swarm-core: `make test SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.
 - **The comparison harness and the result readers**: `ns3-tools.lock` names
   one swarm-routing/ns3-tools release; `tools/ns3_tools.py` fetches it
@@ -53,8 +61,8 @@ them into a git-ignored `web/` when you need the browser checks (see
   prebuilt `ghcr.io/swarm-routing/ns3-dev` images, which CI and the dev
   container use.
 - Neither lock is edited by hand: the `swarm-core / pin` check and org-bot
-  move them (CONTRIBUTING "Dependencies"). A vcpkg-based setup is planned
-  (swarm-routing/.github#489).
+  move them, the vcpkg override and registry baseline with the lock
+  (CONTRIBUTING "Dependencies", vcpkg mode).
 
 ## Build
 

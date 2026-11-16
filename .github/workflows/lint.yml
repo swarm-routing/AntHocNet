@@ -246,7 +246,8 @@ jobs:
       - name: clang-tidy
         if: steps.diff.outputs.run == 'true'
         run: |
-          cmake -S core -B build-tidy/core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null
+          cmake -S core -B build-tidy/core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)" >/dev/null
           : > tidy.txt
           for f in core/src/*.cpp; do clang-tidy-18 -p build-tidy/core --quiet "$f" >> tidy.txt 2>/dev/null || true; done
           # One annotation per distinct finding (a header's finding repeats
