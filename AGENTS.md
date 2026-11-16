@@ -104,10 +104,10 @@ Read [`docs/development.md`](docs/development.md) before:
   With swarm-routing/.github checked out next to this repository,
   `python3 -I ../.github/tools/checks/release_lock.py verify swarm-core.lock`
   checks it locally.
-- **The ns-3 build**: `dependencies` of `reusable-ns3-ci.yml` names release
-  tags; `canary-dependencies` names `@main`, one non-blocking leg on push,
-  schedule and dispatch, never on a PR (swarm-routing/.github#411). A red
-  canary on `main` means the next release of a dependency needs work here.
+- **The ns-3 build**: this repository's own ns-3 CI (it does not call
+  `reusable-ns3-ci.yml`) builds from the release locks alone, with no
+  canary leg on `@main` (maintainer decision on swarm-routing/.github#411). A
+  dependency's next release reaches it through org-bot's lock bump PR.
 - **Working against an unreleased swarm-core**: `-DSWARM_CORE_DIR=<checkout>/core`
   builds `core/` on a local checkout instead of the lock (development only).
 - **Later**: `find_package(swarm-core CONFIG)` from an installed release, then
