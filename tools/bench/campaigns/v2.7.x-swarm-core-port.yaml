@@ -1,0 +1,101 @@
+# swarm-routing/AntHocNet#1019: the standard-cell campaign of AntHocNet's
+# move onto swarm-core (S0-S11). One cell per family, 20 seeds, both arms on
+# one ns3-dev:3.48-optimized digest, sha256:5585a93c… (3.48 while #843 is
+# open: aodv is an arm).
+#
+#   base: main before S1 (8666423) with #1063's ns3-tools v1.1.2 lock
+#         cherry-picked (da5963d, draft #1079, never merged), so both arms run
+#         the same harness and readers (--isolateArms is its default);
+#   port: main after S10d (c919528), on swarm-core v1.0.0.
+# The arms differ by S1-S10d alone (S0, C++23, is in both: 8666423 follows
+# #1024).
+#
+# Cells: the eight families of v2.7.x-ns3-tools-pin-control.yaml (grid, static
+# mesh, FANET, VANET, disaster, ISL, LEO, SAGIN), with their committed flags
+# and protocol lists, at 20 seeds 1-20 split into blocks as
+# v2.7.x-image-control.yaml splits them (a run is a function of its seed
+# alone, #352).
+#
+# Read (tools/bench/harness_control.py): each cell's `source` is the port
+# arm's file, so harness_control.py compares base's ##RUN##/##ROUTE##/##COMMON##
+# rows with port's for every seed:
+#   python3 tools/bench/harness_control.py tools/bench/campaigns/v2.7.x-swarm-core-port.yaml
+# Result (2026-11-16, docs/benchmarks/v2.7.x-swarm-core-port.md): static mesh,
+# ISL, LEO and SAGIN identical; grid, FANET, VANET and disaster differ in
+# anthocnet rows (#1080). sat-failcell has no seed blocks: isl-grid takes no
+# --firstRun (its first dispatch with one failed at base and was dropped).
+#
+# Reading, fixed before dispatch: per cell, `port` vs `base`, the anthocnet
+# rows. ##RUN##, ##ROUTE## and ##COMMON## rows of anthocnet (and of oracle,
+# which shares no code with the port) must be byte-identical; ##PROV## differs
+# by construction (commit, image, modules=swarm-core@...), ##PERF## is
+# timing. A stock arm's row (aodv, olsr, dsdv, aomdv, hwmp, gpsr, gpcr,
+# gpsr3d) is expected identical too, since both images share one base digest
+# and every arm runs in its own process; a difference there is reported, not
+# a port verdict. Any anthocnet difference is explained on #1019 before the
+# S10 box is ticked.
+#
+#   P=tools/bench/campaigns/v2.7.x-swarm-core-port.yaml
+#   ns3-campaign plan     $P
+#   ns3-campaign dispatch $P --cap 8
+#   ns3-campaign status   $P --brief
+#   ns3-campaign collect  $P --out results/cells
+generation: port1019
+ref: main
+repo: swarm-routing/AntHocNet
+isolates: source_sha
+source_sha: da5963d363cc45feb34cf1837778b04f6de1ee0d
+image: ghcr.io/swarm-routing/anthocnet-dev@sha256:96c845793080ff2843cfcb4d3393c748721fef0417318e08a5213d8dc46e4af4
+pins:
+  port: {source_sha: c91952871d5f8b0da75dfa779178d7b560a71221, image: ghcr.io/swarm-routing/anthocnet-dev@sha256:0b8d3eced2debfd1b493c950d80eae1071f25a7fd526966ea47c0d6954466fdf}
+program: routing-compare
+cap: 8
+control: base
+arms:
+  base: ""
+  port: ""
+
+cells:
+  grid-rwp-tworay:
+    source: grid-rwp-tworay-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,aomdv,oracle"}
+    blocks: [1, 11]
+  static-mesh:
+    source: static-mesh-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=5 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=900 --propagation=range --mobility=rwp --transport=udp --standard=80211a --rateManager=constant6 --ns3::dot11s::PeerLink::MaxBeaconLoss=20 --protocols=anthocnet,olsr,hwmp,oracle"}
+    blocks: [1, 6, 11, 16]
+  fanet-main:
+    source: fanet-main-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=fanet --runs=20 --nNodes=30 --time=900 --areaX=1000 --areaY=1000 --pause=0 --speed=30 --range=350 --propagation=range --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,gpsr3d,oracle"}
+    blocks: [1]
+  vanet-sparse:
+    source: vanet-sparse-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=vanet --runs=10 --nNodes=40 --time=900 --areaX=800 --areaY=800 --pause=0 --speed=20 --range=300 --propagation=urban --mobility=manhattan --transport=udp --protocols=anthocnet,aodv,gpsr,gpcr,oracle"}
+    blocks: [1, 11]
+  disaster-main:
+    source: disaster-main-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=disaster --runs=10 --nNodes=47 --time=900 --areaX=1000 --areaY=500 --speed=20 --pause=30 --range=300 --propagation=urban --mobility=trace --transport=udp --traceFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.ns2 --flowsFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.flows --buildings=120,170,320,330;680,170,880,330 --protocols=anthocnet,aodv,olsr,oracle"}
+    blocks: [1, 11]
+  sat-failcell:
+    source: sat-failcell-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: isl-grid, args: "--torus=true --islDelayMs=5 --islRate=10Mbps --time=900 --runs=20 --cbrBps=4096 --rows=4 --cols=4 --flows=8 --breakLink=0,0,3,0 --breakAt=450 --protocols=anthocnet,oracle"}
+    # no blocks: isl-grid takes no --firstRun (seeds 1..runs), as in v2.7.x-ns3-tools-pin-control.yaml
+  leo-walker16-anthocnet:
+    source: leo-walker16-anthocnet-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=20 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --protocols=anthocnet"}
+    blocks: [1]
+  sagin-walker16-anthocnet:
+    source: sagin-walker16-anthocnet-port1019-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=20 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --sagin --protocols=anthocnet"}
+    blocks: [1]
+
+jobs:
+  - {arms: [base, port], cells: "*"}
