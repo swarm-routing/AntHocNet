@@ -34,13 +34,16 @@ SWARM_CORE_REF ?= v1.0.0
 VCPKG_ROOT ?=
 CORE_SWARM_CORE = $(if $(SWARM_CORE_DIR),-DSWARM_CORE_DIR=$(abspath $(SWARM_CORE_DIR)),$(if $(VCPKG_ROOT),-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake -DSWARM_CORE_DIR=,-DSWARM_CORE_DIR=$(shell python3 tools/swarm_core.py path)))
 CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release $(CORE_SWARM_CORE)
+# The port builds in its own directory: CMake reads vcpkg's toolchain only on
+# a build directory's first configure, so the port and the sources never share one.
+CORE_BUILD = core/build$(if $(SWARM_CORE_DIR),,$(if $(VCPKG_ROOT),-vcpkg))
 
 help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## build the core (the ns-3 module builds on a tree: make install-ns3)
-	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
-	cmake --build core/build -j
+	cmake -S core -B $(CORE_BUILD) $(CORE_CMAKE_ARGS)
+	cmake --build $(CORE_BUILD) -j
 
 test: core-test ## the fast tests CI runs on every PR (core, no simulator)
 
@@ -57,14 +60,14 @@ shell: ## an interactive shell in the dev image with this repo at /src
 
 
 core-test:
-	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
-	cmake --build core/build -j
-	cd core/build && ctest --output-on-failure
+	cmake -S core -B $(CORE_BUILD) $(CORE_CMAKE_ARGS)
+	cmake --build $(CORE_BUILD) -j
+	cd $(CORE_BUILD) && ctest --output-on-failure
 
 bench-core:
-	cmake -S core -B core/build $(CORE_CMAKE_ARGS)
-	cmake --build core/build -j --target bench_core
-	core/build/bench_core $(BENCH_ARGS)
+	cmake -S core -B $(CORE_BUILD) $(CORE_CMAKE_ARGS)
+	cmake --build $(CORE_BUILD) -j --target bench_core
+	$(CORE_BUILD)/bench_core $(BENCH_ARGS)
 
 # The project's own C++ (.clang-format; ns3/baselines/ is excluded by
 # .clang-format-ignore). CI runs the same file list with --dry-run -Werror.
@@ -83,7 +86,7 @@ uninstall-ns3:
 	$(MAKE) -C ns3 uninstall NS3DIR=$(NS3DIR)
 
 clean:
-	rm -rf core/build
+	rm -rf core/build core/build-vcpkg
 
 # One command per published figure (#621): results/figures.yml maps each PNG
 # under docs/benchmarks/ to its data, renderer and re-run recipe.

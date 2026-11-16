@@ -50,14 +50,14 @@ jobs:
           binary-cache: 'off'
       - name: Build and test core (swarm-core from its vcpkg port)
         # setup-vcpkg exports VCPKG_ROOT; the Makefile then configures with
-        # vcpkg's toolchain (one vcpkg_installed under core/build)
+        # vcpkg's toolchain, in core/build-vcpkg (its vcpkg_installed is reused below)
         run: make test
       - name: The CMake package anthocnet-core (find_package, on the swarm-core port; #1037)
         env:
           TOOLCHAIN: ${{ steps.vcpkg.outputs.toolchain }}
         run: |
           prefix="$PWD/core/build-pkg/prefix"
-          installed="$PWD/core/build/vcpkg_installed"
+          installed="$PWD/core/build-vcpkg/vcpkg_installed"
           cmake -S core -B core/build-pkg/core -DANTHOCNET_CORE_INSTALL=ON -DANTHOCNET_CORE_TESTS=OFF \
             -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" -DVCPKG_INSTALLED_DIR="$installed"
           cmake --build core/build-pkg/core -j && cmake --install core/build-pkg/core --prefix "$prefix"
