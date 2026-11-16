@@ -30,7 +30,7 @@ flowchart TB
     subgraph ADAPT["Adapters (thin — no routing logic)"]
         direction LR
         subgraph NS3["ns3/ contrib module"]
-            A3["RoutingProtocol : Ipv4RoutingProtocol<br/>AntHeader : ns3::Header<br/>Ns3Clock / Ns3Rng<br/><b>~30 attributes</b> (the config surface)"]
+            A3["RoutingProtocol : SwarmRoutingBase (swarm-core)<br/>AntHeader : ns3::Header<br/>the base's Clock() / Rng() ports<br/><b>~30 attributes</b> (the config surface)"]
         end
         subgraph WEB["web/ browser adapter"]
             AW["ahn_web::Node (IClock, IRng)<br/>event-queue World<br/>core/ as WebAssembly<br/>learn site"]

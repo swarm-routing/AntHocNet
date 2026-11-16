@@ -147,3 +147,13 @@ change bumps `kWireVersion`.**
   CMake 3.20+ and a C++23 compiler (GCC 11+ or Clang 14+).
 - NS-3 module targets 3.46+ (CMake, C++23); the `wscript` from waf-era ns-3 is
   unsupported.
+- The module links swarm-core's ns-3 module (`contrib/swarm-core`, at the
+  release `swarm-core.lock` names; `make install-ns3 NS3DIR=/path/to/ns-3`
+  installs it into that ns-3 tree). A `contrib/swarm-core` that another
+  installer put there (another protocol's, at another release) is kept, with
+  a warning naming both releases, and the module then links that one, which is
+  not the release AntHocNet is tested with. The
+  adapter derives from swarm-core's `SwarmRoutingBase`
+  ([ADR-0029](adr/0029-anthocnet-builds-on-swarm-core.md)). Porting the adapter
+  to another ns-3 release therefore follows swarm-core's own supported range
+  (`swarm-core`'s `INSTALL.txt`).

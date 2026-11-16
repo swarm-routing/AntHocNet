@@ -32,10 +32,12 @@ core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm
          installs as the CMake package anthocnet-core (ANTHOCNET_CORE_INSTALL with swarm-core from its package,
          ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE; core/tests/consumer-package/; #1037, the vcpkg port)
 swarm-core.lock  the swarm-core release (tag, commit, tarball sha256) core/ builds on; written by org-bot, never by hand
-ns3/     anthocnet/ (the ns-3 module + satellite harnesses), baselines/<arm>/ (vendored arms), tools/
+ns3/     anthocnet/ (the ns-3 module, on swarm-core's SwarmRoutingBase; it links contrib/swarm-core, which make install-ns3
+         installs at the same release, or keeps with a warning when another installer put a different one there;
+         ADR-0029) + satellite harnesses, baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
-tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (swarm-core's core/ at the swarm-core.lock release, for make install-ns3), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
+tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (the swarm-core release swarm-core.lock names: `module` for make install-ns3, `path` its core/), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
 api/     Doxygen config for the API reference (/api/)
@@ -460,7 +462,7 @@ on what the row names.
 | Change pheromone math | `core/src/pheromone_engine.cpp`, `pheromone_table.cpp` |
 | Change the wire format | `docs/wire-format.md` → `core/include/.../ant_message_codec.h` (+ the ns-3 header; bump `kWireVersion`) |
 | Find the removed NS-2 adapter | [`docs/ns2-support.md`](docs/ns2-support.md) — the v1.2.0 / v1.9.0 tags and images |
-| Work on the NS-3 adapter | `ns3/anthocnet/model/`, `ns3/anthocnet/helper/`, `ns3/anthocnet/examples/` |
+| Work on the NS-3 adapter | `ns3/anthocnet/model/`, `ns3/anthocnet/helper/`, `ns3/anthocnet/examples/`; it derives from swarm-core's `SwarmRoutingBase` (sockets, ports, pending queue, MAC failures, peer map, observer): [ADR-0029](docs/adr/0029-anthocnet-builds-on-swarm-core.md), #1019 |
 | Work on the browser adapter (the learn site's simulation) | `swarm-routing/swarm-routing.github.io` `site/anthocnet/` ([ADR-0021](docs/adr/0021-the-browser-is-an-adapter.md)); fetched here as `web/`; parity must stay byte-identical |
 | Run / read benchmarks | `docs/benchmarks.md` and its index, `ns3/tools/` (run, charts, update) |
 | Inspect protocol internals | NS-3 trace sources and swarm-core's observer; core counters via `IRouterObserver` (`core/include/anthocnet/core/ports.h`) |

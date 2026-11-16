@@ -7,16 +7,19 @@ adapter shipped through v1.9.0 and was removed in v2.0.0 —
 [ADR-0023](adr/0023-one-core-one-simulator-adapter.md).)
 
 ```
-                +-------------------------------------------+
+   swarm-core core/ (swarm-routing/ns3-swarm-core, MIT OR GPL-2.0-only)
+   ports, RouteDecision, VisitedPath/Hop, DedupHistory, WireWriter/Reader,
+   PheromoneTable, ILinkMetric, EnergyMetric   (release in swarm-core.lock)
+                                 ^
+                                 | builds on (ADR-0029)
+                +----------------+--------------------------+
                 |                  core/                    |
-                |  (simulator-agnostic C++, no sim deps)    |
+                |  (simulator-agnostic C++23, no sim deps)  |
                 |                                           |
-                |  PheromoneTable      AntMessage (POD)     |
-                |  PheromoneEngine     VisitedPath (vector) |
-                |  AntHistoryTracker   AntRouterLogic       |
-                |                       -> RouteDecision     |
-                |  Ports: IClock IRng INeighborProvider     |
-                |         ITimerScheduler                   |
+                |  PheromoneTable view  AntMessage + codec  |
+                |  PheromoneEngine      AntRouterLogic      |
+                |  GenerationTracker     -> RouteDecision    |
+                |  ClassicMetric, SinrMetric, IKinematics   |
                 +----------------+--------------------------+
                                  |
               implements ports   |   returns RouteDecisions
@@ -26,12 +29,17 @@ adapter shipped through v1.9.0 and was removed in v2.0.0 —
 +-------v-----------+                           +---------v---------+
 |       ns3/        |                           |       web/        |
 | RoutingProtocol : |                           | ahn_web::Node     |
-| Ipv4RoutingProtocol|                          | (IClock, IRng)    |
+| SwarmRoutingBase  |                           | (IClock, IRng)    |
 | AntHeader:ns3::Hdr |                          | event-queue World |
-| Ns3Clock/Ns3Rng   |                           | -> WebAssembly    |
-| + contrib module  |                           | + learn site      |
+| links contrib/    |                           | -> WebAssembly    |
+|  swarm-core       |                           | + learn site      |
 +-------------------+                           +-------------------+
 ```
+
+The shared primitives, the ports and the ns-3 glue (sockets, the pending
+queue, MAC-failure and multi-interface plumbing, the router observer) are
+swarm-core's; what stays here is AntHocNet's protocol logic
+([ADR-0029](adr/0029-anthocnet-builds-on-swarm-core.md), #1019).
 
 The second adapter, **`web/`** ([ADR-0021](adr/0021-the-browser-is-an-adapter.md)),
 runs the same core compiled to WebAssembly for the learn site: it implements

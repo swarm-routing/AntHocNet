@@ -236,18 +236,23 @@ The types are not just a design abstraction — they are counted and traceable:
 - **ns-3 trace sources** `Tx` and `Rx` on
   `ns3::anthocnet::RoutingProtocol` carry `(type, direction, broadcast)` per ant,
   so an experiment can histogram the control plane without patching the core.
-- **swarm-core's router-observer trace sources** on the same class
-  ([#917](https://github.com/swarm-routing/AntHocNet/issues/917)), named and
-  shaped as every swarm-routing protocol's: `ControlTx` `(kind, broadcast,
+- **swarm-core's router-observer trace sources**, which the class inherits
+  from `SwarmRoutingBase`
+  ([#917](https://github.com/swarm-routing/AntHocNet/issues/917),
+  [ADR-0029](adr/0029-anthocnet-builds-on-swarm-core.md)), named and shaped as
+  every swarm-routing protocol's: `ControlTx` `(kind, broadcast,
   bytes)` and `ControlRx` `(kind, bytes)`, where `kind` is the wire type byte
   with `0x80` set for a backward ant (`RoutingProtocol::GetKindName(kind)`
   prints `REACTIVE_BANT`; the core's table is `kControlKindNames` in
-  `ports.h`) and `bytes` its encoded size; `DataDecision` `(dest, action)` for
+  `ports.h`, registered with `SetKindNames`) and `bytes` its encoded size;
+  `RouteChanged` `(Ipv4Address dest, Ipv4Address nextHop, bool added)`;
+  `DataDecision` `(Ipv4Address dest, swarm::core::RouteAction action)` for
   every data packet forwarded, queued or delivered, and a `Drop` for each
   packet a timed-out local repair releases (packets the pending queue discards
   on expiry or overflow are not reported, so the trace does not count every
   drop); and `StateSize`
-  `(entries, bytes)` whenever the pheromone table's entry count changes.
+  `(entries, bytes)` whenever the pheromone table's entry count changes. The
+  base also keeps the same events as bounded counters (`GetRouterStats()`).
   Connecting them changes nothing in the run (the `anthocnet` test suite checks it).
 - **`nrl` / `nrl_bytes`** aggregate all of it into the overhead the benchmark
   tables report — control packets (and bytes) per delivered data packet.
