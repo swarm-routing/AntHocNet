@@ -20,7 +20,7 @@ skip = ["AGENTS.md#org-rules", "docs/adr/0000-template.md"]
 # CodeRabbit skips generated data: committed benchmark results, the charts
 # charts.yml renders, and the hash-pinned uv lockfiles (#838).
 coderabbit_path_filters = ["!results/**", "!docs/benchmarks/charts/*.png", "!docs/benchmarks/sweep-*.png", "!requirements/*.txt"]
-badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "bestpractices", "release", "doi", "cite", "licence", "cxx", "ns3dev", "conventional", "arena", "docs", "codespaces"]
+badges = ["ci", "sonar", "codecov", "coderabbit", "scorecard", "bestpractices", "release", "doi", "cite", "licence", "cxx", "ns3dev", "conventional", "arena", "docs", "rcapa", "codespaces"]
 
 
 [settings]
