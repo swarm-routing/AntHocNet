@@ -6,6 +6,8 @@
 #include "anthocnet/core/ant_message_codec.h"
 #include "anthocnet/core/link_metric_registry.h"
 
+#include "ns3/swarm-wifi-link-monitor.h"
+
 #include "ns3/log.h"
 #include "ns3/node.h"
 #include "ns3/mobility-model.h"
@@ -25,7 +27,6 @@
 #include "ns3/qos-utils.h"
 #include "ns3/ipv4-interface.h"
 #include "ns3/arp-cache.h"
-#include "ns3/llc-snap-header.h"
 #include "ns3/udp-header.h"
 #include "ns3/tag.h"
 
@@ -934,19 +935,23 @@ void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
     ci.interface = interface;
     ci.address = iface;
 
-    // ADR-0008 detector D: subscribe to the WifiMac transmit-failure trace so a
-    // failed unicast to a next hop is reported immediately (NS-2 parity). Only
-    // wifi devices expose this; for others (e.g. SimpleNetDevice) detector A
+    // ADR-0008 detector D: a failed unicast to a next hop is reported
+    // immediately (NS-2 parity). The node's WifiLinkMonitor (swarm-core) reads
+    // the WifiMac "DroppedMpdu" trace, and the base hands every retry-limit
+    // drop to OnTxFailure (S10c of #1019, swarm-routing/ns3-swarm-core#128).
+    // Installed here, with the first wifi interface, unless the node already
+    // has one; the base connects to it (swarm-routing/ns3-swarm-core#171).
+    // Only wifi devices have one; for others (e.g. SimpleNetDevice) detector A
     // (the hello-timeout maintenance tick) remains the sole, mandatory detector.
-    // TraceConnect returns false if the source is absent on this ns-3 version,
-    // which we tolerate — detection then falls back to detector A.
     Ptr<NetDevice> dev = l3->GetNetDevice(interface);
     Ptr<WifiNetDevice> wifi = dev ? dev->GetObject<WifiNetDevice>() : nullptr;
     if (wifi) {
+        Ptr<Node> node = m_ipv4->GetObject<Node>();
+        if (node && !node->GetObject<WifiLinkMonitor>()) {
+            CreateObject<WifiLinkMonitor>()->Install(node);
+        }
         Ptr<WifiMac> wmac = wifi->GetMac();
         if (wmac) {
-            wmac->TraceConnectWithoutContext("DroppedMpdu",
-                                             MakeCallback(&RoutingProtocol::NotifyTxError, this));
             // Issue #68: sample measured MAC service time on each success.
             wmac->TraceConnectWithoutContext("AckedMpdu",
                                              MakeCallback(&RoutingProtocol::NotifyAckedMpdu, this));
@@ -1008,7 +1013,7 @@ void RoutingProtocol::NotifyInterfaceDown(uint32_t interface) {
     // milliseconds, so treating this local event as a definitive transmit
     // failure is more faithful than waiting for the hello timeout (detector A,
     // which stays on as the mandatory backstop — e.g. for silent losses this
-    // path never sees). Wifi devices keep their DroppedMpdu path (NotifyTxError,
+    // path never sees). Wifi devices keep their DroppedMpdu path (OnTxFailure,
     // byte-identical) and are excluded here; both fast paths share the
     // EnableMacFailureDetector ablation gate.
     if (!m_enableMacFailureDetector || !m_logic) return;
@@ -1171,7 +1176,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
     if (!m_logic || m_ifaces.empty() || IsDown()) return false;
 
     // Ipv4L3Protocol passes the same bound callbacks on every call; cache them
-    // so NotifyTxError can re-inject a MAC-dropped data packet (issue #46).
+    // so OnTxFailure can re-inject a MAC-dropped data packet (issue #46).
     m_cachedUcb = ucb;
     m_cachedEcb = ecb;
 
@@ -1229,7 +1234,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
 uint8_t RoutingProtocol::HoldClassFor(Ipv4Address dst) {
     // #21 attribution: a deferred packet is either a first-time reactive setup
     // (this dest was never routed) or a reconvergence wait (route was known and
-    // lost). NotifyTxError's re-injection path holds its own as HOLD_REPAIR.
+    // lost). OnTxFailure's re-injection path holds its own as HOLD_REPAIR.
     return m_everRouted.count(ToCore(dst)) ? HOLD_RECONV : HOLD_SETUP;
 }
 
@@ -1568,51 +1573,35 @@ public:
 
 NS_OBJECT_ENSURE_REGISTERED(ReinjCountTag);
 
-void RoutingProtocol::NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI_MPDU> mpdu) {
+void RoutingProtocol::OnTxFailure(Ipv4Address /*neighbor*/, Mac48Address mac, Ptr<const Packet> p,
+                                  const Ipv4Header* header, bool /*control*/) {
     // Detector D is a latency optimisation over the mandatory hello-timeout
     // detector A (ADR-0008); it can be gated off for ablation (issue #46).
+    // The base calls this once per unicast frame the MAC gave up on at its
+    // retry limit (a broadcast or group frame has no single next hop); other
+    // drop reasons (queue full, lifetime expiry) are congestion, not topology.
     if (!m_enableMacFailureDetector) return;
-    if (!m_logic || m_ifaces.empty() || !mpdu) return;
-    // Only a retry-limit drop is a real broken link; other drop reasons
-    // (queue full, lifetime expiry) are congestion, not topology.
-    if (reason != WIFI_MAC_DROP_REACHED_RETRY_LIMIT) return;
+    if (!m_logic || m_ifaces.empty()) return;
 
-    const Mac48Address dstMac = mpdu->GetHeader().GetAddr1();
-    if (dstMac.IsBroadcast() || dstMac.IsGroup()) return;  // no single next hop
-
+    // The neighbour by its MAC, as the core knows it (MapMacToCore: the table's
+    // neighbours in the ARP caches), not the monitor's guess at its IP.
     NodeAddress next;
-    if (!MapMacToCore(dstMac, next)) return;  // unknown peer — nothing to prune
+    if (!MapMacToCore(mac, next)) return;  // unknown peer — nothing to prune
 
-    // Peek the carried L3 packet: only a failed *data* packet triggers a repair
-    // ant (ant control traffic is UDP to ANT_PORT — mirror NS-2, which repairs
-    // only non-ant packets). dataDest stays kInvalidAddress if we can't parse it,
-    // so we still prune the dead neighbour even when the payload is opaque.
+    // Only a failed *data* packet triggers a repair ant (ant control traffic
+    // is UDP to ANT_PORT, which the base flags and hands no datagram for —
+    // mirror NS-2, which repairs only non-ant packets). dataDest stays
+    // kInvalidAddress when the frame carried no whole IPv4 datagram, so the
+    // dead neighbour is still pruned.
     NodeAddress dataDest = kInvalidAddress;
-    Ptr<Packet> pkt = mpdu->GetPacket()->Copy();
+    Ptr<Packet> pkt;
     Ipv4Header ipHeader;  // kept for re-injection (#46)
     bool haveData = false;
-    LlcSnapHeader llc;
-    if (pkt->GetSize() >= llc.GetSerializedSize()) {
-        pkt->RemoveHeader(llc);
-        if (llc.GetType() == 0x0800) {  // IPv4 EtherType
-            Ipv4Header ip;
-            if (pkt->GetSize() >= ip.GetSerializedSize()) {
-                pkt->RemoveHeader(ip);
-                bool isAnt = false;
-                if (ip.GetProtocol() == 17) {  // UDP
-                    UdpHeader udp;
-                    if (pkt->GetSize() >= udp.GetSerializedSize()) {
-                        pkt->PeekHeader(udp);
-                        isAnt = (udp.GetDestinationPort() == ANT_PORT);
-                    }
-                }
-                if (!isAnt) {
-                    dataDest = ToCore(ip.GetDestination());
-                    ipHeader = ip;
-                    haveData = true;
-                }
-            }
-        }
+    if (p && header) {
+        pkt = p->Copy();
+        ipHeader = *header;
+        dataDest = ToCore(ipHeader.GetDestination());
+        haveData = true;
     }
 
     // Converge on the shared core path: prune + LinkFail notifications + (for

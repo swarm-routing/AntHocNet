@@ -268,6 +268,12 @@ protected:
                               Ptr<const Packet> p) override;
     void StartDiscovery(Ipv4Address dst) override;
     uint8_t HoldClassFor(Ipv4Address dst) override;
+    /// ADR-0008 detector D (S10c of #1019): a unicast frame the MAC gave up on
+    /// at its retry limit, from the node's WifiLinkMonitor. Drives the shared
+    /// core reportTxFailure path (prune + bounded repair ant) and re-injects a
+    /// failed data packet into the pending queue (#46).
+    void OnTxFailure(Ipv4Address neighbor, Mac48Address mac, Ptr<const Packet> p,
+                     const Ipv4Header* header, bool control) override;
     void RecvControl(Ptr<Packet> p, Ipv4Address from, Ipv4Address receiver) override;
 
 public:
@@ -315,11 +321,6 @@ private:
     /// dominates the delay/jitter tail.
     void ReactiveRetryTimerExpire();
 
-    // ADR-0008 detector D: MAC transmit-failure hook. The WifiMac "DroppedMpdu"
-    // trace fires when a unicast frame is dropped after exhausting retries; we
-    // treat a retry-limit drop as a broken link to that next hop and drive the
-    // shared core reportTxFailure path (prune + bounded repair ant).
-    void NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI_MPDU> mpdu);
     /// Issue #68: successful-transmission hook — samples the measured
     /// per-packet MAC service time for the A2 congestion metric.
     void NotifyAckedMpdu(Ptr<const AHN_WIFI_MPDU> mpdu);
@@ -495,7 +496,7 @@ private:
     static void TxDequeueTrace(RoutingProtocol* self, uint32_t interface, Ptr<const Packet> p);
 
     // L3 forwarding callbacks cached from RouteInput (Ipv4L3Protocol passes the
-    // same bound callbacks on every call). NotifyTxError needs them to re-inject
+    // same bound callbacks on every call). OnTxFailure needs them to re-inject
     // a MAC-dropped data packet it only sees as a raw MPDU (issue #46).
     UnicastForwardCallback m_cachedUcb;
     ErrorCallback m_cachedEcb;
@@ -524,7 +525,7 @@ private:
     // MaxReinjectPerPacket and was NOT re-injected, so its MAC drop stays
     // terminal. Same signature and packet form as MacReinject (it reuses
     // MacReinjectCallback); fired only inside the m_maxReinjectPerPacket != 0
-    // branch of NotifyTxError, so it can never fire at the default cap 0.
+    // branch of OnTxFailure, so it can never fire at the default cap 0.
     TracedCallback<const Ipv4Header&, Ptr<const Packet>> m_macReinjectSkipTrace;
 };
 
