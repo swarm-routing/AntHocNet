@@ -33,7 +33,8 @@ core/    simulator-agnostic C++ (no simulator headers) + unit tests; links swarm
          ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE; core/tests/consumer-package/; #1037, the vcpkg port)
 swarm-core.lock  the swarm-core release (tag, commit, tarball sha256) core/ builds on; written by org-bot, never by hand
 ns3/     anthocnet/ (the ns-3 module, on swarm-core's SwarmRoutingBase; it links contrib/swarm-core, which make install-ns3
-         installs at the same release; ADR-0029) + satellite harnesses, baselines/<arm>/ (vendored arms), tools/
+         installs at the same release, or keeps with a warning when another installer put a different one there;
+         ADR-0029) + satellite harnesses, baselines/<arm>/ (vendored arms), tools/
 ns3-tools.lock  the swarm-routing/ns3-tools release (tag, commit, sha256) the routing-bench harness and the ns3_tool readers come from (ns3-tools#29)
 web/     (not tracked) the browser adapter + learn site, fetched from swarm-routing.github.io by tools/checks/fetch-site-web.sh (#850)
 tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (the swarm-core release swarm-core.lock names: `module` for make install-ns3, `path` its core/), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
