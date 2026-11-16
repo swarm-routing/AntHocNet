@@ -347,6 +347,16 @@ implements (every work the repository relies on, with its role, is in
 What this implementation reproduces from those sources — and every deliberate
 deviation — is stated in [docs/fidelity.md](docs/fidelity.md).
 
+<!-- org-sync:begin develop -->
+## Develop
+
+New here? [docs/development.md](docs/development.md) is the developer guide:
+the tools to install, how to get the code and its dependencies, how to
+build, test, run and lint it, the Docker images, what CI checks and how to
+read a red run. How changes are proposed, reviewed and released is the org's
+[CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md).
+<!-- org-sync:end develop -->
+
 ## Contributing
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the build/test steps per component, the
@@ -374,6 +384,7 @@ What is planned and in progress here: the issues labelled [`epic`](https://githu
 | [#64](https://github.com/swarm-routing/AntHocNet/issues/64) Abstract discrete-event testbench in core/tests — trend regression without a simulator | In progress | 1 / 2 |
 | [#109](https://github.com/swarm-routing/AntHocNet/issues/109) Publish the AntHocNet implementation (reproducibility + cross-simulator paper) | In progress | 1 / 4 |
 | [#328](https://github.com/swarm-routing/AntHocNet/issues/328) 5-star open-source packaging — visibility, supply-chain trust, onboarding, docs site | In progress | 19 / 25 |
+| [#1068](https://github.com/swarm-routing/AntHocNet/issues/1068) developer experience: a newcomer can build, test and contribute from the docs alone | In progress | 1 / 1 |
 | [#32](https://github.com/swarm-routing/AntHocNet/issues/32) Add an OMNeT++/INET adapter (third simulator target) | Planned | 0 / 4 |
 | [#65](https://github.com/swarm-routing/AntHocNet/issues/65) CORE/EMANE emulation target — run the real core as a Linux daemon | Planned | 0 / 3 |
 | [#194](https://github.com/swarm-routing/AntHocNet/issues/194) Make the NS-3 adapter satellite-capable (multi-interface, timescales, non-wifi signals) | Planned | no sub-issues yet |

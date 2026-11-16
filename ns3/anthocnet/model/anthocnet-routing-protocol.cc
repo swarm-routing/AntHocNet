@@ -6,6 +6,8 @@
 #include "anthocnet/core/ant_message_codec.h"
 #include "anthocnet/core/link_metric_registry.h"
 
+#include "ns3/swarm-wifi-link-monitor.h"
+
 #include "ns3/log.h"
 #include "ns3/node.h"
 #include "ns3/mobility-model.h"
@@ -25,7 +27,6 @@
 #include "ns3/qos-utils.h"
 #include "ns3/ipv4-interface.h"
 #include "ns3/arp-cache.h"
-#include "ns3/llc-snap-header.h"
 #include "ns3/udp-header.h"
 #include "ns3/tag.h"
 
@@ -52,7 +53,6 @@ const uint16_t RoutingProtocol::ANT_PORT = 6900;
 
 RoutingProtocol::RoutingProtocol()
     : m_started(false),
-      m_queue(64, Seconds(3)),
       m_helloInterval(Seconds(1.0)),
       m_proactiveInterval(Seconds(10.0)),
       m_alpha(0.7),
@@ -743,11 +743,14 @@ void RoutingProtocol::DoInitialize() {
     m_config.antAcceptanceFactorNewHop = m_antAcceptanceFactorNewHop;
     m_config.linkfailNotifyInterval = m_linkfailNotifyInterval;
     m_config.enableMacMetric = m_enableMacMetric;
-    m_queue.SetTimeout(m_queueTimeout);  // attribute lands after construction (#21)
+    // The pending queue is the base's DeferredPacketQueue (S10b of #1019),
+    // configured as AntHocNet's RequestQueue was: QueueTimeout re-armed at
+    // each enqueue, the per-reason caps (#21), and no purge on a timer, so an
+    // expired packet is dropped when the queue is next used, as before.
     // Issue #21 L2: per-reason hold caps (default 0 == disabled). SETUP stays
     // uncapped on QueueTimeout; only the tail-dominant RECONV/REPAIR holds cap.
-    m_queue.SetHoldCap(HOLD_RECONV, m_reconvHoldCap);
-    m_queue.SetHoldCap(HOLD_REPAIR, m_repairHoldCap);
+    ConfigurePendingQueue(*GetDeferredQueue(), m_queueTimeout, m_reconvHoldCap, m_repairHoldCap);
+    SetAttribute("PeriodicPurge", BooleanValue(false));
     // The ControlTx/ControlRx kind names, for the base's GetKindName (#917).
     SetKindNames(GetTypeId(), ::anthocnet::core::kControlKindNames);
     SwarmRoutingBase::DoInitialize();
@@ -932,19 +935,23 @@ void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
     ci.interface = interface;
     ci.address = iface;
 
-    // ADR-0008 detector D: subscribe to the WifiMac transmit-failure trace so a
-    // failed unicast to a next hop is reported immediately (NS-2 parity). Only
-    // wifi devices expose this; for others (e.g. SimpleNetDevice) detector A
+    // ADR-0008 detector D: a failed unicast to a next hop is reported
+    // immediately (NS-2 parity). The node's WifiLinkMonitor (swarm-core) reads
+    // the WifiMac "DroppedMpdu" trace, and the base hands every retry-limit
+    // drop to OnTxFailure (S10c of #1019, swarm-routing/ns3-swarm-core#128).
+    // Installed here, with the first wifi interface, unless the node already
+    // has one; the base connects to it (swarm-routing/ns3-swarm-core#171).
+    // Only wifi devices have one; for others (e.g. SimpleNetDevice) detector A
     // (the hello-timeout maintenance tick) remains the sole, mandatory detector.
-    // TraceConnect returns false if the source is absent on this ns-3 version,
-    // which we tolerate — detection then falls back to detector A.
     Ptr<NetDevice> dev = l3->GetNetDevice(interface);
     Ptr<WifiNetDevice> wifi = dev ? dev->GetObject<WifiNetDevice>() : nullptr;
     if (wifi) {
+        Ptr<Node> node = m_ipv4->GetObject<Node>();
+        if (node && !node->GetObject<WifiLinkMonitor>()) {
+            CreateObject<WifiLinkMonitor>()->Install(node);
+        }
         Ptr<WifiMac> wmac = wifi->GetMac();
         if (wmac) {
-            wmac->TraceConnectWithoutContext("DroppedMpdu",
-                                             MakeCallback(&RoutingProtocol::NotifyTxError, this));
             // Issue #68: sample measured MAC service time on each success.
             wmac->TraceConnectWithoutContext("AckedMpdu",
                                              MakeCallback(&RoutingProtocol::NotifyAckedMpdu, this));
@@ -1006,7 +1013,7 @@ void RoutingProtocol::NotifyInterfaceDown(uint32_t interface) {
     // milliseconds, so treating this local event as a definitive transmit
     // failure is more faithful than waiting for the hello timeout (detector A,
     // which stays on as the mandatory backstop — e.g. for silent losses this
-    // path never sees). Wifi devices keep their DroppedMpdu path (NotifyTxError,
+    // path never sees). Wifi devices keep their DroppedMpdu path (OnTxFailure,
     // byte-identical) and are excluded here; both fast paths share the
     // EnableMacFailureDetector ablation gate.
     if (!m_enableMacFailureDetector || !m_logic) return;
@@ -1044,38 +1051,15 @@ void RoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddre
 
 void RoutingProtocol::ResolveNextHop(NodeAddress next, Ipv4Address& gateway, Ptr<NetDevice>& dev,
                                      uint32_t& iface) const {
-    const Ipv4Address nextIp = ToIpv4(next);
-
-    // 1. Directly attached: the next hop is on one of our own subnets. Every
-    //    single-interface topology takes this path, so the common case keeps
-    //    exactly its pre-#203 gateway/device.
-    for (const auto& kv : m_ifaces) {
-        const Ipv4InterfaceAddress& addr = kv.second.address;
-        if (addr.GetLocal().CombineMask(addr.GetMask()) == nextIp.CombineMask(addr.GetMask())) {
-            const int32_t i = m_ipv4->GetInterfaceForAddress(addr.GetLocal());
-            if (i < 0) continue;
-            gateway = nextIp;
-            iface = static_cast<uint32_t>(i);
-            dev = m_ipv4->GetNetDevice(iface);
-            return;
-        }
-    }
-
-    // 2. Multi-interface peer: the core named it by its canonical address,
-    //    which sits on a subnet we are not attached to. Its hello told us which
-    //    of our links actually reaches it, and at what address.
-    std::map<Ipv4Address, PeerRoute>::const_iterator it = m_peerRoutes.find(nextIp);
-    if (it != m_peerRoutes.end() && it->second.iface < m_ipv4->GetNInterfaces()) {
-        gateway = it->second.linkLocal;
-        iface = it->second.iface;
-        dev = m_ipv4->GetNetDevice(iface);
-        return;
-    }
-
-    // 3. Unknown next hop: degrade to the first interface exactly as before.
-    gateway = nextIp;
-    iface = static_cast<uint32_t>(
-        m_ipv4->GetInterfaceForAddress(m_ifaces.begin()->second.address.GetLocal()));
+    // The base's rule (#203 here, swarm-routing/ns3-swarm-core#127): (1) a
+    // directly attached subnet, the next hop itself the gateway, which every
+    // single-interface topology takes; (2) a multi-interface peer the core
+    // names by its canonical address, through the link its hello arrived on
+    // (SetPeerRoute in RecvControl), at its address there; (3) the first
+    // interface. Callers check m_ifaces is not empty first.
+    const NextHopRoute hop = SwarmRoutingBase::ResolveNextHop(ToIpv4(next));
+    gateway = hop.gateway;
+    iface = static_cast<uint32_t>(hop.ifIdx);
     dev = m_ipv4->GetNetDevice(iface);
 }
 
@@ -1169,7 +1153,7 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
     if (!m_logic || m_ifaces.empty() || IsDown()) return false;
 
     // Ipv4L3Protocol passes the same bound callbacks on every call; cache them
-    // so NotifyTxError can re-inject a MAC-dropped data packet (issue #46).
+    // so OnTxFailure can re-inject a MAC-dropped data packet (issue #46).
     m_cachedUcb = ucb;
     m_cachedEcb = ecb;
 
@@ -1224,20 +1208,18 @@ bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
     return true;
 }
 
-void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header& header,
-                                          UnicastForwardCallback ucb, ErrorCallback ecb) {
-    QueueEntry entry;
-    entry.packet = p;
-    entry.header = header;
-    entry.ucb = ucb;
-    entry.ecb = ecb;
+uint8_t RoutingProtocol::HoldClassFor(Ipv4Address dst) {
     // #21 attribution: a deferred packet is either a first-time reactive setup
     // (this dest was never routed) or a reconvergence wait (route was known and
-    // lost). NotifyTxError's re-injection path tags its own entries HOLD_REPAIR.
-    entry.holdReason =
-        m_everRouted.count(ToCore(header.GetDestination())) ? HOLD_RECONV : HOLD_SETUP;
-    m_queue.Enqueue(entry);
-    StartDiscovery(header.GetDestination());
+    // lost). OnTxFailure's re-injection path holds its own as HOLD_REPAIR.
+    return m_everRouted.count(ToCore(dst)) ? HOLD_RECONV : HOLD_SETUP;
+}
+
+void RoutingProtocol::DeferredRouteOutput(Ptr<const Packet> p, const Ipv4Header& header,
+                                          UnicastForwardCallback ucb, ErrorCallback ecb) {
+    // The base holds it in the class HoldClassFor names, then calls
+    // StartDiscovery: the core's onDataPacket.
+    Defer(p, header, ucb, ecb);
 }
 
 void RoutingProtocol::StartDiscovery(Ipv4Address dst) {
@@ -1267,23 +1249,13 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     AntHeader header(msg);
     packet->AddHeader(header);
 
-    // Every send goes through one of the base's control sockets with
-    // UnicastControl, which sends out of the interface whose subnet holds the
-    // address it is given (its first rule; the second, the peer map, is
-    // empty here, and the third is the first interface). Each address below
-    // is chosen so that rule picks the socket this adapter always used:
+    // Every send goes through one of the base's control sockets:
     if (dest == Ipv4Address("255.255.255.255")) {
-        // a broadcast: the interface's subnet broadcast, on each interface in
-        // device order (#362). Two interfaces on one subnet would both resolve
-        // to the first of them, so a node with such a pair broadcasts with
-        // BroadcastControl instead (every interface, in the order they came
-        // up), until the base's per-interface broadcast (S10b) replaces both.
-        if (!SubnetsDistinct()) {
-            BroadcastControl(packet);
-            return;
-        }
+        // a broadcast: on each interface in device order (#362), whatever the
+        // order the interfaces came up in (BroadcastControlOn,
+        // swarm-routing/ns3-swarm-core#166).
         for (const auto& kv : m_ifaces) {
-            UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
+            BroadcastControlOn(packet->Copy(), kv.second.interface);
         }
         return;
     }
@@ -1292,10 +1264,10 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     // addressed to where it is reachable on that link (#203). A backward ant
     // retraces a path made of canonical addresses, so on a multi-interface
     // node the ant's next hop is routinely NOT on the subnet it must be sent
-    // over. The gateway is on the chosen interface's subnet; when that
-    // interface has no socket (it went down) or the hop is unknown, the
-    // gateway is on no subnet of a socket and the first interface sends it,
-    // as before.
+    // over. UnicastControl sends to the gateway out of the interface whose
+    // subnet holds it, the chosen one; when that interface has no socket (it
+    // went down) or the hop is unknown, the gateway is on no subnet of a
+    // socket and the first interface sends it, as before.
     Ipv4Address gateway;
     Ptr<NetDevice> dev;
     uint32_t ifIdx;
@@ -1361,12 +1333,7 @@ void RoutingProtocol::RecvControl(Ptr<Packet> packet, Ipv4Address sender, Ipv4Ad
             std::set<NodeAddress>& nbs = m_ifaceNeighbors[static_cast<uint32_t>(i)];
             nbs.insert(ToCore(sender));
             nbs.insert(incoming.src);
-            if (canonical != sender) {
-                PeerRoute pr;
-                pr.iface = static_cast<uint32_t>(i);
-                pr.linkLocal = sender;
-                m_peerRoutes[canonical] = pr;
-            }
+            if (canonical != sender) SetPeerRoute(canonical, static_cast<uint32_t>(i), sender);
         }
     }
 
@@ -1408,15 +1375,18 @@ void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
     // timer or a MAC re-injection either (#974 adds the protocol's hooks).
     if (IsDown()) return;
     Ipv4Address dst = ToIpv4(coreDest);
-    std::vector<QueueEntry> pending;
-    m_queue.DequeueAll(dst, pending);
+    // Expired packets go first (through their error callbacks), then every
+    // packet to `dst`, in queue order.
+    std::vector<DeferredPacket> pending = GetDeferredQueue()->Release(dst);
     if (pending.empty()) return;  // #918: the usual case on a backward ant
 
-    for (QueueEntry& e : pending) {
+    std::vector<DeferredPacket> back;
+    for (DeferredPacket& e : pending) {
         NodeAddress next = m_logic->nextHopForData(coreDest);
         if (next == kInvalidAddress) {
-            // Route vanished again; re-queue.
-            m_queue.Enqueue(e);
+            // Route vanished again; re-queue (below, in order, keeping its
+            // first enqueue time and hold class).
+            back.push_back(std::move(e));
             continue;
         }
         Ipv4Address gateway;
@@ -1429,25 +1399,29 @@ void RoutingProtocol::FlushQueue(NodeAddress coreDest) {
         route->SetSource(e.header.GetSource());
         route->SetOutputDevice(dev);
         if (!e.ucb.IsNull()) {
-            m_everRouted.insert(coreDest);  // #21: this dest has been routed
-            m_queue.NoteDelivered(e);       // #21: attribute this packet's hold
+            m_everRouted.insert(coreDest);         // #21: this dest has been routed
+            GetDeferredQueue()->NoteForwarded(e);  // #21: attribute this packet's hold
             onDataDecision(coreDest, RouteAction::Unicast);
             e.ucb(route, e.packet, e.header);
         }
     }
+    if (!back.empty()) GetDeferredQueue()->Requeue(std::move(back));
 }
 
 void RoutingProtocol::DiscardQueue(NodeAddress coreDest) {
-    std::vector<QueueEntry> pending;
-    m_queue.DequeueAll(ToIpv4(coreDest), pending);
+    // Expired packets go first, as aged-out drops (#21), as they did when the
+    // queue was AntHocNet's own; the rest to `coreDest` are discarded through
+    // their error callbacks.
+    Ptr<DeferredPacketQueue> q = GetDeferredQueue();
+    q->Purge();
+    const uint32_t before = q->Size();
+    DiscardDeferred(ToIpv4(coreDest));
+    const uint32_t discarded = before - q->Size();
     // #215: count the packets, not just the event — the core counts the events
     // (repairDiscards()), but only the adapter owns the queue and so knows how
     // many packets each expired repair released.
-    m_repairDiscardedPackets += pending.size();
-    for (std::size_t k = 0; k < pending.size(); ++k) onDataDecision(coreDest, RouteAction::Drop);
-    for (QueueEntry& e : pending) {
-        if (!e.ecb.IsNull()) e.ecb(e.packet, e.header, Socket::ERROR_NOROUTETOHOST);
-    }
+    m_repairDiscardedPackets += discarded;
+    for (uint32_t k = 0; k < discarded; ++k) onDataDecision(coreDest, RouteAction::Drop);
 }
 
 // --- timers -----------------------------------------------------------------
@@ -1459,9 +1433,7 @@ void RoutingProtocol::HelloTimerExpire() {
         // LinkFail broadcasts and repair-timeout DiscardPending actions (D6).
         ExecuteDecisions(m_logic->onMaintenanceTick(), kInvalidAddress);
         AntMessage hello = m_logic->createHelloAnt();
-        // A node with two interfaces on one subnet cannot send on one of them
-        // alone yet (S10b), so it sends every hello on every interface.
-        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0 || !SubnetsDistinct();
+        const bool p2pTick = m_helloTicks++ % m_p2pHelloEvery == 0;
         if (p2pTick) {
             SendAnt(hello, Ipv4Address("255.255.255.255"));
         } else {
@@ -1481,8 +1453,7 @@ void RoutingProtocol::HelloTimerExpire() {
                     for (NodeAddress n : nit->second) m_logic->learnNeighbor(n);
                     continue;
                 }
-                // This interface's subnet broadcast, as SendAnt sends one.
-                UnicastControl(packet->Copy(), kv.second.address.GetBroadcast());
+                BroadcastControlOn(packet->Copy(), kv.second.interface);
             }
         }
     }
@@ -1516,7 +1487,9 @@ void RoutingProtocol::ReactiveRetryTimerExpire() {
     // QueueTimeout. Mirrors the core's own reactive emission (createForwardAnt +
     // Broadcast), so the ant is the same bounded expanding-ring flood.
     if (m_logic) {
-        for (Ipv4Address dst : m_queue.PendingDestinations()) {
+        // Expired packets go first, then the destinations still held.
+        GetDeferredQueue()->Purge();
+        for (Ipv4Address dst : GetDeferredQueue()->Destinations()) {
             const NodeAddress coreDst = ToCore(dst);
             if (m_logic->nextHopForData(coreDst) == kInvalidAddress) {
                 AntMessage refa = m_logic->createForwardAnt(AntType::Reactive, coreDst);
@@ -1572,51 +1545,35 @@ public:
 
 NS_OBJECT_ENSURE_REGISTERED(ReinjCountTag);
 
-void RoutingProtocol::NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI_MPDU> mpdu) {
+void RoutingProtocol::OnTxFailure(Ipv4Address /*neighbor*/, Mac48Address mac, Ptr<const Packet> p,
+                                  const Ipv4Header* header, bool /*control*/) {
     // Detector D is a latency optimisation over the mandatory hello-timeout
     // detector A (ADR-0008); it can be gated off for ablation (issue #46).
+    // The base calls this once per unicast frame the MAC gave up on at its
+    // retry limit (a broadcast or group frame has no single next hop); other
+    // drop reasons (queue full, lifetime expiry) are congestion, not topology.
     if (!m_enableMacFailureDetector) return;
-    if (!m_logic || m_ifaces.empty() || !mpdu) return;
-    // Only a retry-limit drop is a real broken link; other drop reasons
-    // (queue full, lifetime expiry) are congestion, not topology.
-    if (reason != WIFI_MAC_DROP_REACHED_RETRY_LIMIT) return;
+    if (!m_logic || m_ifaces.empty()) return;
 
-    const Mac48Address dstMac = mpdu->GetHeader().GetAddr1();
-    if (dstMac.IsBroadcast() || dstMac.IsGroup()) return;  // no single next hop
-
+    // The neighbour by its MAC, as the core knows it (MapMacToCore: the table's
+    // neighbours in the ARP caches), not the monitor's guess at its IP.
     NodeAddress next;
-    if (!MapMacToCore(dstMac, next)) return;  // unknown peer — nothing to prune
+    if (!MapMacToCore(mac, next)) return;  // unknown peer — nothing to prune
 
-    // Peek the carried L3 packet: only a failed *data* packet triggers a repair
-    // ant (ant control traffic is UDP to ANT_PORT — mirror NS-2, which repairs
-    // only non-ant packets). dataDest stays kInvalidAddress if we can't parse it,
-    // so we still prune the dead neighbour even when the payload is opaque.
+    // Only a failed *data* packet triggers a repair ant (ant control traffic
+    // is UDP to ANT_PORT, which the base flags and hands no datagram for —
+    // mirror NS-2, which repairs only non-ant packets). dataDest stays
+    // kInvalidAddress when the frame carried no whole IPv4 datagram, so the
+    // dead neighbour is still pruned.
     NodeAddress dataDest = kInvalidAddress;
-    Ptr<Packet> pkt = mpdu->GetPacket()->Copy();
+    Ptr<Packet> pkt;
     Ipv4Header ipHeader;  // kept for re-injection (#46)
     bool haveData = false;
-    LlcSnapHeader llc;
-    if (pkt->GetSize() >= llc.GetSerializedSize()) {
-        pkt->RemoveHeader(llc);
-        if (llc.GetType() == 0x0800) {  // IPv4 EtherType
-            Ipv4Header ip;
-            if (pkt->GetSize() >= ip.GetSerializedSize()) {
-                pkt->RemoveHeader(ip);
-                bool isAnt = false;
-                if (ip.GetProtocol() == 17) {  // UDP
-                    UdpHeader udp;
-                    if (pkt->GetSize() >= udp.GetSerializedSize()) {
-                        pkt->PeekHeader(udp);
-                        isAnt = (udp.GetDestinationPort() == ANT_PORT);
-                    }
-                }
-                if (!isAnt) {
-                    dataDest = ToCore(ip.GetDestination());
-                    ipHeader = ip;
-                    haveData = true;
-                }
-            }
-        }
+    if (p && header) {
+        pkt = p->Copy();
+        ipHeader = *header;
+        dataDest = ToCore(ipHeader.GetDestination());
+        haveData = true;
     }
 
     // Converge on the shared core path: prune + LinkFail notifications + (for
@@ -1664,18 +1621,20 @@ void RoutingProtocol::NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI
             else
                 pkt->AddPacketTag(tag);
         }
-        QueueEntry entry;
+        DeferredPacket entry;
         entry.packet = pkt;
         entry.header = ipHeader;
         entry.ucb = m_cachedUcb;
         entry.ecb = m_cachedEcb;
-        entry.holdReason = HOLD_REPAIR;  // #21: held during local repair (#46)
-        ++m_macReinjectedPackets;        // #215: this MAC failure was not terminal
+        entry.holdClass = HOLD_REPAIR;  // #21: held during local repair (#46)
+        ++m_macReinjectedPackets;       // #215: this MAC failure was not terminal
         // #386: same site as the counter, so a listener's event count and
         // MacReinjectedPackets() agree by construction (scenario_check asserts
         // events == reinjected on exactly that ground).
         m_macReinjectTrace(ipHeader, pkt);
-        m_queue.Enqueue(entry);
+        // Into the base's queue directly, not Defer: no discovery here, the
+        // flush below retries at once.
+        GetDeferredQueue()->Enqueue(entry);
         FlushQueue(dataDest);
     }
 }
@@ -1711,20 +1670,6 @@ bool RoutingProtocol::MapMacToCore(const Mac48Address& mac, NodeAddress& out) co
 }
 
 // --- helpers ----------------------------------------------------------------
-
-bool RoutingProtocol::SubnetsDistinct() const {
-    for (auto a = m_ifaces.begin(); a != m_ifaces.end(); ++a) {
-        const Ipv4InterfaceAddress& x = a->second.address;
-        for (auto b = std::next(a); b != m_ifaces.end(); ++b) {
-            const Ipv4InterfaceAddress& y = b->second.address;
-            if (x.GetLocal().CombineMask(x.GetMask()) == y.GetLocal().CombineMask(x.GetMask()) ||
-                x.GetLocal().CombineMask(y.GetMask()) == y.GetLocal().CombineMask(y.GetMask())) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 int64_t RoutingProtocol::AssignStreams(int64_t stream) {
     return SwarmRoutingBase::AssignStreams(stream);  // the Rng() port's one stream

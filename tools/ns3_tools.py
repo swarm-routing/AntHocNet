@@ -77,7 +77,7 @@ def assets(pin):
     """(asset name, sha256) for the two release assets this repo uses."""
     ver = pin["NS3_TOOLS_VERSION"]
     return [(f"routing-bench-{ver}.tar.gz", pin["ROUTING_BENCH_SHA256"]),
-            (f"ns3_tool-{ver}-py3-none-any.whl", pin["NS3_TOOL_WHEEL_SHA256"])]
+            (f"ns3_tools-{ver}-py3-none-any.whl", pin["NS3_TOOL_WHEEL_SHA256"])]
 
 
 def _download(pin, name, sha, dest):

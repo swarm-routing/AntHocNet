@@ -1,0 +1,19 @@
+# pin111 campaign sat-failcell-pin111-pin: 1 run(s): 43753233578 (pin/sat-failcell); ref main; source_sha 1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f
+##RUN## 1 anthocnet 100.00 10.15 11.00 46.69 1.10 1.82 0.00
+# failcell anthocnet seed=1 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1270
+##RUN## 2 anthocnet 100.00 10.16 11.00 46.64 1.09 1.81 0.00
+# failcell anthocnet seed=2 breakAt=450.0000 tDetect=0.0000 tReconverge=0.1384
+##ORACLE## 1 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 1 oracle 100.00 10.15 11.00 46.69 0.00 0.00 0.00
+# failcell oracle seed=1 breakAt=450.0000 tDetect=nan tReconverge=0.1067
+##ORACLE## 2 oracle mode=wired approx=0 nodes=16 edges=62 recomputes=900 changes=2 range=-1.0 noRoute=0 nrl=0.00
+##RUN## 2 oracle 100.00 10.15 11.00 46.64 0.00 0.00 0.00
+# failcell oracle seed=2 breakAt=450.0000 tDetect=nan tReconverge=0.1248
++Grid torus 4x4 = 16 satellites, 32 ISLs (mean degree 4.00) @ 5.00 ms 10Mbps, 8 flows, 900.00 s, mean of 2 run(s)
+
+protocol          PDR%  delay(ms)  delay99(ms)  thrput(kbps)     NRL   NRLbytes  jitter(ms)
+-------------------------------------------------------------------------------------------
+anthocnet        100.0       10.2         11.0         46.67    1.10       1.81        0.00
+oracle           100.0       10.2         11.0         46.67    0.00       0.00        0.00
+##ARGS## isl-grid --torus=true --islDelayMs=5 --islRate=10Mbps --time=900 --runs=2 --cbrBps=4096 --rows=4 --cols=4 --flows=8 --breakLink=0,0,3,0 --breakAt=450 --protocols=anthocnet,oracle
+##PROV## commit=1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f ref=main run_id=43753233578 attempt=1 image=ghcr.io/swarm-routing/anthocnet-dev@sha256:45ddca249ebcef97ad18bfcb94dc4b3b49755abb083730835d91350a8318c5a5 profile=release harness=isl-grid base=ghcr.io/swarm-routing/ns3-dev:3.48-optimized-fb7596b@sha256:5585a93c5cea1980592539e2d26a4e111e0ff4b0cc63b3dfd6ea5de459d80d3f base_tag=ghcr.io/swarm-routing/ns3-dev:3.48-optimized build_profile=optimized modules=swarm-core@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,routing-bench@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,oracle@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,aomdv@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,gpsr@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,adaptive@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f,anthocnet@1a5f7caa713bd45a19dfc178f2b7e3b38af09a6f key=6e8e6208cc7f9628961c273905256cef986c7486051df6cb3b000479b3915fa8

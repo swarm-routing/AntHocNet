@@ -233,7 +233,7 @@ public:
     /// repair) pending-queue hold-time stats accumulated over the run, read by
     /// the comparison harness under --diag to locate the delay tail's dominant
     /// hold path.
-    const HoldStats& HoldTimeStats() const { return m_queue.Stats(); }
+    HoldStats HoldTimeStats() const { return HoldStatsOf(GetDeferredQueue()->Stats()); }
 
     /// Issue #215 drop-cause breakdown, the AntHocNet-specific causes. The
     /// generic ones (channel, MAC, TTL, interface queue) are measured
@@ -267,6 +267,13 @@ protected:
     Ipv4Address SelectNextHop(Ipv4Address dst, Ipv4Address src, Ipv4Address prev,
                               Ptr<const Packet> p) override;
     void StartDiscovery(Ipv4Address dst) override;
+    uint8_t HoldClassFor(Ipv4Address dst) override;
+    /// ADR-0008 detector D (S10c of #1019): a unicast frame the MAC gave up on
+    /// at its retry limit, from the node's WifiLinkMonitor. Drives the shared
+    /// core reportTxFailure path (prune + bounded repair ant) and re-injects a
+    /// failed data packet into the pending queue (#46).
+    void OnTxFailure(Ipv4Address neighbor, Mac48Address mac, Ptr<const Packet> p,
+                     const Ipv4Header* header, bool control) override;
     void RecvControl(Ptr<Packet> p, Ipv4Address from, Ipv4Address receiver) override;
 
 public:
@@ -288,8 +295,6 @@ public:
 private:
     /// Starts the periodic timers, once (the first interface up).
     void StartTimers();
-    /// No two control interfaces share a subnet (SendAnt's per-interface fan-out).
-    bool SubnetsDistinct() const;
     Ptr<Ipv4Route> LoopbackRoute(const Ipv4Header& header, Ptr<NetDevice> oif) const;
 
     // ant I/O
@@ -316,11 +321,6 @@ private:
     /// dominates the delay/jitter tail.
     void ReactiveRetryTimerExpire();
 
-    // ADR-0008 detector D: MAC transmit-failure hook. The WifiMac "DroppedMpdu"
-    // trace fires when a unicast frame is dropped after exhausting retries; we
-    // treat a retry-limit drop as a broken link to that next hop and drive the
-    // shared core reportTxFailure path (prune + bounded repair ant).
-    void NotifyTxError(WifiMacDropReason reason, Ptr<const AHN_WIFI_MPDU> mpdu);
     /// Issue #68: successful-transmission hook — samples the measured
     /// per-packet MAC service time for the A2 congestion metric.
     void NotifyAckedMpdu(Ptr<const AHN_WIFI_MPDU> mpdu);
@@ -338,7 +338,8 @@ private:
     /// to exactly the pre-#203 values.
     ///
     /// Never fails: an unresolvable hop falls back to the first interface, the
-    /// old behaviour, rather than dropping the packet.
+    /// old behaviour, rather than dropping the packet. The rule and the peer
+    /// map are SwarmRoutingBase's (ResolveNextHop, SetPeerRoute; S10d of #1019).
     void ResolveNextHop(::anthocnet::core::NodeAddress next, Ipv4Address& gateway,
                         Ptr<NetDevice>& dev, uint32_t& iface) const;
 
@@ -359,20 +360,6 @@ private:
     };
     std::map<uint32_t, ControlIface> m_ifaces;
 
-    /// Issue #203: where a peer the core named actually is. `iface` is the ns-3
-    /// interface index whose device shares a link with it; `linkLocal` is the
-    /// address to send to on that link.
-    struct PeerRoute {
-        uint32_t iface = 0;
-        Ipv4Address linkLocal;
-    };
-    /// Peer canonical address (how the core names it, i.e. how it appears in
-    /// pheromone tables and ant paths) -> how to reach it. Learned from hello
-    /// ants, the one message carrying both of a peer's names: `msg.src` is the
-    /// canonical one, the IP source is the link-local one. Only populated when
-    /// the two differ, so it stays empty on every single-interface topology.
-    std::map<Ipv4Address, PeerRoute> m_peerRoutes;
-
     /// Issue #260: every core name a neighbour was heard under, per interface —
     /// both the link-local sender (what learnNeighbor records as prevHop) and
     /// the canonical `msg.src` a hello carries. Consulted only by the non-wifi
@@ -384,8 +371,6 @@ private:
     ::anthocnet::core::Config m_config;
     std::unique_ptr<::anthocnet::core::AntRouterLogic> m_logic;
     bool m_started;
-
-    RequestQueue m_queue;
 
     Timer m_helloTimer;
     Timer m_proactiveTimer;
@@ -498,7 +483,7 @@ private:
     static void TxDequeueTrace(RoutingProtocol* self, uint32_t interface, Ptr<const Packet> p);
 
     // L3 forwarding callbacks cached from RouteInput (Ipv4L3Protocol passes the
-    // same bound callbacks on every call). NotifyTxError needs them to re-inject
+    // same bound callbacks on every call). OnTxFailure needs them to re-inject
     // a MAC-dropped data packet it only sees as a raw MPDU (issue #46).
     UnicastForwardCallback m_cachedUcb;
     ErrorCallback m_cachedEcb;
@@ -527,7 +512,7 @@ private:
     // MaxReinjectPerPacket and was NOT re-injected, so its MAC drop stays
     // terminal. Same signature and packet form as MacReinject (it reuses
     // MacReinjectCallback); fired only inside the m_maxReinjectPerPacket != 0
-    // branch of NotifyTxError, so it can never fire at the default cap 0.
+    // branch of OnTxFailure, so it can never fire at the default cap 0.
     TracedCallback<const Ipv4Header&, Ptr<const Packet>> m_macReinjectSkipTrace;
 };
 

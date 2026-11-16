@@ -68,7 +68,8 @@ the core half locally first. Three facts that hold for every change:
   a rolling tag (#866), and is compared across images only by the cross-image
   rule in `docs/benchmarks/methodology.md`;
 - until #843 closes, the gates, package checks and kits run on `ns3-dev:3.48`
-  (ns-3.49's AODV livelocks); the `latest` leg keeps the build and unit tests.
+  (ns-3.49's AODV livelocks, NS3-001 in the org's
+  [ns-3 bug register](https://github.com/swarm-routing/ns3-tools/blob/main/docs/ns3-bugs.md)); the `latest` leg keeps the build and unit tests.
 
 Read [`docs/development.md`](docs/development.md) before:
 
@@ -424,6 +425,11 @@ because the issue threads were thorough. Caveman the chat, not the record.
   link, read from its record (`lit-search` confirms it), or, for a work with
   no DOI, by its publisher's or institution's page; never point into or name
   the private paper library there.
+- An ns-3 bug, or an investigation of one, always gets an RCAPA ticket in
+  swarm-routing/ns3-tools first (form *ns-3 bug (RCAPA)*, label `rcapa`, ID
+  `NS3-NNN`); its doc in `docs/ns3-rcapa/` and its `docs/ns3-bugs.md` row
+  follow, and every workaround links the ID. Upstream reports are filed by
+  the maintainer, never by an agent (CONTRIBUTING "ns-3 bugs (RCAPA)").
 <!-- org-sync:end agent-defaults -->
 
 ## Where to look
@@ -462,6 +468,7 @@ on what the row names.
 | Run the benchmark campaign loop (dispatch → fetch → parse) | `benchmark-results` skill (SKILL.md documents the whole procedure) |
 | Run a campaign (cells × arms, throttled so PR CI keeps runners) | `ns3-campaign` (swarm-routing/ns3-tools) + a plan in `tools/bench/campaigns/` pinning `repo`, `source_sha`, `image`; the `benchmark-results` skill |
 | Run the comparison harness, or add a protocol (arm) to it | [`docs/comparison-harness.md`](docs/comparison-harness.md), [ADR-0027](docs/adr/0027-the-comparison-harness-is-protocol-agnostic.md); the harness is ns3-tools' `routing-bench` at the `ns3-tools.lock` pin |
+| Find or suspect an upstream ns-3 bug (a stock arm hangs, crashes, or moves with unrelated code) | the org's register in swarm-routing/ns3-tools: [`docs/ns3-bugs.md`](https://github.com/swarm-routing/ns3-tools/blob/main/docs/ns3-bugs.md) (index, workarounds, upstream status) and [`docs/ns3-rcapa/`](https://github.com/swarm-routing/ns3-tools/tree/main/docs/ns3-rcapa) (one root-cause record per bug); a new one starts with its `[rcapa]` ticket there |
 | Compare benchmark A/B runs (deltas + noise verdict) | `benchmark-results` skill (`python3 tools/ns3_tools.py run bench_parse`: ns3-tools' reader at the pin) |
 | Build, test or screenshot the learn site | the `learn-site` skill in `swarm-routing/swarm-routing.github.io` (parity, smoke, README figures) |
 | Change the site's top bar, places or the docs/API look | the site repo's `site/anthocnet/shell/`, `docs/places/`, the nav in `mkdocs.yml` |

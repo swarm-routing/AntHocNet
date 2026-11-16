@@ -70,7 +70,6 @@ build_lib(
   SOURCE_FILES
     model/anthocnet-routing-protocol.cc
     model/anthocnet-packet.cc
-    model/anthocnet-rqueue.cc
     helper/anthocnet-helper.cc
     ${anthocnet_bench_sources}
     core/src/pheromone_table.cpp
