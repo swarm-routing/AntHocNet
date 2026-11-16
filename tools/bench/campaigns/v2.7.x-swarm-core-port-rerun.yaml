@@ -1,0 +1,91 @@
+# swarm-routing/AntHocNet#1019: the standard-cell campaign of AntHocNet's
+# move onto swarm-core, re-run after the TTL fix (#1083) for the S10 box. Same
+# shape as v2.7.x-swarm-core-port.yaml (port1019): one cell per family, 20
+# seeds, both arms on one ns3-dev:3.48-optimized digest, sha256:5585a93c…
+# (3.48 while #843 is open: aodv is an arm), ns3-tools v1.1.2 in both arms
+# (--isolateArms is its default).
+#
+#   base: main before S1 (8666423) with #1063's ns3-tools v1.1.2 lock
+#         cherry-picked (da5963d), the image port1019's base ran; re-run here,
+#         not reused;
+#   port: main after #1083 (228a423, campaign-image run 43905585290; its last two commits, #1084 and #1086,
+#         change docs only), on swarm-core v1.0.0.
+# The arms differ by S1-S11 and #1083 alone.
+#
+# Cells, blocks and protocol lists: port1019's, unchanged. Each cell's
+# `source` is the port arm's file.
+#
+# Reading, fixed before dispatch: per cell, `port` vs `base`, every line but
+# ##PROV## (commit, image, modules differ by construction) and ##PERF##
+# (timing): byte-identical in all eight families ticks S10 on #1019; any
+# anthocnet difference stops the close-out and is recorded on #1019 and a new
+# issue. ##COMMON## and ##MATCH## depend on every arm, so they are compared
+# too. Tools:
+#   python3 tools/bench/harness_control.py tools/bench/campaigns/v2.7.x-swarm-core-port-rerun.yaml
+#   f() { grep -v -e '^##PROV##' -e '^##PERF##' -e '^# ' "$1"; }
+#   diff <(f results/cells/<cell>-port1019b.txt) <(f results/cells/<cell>-port1019b-port.txt)
+#
+#   P=tools/bench/campaigns/v2.7.x-swarm-core-port-rerun.yaml
+#   ns3-campaign plan     $P
+#   ns3-campaign dispatch $P --cap 8
+#   ns3-campaign status   $P --brief
+#   ns3-campaign collect  $P --out results/cells
+generation: port1019b
+ref: main
+repo: swarm-routing/AntHocNet
+isolates: source_sha
+source_sha: da5963d363cc45feb34cf1837778b04f6de1ee0d
+image: ghcr.io/swarm-routing/anthocnet-dev@sha256:96c845793080ff2843cfcb4d3393c748721fef0417318e08a5213d8dc46e4af4
+pins:
+  port: {source_sha: 228a42310754c6814391d5a7d77a58c38e5838f8, image: ghcr.io/swarm-routing/anthocnet-dev@sha256:a6d9a00fb9a44c6e259acaa75f75514059776d583d92f05c2477b22b84ea7aeb}
+program: routing-compare
+cap: 8
+control: base
+arms:
+  base: ""
+  port: ""
+
+cells:
+  grid-rwp-tworay:
+    source: grid-rwp-tworay-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=10 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=30 --propagation=tworay --mobility=rwp --transport=udp --protocols=anthocnet,aodv,olsr,dsdv,aomdv,oracle"}
+    blocks: [1, 11]
+  static-mesh:
+    source: static-mesh-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=paper --runs=5 --nNodes=50 --time=900 --areaX=1500 --areaY=300 --speed=20 --range=300 --pause=900 --propagation=range --mobility=rwp --transport=udp --standard=80211a --rateManager=constant6 --ns3::dot11s::PeerLink::MaxBeaconLoss=20 --protocols=anthocnet,olsr,hwmp,oracle"}
+    blocks: [1, 6, 11, 16]
+  fanet-main:
+    source: fanet-main-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=fanet --runs=20 --nNodes=30 --time=900 --areaX=1000 --areaY=1000 --pause=0 --speed=30 --range=350 --propagation=range --mobility=gaussmarkov --transport=udp --protocols=anthocnet,aodv,olsr,gpsr3d,oracle"}
+    blocks: [1]
+  vanet-sparse:
+    source: vanet-sparse-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=vanet --runs=10 --nNodes=40 --time=900 --areaX=800 --areaY=800 --pause=0 --speed=20 --range=300 --propagation=urban --mobility=manhattan --transport=udp --protocols=anthocnet,aodv,gpsr,gpcr,oracle"}
+    blocks: [1, 11]
+  disaster-main:
+    source: disaster-main-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: routing-compare, args: "--scenario=disaster --runs=10 --nNodes=47 --time=900 --areaX=1000 --areaY=500 --speed=20 --pause=30 --range=300 --propagation=urban --mobility=trace --transport=udp --traceFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.ns2 --flowsFile=$GITHUB_WORKSPACE/ns3/tools/fixtures/disaster/disaster.flows --buildings=120,170,320,330;680,170,880,330 --protocols=anthocnet,aodv,olsr,oracle"}
+    blocks: [1, 11]
+  sat-failcell:
+    source: sat-failcell-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: isl-grid, args: "--torus=true --islDelayMs=5 --islRate=10Mbps --time=900 --runs=20 --cbrBps=4096 --rows=4 --cols=4 --flows=8 --breakLink=0,0,3,0 --breakAt=450 --protocols=anthocnet,oracle"}
+    # no blocks: isl-grid takes no --firstRun (seeds 1..runs), as in v2.7.x-ns3-tools-pin-control.yaml
+  leo-walker16-anthocnet:
+    source: leo-walker16-anthocnet-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=20 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --protocols=anthocnet"}
+    blocks: [1]
+  sagin-walker16-anthocnet:
+    source: sagin-walker16-anthocnet-port1019b-port.txt
+    workflow: benchmark-cell.yml
+    inputs: {harness: leo-walker, args: "--time=300 --runs=20 --flows=4 --cbrBps=2048 --islRate=10Mbps --planes=16 --sats=16 --phasing=1 --altitude=1150 --inclination=53 --minElevation=25 --islDown=0.01 --sagin --protocols=anthocnet"}
+    blocks: [1]
+
+jobs:
+  - {arms: [base, port], cells: "*"}
