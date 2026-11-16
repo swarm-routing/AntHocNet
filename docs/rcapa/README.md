@@ -16,9 +16,11 @@ A **published release** of AntHocNet is a `v*` tag of this repository: its
 GitHub release (the core and ns-3 module tarballs, `release.yml`'s `publish` job), archived on Zenodo (concept DOI
 [10.5281/zenodo.20981979](https://doi.org/10.5281/zenodo.20981979)), the `anthocnet` ns-3 image on ghcr.io (`release.yml`'s `images` job), and, once its port leaves swarm-routing/vcpkg-registry `templates/`, the `anthocnet-core` vcpkg port. A
 regression is something that worked in one of those releases and broke
-after a change. A defect caught on `main` before the next tag needs no RCAPA:
-an ordinary `bug` issue is enough. Whether a commit reached a release is read
-from `git tag --contains <commit>`.
+after a change, whenever it is found, also on `main` before the next tag.
+A defect introduced after the last tag and fixed before the next one never
+reached a release: it needs no RCAPA, an ordinary `bug` issue is enough.
+Whether a commit reached a release is read from
+`git tag --contains <commit>`.
 
 | | |
 |---|---|
