@@ -42,6 +42,7 @@
 #include "ns3/nstime.h"
 
 #include <sstream>
+#include <vector>
 #include <string>
 #include <vector>
 
@@ -278,6 +279,96 @@ private:
         while ((p = s->Recv())) m_rxBytes += p->GetSize();
     }
     uint32_t m_rxBytes;
+};
+
+// #362, S10b of #1019 — a broadcast leaves on every interface in device order,
+// whatever order the interfaces came up in.
+//
+// Node 0 has two devices, each on its own channel and subnet: node 1 on the
+// first (10.1.1.0/24), node 2 on the second (10.1.2.0/24). After its first
+// interface goes down and comes back up, SwarmRoutingBase lists that
+// interface's sockets last, so BroadcastControl would send on interface 2
+// first. Every hello must still leave on interface 1, then interface 2, in the
+// same instant (BroadcastControlOn in device order), and reach both
+// neighbours. (Two interfaces on one subnet, the case the review of #1054
+// raised, cannot be tested here: ns-3 sends a subnet-directed broadcast from
+// either of them out of the same interface, so the second neighbour hears
+// nothing whichever socket sends it.)
+class DeviceOrderBroadcastTestCase : public TestCase {
+public:
+    DeviceOrderBroadcastTestCase()
+        : TestCase("Broadcasts leave in device order after an interface down/up (#362)") {}
+
+    void DoRun() override {
+        RngSeedManager::SetSeed(1);
+        RngSeedManager::SetRun(1);
+        NodeContainer nodes;
+        nodes.Create(3);
+        SimpleNetDeviceHelper devHelper;
+        NetDeviceContainer a = devHelper.Install(NodeContainer(nodes.Get(0), nodes.Get(1)),
+                                                 CreateObject<SimpleChannel>());
+        NetDeviceContainer b = devHelper.Install(NodeContainer(nodes.Get(0), nodes.Get(2)),
+                                                 CreateObject<SimpleChannel>());
+        AntHocNetHelper anthocnet;
+        InternetStackHelper internet;
+        internet.SetRoutingHelper(anthocnet);
+        internet.Install(nodes);
+        Ipv4AddressHelper address;
+        address.SetBase("10.1.1.0", "255.255.255.0");
+        address.Assign(a);  // node 0's interface 1
+        address.SetBase("10.1.2.0", "255.255.255.0");
+        address.Assign(b);  // node 0's interface 2
+
+        Ptr<Ipv4> ip0 = nodes.Get(0)->GetObject<Ipv4>();
+        ip0->GetObject<Ipv4L3Protocol>()->TraceConnectWithoutContext(
+            "Tx", MakeCallback(&DeviceOrderBroadcastTestCase::Tx, this));
+        for (uint32_t n = 1; n < 3; ++n) {
+            nodes.Get(n)->GetObject<Ipv4>()->GetRoutingProtocol()->TraceConnectWithoutContext(
+                "Rx", MakeBoundCallback(&DeviceOrderBroadcastTestCase::Rx, &m_hellosAt[n]));
+        }
+        Simulator::Schedule(Seconds(3.0), [ip0]() { ip0->SetDown(1); });
+        Simulator::Schedule(Seconds(4.0), [ip0]() { ip0->SetUp(1); });
+        Simulator::Stop(Seconds(12.0));
+        Simulator::Run();
+        Simulator::Destroy();
+        Close();  // the last group: no later broadcast closed it
+
+        NS_TEST_ASSERT_MSG_GT(m_ticksAfter, 3u, "node 0 sent hellos after the down/up cycle");
+        NS_TEST_ASSERT_MSG_EQ(m_badOrder, 0u, "a hello left in another order than interface 1, 2");
+        NS_TEST_ASSERT_MSG_GT(m_hellosAt[1], 3u, "node 1 (interface 1) heard node 0's hellos");
+        NS_TEST_ASSERT_MSG_GT(m_hellosAt[2], 3u, "node 2 (interface 2) heard node 0's hellos");
+    }
+
+private:
+    // Node 0's control broadcasts after the cycle, grouped by the instant they
+    // left: each group must be exactly interfaces 1, 2.
+    void Tx(Ptr<const Packet> p, Ptr<Ipv4>, uint32_t iface) {
+        const Time now = Simulator::Now();
+        if (now < Seconds(5.0)) return;
+        Ipv4Header ip;
+        p->PeekHeader(ip);
+        if (!ip.GetDestination().IsSubnetDirectedBroadcast(Ipv4Mask("255.255.255.0"))) return;
+        if (now != m_groupAt) {
+            Close();
+            m_groupAt = now;
+        }
+        m_group.push_back(iface);
+    }
+    void Close() {
+        if (m_group.empty()) return;
+        ++m_ticksAfter;
+        if (m_group != std::vector<uint32_t>{1, 2}) ++m_badOrder;
+        m_group.clear();
+    }
+    static void Rx(uint32_t* count, uint8_t type, uint8_t) {
+        if (Simulator::Now() >= Seconds(5.0) && type == 1) ++*count;  // AntType::Hello
+    }
+
+    Time m_groupAt;
+    std::vector<uint32_t> m_group;
+    uint32_t m_ticksAfter = 0;
+    uint32_t m_badOrder = 0;
+    uint32_t m_hellosAt[3] = {0, 0, 0};
 };
 
 // #204 — hellos on point-to-point links every N ticks, liveness from the up
@@ -556,77 +647,90 @@ public:
     }
 };
 
-// #918: the pending queue's in-place DequeueAll/Purge. Every backward ant at
-// every node flushes its origin, so a flush for a destination with nothing
-// queued must leave the queue exactly as it was; a real flush hands out that
-// destination's packets in queue order and keeps the others' order; an aged
-// entry is still purged first, through its error callback.
+// #918: the pending queue's in-place flush, now swarm-core's DeferredPacketQueue
+// configured as AntHocNet's (ConfigurePendingQueue; S10b of #1019). Every
+// backward ant at every node flushes its origin, so a flush for a destination
+// with nothing queued must leave the queue exactly as it was; a real flush
+// hands out that destination's packets in queue order and keeps the others'
+// order; an aged entry is still purged first, through its error callback, and
+// counted against its hold reason.
 class RequestQueueInPlaceTestCase : public TestCase {
 public:
     RequestQueueInPlaceTestCase()
         : TestCase("Pending queue: in-place, order-preserving flush (#918)") {}
 
     void DoRun() override {
-        using ns3::anthocnet::QueueEntry;
-        using ns3::anthocnet::RequestQueue;
-        RequestQueue q(64, Seconds(10));
+        using ns3::DeferredPacket;
+        using ns3::DeferredPacketQueue;
+        Ptr<DeferredPacketQueue> q = CreateObject<DeferredPacketQueue>();
+        ns3::anthocnet::ConfigurePendingQueue(*q, Seconds(10), Seconds(0.2), Seconds(0));
         const char* dsts[] = {"10.0.0.1", "10.0.0.2", "10.0.0.1", "10.0.0.3", "10.0.0.2"};
         std::vector<uint64_t> uids;
         for (const char* d : dsts) {
-            QueueEntry e;
+            DeferredPacket e;
             e.packet = Create<Packet>(8);
             e.header.SetDestination(Ipv4Address(d));
             uids.push_back(e.packet->GetUid());
-            q.Enqueue(e);
+            q->Enqueue(e);
         }
 
         // No match: nothing out, nothing moved.
-        std::vector<QueueEntry> out;
-        q.DequeueAll(Ipv4Address("10.0.0.9"), out);
+        std::vector<DeferredPacket> out = q->Release(Ipv4Address("10.0.0.9"));
         NS_TEST_ASSERT_MSG_EQ(out.size(), 0u, "a flush with no match dequeues nothing");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 5u, "a flush with no match keeps every entry");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 5u, "a flush with no match keeps every entry");
 
         // A match: that destination's packets, in queue order.
-        q.DequeueAll(Ipv4Address("10.0.0.1"), out);
+        out = q->Release(Ipv4Address("10.0.0.1"));
         NS_TEST_ASSERT_MSG_EQ(out.size(), 2u, "both packets for 10.0.0.1");
         NS_TEST_ASSERT_MSG_EQ(out[0].packet->GetUid(), uids[0], "queue order kept (1st)");
         NS_TEST_ASSERT_MSG_EQ(out[1].packet->GetUid(), uids[2], "queue order kept (2nd)");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 3u, "the other three stay");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 3u, "the other three stay");
 
         // The rest kept their order: drain them one destination at a time.
-        std::vector<QueueEntry> rest;
-        q.DequeueAll(Ipv4Address("10.0.0.2"), rest);
-        q.DequeueAll(Ipv4Address("10.0.0.3"), rest);
+        std::vector<DeferredPacket> rest = q->Release(Ipv4Address("10.0.0.2"));
+        for (DeferredPacket& e : q->Release(Ipv4Address("10.0.0.3"))) rest.push_back(e);
         NS_TEST_ASSERT_MSG_EQ(rest.size(), 3u, "three left");
         NS_TEST_ASSERT_MSG_EQ(rest[0].packet->GetUid(), uids[1], "kept order (10.0.0.2 first)");
         NS_TEST_ASSERT_MSG_EQ(rest[1].packet->GetUid(), uids[4], "kept order (10.0.0.2 second)");
         NS_TEST_ASSERT_MSG_EQ(rest[2].packet->GetUid(), uids[3], "kept order (10.0.0.3)");
-        NS_TEST_ASSERT_MSG_EQ(q.Size(), 0u, "empty");
+        NS_TEST_ASSERT_MSG_EQ(q->Size(), 0u, "empty");
 
         // Aging: an expired entry leaves through its error callback on the
-        // next flush, even one that matches nothing; a live one stays.
+        // next flush, even one that matches nothing; a live one stays. A
+        // reconvergence hold also expires at its cap (0.2 s here).
         m_errors = 0;
-        RequestQueue aging(64, Seconds(1));
-        QueueEntry old;
+        Ptr<DeferredPacketQueue> aging = CreateObject<DeferredPacketQueue>();
+        ns3::anthocnet::ConfigurePendingQueue(*aging, Seconds(1), Seconds(0.2), Seconds(0));
+        DeferredPacket old;
         old.packet = Create<Packet>(8);
         old.header.SetDestination(Ipv4Address("10.0.0.1"));
         old.ecb = MakeCallback(&RequestQueueInPlaceTestCase::OnError, this);
-        aging.Enqueue(old);
+        aging->Enqueue(old);
+        DeferredPacket reconv = old;
+        reconv.header.SetDestination(Ipv4Address("10.0.0.4"));
+        reconv.holdClass = ns3::anthocnet::HOLD_RECONV;
+        aging->Enqueue(reconv);
         Simulator::Schedule(Seconds(0.5), [&aging]() {
-            QueueEntry young;
+            DeferredPacket young;
             young.packet = Create<Packet>(8);
             young.header.SetDestination(Ipv4Address("10.0.0.2"));
-            aging.Enqueue(young);
+            aging->Enqueue(young);
         });
-        std::vector<QueueEntry> none;
+        std::vector<DeferredPacket> none;
         Simulator::Schedule(Seconds(1.2),
-                            [&aging, &none]() { aging.DequeueAll(Ipv4Address("10.0.0.9"), none); });
+                            [&aging, &none]() { none = aging->Release(Ipv4Address("10.0.0.9")); });
         Simulator::Run();
         Simulator::Destroy();
         NS_TEST_ASSERT_MSG_EQ(none.size(), 0u, "nothing matched");
-        NS_TEST_ASSERT_MSG_EQ(m_errors, 1u, "the aged entry was purged through its ecb");
-        NS_TEST_ASSERT_MSG_EQ(aging.Stats().droppedCount[ns3::anthocnet::HOLD_SETUP], 1u,
-                              "and counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ(m_errors, 2u, "the aged entries were purged through their ecb");
+        NS_TEST_ASSERT_MSG_EQ(aging->Size(), 1u, "the live one stays");
+        const ns3::anthocnet::HoldStats h = ns3::anthocnet::HoldStatsOf(aging->Stats());
+        NS_TEST_ASSERT_MSG_EQ(h.droppedCount[ns3::anthocnet::HOLD_SETUP], 1u,
+                              "the setup hold counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ(h.droppedCount[ns3::anthocnet::HOLD_RECONV], 1u,
+                              "the reconvergence hold counted as dropped");
+        NS_TEST_ASSERT_MSG_EQ_TOL(h.droppedSumS[ns3::anthocnet::HOLD_RECONV], 0.5, 1e-9,
+                                  "dropped when the queue was next used (0.5 s), not at its cap");
     }
 
 private:
@@ -996,6 +1100,7 @@ public:
         AddTestCase(new AddressMappingTestCase(), AHN_TEST_QUICK);
         AddTestCase(new AntHocNetDeliveryTestCase(), AHN_TEST_QUICK);
         AddTestCase(new MultiInterfaceDeliveryTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new DeviceOrderBroadcastTestCase(), AHN_TEST_QUICK);
         AddTestCase(new P2pHelloThrottleTestCase(), AHN_TEST_QUICK);
         AddTestCase(new StrongestNextHopTestCase(), AHN_TEST_QUICK);
         AddTestCase(new PerHopCongestionSignalTestCase(), AHN_TEST_QUICK);
