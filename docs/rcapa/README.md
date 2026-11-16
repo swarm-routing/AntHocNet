@@ -1,50 +1,55 @@
 # RCAPA: regressions in a release of swarm-routing/AntHocNet
 
 An **RCAPA** (root cause analysis with corrective and preventive actions) is
-the full record of one **regression in a published release** of this
-project: something that worked in a released version and broke after a
-change. A bug or change that never reached a release needs none (an
-ordinary `bug` issue is enough), and an upstream ns-3 bug is an `NS3-NNN` in
-swarm-routing/ns3-tools. The org's rule and its decision table are in
+the full record of one **regression in a published library**: a version of
+it that another project consumes (a release pinned by a lock, PyPI, a vcpkg
+port) worked, and a later one broke. A bug or change that never reached a
+published version needs none (an ordinary `bug` issue is enough), a Docker
+image needs one only when its composition is the cause, and an upstream
+ns-3 bug is an `NS3-NNN` in swarm-routing/ns3-tools. The org's rule and its decision table are in
 [CONTRIBUTING.md, "RCAPA"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#rcapa)
 ([ADR-0003](https://github.com/swarm-routing/.github/blob/main/docs/adr/0003-rcapa-for-ns3-bugs-and-released-regressions.md)).
 This page is the project's flow and its index.
 
 ## The flow for this project
 
-A **published release** of AntHocNet is a `v*` tag of this repository: its
-GitHub release (the core and ns-3 module tarballs, `release.yml`'s `publish` job), archived on Zenodo (concept DOI
-[10.5281/zenodo.20981979](https://doi.org/10.5281/zenodo.20981979)), the `anthocnet` ns-3 image on ghcr.io (`release.yml`'s `images` job), and, once its port leaves swarm-routing/vcpkg-registry `templates/`, the `anthocnet-core` vcpkg port. A
-regression is something that worked in one of those releases and broke
-after a change, whenever it is found, also on `main` before the next tag.
-A defect introduced after the last tag and fixed before the next one never
-reached a release: it needs no RCAPA, an ordinary `bug` issue is enough.
-Whether a commit reached a release is read from
-`git tag --contains <commit>`.
+The library other projects would consume from AntHocNet is its simulator-free
+`core/`, through the `anthocnet-core` vcpkg port. That port is not published yet (it
+waits in swarm-routing/vcpkg-registry `templates/` until a release installs
+`core/` as a CMake package), so **RCAPA does not apply yet**: the flow below
+starts with the first published port version. The ns-3 module, the GitHub
+releases and their Zenodo DOIs are not consumed at a version by another
+project; a defect there is an ordinary `bug` issue.
+
+AntHocNet is the org's main **consumer**: when one of its lock bumps breaks
+it (`swarm-core.lock`, `ns3-tools.lock`), the RCAPA belongs to that library,
+an `SWC-NNN` in swarm-routing/ns3-swarm-core or an `NST-NNN` in
+swarm-routing/ns3-tools, opened from AntHocNet's finding and verified with
+AntHocNet's failing check.
 
 | | |
 |---|---|
-| Published as | `v*` tags: GitHub release + Zenodo DOI, the `anthocnet` release image on ghcr.io, the `anthocnet-core` vcpkg port (planned: still in swarm-routing/vcpkg-registry `templates/`) |
+| Published as | nothing yet: the `anthocnet-core` vcpkg port, from its first published version |
 | ID prefix | `AHN-NNN` |
-| Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] AHN-NNN <short description>`, labels `rcapa` and `bug` |
-| Verified by | the reproducer against the failing tag and the last good one: `make test` (core ctest), the ns-3 suite and gate groups of `ci-ns3.yml`, native-vs-WASM parity, and for a changed number the standard cells (`benchmark-cell.yml`, a campaign plan in `tools/bench/campaigns/`, `tools/bench/harness_control.py` on the committed cells); the determinism check (same seed, byte-identical) where output changed |
-| Corrective action | the fix PR with a test that fails without it: a core unit test in `core/tests/` for any core logic change (golden rule 7), an ns-3 test case only for a fix outside core logic (the adapter); a fix that adds a mechanism or moves a default follows golden rule 8: the mechanism ships behind a default-off `Config` switch, the default path stays byte-identical (the determinism check), and a default moves only after an identical-seed A/B in every family; then a release bump |
-| Preventive action | the gate, standard cell or determinism case that would have caught it before the tag, added to CI or to the release checks; a published number it touched is re-run and the record in `docs/benchmarks/` corrected |
-| Closes when | the fix is merged **and** a `v*` release carries it (tag and version DOI read from Zenodo, recorded in the index) |
+| Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] AHN-NNN <short description>`, labels `rcapa` and `bug`, opened from the consumer's finding |
+| Verified by | the consumer's failing build or test against the `anthocnet-core` version that broke and the one before it; then `make test` (core ctest), and in CI `ci-core.yml` (`core`, `core-sanitizers` under ASan + UBSan, `codec-fuzz`) and the ns-3 gates of `ci-ns3.yml` |
+| Corrective action | the fix PR with a core unit test in `core/tests/` that fails without it (golden rule 7); a wire-format change bumps `kWireVersion` (golden rule 4); then a release and the port bump org-bot opens in swarm-routing/vcpkg-registry |
+| Preventive action | the core test or fuzz case that would have caught it, and a consumer case in swarm-routing/vcpkg-registry `test/consumer/` if only a consumer showed it |
+| Closes when | a release carries the fix **and** the `anthocnet-core` port is bumped to it in the registry, with the consumer that found it green on the new baseline |
 
 ```mermaid
 sequenceDiagram
-    participant U as Reporter or campaign
+    participant C as A vcpkg consumer
     participant T as RCAPA ticket
-    participant G as CI gates and standard cells
+    participant G as core checks
     participant M as main
-    participant R as Release and Zenodo
-    U->>T: a released version behaves differently
-    T->>G: reproduce against the failing and last good release
+    participant R as AntHocNet release and port bump
+    C->>T: a check that passed on the old version fails on the new one
+    T->>G: reproduce with the consumer's check, new version against old
     T->>M: fix with a test that fails without it
-    M->>G: the same check passes on main
-    M->>R: release bump carries the fix
-    R->>T: tag and DOI recorded, ticket closed
+    M->>R: a release carries the fix
+    R->>C: the consumer moves to it and runs green
+    C->>T: release and green run recorded, ticket closed
 ```
 
 ## Index
@@ -59,8 +64,7 @@ sequenceDiagram
 2. Copy [`_template.md`](_template.md) to `rcapa-<short-description>.md`
    (lowercase, hyphens: what breaks, not where it was found), and add its row
    to the index in the same pull request.
-3. The ticket stays open until the corrective action is merged **and a
-   release carries the fix**; record that release in the index.
+3. The ticket stays open until a release carries the fix, the `anthocnet-core` port is bumped to it in swarm-routing/vcpkg-registry, and the consumer that found it runs green on the new baseline; record the release and the baseline in the index.
 
 ## What an RCAPA answers
 
