@@ -26,7 +26,7 @@ NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 # core/CMakeLists.txt reads; SWARM_CORE_REF is that release's tag, as every
 # place that names swarm-core must (checked by `swarm-core / pin`).
 # SWARM_CORE_DIR=<checkout>/core builds against a local swarm-core instead.
-SWARM_CORE_REF ?= v0.4.0
+SWARM_CORE_REF ?= v1.0.0
 CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release \
   -DSWARM_CORE_DIR=$(if $(SWARM_CORE_DIR),$(abspath $(SWARM_CORE_DIR)))
 

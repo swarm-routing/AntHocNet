@@ -149,3 +149,120 @@ date,commit,cpu,case,ns_per_op,min_ns,max_ns
 2026-11-14,0ce97adafd41,AMD EPYC 7763 64-Core Processor,history_dedup,92.68,92.16,93.54
 2026-11-14,0ce97adafd41,AMD EPYC 7763 64-Core Processor,evaporate_all,7899.36,7879.25,7987.31
 2026-11-14,0ce97adafd41,AMD EPYC 7763 64-Core Processor,create_hello,7005.38,6965.57,7101.34
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,pheromone_update,70.95,70.79,73.11
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,select_next_hop_4,98.54,98.33,98.69
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,select_next_hop_16,358.50,357.97,367.24
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,select_next_hop_64,1344.72,1342.57,1345.75
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,codec_encode_full_ant,58.15,58.05,58.65
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,codec_decode_full_ant,69.99,69.84,70.48
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,history_dedup,93.84,93.56,94.99
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,evaporate_all,7868.41,7847.20,8155.90
+2026-11-15,49376679d832,AMD EPYC 7763 64-Core Processor,create_hello,6990.64,6969.01,7251.54
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,pheromone_update,64.01,63.74,64.72
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,57.36,57.14,57.82
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,237.20,236.53,237.69
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,864.71,859.47,869.04
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,40.74,40.57,40.89
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,46.89,46.50,46.98
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,history_dedup,62.80,62.54,63.16
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,evaporate_all,5209.70,5106.95,5317.41
+2026-11-15,302437aed2e5,Intel(R) Xeon(R) 6975P-C,create_hello,4639.06,4606.99,4665.32
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,pheromone_update,64.07,63.95,64.34
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,57.28,57.23,57.64
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,236.89,236.39,237.34
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,863.18,862.15,864.34
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,40.84,40.79,41.58
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,46.48,46.41,46.67
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,history_dedup,62.18,62.01,62.45
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,evaporate_all,5208.59,5191.28,5226.86
+2026-11-15,bfa07b95f04e,Intel(R) Xeon(R) 6975P-C,create_hello,4672.74,4660.66,4844.28
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,pheromone_update,76.27,74.96,77.16
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,select_next_hop_4,67.44,66.83,69.81
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,select_next_hop_16,272.70,270.71,274.40
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,select_next_hop_64,995.19,984.15,1006.81
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,codec_encode_full_ant,42.70,42.45,44.69
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,codec_decode_full_ant,63.00,61.34,64.43
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,history_dedup,74.11,73.35,82.18
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,evaporate_all,6334.68,6244.31,6434.15
+2026-11-15,6cea87a6b34b,INTEL(R) XEON(R) PLATINUM 8573C,create_hello,6343.08,6229.77,6525.18
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,pheromone_update,64.83,64.73,65.19
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,57.27,57.18,57.38
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,236.90,236.43,237.44
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,867.97,866.07,871.56
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,41.61,41.41,41.63
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,47.47,47.33,49.98
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,history_dedup,65.20,65.04,66.67
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,evaporate_all,5584.10,5519.51,5650.12
+2026-11-15,33112ffb3850,Intel(R) Xeon(R) 6975P-C,create_hello,4964.38,4948.52,4975.46
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,pheromone_update,65.05,64.96,65.31
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,57.38,57.35,59.00
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,237.02,236.50,237.38
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,865.68,863.17,866.94
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,41.14,40.74,41.31
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,46.94,46.58,47.13
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,history_dedup,70.96,70.78,71.26
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,evaporate_all,5528.08,5512.66,5624.42
+2026-11-15,bcca43dfab8f,Intel(R) Xeon(R) 6975P-C,create_hello,5166.06,5099.20,5216.40
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,pheromone_update,69.68,69.33,70.27
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,select_next_hop_4,97.67,97.57,98.39
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,select_next_hop_16,361.51,360.79,363.90
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,select_next_hop_64,1354.89,1352.54,1363.87
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,codec_encode_full_ant,369.62,368.95,370.55
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,codec_decode_full_ant,279.17,277.59,281.42
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,history_dedup,108.87,108.40,109.41
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,evaporate_all,8935.93,8887.78,8986.79
+2026-11-15,9232402c5948,AMD EPYC 7763 64-Core Processor,create_hello,7494.86,7448.68,7679.60
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,pheromone_update,69.99,69.56,70.31
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,select_next_hop_4,97.80,97.67,98.09
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,select_next_hop_16,362.37,361.97,366.13
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,select_next_hop_64,1353.74,1352.70,1360.89
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,codec_encode_full_ant,368.77,368.48,373.28
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,codec_decode_full_ant,272.63,272.23,275.81
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,history_dedup,105.45,105.26,106.93
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,evaporate_all,8518.13,8481.74,8535.87
+2026-11-15,e06c2206c3fa,AMD EPYC 7763 64-Core Processor,create_hello,7529.16,7503.58,7578.63
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,pheromone_update,53.29,53.16,56.30
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,select_next_hop_4,48.02,47.93,48.44
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,select_next_hop_16,203.81,197.43,214.97
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,select_next_hop_64,757.75,711.37,763.87
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,codec_encode_full_ant,80.40,80.26,86.24
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,codec_decode_full_ant,122.13,121.92,123.09
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,history_dedup,51.99,51.64,52.75
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,evaporate_all,3984.90,3973.43,4129.50
+2026-11-15,d35d0ba66ce3,AMD EPYC 9V45 96-Core Processor,create_hello,3412.03,3401.75,3442.15
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,pheromone_update,59.67,59.57,59.92
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,select_next_hop_4,69.93,69.83,70.05
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,select_next_hop_16,243.90,243.60,244.03
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,select_next_hop_64,936.75,935.24,939.51
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,codec_encode_full_ant,149.22,147.51,151.38
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,codec_decode_full_ant,149.53,149.34,149.90
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,history_dedup,80.15,80.00,81.10
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,evaporate_all,5330.42,5327.31,5387.24
+2026-11-15,5eb8d3ac2be9,AMD EPYC 9V74 80-Core Processor,create_hello,4970.49,4963.69,5230.82
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,pheromone_update,70.13,69.52,70.18
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,select_next_hop_4,107.55,107.20,113.07
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,select_next_hop_16,371.70,369.26,372.04
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,select_next_hop_64,1375.40,1373.66,1377.85
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,codec_encode_full_ant,368.95,368.74,370.02
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,codec_decode_full_ant,211.76,209.80,214.65
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,history_dedup,109.03,108.30,113.51
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,evaporate_all,10941.87,10741.27,11129.80
+2026-11-15,b48bee16ed03,AMD EPYC 7763 64-Core Processor,create_hello,7262.23,7232.58,7293.99
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,pheromone_update,63.84,63.76,64.13
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,61.49,61.45,61.61
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,239.43,238.91,240.00
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,871.58,870.30,874.52
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,124.37,124.32,124.50
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,127.76,126.82,128.30
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,history_dedup,70.76,70.39,70.91
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,evaporate_all,6813.72,6677.67,6817.94
+2026-11-15,4b1eb7f4cebe,Intel(R) Xeon(R) 6975P-C,create_hello,4769.53,4752.98,4778.66
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,pheromone_update,61.21,61.08,61.37
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,select_next_hop_4,73.85,73.76,74.30
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,select_next_hop_16,249.73,249.49,251.24
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,select_next_hop_64,947.69,945.47,956.43
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,codec_encode_full_ant,146.95,145.92,147.74
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,codec_decode_full_ant,149.63,149.26,150.55
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,history_dedup,80.36,80.20,80.59
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,evaporate_all,7940.47,7933.53,8152.03
+2026-11-15,fa9776cbd997,AMD EPYC 9V74 80-Core Processor,create_hello,5654.57,5632.01,5660.41

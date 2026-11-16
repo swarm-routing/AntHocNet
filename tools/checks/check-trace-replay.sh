@@ -45,7 +45,8 @@ printf '%s\n' "$out" | grep -q "^##CONFIG## .*nNodes=10 .*traceFile=.*flowsFile=
   || { say "FAIL: ##CONFIG## does not name nNodes=10 and the two files"; fail=1; }
 
 # 2. generated run == its replay, byte for byte
-ARGS="--csv --protocols=anthocnet,aodv --nNodes=20 --time=120 --area=600 --flows=4 --speed=10 --pause=5 --range=300"
+# --perf=0: ##PERF## (ns3-tools v0.2.0+, swarm-routing/ns3-tools#91) is CPU and wall time, different every run (its event count also differs between a generated run and its replay); the byte comparison is of what the protocols did.
+ARGS="--csv --perf=0 --protocols=anthocnet,aodv --nNodes=20 --time=120 --area=600 --flows=4 --speed=10 --pause=5 --range=300"
 run $ARGS --dumpTrace="$TMP/gen.ns_movements" --dumpFlows="$TMP/gen.flows" > "$TMP/gen.out"
 run $ARGS --mobility=trace --traceFile="$TMP/gen.ns_movements" --flowsFile="$TMP/gen.flows" > "$TMP/rep.out"
 if diff <(grep -v '^##CONFIG##' "$TMP/gen.out") <(grep -v '^##CONFIG##' "$TMP/rep.out") > "$TMP/diff"; then
