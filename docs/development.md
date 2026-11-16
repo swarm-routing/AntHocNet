@@ -1,13 +1,84 @@
-# Build, test and verify in detail
+# Developer guide
 
-The long form of "Build & verify" in [`AGENTS.md`](../AGENTS.md): how coverage is
-measured, how an adapter change is validated through CI (the ns-3 matrix, the
-sanitizer pass, the gate groups, the heavier manual workflows), how the browser
-adapter and the learn site are checked, and the checks to run before pushing a
-docs or packaging change. AGENTS.md keeps the commands every change needs and
-says when to read each section here.
+This page is how to work on AntHocNet: the tools to install, how to get the
+code and its dependencies, build, test, run and lint it, the dev container,
+what CI checks and how a release is cut. It is also the long form of "Build
+& verify" in [`AGENTS.md`](../AGENTS.md): how coverage is measured, how an
+adapter change is validated through CI (the ns-3 matrix, the sanitizer pass,
+the gate groups, the heavier manual workflows), how the browser adapter and
+the learn site are checked, and the checks to run before pushing a docs or
+packaging change. AGENTS.md keeps the commands every change needs and says
+when to read each section here; how issues and pull requests work is the
+org's [CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md).
 
-# Test coverage
+## Prerequisites
+
+| Tool | Version | Needed for |
+| --- | --- | --- |
+| Linux or macOS, `git`, `make` | any recent | everything |
+| C++ compiler with C++23, CMake | a C++23 compiler (CI: GCC 13.3 on Ubuntu 24.04); CMake 3.20 or newer | `core/` and its tests (`make test`) |
+| clang-format, clang-tidy | 18 (`clang-format-18`) | `make lint`, `make format`, the static checks |
+| ns-3 | 3.46 or newer (the C++23 floor); CI builds on the release ns-3 supports, 3.49 today | the ns-3 module: your own tree, or the `ns3-dev` image (below) |
+| Docker | any recent; about 4 GB free for an `ns3-dev` image | the dev container, `make shell` |
+| Python | 3.11 or newer, with the pins in `requirements/` (`gcovr.txt`, `mkdocs-material.txt`, `ruff.txt`, `pyyaml.txt`, `matplotlib.txt`) | coverage, the docs site, the Python tools and charts |
+| doxygen | any recent (CI: Ubuntu 24.04's) | the API reference |
+| emsdk | 4.0.10, pinned in `.github/actions/setup-emsdk` | only the browser checks (parity, the site) |
+| Node.js | 22 | only the browser smokes |
+
+Install a pinned Python set by its file, for example `pip install
+--require-hashes -r requirements/gcovr.txt` for coverage; the other files in
+`requirements/` work the same way.
+
+## Get the code
+
+```bash
+git clone https://github.com/swarm-routing/AntHocNet.git
+cd AntHocNet
+```
+
+There are no submodules. The browser adapter and the learn site live in
+swarm-routing/swarm-routing.github.io; `tools/checks/fetch-site-web.sh` copies
+them into a git-ignored `web/` when you need the browser checks (see
+"Validating the browser adapter and the learn site" below).
+
+## Dependencies
+
+- **swarm-core's `core/`**: `swarm-core.lock` names one swarm-core release;
+  CMake downloads its tarball and checks its SHA256. Offline, or against an
+  unreleased swarm-core: `make test SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.
+- **The comparison harness and the result readers**: `ns3-tools.lock` names
+  one swarm-routing/ns3-tools release; `tools/ns3_tools.py` fetches it
+  (`python3 tools/ns3_tools.py run bench_parse ...` runs a reader at the pin).
+- **ns-3**: your own tree (`make install-ns3 NS3DIR=...`), or the org's
+  prebuilt `ghcr.io/swarm-routing/ns3-dev` images, which CI and the dev
+  container use.
+- Neither lock is edited by hand: the `swarm-core / pin` check and org-bot
+  move them (CONTRIBUTING "Dependencies"). A vcpkg-based setup is planned
+  (swarm-routing/.github#489).
+
+## Build
+
+```bash
+make build                                   # core/ only (CMake), into core/build
+make doctor      NS3DIR=/path/to/ns-3        # check the ns-3 tree (##DOCTOR## line)
+make install-ns3 NS3DIR=/path/to/ns-3        # BASELINES=0: AntHocNet alone, no comparison arms
+cd /path/to/ns-3 && ./ns3 configure --enable-examples --enable-tests && ./ns3 build
+```
+
+`make uninstall-ns3 NS3DIR=...` removes the modules again;
+[ns3/README.md](../ns3/README.md) has the details. In the dev container the
+modules are installed and built for you (see "Docker and dev containers").
+
+## Test
+
+`make test` builds `core/` and runs its ctest suite: no simulator, a few
+seconds, and the check CI runs on every PR. **Always run it before
+committing a core change.** The ns-3 half (the module's `test.py` suites,
+the delivery smokes and the gates) is validated through CI, as below; in the
+dev container `cd /opt/ns-3 && ./test.py -s anthocnet` runs the module's
+suite.
+
+### Test coverage
 
 `core/` has an opt-in gcov build (default build is untouched):
 
@@ -44,7 +115,7 @@ push/PR and is runnable here. An actual NS-3 build needs an external simulator
 tree and is **not** possible from this repo alone. **Always run `make test`
 before committing a core change.**
 
-# Validating adapter (NS-3) changes — use CI
+### Validating adapter (NS-3) changes — use CI
 
 Because you cannot build a simulator here, the **CI matrix is how you validate
 an adapter change**: develop, push a branch, open a PR, and read the job
@@ -116,12 +187,16 @@ results.
   (nightly build against ns-3-dev; a red night opens a `[ci]` issue). The AI
   reviewer is CodeRabbit, a GitHub App configured by `.coderabbit.yaml` (the org's
   settings plus this file's golden rules): it reviews each PR once when it opens,
-  comments only, never approves, and is not a required check (#811, #838; the
-  Claude Code Action review was removed by maintainer decision, #864). Releases are version-bumped by Commitizen from
+  comments only and never approves (#811, #838; the
+  Claude Code Action review was removed by maintainer decision, #864). Its
+  gate, `review / coderabbit`, is a required check (swarm-routing/.github#294):
+  it passes once CodeRabbit has reviewed the PR or said it will not, or 30
+  minutes after the PR opened, and the ruleset holds a merge while a
+  CodeRabbit thread is unresolved. Releases are version-bumped by Commitizen from
   Conventional-Commit history; **PR titles must be Conventional Commits** (CI
   enforces it — see `CONTRIBUTING.md`).
 
-# Validating the browser adapter and the learn site
+### Validating the browser adapter and the learn site
 
 The browser adapter, the game and the site shell live in
 [`swarm-routing/swarm-routing.github.io`](https://github.com/swarm-routing/swarm-routing.github.io)
@@ -143,12 +218,50 @@ node web/test/smoke.mjs "$PWD/web/build-site"  # needs playwright-core + axe-cor
 The site repo's `learn-site` skill has the full procedure, including
 regenerating the README figures from the game.
 
-# Docs and release-package checks (run before pushing a docs or packaging change)
+## Run
+
+In the dev container, or on an ns-3 tree with the modules installed:
+
+```bash
+cd /opt/ns-3                                          # or your NS3DIR
+./ns3 run anthocnet-example                           # a first simulation
+./ns3 run "anthocnet-compare --nNodes=20 --time=30"   # vs AODV / OLSR / DSDV
+```
+
+`anthocnet-compare` is ns3-tools' `routing-compare` under its old name
+([comparison-harness.md](comparison-harness.md) has the flags and the
+marker lines it prints). Benchmark numbers come from CI, not from a
+laptop: one cell is the `benchmark-cell` workflow, a campaign is a plan run
+by ns3-tools' `ns3-campaign` (AGENTS.md "Where to look", the
+`benchmark-results` skill).
+
+## Docker and dev containers
+
+- **Dev container** ([`.devcontainer/`](../.devcontainer/)): open the
+  repository in GitHub Codespaces or VS Code ("Dev Containers: Reopen in
+  Container"). It starts from `ghcr.io/swarm-routing/ns3-dev:3.48-debug`,
+  pinned by digest, and `post-create.sh` installs and builds this checkout's
+  modules on the image's warm ns-3 tree.
+- **`make shell`**: an interactive shell in the dev image with this checkout
+  at `/src`.
+- **Images**: this repository builds no ns-3 image of its own; release and
+  campaign images are built `FROM` an `ns3-dev` digest
+  ([docker/README.md](../docker/README.md)).
+
+## Lint and format
+
+```bash
+make lint      # clang-format-18 dry run over core/ and ns3/anthocnet/, as lint.yml
+make format    # apply it
+```
+
+### Docs and release-package checks (run before pushing a docs or packaging change)
 
 In a Claude Code on the web session, `.claude/hooks/session-start.sh` (#618)
 already installed these tools at CI's pins; set `AHN_WEB=1` in the environment
 to also get emsdk and playwright for the browser checks above. CI's
-required checks are the `CI gate` job and `check / org-sync` (org-sync.yml); docs-only PRs skip the simulator jobs (#607)
+required checks are the `CI gate` job, `check / org-sync` (org-sync.yml) and the
+review gate `review / coderabbit` (the CI map below); docs-only PRs skip the simulator jobs (#607)
 but not the `pages` job, which builds the whole site, crawls it
 (`tools/checks/check-site.py`) and runs the browser smoke with axe on every docs page.
 
@@ -165,3 +278,51 @@ make format
 cmake -S core -B build-tidy/core -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 ```
+
+## CI map
+
+| Workflow | Job (check name) | What it checks | Required |
+| --- | --- | --- | --- |
+| `ci.yml` (calls `ci-core.yml`, `ci-ns3.yml`, `ci-web.yml`) | `CI gate` | the one gate over `core`, `ns3` (build, unit tests, smokes, the 8 gate groups), `web` (parity, the docs and API build and its browser smoke) and the allowlists; docs-only PRs skip the simulator jobs | yes |
+| `org-sync.yml` | `check / org-sync` | the org-managed files match the templates | yes |
+| `review-gate.yml` | `review / coderabbit` | CodeRabbit has reviewed the PR | yes |
+| `lint.yml` | | clang-format (fails on a diff), clang-tidy (warn-only), ruff, the release-package gate, the ns3-tools pin | no |
+| `pr-title.yml` | | the PR title is a lowercase Conventional Commit | no (enforced by CI) |
+| `quality.yml`, `codeql.yml`, `core-bench.yml` | | coverage to Codecov and SonarQube Cloud; CodeQL; core ns/op against the base | no (report-only) |
+| `licence.yml`, `swarm-core-pin.yml` | | licence headers; the swarm-core lock | no |
+| `benchmark-cell.yml`, `campaign-image.yml`, `benchmarks.yml` | | one harness cell, a campaign image (dispatched) | no (manual) |
+| `charts.yml`, `links.yml`, `ns3-dev.yml`, `bake.yml` | | charts from committed data; weekly link check; nightly ns-3-dev build; the bake recipe (paused) | no |
+| `release.yml` | | the release (dispatched; the merged bump PR publishes) | no |
+
+The required checks are the ones the `main` ruleset lists: `gh api
+repos/swarm-routing/AntHocNet/rules/branches/main`. `main` merges through a
+merge queue, so a pull request is merged by enabling auto-merge.
+
+## Release
+
+Releases follow the org procedure: [CONTRIBUTING "Cutting a release"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#cutting-a-release),
+cut only on request once the version's `release:vX.Y.Z` issues are done
+([roadmap.md](roadmap.md)). Run the `Release` workflow with `mode: bump`; it
+opens the bump PR, and merging that PR tags, publishes the install bundle and
+the `anthocnet:<tag>` images. Record the version DOI afterwards by reading it
+from Zenodo, never by typing it (AGENTS.md "Where to look", "Cut a
+release").
+
+## Troubleshooting
+
+- **A gate or an AODV-family arm hangs on ns-3.49.** ns-3.49's stock AODV
+  and the vendored AOMDV livelock (#843): those jobs, and the dev container,
+  run on `ns3-dev:3.48` until a fixed ns-3 release reaches `latest`.
+- **An adapter change builds on one ns-3 release and not another.** The usual
+  cause is API drift between releases; extend the `AHN_*`/`ANTHOCNET_NS3_*`
+  version macros rather than forking the code (see "Validating adapter
+  (NS-3) changes" above).
+- **`make test` fails at configure while offline.** It downloads the
+  swarm-core release; pass `SWARM_CORE_DIR=/path/to/ns3-swarm-core/core`.
+- **`mkdocs build --strict` cannot find the site shell.** Run
+  `tools/checks/fetch-site-web.sh` first: `web/` is fetched, not tracked.
+- **`web/test/parity.sh` reports a difference.** The browser build must stay
+  byte-identical to native (golden rule 9): randomness drawn into named
+  locals, no libm trigonometry in mobility, `-ffp-contract=off`.
+- **The `ns3-asan` job is green but its log shows leaks.** It is
+  `continue-on-error` while the suppressions are calibrated; read the log.
