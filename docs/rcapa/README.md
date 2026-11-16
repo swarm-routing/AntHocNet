@@ -10,33 +10,40 @@ swarm-routing/ns3-tools. The org's rule and its decision table are in
 ([ADR-0003](https://github.com/swarm-routing/.github/blob/main/docs/adr/0003-rcapa-for-ns3-bugs-and-released-regressions.md)).
 This page is the project's flow and its index.
 
-<!-- Seeded by org-sync from swarm-routing/.github templates/rcapa/README.md;
-the repository's own from here. Replace every TODO with this project's facts
-(its AGENTS.md, release.yml and docs), then delete this comment. -->
-
 ## The flow for this project
+
+A **published release** of AntHocNet is a `v*` tag of this repository: its
+GitHub release (the core and ns-3 module tarballs, `release.yml`'s `publish` job), archived on Zenodo (concept DOI
+[10.5281/zenodo.20981979](https://doi.org/10.5281/zenodo.20981979)), the `anthocnet` ns-3 image on ghcr.io (`release.yml`'s `images` job), and, once its port leaves swarm-routing/vcpkg-registry `templates/`, the `anthocnet-core` vcpkg port. A
+regression is something that worked in one of those releases and broke
+after a change, whenever it is found, also on `main` before the next tag.
+A defect introduced after the last tag and fixed before the next one never
+reached a release: it needs no RCAPA, an ordinary `bug` issue is enough.
+Whether a commit reached a release is read from
+`git tag --contains <commit>`.
 
 | | |
 |---|---|
-| Published as | TODO: the release channels this project ships (GitHub release + Zenodo DOI, PyPI, a vcpkg port, images, a site deploy, a dataset release, a plugin version), or "nothing yet: the flow starts at the first release" |
-| ID prefix | TODO: `<PREFIX>-NNN` (CONTRIBUTING "RCAPA", the prefix table) |
-| Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] <PREFIX>-NNN <short description>`, labels `rcapa` and `bug` |
-| Verified by | TODO: the check, gate or reproducer that shows the regression and its fix |
-| Corrective action | TODO: the fix and its test, and how a fixed release is cut |
-| Preventive action | TODO: the check that would have caught it before the release |
-| Closes when | the fix is merged **and** a release of the channel above carries it |
+| Published as | `v*` tags: GitHub release + Zenodo DOI, the `anthocnet` release image on ghcr.io, the `anthocnet-core` vcpkg port (planned: still in swarm-routing/vcpkg-registry `templates/`) |
+| ID prefix | `AHN-NNN` |
+| Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] AHN-NNN <short description>`, labels `rcapa` and `bug` |
+| Verified by | the reproducer against the failing tag and the last good one: `make test` (core ctest), the ns-3 suite and gate groups of `ci-ns3.yml`, native-vs-WASM parity, and for a changed number the standard cells (`benchmark-cell.yml`, a campaign plan in `tools/bench/campaigns/`, `tools/bench/harness_control.py` on the committed cells); the determinism check (same seed, byte-identical) where output changed |
+| Corrective action | the fix PR with a test that fails without it: a core unit test in `core/tests/` for any core logic change (golden rule 7), an ns-3 test case only for a fix outside core logic (the adapter); a fix that adds a mechanism or moves a default follows golden rule 8: the mechanism ships behind a default-off `Config` switch, the default path stays byte-identical (the determinism check), and a default moves only after an identical-seed A/B in every family; then a release bump |
+| Preventive action | the gate, standard cell or determinism case that would have caught it before the tag, added to CI or to the release checks; a published number it touched is re-run and the record in `docs/benchmarks/` corrected |
+| Closes when | the fix is merged **and** a `v*` release carries it (tag and version DOI read from Zenodo, recorded in the index) |
 
 ```mermaid
 sequenceDiagram
-    participant U as Reporter
+    participant U as Reporter or campaign
     participant T as RCAPA ticket
-    participant D as This page
+    participant G as CI gates and standard cells
     participant M as main
-    participant R as Release
-    U->>T: regression found against a release
-    T->>D: RCAPA document and index row
-    T->>M: fix and test, merged
-    M->>R: release that carries the fix
+    participant R as Release and Zenodo
+    U->>T: a released version behaves differently
+    T->>G: reproduce against the failing and last good release
+    T->>M: fix with a test that fails without it
+    M->>G: the same check passes on main
+    M->>R: release bump carries the fix
     R->>T: tag and DOI recorded, ticket closed
 ```
 
