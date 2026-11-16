@@ -934,6 +934,11 @@ void RoutingProtocol::NotifyInterfaceUp(uint32_t interface) {
     ControlIface& ci = m_ifaces[l3->GetNetDevice(interface)->GetIfIndex()];
     ci.interface = interface;
     ci.address = iface;
+    if (!ci.unicast) {  // #1080: unicast ants at the default TTL, see ControlIface
+        ci.unicast = Socket::CreateSocket(GetObject<Node>(), UdpSocketFactory::GetTypeId());
+        ci.unicast->BindToNetDevice(l3->GetNetDevice(interface));
+        ci.unicast->Bind(InetSocketAddress(Ipv4Address::GetAny(), ANT_PORT));
+    }
 
     // ADR-0008 detector D: a failed unicast to a next hop is reported
     // immediately (NS-2 parity). The node's WifiLinkMonitor (swarm-core) reads
@@ -995,6 +1000,7 @@ void RoutingProtocol::NotifyInterfaceDown(uint32_t interface) {
     SwarmRoutingBase::NotifyInterfaceDown(interface);  // closes its control sockets
     for (auto it = m_ifaces.begin(); it != m_ifaces.end(); ++it) {
         if (it->second.address == iface) {
+            if (it->second.unicast) it->second.unicast->Close();
             m_ifaces.erase(it);
             break;
         }
@@ -1264,15 +1270,23 @@ void RoutingProtocol::SendAnt(const AntMessage& msg, Ipv4Address dest) {
     // addressed to where it is reachable on that link (#203). A backward ant
     // retraces a path made of canonical addresses, so on a multi-interface
     // node the ant's next hop is routinely NOT on the subnet it must be sent
-    // over. UnicastControl sends to the gateway out of the interface whose
-    // subnet holds it, the chosen one; when that interface has no socket (it
-    // went down) or the hop is unknown, the gateway is on no subnet of a
-    // socket and the first interface sends it, as before.
+    // over. The ant goes to the gateway out of the interface whose subnet
+    // holds it, as the base's UnicastControl picks them; when no interface
+    // reaches it (it went down, or the hop is unknown) nothing is sent, as
+    // there. It leaves by that interface's unicast socket at ns-3's default
+    // TTL, not the base's TTL-1 socket (#1080, see ControlIface).
     Ipv4Address gateway;
     Ptr<NetDevice> dev;
     uint32_t ifIdx;
     ResolveNextHop(ToCore(dest), gateway, dev, ifIdx);
-    UnicastControl(packet->Copy(), gateway);
+    if (IsDown()) return;
+    const NextHopRoute hop = SwarmRoutingBase::ResolveNextHop(gateway);
+    for (const auto& kv : m_ifaces) {
+        if (static_cast<int32_t>(kv.second.interface) == hop.ifIdx && kv.second.unicast) {
+            kv.second.unicast->SendTo(packet->Copy(), 0, InetSocketAddress(hop.gateway, ANT_PORT));
+            return;
+        }
+    }
 }
 
 void RoutingProtocol::ExecuteDecisions(const std::vector<RouteDecision>& decisions,

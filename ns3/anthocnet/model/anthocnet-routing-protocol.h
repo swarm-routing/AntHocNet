@@ -7,7 +7,8 @@
  * An Ipv4RoutingProtocol on swarm-core's SwarmRoutingBase (S10 of #1019,
  * swarm-routing/ns3-swarm-core#14) that delegates all routing decisions to the
  * shared core::AntRouterLogic. The base owns the control sockets (one UDP
- * socket per interface and one on its subnet broadcast, on ANT_PORT), the
+ * socket per interface and one on its subnet broadcast, on ANT_PORT; unicast
+ * ants leave by a socket of this adapter, at the default TTL, #1080), the
  * core's clock and randomness ports, and the router observer's trace sources;
  * data packets are routed/queued via RouteOutput / RouteInput, which this
  * adapter still overrides (the pending queue, the MAC hooks and the
@@ -357,6 +358,16 @@ private:
     struct ControlIface {
         uint32_t interface = 0;  ///< the IPv4 interface index
         Ipv4InterfaceAddress address;
+        /// #1080: the socket a unicast ant leaves by, at ns-3's default TTL.
+        /// The base's control sockets send with TTL 1 (one hop), but a unicast
+        /// ant goes where RouteOutput routes it, and RouteOutput routes it by
+        /// the pheromone table: to a next hop that is no longer a neighbour it
+        /// goes through a gateway, which relays it at the IP layer, as AntHocNet
+        /// has always done. Bound to the wildcard address on ANT_PORT and the
+        /// device, so it sends from ANT_PORT as before and receives nothing
+        /// (the base's sockets, bound to the interface's addresses, are the
+        /// more specific match).
+        Ptr<Socket> unicast;
     };
     std::map<uint32_t, ControlIface> m_ifaces;
 
