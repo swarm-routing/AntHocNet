@@ -63,9 +63,9 @@ The move went in one PR per slice:
 | S8 | `ILinkMetric`, `EnergyMetric` | #1047 |
 | S9 | the duplicate check as a CI gate | #1050 |
 | S10a | the adapter on `SwarmRoutingBase`: sockets, the clock and RNG ports, the observer | #1054 |
-| S10b | the pending queue on `DeferredPacketQueue` | |
-| S10c | MAC failures through `OnTxFailure` | |
-| S10d | multi-interface routes on the base's peer map | |
+| S10b | the pending queue on `DeferredPacketQueue`, broadcasts on `BroadcastControlOn` | #1064 |
+| S10c | MAC failures through `WifiLinkMonitor` and `OnTxFailure` | #1065 |
+| S10d | multi-interface routes on the base's peer map | #1066 |
 
 Every slice changes no arithmetic and no order. Each had to show:
 - `make test`;
@@ -134,7 +134,7 @@ The maintainer decided on 2026-11-15 that swarm-core 1.0.0 already contains ever
 1. S10a merged on v0.4.0.
 2. The remaining base additions merged before the freeze (swarm-routing/ns3-swarm-core#168, swarm-routing/ns3-swarm-core#171).
 3. swarm-core 1.0.0 is cut, together with BeeAdHoc v0.2.0, the other criterion.
-4. S10b moves `swarm-core.lock` to v1.0.0, and S10b to S10d finish on it.
+4. org-bot's pin bump moved `swarm-core.lock` to v1.0.0 (#1077), and S10b to S10d finished on it, each with every AntHocNet `##RUN##` row of CI identical to `main`.
 
 Anything later is additive and comes in a swarm-core 1.x minor.
 
