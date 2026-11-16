@@ -38,6 +38,11 @@ on:
         type: choice
         options: [bump, baseline, dryrun]
         default: bump
+      increment:
+        description: "bump and dryrun: auto lets Commitizen pick the bump from the commits; PATCH, MINOR or MAJOR force it (cz bump --increment), when the version the ladder fixes differs (swarm-routing/.github#512)"
+        type: choice
+        options: [auto, PATCH, MINOR, MAJOR]   # a choice cannot be empty: auto passes no --increment
+        default: auto
   push:
     branches: [main]
     paths: [VERSION]
@@ -86,6 +91,8 @@ jobs:
         run: pip install --require-hashes -r requirements/commitizen.txt
       - name: Bump (files only)
         id: bump
+        env:
+          INCREMENT: ${{ inputs.increment != 'auto' && inputs.increment || '' }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -94,7 +101,7 @@ jobs:
           # stamp today's date first (the merge day can differ; the PR can be
           # refreshed by dispatching bump again).
           sed -i -E "s/^date-released:.*/date-released: \"$(date -u +%Y-%m-%d)\"/" CITATION.cff
-          cz bump --yes --changelog
+          cz bump --yes --changelog ${INCREMENT:+--increment "$INCREMENT"}
           ver="$(tr -d '[:space:]' < VERSION)"
           # Keep the files, drop cz's commit and tag: the tag goes on the merged
           # commit (publish job), and bot-pr makes the commit.
@@ -200,11 +207,12 @@ jobs:
         id: compute
         env:
           MODE: ${{ inputs.mode }}
+          INCREMENT: ${{ inputs.increment != 'auto' && inputs.increment || '' }}
         run: |
           if [ "$MODE" = "dryrun" ]; then
             # As step 1 would, on the runner only.
             sed -i -E "s/^date-released:.*/date-released: \"$(date -u +%Y-%m-%d)\"/" CITATION.cff
-            cz bump --yes --changelog
+            cz bump --yes --changelog ${INCREMENT:+--increment "$INCREMENT"}
             ver="$(tr -d '[:space:]' < VERSION)"
           else
             ver="$(tr -d '[:space:]' < VERSION)"
