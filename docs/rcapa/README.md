@@ -32,10 +32,10 @@ AntHocNet's failing check.
 | Published as | nothing yet: the `anthocnet-core` vcpkg port, from its first published version |
 | ID prefix | `AHN-NNN` |
 | Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] AHN-NNN <short description>`, labels `rcapa` and `bug`, opened from the consumer's finding |
-| Verified by | the consumer's failing build or test against the `anthocnet-core` version that broke and the one before it; then `make core-test` (`core.yml`: ctest, strict warnings, ASan + UBSan) |
-| Corrective action | the fix PR with a core test in `core/test/` that fails without it; a wire-format change bumps the version byte (golden rule 3); then a release and the port bump org-bot opens in swarm-routing/vcpkg-registry |
+| Verified by | the consumer's failing build or test against the `anthocnet-core` version that broke and the one before it; then `make test` (core ctest), and in CI `ci-core.yml` (`core`, `core-sanitizers` under ASan + UBSan, `codec-fuzz`) and the ns-3 gates of `ci-ns3.yml` |
+| Corrective action | the fix PR with a core unit test in `core/tests/` that fails without it (golden rule 7); a wire-format change bumps `kWireVersion` (golden rule 4); then a release and the port bump org-bot opens in swarm-routing/vcpkg-registry |
 | Preventive action | the core test or fuzz case that would have caught it, and a consumer case in swarm-routing/vcpkg-registry `test/consumer/` if only a consumer showed it |
-| Closes when | a release carries the fix **and** the `anthocnet-core` port is bumped to it, with the consumer green on the new baseline |
+| Closes when | a release carries the fix **and** the `anthocnet-core` port is bumped to it in the registry, with the consumer that found it green on the new baseline |
 
 ```mermaid
 sequenceDiagram
@@ -64,9 +64,7 @@ sequenceDiagram
 2. Copy [`_template.md`](_template.md) to `rcapa-<short-description>.md`
    (lowercase, hyphens: what breaks, not where it was found), and add its row
    to the index in the same pull request.
-3. The ticket stays open until the corrective action is merged, a release
-   carries the fix, and the consumer that found it runs green on that
-   release; record the release in the index.
+3. The ticket stays open until a release carries the fix, the `anthocnet-core` port is bumped to it in swarm-routing/vcpkg-registry, and the consumer that found it runs green on the new baseline; record the release and the baseline in the index.
 
 ## What an RCAPA answers
 
