@@ -338,7 +338,8 @@ private:
     /// to exactly the pre-#203 values.
     ///
     /// Never fails: an unresolvable hop falls back to the first interface, the
-    /// old behaviour, rather than dropping the packet.
+    /// old behaviour, rather than dropping the packet. The rule and the peer
+    /// map are SwarmRoutingBase's (ResolveNextHop, SetPeerRoute; S10d of #1019).
     void ResolveNextHop(::anthocnet::core::NodeAddress next, Ipv4Address& gateway,
                         Ptr<NetDevice>& dev, uint32_t& iface) const;
 
@@ -358,20 +359,6 @@ private:
         Ipv4InterfaceAddress address;
     };
     std::map<uint32_t, ControlIface> m_ifaces;
-
-    /// Issue #203: where a peer the core named actually is. `iface` is the ns-3
-    /// interface index whose device shares a link with it; `linkLocal` is the
-    /// address to send to on that link.
-    struct PeerRoute {
-        uint32_t iface = 0;
-        Ipv4Address linkLocal;
-    };
-    /// Peer canonical address (how the core names it, i.e. how it appears in
-    /// pheromone tables and ant paths) -> how to reach it. Learned from hello
-    /// ants, the one message carrying both of a peer's names: `msg.src` is the
-    /// canonical one, the IP source is the link-local one. Only populated when
-    /// the two differ, so it stays empty on every single-interface topology.
-    std::map<Ipv4Address, PeerRoute> m_peerRoutes;
 
     /// Issue #260: every core name a neighbour was heard under, per interface —
     /// both the link-local sender (what learnNeighbor records as prevHop) and

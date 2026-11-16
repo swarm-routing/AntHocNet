@@ -1051,38 +1051,15 @@ void RoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddre
 
 void RoutingProtocol::ResolveNextHop(NodeAddress next, Ipv4Address& gateway, Ptr<NetDevice>& dev,
                                      uint32_t& iface) const {
-    const Ipv4Address nextIp = ToIpv4(next);
-
-    // 1. Directly attached: the next hop is on one of our own subnets. Every
-    //    single-interface topology takes this path, so the common case keeps
-    //    exactly its pre-#203 gateway/device.
-    for (const auto& kv : m_ifaces) {
-        const Ipv4InterfaceAddress& addr = kv.second.address;
-        if (addr.GetLocal().CombineMask(addr.GetMask()) == nextIp.CombineMask(addr.GetMask())) {
-            const int32_t i = m_ipv4->GetInterfaceForAddress(addr.GetLocal());
-            if (i < 0) continue;
-            gateway = nextIp;
-            iface = static_cast<uint32_t>(i);
-            dev = m_ipv4->GetNetDevice(iface);
-            return;
-        }
-    }
-
-    // 2. Multi-interface peer: the core named it by its canonical address,
-    //    which sits on a subnet we are not attached to. Its hello told us which
-    //    of our links actually reaches it, and at what address.
-    std::map<Ipv4Address, PeerRoute>::const_iterator it = m_peerRoutes.find(nextIp);
-    if (it != m_peerRoutes.end() && it->second.iface < m_ipv4->GetNInterfaces()) {
-        gateway = it->second.linkLocal;
-        iface = it->second.iface;
-        dev = m_ipv4->GetNetDevice(iface);
-        return;
-    }
-
-    // 3. Unknown next hop: degrade to the first interface exactly as before.
-    gateway = nextIp;
-    iface = static_cast<uint32_t>(
-        m_ipv4->GetInterfaceForAddress(m_ifaces.begin()->second.address.GetLocal()));
+    // The base's rule (#203 here, swarm-routing/ns3-swarm-core#127): (1) a
+    // directly attached subnet, the next hop itself the gateway, which every
+    // single-interface topology takes; (2) a multi-interface peer the core
+    // names by its canonical address, through the link its hello arrived on
+    // (SetPeerRoute in RecvControl), at its address there; (3) the first
+    // interface. Callers check m_ifaces is not empty first.
+    const NextHopRoute hop = SwarmRoutingBase::ResolveNextHop(ToIpv4(next));
+    gateway = hop.gateway;
+    iface = static_cast<uint32_t>(hop.ifIdx);
     dev = m_ipv4->GetNetDevice(iface);
 }
 
@@ -1356,12 +1333,7 @@ void RoutingProtocol::RecvControl(Ptr<Packet> packet, Ipv4Address sender, Ipv4Ad
             std::set<NodeAddress>& nbs = m_ifaceNeighbors[static_cast<uint32_t>(i)];
             nbs.insert(ToCore(sender));
             nbs.insert(incoming.src);
-            if (canonical != sender) {
-                PeerRoute pr;
-                pr.iface = static_cast<uint32_t>(i);
-                pr.linkLocal = sender;
-                m_peerRoutes[canonical] = pr;
-            }
+            if (canonical != sender) SetPeerRoute(canonical, static_cast<uint32_t>(i), sender);
         }
     }
 
