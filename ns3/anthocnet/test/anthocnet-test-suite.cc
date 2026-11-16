@@ -22,6 +22,8 @@
 #include "ns3/ipv4-address-helper.h"
 #include "ns3/socket.h"
 #include "ns3/udp-socket-factory.h"
+#include "ns3/udp-header.h"
+#include "ns3/udp-l4-protocol.h"
 #include "ns3/inet-socket-address.h"
 
 #include "ns3/wifi-helper.h"
@@ -204,6 +206,72 @@ private:
         while ((p = s->Recv())) m_rxBytes += p->GetSize();
     }
     uint32_t m_rxBytes;
+};
+
+// #1080 — a unicast ant leaves at ns-3's default TTL, not the base's TTL 1.
+//
+// AntHocNet's RouteOutput routes a unicast ant by the pheromone table, so an
+// ant to a next hop that is no longer a neighbour goes through a gateway that
+// relays it at the IP layer. The base's control sockets send with TTL 1 (one
+// hop), and the ant was then dropped as TTL-exceeded (S10a); the standard
+// cells of grid, FANET, VANET and disaster moved. Every unicast ant of the
+// 3-node line's run must leave with a TTL above 1.
+class UnicastAntTtlTestCase : public TestCase {
+public:
+    UnicastAntTtlTestCase() : TestCase("Unicast ants leave at the default TTL (#1080)") {}
+
+    void DoRun() override {
+        RngSeedManager::SetSeed(1);
+        RngSeedManager::SetRun(1);
+        NodeContainer nodes;
+        nodes.Create(3);
+        Ptr<SimpleChannel> channel = CreateObject<SimpleChannel>();
+        SimpleNetDeviceHelper devHelper;
+        NetDeviceContainer devices = devHelper.Install(nodes, channel);
+        Ptr<SimpleNetDevice> d0 = DynamicCast<SimpleNetDevice>(devices.Get(0));
+        Ptr<SimpleNetDevice> d2 = DynamicCast<SimpleNetDevice>(devices.Get(2));
+        channel->BlackList(d0, d2);
+        channel->BlackList(d2, d0);
+        AntHocNetHelper anthocnet;
+        InternetStackHelper internet;
+        internet.SetRoutingHelper(anthocnet);
+        internet.Install(nodes);
+        Ipv4AddressHelper address;
+        address.SetBase("10.1.0.0", "255.255.255.0");
+        Ipv4InterfaceContainer ifs = address.Assign(devices);
+        for (uint32_t i = 0; i < nodes.GetN(); ++i) {
+            nodes.Get(i)->GetObject<Ipv4L3Protocol>()->TraceConnectWithoutContext(
+                "SendOutgoing", MakeCallback(&UnicastAntTtlTestCase::Out, this));
+        }
+        // Data 0 -> 2 makes the reactive setup's backward ants, unicasts.
+        Ptr<Socket> tx = Socket::CreateSocket(nodes.Get(0), UdpSocketFactory::GetTypeId());
+        tx->Connect(InetSocketAddress(ifs.GetAddress(2), 9));
+        for (double t = 10.0; t < 14.0; t += 0.5) {
+            Simulator::Schedule(Seconds(t), [tx]() { tx->Send(Create<Packet>(64)); });
+        }
+        Simulator::Stop(Seconds(16.0));
+        Simulator::Run();
+        Simulator::Destroy();
+
+        NS_TEST_ASSERT_MSG_GT(m_unicastAnts, 0u, "the run sent no unicast ant");
+        NS_TEST_ASSERT_MSG_EQ(m_ttlOne, 0u, "a unicast ant left with TTL 1");
+    }
+
+private:
+    void Out(const Ipv4Header& h, Ptr<const Packet> p, uint32_t) {
+        if (h.GetProtocol() != UdpL4Protocol::PROT_NUMBER ||
+            h.GetDestination().IsSubnetDirectedBroadcast(Ipv4Mask("255.255.255.0")) ||
+            h.GetDestination().IsBroadcast()) {
+            return;
+        }
+        UdpHeader udp;
+        p->PeekHeader(udp);
+        if (udp.GetDestinationPort() != ns3::anthocnet::RoutingProtocol::ANT_PORT) return;
+        ++m_unicastAnts;
+        if (h.GetTtl() <= 1) ++m_ttlOne;
+    }
+    uint32_t m_unicastAnts = 0;
+    uint32_t m_ttlOne = 0;
 };
 
 // Issue #203 — delivery across a node with MORE THAN ONE interface.
@@ -1099,6 +1167,7 @@ public:
         AddTestCase(new AntHeaderKinematicsTestCase(), AHN_TEST_QUICK);
         AddTestCase(new AddressMappingTestCase(), AHN_TEST_QUICK);
         AddTestCase(new AntHocNetDeliveryTestCase(), AHN_TEST_QUICK);
+        AddTestCase(new UnicastAntTtlTestCase(), AHN_TEST_QUICK);
         AddTestCase(new MultiInterfaceDeliveryTestCase(), AHN_TEST_QUICK);
         AddTestCase(new DeviceOrderBroadcastTestCase(), AHN_TEST_QUICK);
         AddTestCase(new P2pHelloThrottleTestCase(), AHN_TEST_QUICK);

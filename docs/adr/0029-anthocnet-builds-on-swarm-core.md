@@ -77,6 +77,13 @@ One row moved that is not AntHocNet's: the stock AODV row of the leo-walker gate
 
 **Q2 (maintainer, 2026-11-15):** where a slice cannot be byte-identical, its PR names the cause. A paired control (20 seeds per family, the `ns3-tool` noise verdict) then stands in for byte identity for that slice only. No slice needed it.
 
+The CI rows are short runs. The standard-cell campaign after S10d ([results](../benchmarks/v2.7.x-swarm-core-port.md), #1080) found that S10a had moved the `anthocnet` rows of grid, FANET, VANET and disaster on some seeds:
+- The base's control sockets send with TTL 1.
+- A unicast ant goes where AntHocNet's `RouteOutput` routes it. Its next hop may no longer be a neighbour, and the ant then goes through a gateway.
+- That gateway had always relayed the ant at the IP layer. With TTL 1 it dropped it.
+
+Unicast ants now leave by a socket of the adapter, at ns-3's default TTL, which restores those rows byte for byte. Broadcasts and every receive stay on the base's sockets.
+
 Where swarm-core and AntHocNet differed in arithmetic, AntHocNet kept its own. For example, AntHocNet's roulette subtracts `p / sum` from a uniform draw, while swarm-core's `rouletteSelect` draws `u * sum`. Replacing one with the other would move every trajectory, so selection stays AntHocNet's and reads swarm-core's table rows.
 
 Where AntHocNet needed something swarm-core lacked, the gap was added to swarm-core first, additively, before its v1.0.0 freeze, and AntHocNet then used it unchanged:
@@ -104,7 +111,7 @@ Where AntHocNet needed something swarm-core lacked, the gap was added to swarm-c
 ### 4. The adapter on `SwarmRoutingBase`
 
 `ns3::anthocnet::RoutingProtocol` derives from `SwarmRoutingBase`. It takes from the base:
-- the control sockets (`ControlPort`, `RecvControl`, `UnicastControl`, `BroadcastControlOn`);
+- the control sockets (`ControlPort`, `RecvControl`, `BroadcastControlOn`). A unicast ant takes `UnicastControl`'s interface and address but leaves by the adapter's own socket, at the default TTL rather than the base's 1 (#1080);
 - the `Clock()` and `Rng()` ports;
 - the pending queue (`DeferredPacketQueue`, `Defer`, `PeriodicPurge` off), with AntHocNet's hold reasons as hold classes;
 - MAC failures from the node's `WifiLinkMonitor` (`OnTxFailure`);
