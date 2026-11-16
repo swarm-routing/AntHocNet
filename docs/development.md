@@ -25,8 +25,9 @@ org's [CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTR
 | emsdk | 4.0.10, pinned in `.github/actions/setup-emsdk` | only the browser checks (parity, the site) |
 | Node.js | 22 | only the browser smokes |
 
-Install a pinned Python set with `pip install --require-hashes -r
-requirements/<name>.txt`.
+Install a pinned Python set by its file, for example `pip install
+--require-hashes -r requirements/gcovr.txt` for coverage; the other files in
+`requirements/` work the same way.
 
 ## Get the code
 
@@ -186,8 +187,12 @@ results.
   (nightly build against ns-3-dev; a red night opens a `[ci]` issue). The AI
   reviewer is CodeRabbit, a GitHub App configured by `.coderabbit.yaml` (the org's
   settings plus this file's golden rules): it reviews each PR once when it opens,
-  comments only, never approves, and is not a required check (#811, #838; the
-  Claude Code Action review was removed by maintainer decision, #864). Releases are version-bumped by Commitizen from
+  comments only and never approves (#811, #838; the
+  Claude Code Action review was removed by maintainer decision, #864). Its
+  gate, `review / coderabbit`, is a required check (swarm-routing/.github#294):
+  it passes once CodeRabbit has reviewed the PR or said it will not, or 30
+  minutes after the PR opened, and the ruleset holds a merge while a
+  CodeRabbit thread is unresolved. Releases are version-bumped by Commitizen from
   Conventional-Commit history; **PR titles must be Conventional Commits** (CI
   enforces it — see `CONTRIBUTING.md`).
 
