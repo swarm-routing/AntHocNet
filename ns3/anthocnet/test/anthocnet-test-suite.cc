@@ -331,6 +331,7 @@ public:
         Simulator::Stop(Seconds(12.0));
         Simulator::Run();
         Simulator::Destroy();
+        Close();  // the last group: no later broadcast closed it
 
         NS_TEST_ASSERT_MSG_GT(m_ticksAfter, 3u, "node 0 sent hellos after the down/up cycle");
         NS_TEST_ASSERT_MSG_EQ(m_badOrder, 0u, "a hello left in another order than interface 1, 2");

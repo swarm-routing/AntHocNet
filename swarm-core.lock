@@ -7,8 +7,8 @@
 # tools/checks/check-swarm-core-pin.py --bump, which writes it with
 # tools/checks/release_lock.py), and the `swarm-core / pin` check verifies it.
 SWARM_CORE_REPO=swarm-routing/ns3-swarm-core
-SWARM_CORE_TAG=v0.4.0
-SWARM_CORE_COMMIT=111a67385fbcdaecff5efa49cbdd66b20a355a09
-SWARM_CORE_VERSION=0.4.0
-SWARM_CORE_ASSET=swarm-core-0.4.0.tar.gz
-SWARM_CORE_SHA256=28df546260152d6dae3440d6c367821b525ab40d6bf49050b8a1c75967e393ea
+SWARM_CORE_TAG=v1.0.0
+SWARM_CORE_COMMIT=ff097aeb1f6237fb9796ff4713e91524fb5b4d3f
+SWARM_CORE_VERSION=1.0.0
+SWARM_CORE_ASSET=swarm-core-1.0.0.tar.gz
+SWARM_CORE_SHA256=c7f11b1e1f7b1a666f424ea4a0bc96e27a4f7e5bc8d15edea5817be6932a60a7

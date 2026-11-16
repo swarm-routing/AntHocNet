@@ -274,7 +274,9 @@ vendored arms move to ns3-tools later
 [`ns3-tools.lock`](https://github.com/swarm-routing/AntHocNet/blob/main/ns3-tools.lock)
 at the repository root names the one ns3-tools release this repository uses:
 its tag, the commit the tag names, and the sha256 of the two assets it takes
-(`routing-bench-<ver>.tar.gz` and `ns3_tool-<ver>-py3-none-any.whl`).
+(`routing-bench-<ver>.tar.gz` and `ns3_tools-<ver>-py3-none-any.whl`; the
+distribution is `ns3-tools` from v1.1.0, swarm-routing/ns3-tools#197, and the
+package it installs is still `ns3_tool`).
 `tools/ns3_tools.py` reads it:
 
 ```bash

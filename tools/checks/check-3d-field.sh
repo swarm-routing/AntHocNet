@@ -54,7 +54,8 @@ ARMS=anthocnet,aodv,olsr,dsdv,aomdv,oracle
 for MOB in gaussmarkov rwp; do
 say "== --mobility=$MOB, --areaZ=$AREA_Z"
 # --- 1-4: the 3-D run -------------------------------------------------------
-args="anthocnet-compare --csv --diag --protocols=$ARMS --nNodes=20
+# --perf=0: ##PERF## (ns3-tools v0.2.0+, swarm-routing/ns3-tools#91) is CPU and wall time, different every run; the byte comparison is of what the protocols did.
+args="anthocnet-compare --csv --diag --perf=0 --protocols=$ARMS --nNodes=20
       --time=60 --area=500 --areaZ=$AREA_Z --range=250 --flows=3 --runs=1
       --mobility=$MOB --speed=20"
 out=$(./ns3 run "$(echo $args)" 2>/dev/null)

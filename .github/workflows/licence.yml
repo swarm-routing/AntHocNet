@@ -25,4 +25,4 @@ jobs:
       core-roots: core/
       gpl-only: docs/tools/mkdocs_hooks.py
       exclude: '^(\.claude|\.devcontainer)/'
-      core-deps: swarm-routing/ns3-swarm-core@111a67385fbcdaecff5efa49cbdd66b20a355a09:core
+      core-deps: swarm-routing/ns3-swarm-core@ff097aeb1f6237fb9796ff4713e91524fb5b4d3f:core
