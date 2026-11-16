@@ -28,7 +28,7 @@ Whether a commit reached a release is read from
 | ID prefix | `AHN-NNN` |
 | Ticket | an issue in swarm-routing/AntHocNet, form *Regression in a release (RCAPA)*, title `[rcapa] AHN-NNN <short description>`, labels `rcapa` and `bug` |
 | Verified by | the reproducer against the failing tag and the last good one: `make test` (core ctest), the ns-3 suite and gate groups of `ci-ns3.yml`, native-vs-WASM parity, and for a changed number the standard cells (`benchmark-cell.yml`, a campaign plan in `tools/bench/campaigns/`, `tools/bench/harness_control.py` on the committed cells); the determinism check (same seed, byte-identical) where output changed |
-| Corrective action | the fix PR with a core unit test in `core/tests/` (golden rule 7) or an ns-3 test case that fails without it; a changed default ships behind a switch (golden rule 8); then a release bump |
+| Corrective action | the fix PR with a core unit test in `core/tests/` (golden rule 7) or an ns-3 test case that fails without it; a fix that adds a mechanism or moves a default follows golden rule 8: the mechanism ships behind a default-off `Config` switch, the default path stays byte-identical (the determinism check), and a default moves only after an identical-seed A/B in every family; then a release bump |
 | Preventive action | the gate, standard cell or determinism case that would have caught it before the tag, added to CI or to the release checks; a published number it touched is re-run and the record in `docs/benchmarks/` corrected |
 | Closes when | the fix is merged **and** a `v*` release carries it (tag and version DOI read from Zenodo, recorded in the index) |
 
