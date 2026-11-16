@@ -453,3 +453,35 @@ that is the template for revisiting any of the others.
 - [ADR-0019](adr/0019-network-families-change-the-evaluation-not-the-protocol.md) — why family support is scenario work, never per-family protocol defaults.
 - [ADR-0020](adr/0020-security-is-a-default-off-profile.md) — why security is a default-off profile rather than a fork.
 - [`network-regimes.md`](network-regimes.md) · [`software-layers.md`](software-layers.md) · [`ant-types.md`](ant-types.md) — the regime and mechanism references the epics build on.
+
+## Shipped releases
+
+Every published release with its Zenodo version DOI, read from Zenodo by swarm-routing/.github `tools/zenodo/zenodo.py shipped` (org-bot's `release-aftercare` task); never edit the block by hand.
+
+<!-- releases:shipped:begin (zenodo.py shipped --write; never edit by hand) -->
+- **v2.7.0** shipped 2026-11-13 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.7.0), Zenodo version DOI [10.5281/zenodo.24213888](https://doi.org/10.5281/zenodo.24213888))
+- **v2.6.1** shipped 2026-10-29 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.6.1), Zenodo version DOI [10.5281/zenodo.24060921](https://doi.org/10.5281/zenodo.24060921))
+- **v2.6.0** shipped 2026-10-29 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.6.0), Zenodo version DOI [10.5281/zenodo.23777868](https://doi.org/10.5281/zenodo.23777868))
+- **v2.5.0** shipped 2026-10-28 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.5.0), Zenodo version DOI [10.5281/zenodo.23748858](https://doi.org/10.5281/zenodo.23748858))
+- **v2.4.0** shipped 2026-10-26 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.4.0), Zenodo version DOI [10.5281/zenodo.23653720](https://doi.org/10.5281/zenodo.23653720))
+- **v2.3.0** shipped 2026-10-18 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.3.0), Zenodo version DOI [10.5281/zenodo.23456208](https://doi.org/10.5281/zenodo.23456208))
+- **v2.2.0** shipped 2026-10-16 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.2.0), Zenodo version DOI [10.5281/zenodo.23423439](https://doi.org/10.5281/zenodo.23423439))
+- **v2.1.0** shipped 2026-10-09 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.1.0), Zenodo version DOI [10.5281/zenodo.23265537](https://doi.org/10.5281/zenodo.23265537))
+- **v2.0.0** shipped 2026-10-08 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.0.0), Zenodo version DOI [10.5281/zenodo.23250180](https://doi.org/10.5281/zenodo.23250180))
+- **v1.9.0** shipped 2026-10-07 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.9.0), Zenodo version DOI [10.5281/zenodo.23223132](https://doi.org/10.5281/zenodo.23223132))
+- **v1.8.0** shipped 2026-10-06 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.8.0), Zenodo version DOI [10.5281/zenodo.23187497](https://doi.org/10.5281/zenodo.23187497))
+- **v1.7.0** shipped 2026-10-02 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.7.0), Zenodo version DOI [10.5281/zenodo.23108019](https://doi.org/10.5281/zenodo.23108019))
+- **v1.6.0** shipped 2026-09-26 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.6.0), Zenodo version DOI [10.5281/zenodo.22970218](https://doi.org/10.5281/zenodo.22970218))
+- **v1.5.0** shipped 2026-08-15 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.5.0), Zenodo version DOI [10.5281/zenodo.21956001](https://doi.org/10.5281/zenodo.21956001))
+- **v1.4.0** shipped 2026-08-09 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.4.0), Zenodo version DOI [10.5281/zenodo.21863774](https://doi.org/10.5281/zenodo.21863774))
+- **v1.3.0** shipped 2026-08-04 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.3.0), Zenodo version DOI [10.5281/zenodo.21795253](https://doi.org/10.5281/zenodo.21795253))
+- **v1.2.0** shipped 2026-08-02 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.2.0), Zenodo version DOI [10.5281/zenodo.21762983](https://doi.org/10.5281/zenodo.21762983))
+- **v1.1.0** shipped 2026-07-26 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.1.0), Zenodo version DOI [10.5281/zenodo.21583731](https://doi.org/10.5281/zenodo.21583731))
+- **v1.0.0** shipped 2026-07-23 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v1.0.0), Zenodo version DOI [10.5281/zenodo.21502372](https://doi.org/10.5281/zenodo.21502372))
+- **v0.5.0** shipped 2026-07-20 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.5.0), Zenodo version DOI [10.5281/zenodo.21453208](https://doi.org/10.5281/zenodo.21453208))
+- **v0.4.0** shipped 2026-07-19 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.4.0), Zenodo version DOI [10.5281/zenodo.21435553](https://doi.org/10.5281/zenodo.21435553))
+- **v0.3.0** shipped 2026-07-06 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.3.0), Zenodo version DOI [10.5281/zenodo.21219572](https://doi.org/10.5281/zenodo.21219572))
+- **v0.2.0** shipped 2026-06-28 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.2.0), Zenodo version DOI [10.5281/zenodo.21007725](https://doi.org/10.5281/zenodo.21007725))
+- **v0.1.1** shipped 2026-06-28 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.1.1), Zenodo version DOI [10.5281/zenodo.20981980](https://doi.org/10.5281/zenodo.20981980))
+- **v0.1.0** shipped 2026-06-28 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v0.1.0); before the Zenodo record)
+<!-- releases:shipped:end -->
