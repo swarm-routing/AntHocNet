@@ -290,7 +290,7 @@ Code says the plugin is missing (it was called
 | Give a repository its docs/references.bib, or review it: every paper and org release it relies on, confirmed from Crossref, DataCite or Zenodo (a work with no DOI, such as a thesis, from its publisher's or institution's record, with its url), DOI links first, the fidelity Sources table and CITATION.cff references generated from it | `swarm-routing/.github` `tools/fidelity/fidelity.py` (bib), `tools/zenodo/zenodo.py` | `references` |
 | Take open pull requests from review to merge: CI, mergeable state and unresolved review threads in one view, each finding verified and fixed or answered, then merged when green (auto-merge where the repository has a merge queue) | `swarm-routing/.github` `tools/pr-status/pr_status.py` | `pr-shepherd` |
 | Measure what a Claude Code session loads from the agent files (`CLAUDE.md` and its `@` imports, or `AGENTS.md` alone), or where a finished Claude Code session's tokens went, before cutting or adding agent text | `swarm-routing/skills` `tools/token-audit/token_audit.py` | `token-audit` |
-| Register a repository for the OpenSSF Best Practices badge, propose its answers and check they stay current | `swarm-routing/.github` `tools/bestpractices/bestpractices.py` | `bestpractices` |
+| Register a repository for the OpenSSF Best Practices badge, propose its answers and check they stay current | `swarm-routing/.github` `cmd/bestpractices` (Go) | `bestpractices` |
 | Check or bump the release a repository builds on (`swarm-core.lock`, `ns3-tools.lock`), the places that name it, and the `swarm-core / pin` check; org-bot's bump PR first, nothing typed | `swarm-routing/.github` `tools/checks/release_lock.py`, `tools/checks/check-swarm-core-pin.py` | `dependency-bump` |
 | Cut a release on the maintainer's request: readiness (the ladder row, the `release:vX.Y.Z` scope), dry-run, bump, merge, then the aftercare (the Zenodo DOI, the site, consumers' locks, the vcpkg port, PyPI) | `swarm-routing/.github` `tools/release/release_check.py`, `tools/zenodo/zenodo.py` | `release` |
 | Record a reviewed SonarQube Cloud false positive (or an accepted finding) where the quality gate reads it, never by exclusion or in the UI | `swarm-routing/.github` `tools/sonar-triage/sonar_triage.py` | `sonar-triage` |
@@ -435,15 +435,19 @@ because the issue threads were thorough. Caveman the chat, not the record.
   `ns3-upstream`, ID `NS3-NNN`); its doc in `docs/ns3-rcapa/` and its
   `docs/ns3-bugs.md` row follow, and every workaround links the ID. Upstream
   reports go out only through swarm-routing/ns3-upstream-report (CONTRIBUTING
-  "ns-3 bugs (RCAPA)"). A regression in a published release of our own code
-  (it worked in a release, a DOI, PyPI or a vcpkg port, and broke after a
-  change; `git tag --contains <commit>` decides, or, in a repository with no
-  tags, its `docs/rcapa/README.md`; never memory) gets an RCAPA
-  too, in the repository that owns it: ticket first (form *Regression in a
-  release (RCAPA)*, `<PREFIX>-NNN`), then `docs/rcapa/rcapa-<name>.md` and
-  its row in `docs/rcapa/README.md`, the project's flow; the ticket stays
-  open until a release carries the fix. A bug or change that never reached a
-  release, or a typo with no behaviour, needs none (CONTRIBUTING "RCAPA").
+  "ns-3 bugs (RCAPA)"). A regression in a published library, a version
+  another project consumes (a swarm-core or ns3-tools release through its
+  lock, PyPI, a vcpkg port), gets an RCAPA too, in the library's repository,
+  even when a consumer finds it (a swarm-core lock bump that breaks
+  AntHocNet is an `SWC-NNN` in ns3-swarm-core, verified with AntHocNet's
+  failing check): ticket first (form *Regression in a release (RCAPA)*,
+  `<PREFIX>-NNN`), then `docs/rcapa/rcapa-<name>.md` and its row in
+  `docs/rcapa/README.md`; the ticket stays open until a release carries the
+  fix. A Docker image gets one only when its composition is the cause.
+  None for a bug that never reached a published version, for changes in
+  .github, the site, skills, benchmarks or ns3-upstream-report, or for a
+  typo with no behaviour; the pins and `git tag --contains <commit>` decide,
+  never memory (CONTRIBUTING "RCAPA").
 <!-- org-sync:end agent-defaults -->
 
 ## Where to look
