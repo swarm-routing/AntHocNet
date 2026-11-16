@@ -347,6 +347,16 @@ implements (every work the repository relies on, with its role, is in
 What this implementation reproduces from those sources — and every deliberate
 deviation — is stated in [docs/fidelity.md](docs/fidelity.md).
 
+<!-- org-sync:begin develop -->
+## Develop
+
+New here? [docs/development.md](docs/development.md) is the developer guide:
+the tools to install, how to get the code and its dependencies, how to
+build, test, run and lint it, the Docker images, what CI checks and how to
+read a red run. How changes are proposed, reviewed and released is the org's
+[CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md).
+<!-- org-sync:end develop -->
+
 ## Contributing
 
 [CONTRIBUTING.md](CONTRIBUTING.md) has the build/test steps per component, the
