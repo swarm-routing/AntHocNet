@@ -20,7 +20,9 @@
 # (timing): byte-identical in all eight families ticks S10 on #1019; any
 # anthocnet difference stops the close-out and is recorded on #1019 and a new
 # issue. ##COMMON## and ##MATCH## depend on every arm, so they are compared
-# too. Tools:
+# too. Result (2026-11-16, docs/benchmarks/v2.7.x-swarm-core-port.md
+# "Re-run after the fix"): byte-identical in all eight families; harness_control
+# PASS for every cell. Tools:
 #   python3 tools/bench/harness_control.py tools/bench/campaigns/v2.7.x-swarm-core-port-rerun.yaml
 #   f() { grep -v -e '^##PROV##' -e '^##PERF##' -e '^# ' "$1"; }
 #   diff <(f results/cells/<cell>-port1019b.txt) <(f results/cells/<cell>-port1019b-port.txt)
