@@ -72,7 +72,10 @@ jobs:
         # swarm-core's release (swarm-core.lock; tools/swarm_core.py unpacks it).
         run: |
           python3 -I tools/checks/check-swarm-core-dupes.py --self-test
-          python3 -I tools/checks/check-swarm-core-dupes.py --gate --swarm-core "$(python3 -I tools/swarm_core.py path)"
+          # its own assignment, so a failed download stops the step (an empty
+          # --swarm-core would skip every counterpart check)
+          swarm_core=$(python3 -I tools/swarm_core.py path)
+          python3 -I tools/checks/check-swarm-core-dupes.py --gate --swarm-core "$swarm_core"
   core-sanitizers:
     name: core under ASan + UBSan
     runs-on: ubuntu-24.04
