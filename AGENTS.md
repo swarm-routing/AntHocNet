@@ -117,10 +117,10 @@ Read [`docs/development.md`](docs/development.md) before:
   the tag and its commit on every line above, the override, and the registry
   baseline to the registry's `main`, once that `main` holds the release (its
   port PR merged; until then it waits). Between releases nothing moves.
-- **The ns-3 canary**: `dependencies` of `reusable-ns3-ci.yml` names release
-  tags; `canary-dependencies` names `@main`, one non-blocking leg on push,
-  schedule and dispatch, never on a PR (swarm-routing/.github#411). A red
-  canary on `main` means the next release of a dependency needs work here.
+- **The ns-3 build**: this repository's own ns-3 CI (it does not call
+  `reusable-ns3-ci.yml`) builds from the release locks alone, with no
+  canary leg on `@main` (maintainer decision on swarm-routing/.github#411). A
+  dependency's next release reaches it through org-bot's lock bump PR.
 - **Working against an unreleased swarm-core**: `-DSWARM_CORE_DIR=<checkout>/core`
   builds `core/` on a local checkout instead of the port (development only).
 <!-- org-sync:end dependencies -->
