@@ -7,9 +7,11 @@ core/ builds on swarm-routing/ns3-swarm-core's dual-licensed core/
 (swarm-routing/ns3-swarm-core#14), at the release swarm-core.lock locks
 (swarm-routing/ns3-swarm-core#134: tag, commit, the release tarball and its
 SHA256, every value read from the release by swarm-routing/.github
-tools/checks/release_lock.py). The core's own CMake build fetches that tarball
-with FetchContent (URL + URL_HASH). The ns-3 builds get the same release from
-this script: it downloads the tarball, checks its SHA256 against the lock and
+tools/checks/release_lock.py). The core's own CMake build takes it from its
+vcpkg port (swarm-routing/.github#489), or, with SWARM_CORE_DIR, from the
+sources this script unpacks (`make test` without VCPKG_ROOT, and the coverage,
+fuzz and analysis jobs). The ns-3 builds get the same release from this
+script: it downloads the tarball, checks its SHA256 against the lock and
 unpacks it under .swarm-core/<tag>/swarm-core/ (git-ignored). That tree is the
 swarm-core ns-3 module (`make install-ns3` installs it as contrib/swarm-core,
 which the adapter links: SwarmRoutingBase, S10 of #1019), and its core/ is what

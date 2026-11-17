@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
+# swarm-core comes from its vcpkg port (swarm-routing/.github#489): with the
+# vcpkg toolchain, vcpkg installs the version ../vcpkg.json pins from
+# swarm-routing/vcpkg-registry at ../vcpkg-configuration.json's baseline
+# (manifest mode). The manifest is at the repository root, not in core/: tell
+# the toolchain (read by project() below) where it is, unless the caller did.
+if(NOT DEFINED VCPKG_MANIFEST_DIR AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/../vcpkg.json"
+   AND CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(VCPKG_MANIFEST_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+endif()
 # Keep VERSION in sync with the top-level VERSION file (the release workflow
 # checks the git tag against it).
 project(anthocnet_core VERSION 2.7.0 LANGUAGES CXX)
@@ -12,17 +21,23 @@ else()
   set(_anthocnet_core_top OFF)
 endif()
 # ANTHOCNET_CORE_TESTS builds the tests and the speed benchmark (ON at the top
-# level). ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE takes swarm-core from an
-# installed package (find_package(swarm-core CONFIG), e.g. its vcpkg port)
-# instead of swarm-core.lock; ANTHOCNET_CORE_INSTALL (which needs it) adds the
-# install rules and the CMake package anthocnet-core: find_package(anthocnet-core
-# CONFIG REQUIRED) gives the imported target anthocnet::core (#1037,
-# swarm-routing/.github#436, the vcpkg port).
+# level). ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE takes swarm-core from
+# find_package even when SWARM_CORE_DIR is set; ANTHOCNET_CORE_INSTALL (which
+# needs the package) adds the install rules and the CMake package
+# anthocnet-core: find_package(anthocnet-core CONFIG REQUIRED) gives the
+# imported target anthocnet::core (#1037, swarm-routing/.github#436, the vcpkg
+# port).
 option(ANTHOCNET_CORE_TESTS "Build the tests and the speed benchmark" ${_anthocnet_core_top})
-option(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE "Take swarm-core from find_package(swarm-core CONFIG)" OFF)
+option(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE "Take swarm-core from find_package(swarm-core CONFIG) even when SWARM_CORE_DIR is set" OFF)
 option(ANTHOCNET_CORE_INSTALL "Add the install rules and the CMake package anthocnet-core" OFF)
-if(ANTHOCNET_CORE_INSTALL AND NOT ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
-  message(FATAL_ERROR "ANTHOCNET_CORE_INSTALL needs ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE=ON: the package links an installed swarm-core")
+set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: find_package(swarm-core CONFIG), its vcpkg port")
+if(SWARM_CORE_DIR AND NOT ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
+  set(_anthocnet_core_swarm_core_from_dir ON)
+else()
+  set(_anthocnet_core_swarm_core_from_dir OFF)
+endif()
+if(ANTHOCNET_CORE_INSTALL AND _anthocnet_core_swarm_core_from_dir)
+  message(FATAL_ERROR "ANTHOCNET_CORE_INSTALL needs swarm-core from its package, not SWARM_CORE_DIR: the package links an installed swarm-core")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -48,49 +63,29 @@ if(ANTHOCNET_COVERAGE)
 endif()
 
 # swarm-core's dual-licensed core/ (swarm-routing/ns3-swarm-core), the shared
-# primitives every protocol builds on (org golden rule 4), as a subproject: it
-# defines the library target swarm::core and nothing else (no tests, no ctest
+# primitives every protocol builds on (org golden rule 4): its installed CMake
+# package (the vcpkg port, or any install on CMAKE_PREFIX_PATH;
+# swarm-routing/ns3-swarm-core#137), which defines the imported target
+# swarm::core, at the version ../vcpkg.json pins (the release ../swarm-core.lock
+# names, the one the ns-3 build uses; swarm-routing/.github CONTRIBUTING
+# "Dependencies", vcpkg mode):
+#
+#   cmake -S core -B core/build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+#
+# SWARM_CORE_DIR names a swarm-core core/ directory instead, added as a
+# subproject that defines the same target and nothing else (no tests, no ctest
 # entry, no -Werror on our sources; its README "Use core/ from another CMake
-# project"). The release ../swarm-core.lock names (swarm-routing/ns3-swarm-core#134,
-# swarm-routing/.github CONTRIBUTING "Dependencies"): its tarball by URL,
-# checked against the lock's SHA256 (from the release's SHA256SUMS); CMake
-# strips the tarball's top directory. SWARM_CORE_DIR names a local swarm-core
-# core/ directory instead (offline, or an unreleased swarm-core change).
-# After the coverage options, so swarm-core's sources are built the same way.
-set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch the release swarm-core.lock names")
-if(ANTHOCNET_CORE_SWARM_CORE_FROM_PACKAGE)
-  find_package(swarm-core CONFIG REQUIRED)
-elseif(SWARM_CORE_DIR)
+# project"): an unreleased swarm-core change, or the lock's release unpacked
+# by tools/swarm_core.py path (what `make test` does without VCPKG_ROOT, and the
+# coverage, fuzz and analysis jobs). After the coverage options, so its sources
+# are built the same way.
+if(_anthocnet_core_swarm_core_from_dir)
   if(NOT EXISTS "${SWARM_CORE_DIR}/swarm-ports.h")
     message(FATAL_ERROR "SWARM_CORE_DIR=${SWARM_CORE_DIR} is not swarm-core's core/ directory")
   endif()
   add_subdirectory(${SWARM_CORE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/swarm-core)
 else()
-  file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../swarm-core.lock _swarm_core_lock REGEX "^SWARM_CORE_[A-Z0-9_]+=")
-  # a lock bump re-runs the configure step
-  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/../swarm-core.lock)
-  foreach(_swarm_core_kv IN LISTS _swarm_core_lock)
-    string(REGEX MATCH "^([A-Z0-9_]+)=(.*)$" _swarm_core_m "${_swarm_core_kv}")
-    set(_LOCK_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
-  endforeach()
-  foreach(_swarm_core_key REPO TAG ASSET SHA256)
-    if(NOT _LOCK_SWARM_CORE_${_swarm_core_key})
-      message(FATAL_ERROR "swarm-core.lock: no SWARM_CORE_${_swarm_core_key}")
-    endif()
-  endforeach()
-  # Extracted files get the extraction time (CMake 3.24+), so a lock bump
-  # rebuilds every swarm-core object.
-  set(_swarm_core_timestamp)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
-    set(_swarm_core_timestamp DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
-  endif()
-  include(FetchContent)
-  FetchContent_Declare(swarm_core_src
-    URL https://github.com/${_LOCK_SWARM_CORE_REPO}/releases/download/${_LOCK_SWARM_CORE_TAG}/${_LOCK_SWARM_CORE_ASSET}
-    URL_HASH SHA256=${_LOCK_SWARM_CORE_SHA256}
-    ${_swarm_core_timestamp}
-    SOURCE_SUBDIR core)
-  FetchContent_MakeAvailable(swarm_core_src)
+  find_package(swarm-core CONFIG REQUIRED)
 endif()
 
 add_library(anthocnet_core STATIC

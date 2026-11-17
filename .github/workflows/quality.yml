@@ -78,7 +78,8 @@ jobs:
       - name: Build and test the core with gcov
         run: |
           cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug \
-            -DANTHOCNET_COVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            -DANTHOCNET_COVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build core/build-coverage -j"$(nproc)"
           cd core/build-coverage && ctest --output-on-failure
       - name: Build the ns-3 module with gcov and run its suites

@@ -67,7 +67,10 @@ jobs:
           queries: security-and-quality
       - name: Build core
         run: |
-          cmake -S core -B build-codeql/core -DCMAKE_BUILD_TYPE=Release
+          # swarm-core's sources at the release swarm-core.lock names (tools/swarm_core.py),
+          # analysed with the core as before the vcpkg switch (swarm-routing/.github#489)
+          cmake -S core -B build-codeql/core -DCMAKE_BUILD_TYPE=Release \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build build-codeql/core -j
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:

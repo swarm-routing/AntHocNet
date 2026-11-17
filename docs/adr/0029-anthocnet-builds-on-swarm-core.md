@@ -108,6 +108,8 @@ Where AntHocNet needed something swarm-core lacked, the gap was added to swarm-c
 
 `SWARM_CORE_DIR=<checkout>/core` builds against a local swarm-core (offline, or an unreleased change).
 
+*Amended 2026-11-16 (swarm-routing/.github#489, vcpkg mode):* `core/CMakeLists.txt` no longer fetches the tarball. It finds swarm-core's CMake package (`find_package(swarm-core CONFIG REQUIRED)`), which vcpkg installs from swarm-routing/vcpkg-registry in manifest mode (`vcpkg.json` overrides the lock's version, `vcpkg-configuration.json` pins the registry baseline); CI's core job builds on that port. The lock stays the record of the release, and `tools/swarm_core.py` still unpacks the same tarball for `make install-ns3`, for `make test` without `VCPKG_ROOT`, and for the CI jobs that compile swarm-core's sources with their own instrumentation. The `swarm-core / pin` check (vcpkg mode) keeps the lock, the override and the baseline on one version.
+
 ### 4. The adapter on `SwarmRoutingBase`
 
 `ns3::anthocnet::RoutingProtocol` derives from `SwarmRoutingBase`. It takes from the base:

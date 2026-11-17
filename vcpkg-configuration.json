@@ -1,0 +1,17 @@
+{
+  "$comment": "Where vcpkg finds the ports: swarm-core from swarm-routing/vcpkg-registry at the baseline commit (the port's version and the SHA512 of its release asset; org-bot moves it with the lock), vcpkg's own helper ports from the builtin registry at the vcpkg commit swarm-routing/.github's setup-vcpkg action pins.",
+  "default-registry": {
+    "kind": "builtin",
+    "baseline": "9eec002df1cd109f8f104cd966a763daf9751489"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/swarm-routing/vcpkg-registry",
+      "baseline": "5b1c4dd7452740f5f501c6dfe85d2d244b9bdf8a",
+      "packages": [
+        "swarm-core"
+      ]
+    }
+  ]
+}

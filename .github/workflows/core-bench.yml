@@ -62,7 +62,10 @@ jobs:
           python-version: '3.12'
       - name: Build the PR head (or main)
         run: |
-          cmake -S core -B "$RUNNER_TEMP/head" -DCMAKE_BUILD_TYPE=Release
+          # swarm-core at the release swarm-core.lock names, compiled with the
+          # core (tools/swarm_core.py; the core job tests the vcpkg port)
+          cmake -S core -B "$RUNNER_TEMP/head" -DCMAKE_BUILD_TYPE=Release \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build "$RUNNER_TEMP/head" -j --target bench_core
       - name: Build the base branch (PR only)
         if: github.event_name == 'pull_request'
@@ -75,7 +78,12 @@ jobs:
             echo "NO_BASE=1" >> "$GITHUB_ENV"
             exit 0
           fi
-          cmake -S "$RUNNER_TEMP/base-src/core" -B "$RUNNER_TEMP/base" -DCMAKE_BUILD_TYPE=Release
+          # the base's own swarm-core (its lock), as the head's
+          sc=()
+          if [ -f "$RUNNER_TEMP/base-src/tools/swarm_core.py" ]; then
+            sc=(-DSWARM_CORE_DIR="$(python3 -I "$RUNNER_TEMP/base-src/tools/swarm_core.py" path)")
+          fi
+          cmake -S "$RUNNER_TEMP/base-src/core" -B "$RUNNER_TEMP/base" -DCMAKE_BUILD_TYPE=Release "${sc[@]}"
           cmake --build "$RUNNER_TEMP/base" -j --target bench_core
       - name: Compare against the base, interleaved (PR only)
         if: github.event_name == 'pull_request'
