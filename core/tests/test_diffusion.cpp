@@ -148,7 +148,7 @@ int main() {
     {
         FakeClock clock;
         ScriptedRng rng({0.5});
-        auto populated = [&](Config cfg, int nDest) {
+        auto populated = [&](const Config& cfg, int nDest) {
             AntRouterLogic router(/*addr*/ 0, cfg, clock, rng);
             for (int d = 0; d < nDest; ++d)
                 router.table().setPheromoneRegular(/*dest*/ 100 + d, /*neighbor*/ 1,
