@@ -8,6 +8,33 @@ Note: the **software release version** (below) is distinct from the **on-wire
 protocol version** (`kWireVersion`, see [docs/wire-format.md](docs/wire-format.md)),
 which gates packet compatibility independently.
 
+## v2.8.0 (2026-11-22)
+
+### Feat
+
+- **core**: core/ installs as the cmake package anthocnet-core, for its vcpkg port (#1043)
+
+### Fix
+
+- **ns3**: send unicast ants at the default ttl, as before s10a (#1083)
+- **release**: ship swarm-core.lock in the install bundle and check it (#1057)
+- **ns3**: no function-local static in ExecuteDecisions, so the heap is main's again (#1040)
+
+### Refactor
+
+- **make**: rename the ns-3 tree check to make ns3-doctor (#1123)
+- **ns3**: multi-interface routes on swarm-core's peer map (s10d) (#1066)
+- **ns3**: route MAC failures through swarm-core's WifiLinkMonitor and OnTxFailure (s10c) (#1065)
+- **ns3**: the pending queue on swarm-core's DeferredPacketQueue, broadcasts on BroadcastControlOn (s10b) (#1064)
+- **ns3**: the adapter derives from swarm-core's SwarmRoutingBase (s10a) (#1054)
+- **core**: pheromone storage on two swarm-core PheromoneTables (#1049)
+- **core**: ants carry swarm-core's VisitedPath and Hop (#1048)
+- **core**: link metrics on swarm-core's ILinkMetric, the energy metric from swarm-core (#1047)
+- **core**: encode and decode ants with swarm-core's WireWriter and WireReader (#1045)
+- **core**: keep (src, seq) duplicates in swarm-core's DedupHistory (#1042)
+- **core**: use swarm-core's RouteDecision<AntMessage> as RouteDecision (#1035)
+- **core**: take the types, ports, RouteAction, KindName and the router observer from swarm-core (#1034)
+
 ## v2.7.0 (2026-11-13)
 
 ### Feat
