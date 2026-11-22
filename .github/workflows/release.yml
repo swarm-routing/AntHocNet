@@ -332,6 +332,28 @@ jobs:
           spdx=$(jq -r '.spdxVersion | sub("^SPDX-"; "")' "dist/anthocnet-${VER}.spdx.json")   # e.g. 2.3
           gh attestation verify "dist/anthocnet-${VER}.zip" --repo "$GITHUB_REPOSITORY" --predicate-type "https://spdx.dev/Document/v${spdx}"
 
+      - name: SHA256SUMS of every published asset (#1191)
+        # One checksum file over every asset the publish job uploads, as the
+        # rest of the org publishes (reusable-release.yml), so `sha256sum -c
+        # SHA256SUMS` checks a whole download and release_check.py `after`
+        # finds it. Bare names (the subshell), sorted. The per-file .sha256
+        # assets stay, for the links that name them (the vcpkg port, docs).
+        # Keep this list equal to the publish job's `files:`, minus the
+        # .sha256 files and SHA256SUMS itself.
+        run: |
+          set -euo pipefail
+          assets=(
+            "anthocnet-${VER}.zip"
+            "anthocnet-ns3-modules-${VER}.tar.gz"
+            "anthocnet-${VER}.spdx.json"
+            "anthocnet-${VER}.bakeconf.xml"
+            "anthocnet-${VER}.provenance.sigstore.json"
+            "anthocnet-${VER}.intoto.jsonl"
+          )
+          ( cd dist && printf '%s\n' "${assets[@]}" | LC_ALL=C sort | xargs -d '\n' sha256sum -- > SHA256SUMS && sha256sum -c SHA256SUMS )
+          cat dist/SHA256SUMS
+          test "$(wc -l < dist/SHA256SUMS)" -eq "${#assets[@]}"
+
       - name: Hand the release over to the publish job
         id: handover
         if: ${{ inputs.mode != 'dryrun' }}
@@ -465,6 +487,7 @@ jobs:
             dist/anthocnet-${{ env.VER }}.bakeconf.xml
             dist/anthocnet-${{ env.VER }}.provenance.sigstore.json
             dist/anthocnet-${{ env.VER }}.intoto.jsonl
+            dist/SHA256SUMS
           generate_release_notes: true
           body: |
             AntHocNet ${{ env.TAG }}. Release notes: [CHANGELOG.md](https://github.com/swarm-routing/AntHocNet/blob/${{ env.TAG }}/CHANGELOG.md) at this tag.
@@ -494,15 +517,18 @@ jobs:
             and `:${{ env.TAG }}-debug`, ns-3 with every module of this release built and tested,
             `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest (label `io.github.swarm-routing.ns3-dev.digest`).
 
-            **Verify your download.** The SHA-256 digest is published twice — in
-            this body and as the `anthocnet-${{ env.VER }}.zip.sha256` asset:
+            **Verify your download.** `SHA256SUMS` lists the SHA-256 of every
+            asset of this release; in the directory you downloaded to:
+
+            ```
+            sha256sum -c SHA256SUMS --ignore-missing   # checks the assets you downloaded
+            ```
+
+            The bundle's digest is also in this body, and each download keeps
+            its own `.sha256` asset (`sha256sum -c anthocnet-${{ env.VER }}.zip.sha256`):
 
             ```
             ${{ env.SHA256 }}  anthocnet-${{ env.VER }}.zip
-            ```
-
-            ```
-            sha256sum -c anthocnet-${{ env.VER }}.zip.sha256   # both files in the same directory
             ```
 
             **Verify where it came from.** Both downloads carry signed SLSA

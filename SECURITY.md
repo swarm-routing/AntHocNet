@@ -49,11 +49,13 @@ Every release from v2.3.0 on can be checked three ways (#614). The release
 workflow runs each check itself before it publishes, so a release whose
 signatures do not verify never goes out.
 
-**1. Integrity: the checksum.** It is published twice, in the release body
-and as the `.sha256` asset.
+**1. Integrity: the checksum.** The `SHA256SUMS` asset lists every asset of
+the release (from the first release after #1191); the bundle's digest is also
+in the release body, and each download keeps its own `.sha256` asset.
 
 ```bash
-sha256sum -c anthocnet-X.Y.Z.zip.sha256
+sha256sum -c SHA256SUMS --ignore-missing   # the assets you downloaded
+sha256sum -c anthocnet-X.Y.Z.zip.sha256    # one file
 ```
 
 **2. Origin: signed build provenance.** The install bundle and the drop-in
