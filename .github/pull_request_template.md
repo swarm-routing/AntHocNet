@@ -20,6 +20,8 @@ Scopes in use: core, ns3, bench, ci, docs.
 - docs-only: link check
 -->
 
+- [ ] A `feat` or `fix` that changes code adds or changes a test that fails without it, or the Verification says why none applies ([test policy](https://github.com/swarm-routing/AntHocNet/blob/main/CONTRIBUTING.md#building--testing): any new behaviour needs a test; the org's: [CONTRIBUTING "Tests"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#tests))
+
 ## Record
 
 <!-- Delete what doesn't apply:
