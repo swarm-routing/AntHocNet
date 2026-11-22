@@ -517,15 +517,19 @@ jobs:
             and `:${{ env.TAG }}-debug`, ns-3 with every module of this release built and tested,
             `FROM` a pinned `ghcr.io/swarm-routing/ns3-dev` digest (label `io.github.swarm-routing.ns3-dev.digest`).
 
-            **Verify your download.** `SHA256SUMS` lists the SHA-256 of every
-            asset of this release; in the directory you downloaded to:
+            **Verify your download.** `SHA256SUMS` lists the SHA-256 of the six
+            downloads: `anthocnet-${{ env.VER }}.zip`, `anthocnet-ns3-modules-${{ env.VER }}.tar.gz`,
+            `anthocnet-${{ env.VER }}.spdx.json`, `anthocnet-${{ env.VER }}.bakeconf.xml`,
+            `anthocnet-${{ env.VER }}.provenance.sigstore.json` and `anthocnet-${{ env.VER }}.intoto.jsonl`
+            (not the two `.sha256` files). In the directory you downloaded to:
 
             ```
-            sha256sum -c SHA256SUMS --ignore-missing   # checks the assets you downloaded
+            sha256sum -c SHA256SUMS --ignore-missing   # checks those of the six you downloaded; a file it lists as OK is checked
             ```
 
-            The bundle's digest is also in this body, and each download keeps
-            its own `.sha256` asset (`sha256sum -c anthocnet-${{ env.VER }}.zip.sha256`):
+            The bundle and the module tarball also have their own checksum files,
+            `anthocnet-${{ env.VER }}.zip.sha256` and `anthocnet-ns3-modules-${{ env.VER }}.tar.gz.sha256`
+            (`sha256sum -c anthocnet-${{ env.VER }}.zip.sha256`), and the bundle's digest is in this body:
 
             ```
             ${{ env.SHA256 }}  anthocnet-${{ env.VER }}.zip

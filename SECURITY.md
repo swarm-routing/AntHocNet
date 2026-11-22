@@ -49,13 +49,20 @@ Every release from v2.3.0 on can be checked three ways (#614). The release
 workflow runs each check itself before it publishes, so a release whose
 signatures do not verify never goes out.
 
-**1. Integrity: the checksum.** The `SHA256SUMS` asset lists every asset of
-the release (from the first release after #1191); the bundle's digest is also
-in the release body, and each download keeps its own `.sha256` asset.
+**1. Integrity: the checksum.** From the first release after #1191, the
+`SHA256SUMS` asset lists the SHA-256 of the six downloads:
+`anthocnet-X.Y.Z.zip`, `anthocnet-ns3-modules-X.Y.Z.tar.gz`,
+`anthocnet-X.Y.Z.spdx.json`, `anthocnet-X.Y.Z.bakeconf.xml`,
+`anthocnet-X.Y.Z.provenance.sigstore.json` and `anthocnet-X.Y.Z.intoto.jsonl`
+(not the two `.sha256` files below). `--ignore-missing` checks those you
+downloaded and skips the rest; each file it prints as `OK` was checked. The
+bundle and the module tarball also have their own checksum files,
+`anthocnet-X.Y.Z.zip.sha256` and `anthocnet-ns3-modules-X.Y.Z.tar.gz.sha256`,
+and the bundle's digest is in the release body.
 
 ```bash
-sha256sum -c SHA256SUMS --ignore-missing   # the assets you downloaded
-sha256sum -c anthocnet-X.Y.Z.zip.sha256    # one file
+sha256sum -c SHA256SUMS --ignore-missing
+sha256sum -c anthocnet-X.Y.Z.zip.sha256
 ```
 
 **2. Origin: signed build provenance.** The install bundle and the drop-in
