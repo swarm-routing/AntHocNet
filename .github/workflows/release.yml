@@ -473,7 +473,7 @@ jobs:
 
             **Install bundle** (`anthocnet-${{ env.VER }}.zip`) — the source to
             drop onto your own simulator tree:
-            `make doctor NS3DIR=…` then `make install-ns3 NS3DIR=…`
+            `make ns3-doctor NS3DIR=…` then `make install-ns3 NS3DIR=…`
             (`BASELINES=0` for AntHocNet alone).
 
             **Drop-in ns-3 modules** (`anthocnet-ns3-modules-${{ env.VER }}.tar.gz`):

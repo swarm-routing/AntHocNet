@@ -133,7 +133,7 @@ checked by its SHA256; offline, pass a local checkout:
 From a checkout:
 
 ```bash
-make doctor      NS3DIR=/path/to/ns-3      # checks the tree, ns-3 version, CMake, compiler
+make ns3-doctor  NS3DIR=/path/to/ns-3      # checks the tree, ns-3 version, CMake, compiler
 make install-ns3 NS3DIR=/path/to/ns-3      # BASELINES=0: AntHocNet alone, no comparison arms
 cd /path/to/ns-3 && ./ns3 configure --enable-examples --enable-tests && ./ns3 build
 ./ns3 run anthocnet-example

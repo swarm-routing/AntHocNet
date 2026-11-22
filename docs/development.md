@@ -68,7 +68,7 @@ them into a git-ignored `web/` when you need the browser checks (see
 
 ```bash
 make build                                   # core/ only (CMake), into core/build
-make doctor      NS3DIR=/path/to/ns-3        # check the ns-3 tree (##DOCTOR## line)
+make ns3-doctor  NS3DIR=/path/to/ns-3        # check the ns-3 tree (##DOCTOR## line)
 make install-ns3 NS3DIR=/path/to/ns-3        # BASELINES=0: AntHocNet alone, no comparison arms
 cd /path/to/ns-3 && ./ns3 configure --enable-examples --enable-tests && ./ns3 build
 ```
