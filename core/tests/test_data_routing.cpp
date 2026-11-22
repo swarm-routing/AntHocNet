@@ -71,15 +71,15 @@ int main() {
     {
         FakeClock clock;
         ScriptedRng rng({0.5});
-        Config cfg = ::cfgWithBudget(2);
-        AntRouterLogic origin(/*addr*/ 1, cfg, clock, rng);
+        Config budgetCfg = ::cfgWithBudget(2);
+        AntRouterLogic origin(/*addr*/ 1, budgetCfg, clock, rng);
         AntMessage refa = origin.createForwardAnt(AntType::Repair, /*dest*/ 99);
-        CHECK_EQ(refa.broadcastBudget, cfg.repairMaxBroadcasts);
+        CHECK_EQ(refa.broadcastBudget, budgetCfg.repairMaxBroadcasts);
 
-        auto step = [&](AntMessage ant, NodeAddress addr, NodeAddress prevHop) {
+        auto step = [&](const AntMessage& ant, NodeAddress addr, NodeAddress prevHop) {
             FakeClock c;
             ScriptedRng r({0.5});
-            AntRouterLogic node(addr, cfg, c, r);
+            AntRouterLogic node(addr, budgetCfg, c, r);
             return node.onReceiveAnt(ant, prevHop);
         };
         refa.visited = anthocnet::test::path({{1, 0.0}});
@@ -98,8 +98,8 @@ int main() {
     {
         FakeClock clock;
         ScriptedRng rng({0.5});
-        Config cfg = ::cfgWithBudget(2);
-        AntRouterLogic origin(/*addr*/ 1, cfg, clock, rng);
+        Config budgetCfg = ::cfgWithBudget(2);
+        AntRouterLogic origin(/*addr*/ 1, budgetCfg, clock, rng);
         AntMessage refa = origin.createForwardAnt(AntType::Reactive, /*dest*/ 99);
         CHECK(refa.broadcastBudget < 0);
     }

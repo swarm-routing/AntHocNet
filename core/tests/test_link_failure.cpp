@@ -158,7 +158,7 @@ int main() {
         rep.broadcastBudget = 2;
         rep.visited = anthocnet::test::path({{3, 0.0}});
 
-        auto step = [&](AntMessage ant, NodeAddress addr, NodeAddress prevHop) {
+        auto step = [&](const AntMessage& ant, NodeAddress addr, NodeAddress prevHop) {
             FakeClock clock;
             ScriptedRng rng({0.5});
             AntRouterLogic node(addr, cfg, clock, rng);
