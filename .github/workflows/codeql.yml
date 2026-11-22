@@ -31,6 +31,7 @@ on:
     paths:
       - 'core/**'
       - '.github/workflows/codeql.yml'
+      - 'tools/checks/filter-codeql-sarif.py'
   schedule:
     - cron: '41 4 * * 1'
   workflow_dispatch:
@@ -72,6 +73,24 @@ jobs:
           cmake -S core -B build-codeql/core -DCMAKE_BUILD_TYPE=Release \
             -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build build-codeql/core -j
+      # Analyse without uploading, drop the reviewed results, then upload.
+      # CodeQL's query-filters cannot be path-scoped, so a config file would
+      # hide cpp/equality-on-floats and cpp/unused-static-function in
+      # core/src/ too, and paths-ignore on core/tests/ would hide every rule
+      # there. tools/checks/filter-codeql-sarif.py drops exactly those two
+      # rules under core/tests/ (maintainer decision 2026-11-22; the evidence
+      # and rationale are in its docstring, on the `security` tickets and on
+      # swarm-routing/.github#629). Both steps are first-party.
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
+          category: /language:c-cpp
+          upload: never
+          output: sarif-results
+      - name: Drop the reviewed core/tests/ results
+        run: |
+          python3 -I tools/checks/filter-codeql-sarif.py --self-test
+          python3 -I tools/checks/filter-codeql-sarif.py sarif-results/*.sarif
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: sarif-results
           category: /language:c-cpp
