@@ -40,7 +40,7 @@ jobs:
           sudo apt-get install -y cmake g++
       - name: vcpkg (swarm-routing/.github#489)
         id: vcpkg
-        uses: swarm-routing/.github/.github/actions/setup-vcpkg@main
+        uses: swarm-routing/.github/.github/actions/setup-vcpkg@2d2c557c2d25e899fb487edd599056096b218d3f # main@2026-11-22
         timeout-minutes: 8
         with:
           # The NuGet cache needs mono on the runner (28-50 s to install); the
@@ -98,7 +98,7 @@ jobs:
           sudo apt-get install -y cmake g++
       - name: vcpkg (swarm-routing/.github#489)
         id: vcpkg
-        uses: swarm-routing/.github/.github/actions/setup-vcpkg@main
+        uses: swarm-routing/.github/.github/actions/setup-vcpkg@2d2c557c2d25e899fb487edd599056096b218d3f # main@2026-11-22
         timeout-minutes: 8
         with:
           # The NuGet cache needs mono on the runner (28-50 s to install); the
