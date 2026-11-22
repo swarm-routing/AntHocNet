@@ -40,7 +40,8 @@ cd /path/to/ns-3-dev
 `make ns3-doctor` checks that the tree is ns-3.46–3.49 with CMake, a C++23
 compiler, Python and a writable `contrib/`, and reports what is installed. It
 ends with one machine-readable `##DOCTOR##` line (versioned, fields only ever
-added). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
+added). Up to v2.7.0 it was `make doctor`, a name that now runs the org's
+toolchain check (swarm-routing/.github#647). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
 comparison modules: the module, its test suite and `anthocnet-example` build as usual,
 and ns-3 skips the comparison harnesses that link those modules.
 The module links swarm-core, the shared ns-3 module whose `SwarmRoutingBase`
