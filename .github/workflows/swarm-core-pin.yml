@@ -19,4 +19,4 @@ permissions:
 
 jobs:
   swarm-core:
-    uses: swarm-routing/.github/.github/workflows/reusable-swarm-core-pin.yml@c9358e3eedf318ba57e37a9bb3c51d1057d657ac # main@2026-11-22
+    uses: swarm-routing/.github/.github/workflows/reusable-swarm-core-pin.yml@78dd3d7f572c715b41993f9e18b41572d1072ea4 # main@2026-11-22
