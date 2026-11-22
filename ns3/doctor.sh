@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2026 Daniel Henrique Joppi
 #
-# make doctor NS3DIR=/path/to/ns-3 (#605): check an ns-3 tree before a long
+# make ns3-doctor NS3DIR=/path/to/ns-3 (#605): check an ns-3 tree before a long
 # build fails halfway. Prints one line per check (ok / warn / FAIL), a verdict,
 # and one machine-readable line that the learn site's install quest (#636)
 # parses locally:
@@ -38,7 +38,7 @@ module=missing baselines=none built=no
 
 # --- the tree ---------------------------------------------------------------
 if [ -z "$NS3DIR" ]; then
-    fail "NS3DIR is not set: make doctor NS3DIR=/path/to/ns-3"
+    fail "NS3DIR is not set: make ns3-doctor NS3DIR=/path/to/ns-3"
 elif [ ! -d "$NS3DIR" ]; then
     fail "NS3DIR=$NS3DIR does not exist"
 elif [ ! -d "$NS3DIR/contrib" ] || [ ! -f "$NS3DIR/CMakeLists.txt" ]; then

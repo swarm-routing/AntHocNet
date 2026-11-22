@@ -88,11 +88,11 @@ jobs:
         uses: ./.github/actions/ns3-install
         with:
           from-tarball: ${{ matrix.version == inputs.gate-version }}
-      - name: make doctor (#605)
+      - name: make ns3-doctor (#605)
         # The pre-install checker must recognise every supported tree and the
         # installed modules; its ##DOCTOR## line is what the learn site parses.
         run: |
-          out=$(make -s doctor NS3DIR=/opt/ns-3)
+          out=$(make -s ns3-doctor NS3DIR=/opt/ns-3)
           echo "$out"
           line=$(printf '%s\n' "$out" | grep '^##DOCTOR## ')
           # The ns3-dev images set NS3_VERSION to the installed release (also
@@ -604,9 +604,9 @@ jobs:
         uses: ./.github/actions/ns3-install
         with:
           baselines: '0'
-      - name: make doctor reports the baselines missing, verdict still not fail
+      - name: make ns3-doctor reports the baselines missing, verdict still not fail
         run: |
-          out=$(make -s doctor NS3DIR=/opt/ns-3)
+          out=$(make -s ns3-doctor NS3DIR=/opt/ns-3)
           echo "$out"
           printf '%s\n' "$out" | grep -q '^##DOCTOR## .* baselines=aomdv:missing,gpsr:missing,oracle:missing,adaptive:missing,routing-bench:missing '
           ! printf '%s\n' "$out" | grep -q 'verdict=fail'

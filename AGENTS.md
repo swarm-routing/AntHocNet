@@ -50,7 +50,7 @@ paper/   JOSS-style paper source
 ```bash
 make test                                  # build core (CMake) + run ctest — fast, no simulator (swarm-core: the lock's release)
 make test VCPKG_ROOT=/path/to/vcpkg        # the same on swarm-core's vcpkg port, as CI's core job
-make doctor       NS3DIR=/path/to/ns-3-dev # check the tree (##DOCTOR## line)
+make ns3-doctor   NS3DIR=/path/to/ns-3-dev # check the tree (##DOCTOR## line)
 make install-ns3  NS3DIR=/path/to/ns-3-dev # install onto a real NS-3 tree (BASELINES=0: alone)
 make clean                                 # remove core/build
 make test SWARM_CORE_DIR=../ns3-swarm-core/core   # offline / a local swarm-core instead of the pin

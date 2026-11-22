@@ -1,6 +1,6 @@
 # AntHocNet — NS-3 installer.
 #
-#   make doctor    NS3DIR=/path/to/ns-3-dev   # check the tree first (#605)
+#   make doctor    NS3DIR=/path/to/ns-3-dev   # check the tree first (#605; `make ns3-doctor` from the root)
 #   make install   NS3DIR=/path/to/ns-3-dev   # BASELINES=0: AntHocNet only
 #   make uninstall NS3DIR=/path/to/ns-3-dev
 #

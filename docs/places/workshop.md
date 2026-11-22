@@ -5,11 +5,11 @@ on-the-wire format, and the code reference.
 
 **[Open the Workshop in the game](https://swarm-routing.github.io/AntHocNet/workshop.html)**:
 the core's API drawn as a live ant nest, and this install guide as a quest you
-check by pasting `make doctor`'s output, and the comparison harness for your own
+check by pasting `make ns3-doctor`'s output, and the comparison harness for your own
 protocol.
 
 ```bash
-make doctor      NS3DIR=/path/to/ns-3     # check the tree first
+make ns3-doctor  NS3DIR=/path/to/ns-3     # check the tree first
 make install-ns3 NS3DIR=/path/to/ns-3     # BASELINES=0: AntHocNet alone
 cd /path/to/ns-3 && ./ns3 configure --enable-examples --enable-tests && ./ns3 build
 ./test.py -s anthocnet                    # header round-trip + multi-hop delivery

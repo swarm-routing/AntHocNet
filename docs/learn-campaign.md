@@ -490,7 +490,7 @@ the brand, the five places, search, day/night and the language switch
 | **Play** | campaign (from v2.2.0), free play (the five worlds), academy missions | the game |
 | **Field guide** | how the colony routes: ant colony routing, the five ant types, architecture, software layers, network regimes | "Understand the protocol" |
 | **Lab** | what we measured: results per network type with CIs, metrics, methodology, sweeps, reproduce a figure | "Measure & reproduce" |
-| **Workshop** | building it into ns-3: install, `make doctor`, configuration, wire format, porting, the API reference | "Build, port, extend" + `/api/` |
+| **Workshop** | building it into ns-3: install, `make ns3-doctor`, configuration, wire format, porting, the API reference | "Build, port, extend" + `/api/` |
 | **Archive** | decisions and what's next: roadmap, ADRs, fidelity to the paper, research landscape, publications | "Research provenance & fidelity" + "Decisions & process" |
 
 ![Hub mockup: a large Play card with Continue and Free play, and one card per place (Field guide, Lab, Workshop, Archive), each with a world from the game as its art](images/site-game-hub.png)
@@ -638,7 +638,7 @@ behind the code. [#635](https://github.com/swarm-routing/AntHocNet/issues/635).
 ### The game meets ns-3 (v2.1.0–v2.3.0)
 
 - **Install quest** ([#636](https://github.com/swarm-routing/AntHocNet/issues/636), v2.1.0). The install guide becomes a quest.
-  `make doctor` ([#605](https://github.com/swarm-routing/AntHocNet/issues/605)) prints a machine-readable `##DOCTOR##` line; the
+  `make ns3-doctor` ([#605](https://github.com/swarm-routing/AntHocNet/issues/605)) prints a machine-readable `##DOCTOR##` line; the
   user pastes it, and the game ticks or explains each step **locally**,
   pointing at the fix. The install page and the quest are generated from one
   step list.

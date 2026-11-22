@@ -272,7 +272,7 @@
     <div class="content">
       <p style="margin:0">The level you built, as an ns-3 run: your devices' positions over time, your calls, your upgrades.</p>
       <div class="files"><span class="pill">📄 mobility.ns_movements</span><span class="pill">📄 flows.txt</span><span class="pill">📄 run.sh</span><span class="pill">📄 README.md</span></div>
-      <pre><span class="c"># inside the release image, or after make install-ns3 && make doctor</span>
+      <pre><span class="c"># inside the release image, or after make install-ns3 && make ns3-doctor</span>
 ./ns3 run "anthocnet-compare --mobility=trace --traceFile=mobility.ns_movements \
   --flowsFile=flows.txt --propagation=urban --blocksX=5 --blocksY=5 --runs=20 \
   --ns3::anthocnet::RoutingProtocol::<span class="a">EnableRepair</span>=true"</pre>
@@ -282,12 +282,12 @@
   <article class="win quest">
     <div class="title"><span class="dots"><i></i><i></i><i></i></span>Quest · Field engineer — install AntHocNet in ns-3<span class="grow"></span><span class="pill">3 / 5</span></div>
     <div class="content">
-      <div class="chk"><span class="ok">✓</span><span>ns-3 tree found: <code>3.48</code></span><span class="pill">make doctor</span></div>
-      <div class="chk"><span class="ok">✓</span><span>compiler <code>g++ 13.2</code>, CMake <code>3.28</code></span><span class="pill">make doctor</span></div>
+      <div class="chk"><span class="ok">✓</span><span>ns-3 tree found: <code>3.48</code></span><span class="pill">make ns3-doctor</span></div>
+      <div class="chk"><span class="ok">✓</span><span>compiler <code>g++ 13.2</code>, CMake <code>3.28</code></span><span class="pill">make ns3-doctor</span></div>
       <div class="chk"><span class="ok">✓</span><span>module installed to <code>contrib/anthocnet</code></span><span class="pill">make install-ns3</span></div>
       <div class="chk"><span class="no">✗</span><span>baselines: AOMDV not built — re-run with <code>BASELINES=0</code> or install the patch</span><span class="pill">#605</span></div>
       <div class="chk"><span class="todo">○</span><span>run the smoke and paste its <code>##BENCH##</code> line</span><span class="pill">reward: Lab badge</span></div>
-      <p style="margin:6px 0 0;font-size:12.5px">Paste <code>make doctor</code>'s output: the game reads its <code>##DOCTOR##</code> block locally and ticks what passed.</p>
+      <p style="margin:6px 0 0;font-size:12.5px">Paste <code>make ns3-doctor</code>'s output: the game reads its <code>##DOCTOR##</code> block locally and ticks what passed.</p>
     </div>
   </article>
 </section>

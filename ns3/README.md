@@ -28,7 +28,7 @@ layout is the same as before the #608 move: `contrib/anthocnet`,
 
 ```bash
 # from the repository root
-make doctor      NS3DIR=/path/to/ns-3-dev   # check the tree before a long build
+make ns3-doctor  NS3DIR=/path/to/ns-3-dev   # check the tree before a long build
 make install-ns3 NS3DIR=/path/to/ns-3-dev   # add BASELINES=0 for AntHocNet alone
 
 # then (re)configure and build ns-3
@@ -37,7 +37,7 @@ cd /path/to/ns-3-dev
 ./ns3 build
 ```
 
-`make doctor` checks that the tree is ns-3.46–3.49 with CMake, a C++23
+`make ns3-doctor` checks that the tree is ns-3.46–3.49 with CMake, a C++23
 compiler, Python and a writable `contrib/`, and reports what is installed. It
 ends with one machine-readable `##DOCTOR##` line (versioned, fields only ever
 added). `BASELINES=0` skips the `aomdv`, `gpsr`, `oracle` and `adaptive`
