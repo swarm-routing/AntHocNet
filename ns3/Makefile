@@ -93,7 +93,7 @@ install: require-ns3dir
 	    if [ "$$have" = "$$want" ]; then echo ">> contrib/swarm-core $$have is already installed: kept"; \
 	    else echo ">> WARNING: contrib/swarm-core is $$have, swarm-core.lock names $$want: kept, not overwritten (AntHocNet is built and tested with $$want)"; fi; \
 	  else \
-	    echo ">> Installing swarm-core $$want ($$(python3 $(ROOT)/tools/swarm_core.py pin)) into $(SWARMDEST)"; \
+	    echo ">> Installing swarm-core $$want ($${SWARM_CORE_MODULE:-$$(python3 $(ROOT)/tools/swarm_core.py pin)}) into $(SWARMDEST)"; \
 	    mkdir -p "$(SWARMDEST)" && cp -r "$$sc/." "$(SWARMDEST)/" && \
 	    echo "$$want" > "$(SWARMDEST)/$(SWARMMARK)"; \
 	  fi
