@@ -82,7 +82,8 @@ install: require-ns3dir
 	# swarm-core.lock names (swarm-routing/ns3-swarm-core#14, S10 of #1019):
 	# installed as contrib/swarm-core, which the anthocnet module links.
 	# tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core uses a local
-	# one. A contrib/swarm-core this installer did not put there (another
+	# one, SWARM_CORE_MODULE=<adapter checkout> a local adapter tree (its main
+	# has no core/, swarm-routing/swarm-adapter-ns3#258). A contrib/swarm-core this installer did not put there (another
 	# protocol's) is kept: at the same version silently, at another with a
 	# warning, never overwritten.
 	@sc=$$(python3 $(ROOT)/tools/swarm_core.py module) && test -f "$$sc/model/swarm-routing-base.h" && \
