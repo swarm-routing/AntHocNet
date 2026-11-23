@@ -14,12 +14,17 @@ include_directories($<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core/include>)
 # swarm-core (swarm-routing/ns3-swarm-core#14): the ns-3 module the adapter
 # derives from (SwarmRoutingBase, S10 of #1019) and links below; `make
 # install-ns3` installs it as contrib/swarm-core at the release swarm-core.lock
-# names. core/'s headers include its core/ by bare name ("swarm-ports.h", as
-# in the core's own CMake build), so that directory is on the include path too.
-if(NOT EXISTS ${PROJECT_SOURCE_DIR}/contrib/swarm-core/core/swarm-ports.h)
+# names. core/'s headers include swarm-core's primitives by bare name
+# ("swarm-ports.h", as in the core's own CMake build). Their directory comes
+# with ${libswarm-core}: the adapter links swarm-core's swarm::core PUBLIC
+# (swarm-routing/swarm-adapter-ns3#258). Adapter v1.0.0 has no such link and
+# carries them in its own core/, added to the include path where it exists.
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/contrib/swarm-core/model/swarm-routing-base.h)
   message(FATAL_ERROR "anthocnet: contrib/swarm-core is missing; install with `make install-ns3`")
 endif()
-include_directories($<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/contrib/swarm-core/core>)
+if(EXISTS ${PROJECT_SOURCE_DIR}/contrib/swarm-core/core/swarm-ports.h)
+  include_directories($<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/contrib/swarm-core/core>)
+endif()
 
 # Adapt to ns-3 API drift by release. NS3_VER is set by ns-3 (e.g. "3.41");
 # anything non-numeric (e.g. "3-dev") falls through to the modern defaults.
