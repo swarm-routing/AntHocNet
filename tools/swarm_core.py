@@ -32,7 +32,9 @@ Environment:
                                                without a core/ of its own (its
                                                main takes swarm-core from the
                                                release it locks,
-                                               swarm-routing/swarm-adapter-ns3#258)
+                                               swarm-routing/swarm-adapter-ns3#258);
+                                               `path` ignores it and keeps the
+                                               release (or SWARM_CORE_DIR)
     SWARM_CORE_CACHE=<dir>                     where to unpack (default
                                                <repo>/.swarm-core)
 
@@ -78,13 +80,18 @@ def is_module(d):
 
 
 def module():
-    """The swarm-core ns-3 module: the release tree (or SWARM_CORE_MODULE, or SWARM_CORE_DIR's parent)."""
+    """The swarm-core ns-3 module: SWARM_CORE_MODULE, else release_module()."""
     adapter = os.environ.get("SWARM_CORE_MODULE")
     if adapter:
         adapter = os.path.abspath(adapter)
         if not os.path.isfile(os.path.join(adapter, "model", "swarm-routing-base.h")):
             sys.exit(f"swarm_core: SWARM_CORE_MODULE={adapter} is not the swarm-core ns-3 module")
         return adapter
+    return release_module()
+
+
+def release_module():
+    """The swarm-core ns-3 module with a core/: the release tree (or SWARM_CORE_DIR's parent)."""
     local = os.environ.get("SWARM_CORE_DIR")
     if local:
         local = os.path.abspath(local)
@@ -147,7 +154,7 @@ def path():
         if not is_core(local):
             sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
         return local
-    return os.path.join(module(), "core")
+    return os.path.join(release_module(), "core")
 
 
 def main(argv):
