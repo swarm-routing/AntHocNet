@@ -464,6 +464,7 @@ that is the template for revisiting any of the others.
 Every published release with its Zenodo version DOI, read from Zenodo by swarm-routing/.github `tools/zenodo/zenodo.py shipped` (org-bot's `release-aftercare` task); never edit the block by hand.
 
 <!-- releases:shipped:begin (zenodo.py shipped --write; never edit by hand) -->
+- **v2.8.0** shipped 2026-11-22 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.8.0), Zenodo version DOI [10.5281/zenodo.24466958](https://doi.org/10.5281/zenodo.24466958))
 - **v2.7.0** shipped 2026-11-13 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.7.0), Zenodo version DOI [10.5281/zenodo.24213888](https://doi.org/10.5281/zenodo.24213888))
 - **v2.6.1** shipped 2026-10-29 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.6.1), Zenodo version DOI [10.5281/zenodo.24060921](https://doi.org/10.5281/zenodo.24060921))
 - **v2.6.0** shipped 2026-10-29 ([release](https://github.com/swarm-routing/AntHocNet/releases/tag/v2.6.0), Zenodo version DOI [10.5281/zenodo.23777868](https://doi.org/10.5281/zenodo.23777868))
