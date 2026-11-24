@@ -45,6 +45,7 @@ Environment:
 Standard library only, so it runs in the ns-3 images and on a bare runner.
 """
 
+import fcntl
 import hashlib
 import os
 import re
@@ -128,8 +129,14 @@ def fetch(which, ok, what):
         src = os.path.join(tmp, top)
         if not ok(src):
             sys.exit(f"swarm_core: {lk['REPO']} {lk['TAG']} {lk['ASSET']} is not {what}")
-        shutil.rmtree(dest, ignore_errors=True)
-        shutil.move(src, dest)
+        # Two fetches of one release may race: publish under a lock, keep a
+        # tree another process published, replace only an absent or broken one.
+        with open(os.path.join(cache, ".lock"), "w") as held:
+            fcntl.flock(held, fcntl.LOCK_EX)
+            if ok(dest):
+                return dest
+            shutil.rmtree(dest, ignore_errors=True)
+            shutil.move(src, dest)
     return dest
 
 
