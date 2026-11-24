@@ -1,0 +1,15 @@
+# The swarm-routing/swarm-adapter-ns3 release AntHocNet's ns-3 module builds on:
+# the ns-3 contrib module swarm-core (SwarmRoutingBase, S10 of #1019), which
+# `make install-ns3` installs as contrib/swarm-core (tools/swarm_core.py
+# module). swarm-core.lock names swarm-core's own release, the core/ that
+# core/ builds on; the two were one repository until swarm-core moved out
+# (swarm-routing/swarm-adapter-ns3#231, swarm-routing/.github#691). Never edit
+# it by hand: written by swarm-routing/.github tools/checks/release_lock.py
+# (render, every value read from the release); org-bot's release-lock task
+# opens the bump PR when a newer adapter release is out.
+ADAPTER_REPO=swarm-routing/swarm-adapter-ns3
+ADAPTER_TAG=v1.0.0
+ADAPTER_COMMIT=ff097aeb1f6237fb9796ff4713e91524fb5b4d3f
+ADAPTER_VERSION=1.0.0
+ADAPTER_ASSET=swarm-core-1.0.0.tar.gz
+ADAPTER_SHA256=c7f11b1e1f7b1a666f424ea4a0bc96e27a4f7e5bc8d15edea5817be6932a60a7
