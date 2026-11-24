@@ -97,6 +97,14 @@ jobs:
         # tables from ##COMMON## rows. A synthetic cell with known answers,
         # no simulator, ~1 s.
         run: python3 tools/bench/test_common_tables.py
+      - name: Re-anchor self-test (#1222)
+        # reanchor.py proposes a gate's seed window when an ns-3 release moves
+        # the field (methodology "Re-anchoring a gate's seeds"). It parses the
+        # gates from check-anchors.sh and check-arm-delivery.sh (every gate
+        # must have a kind) and applies the rule to #1222's survey, which
+        # must give arm-delivery seed 3 and mesh-hwmp-shortest seeds 3-4.
+        # No simulator, no network, ~1 s.
+        run: python3 -I tools/bench/reanchor.py --self-test
       - name: Every committed cell reads strictly (#976)
         # A committed cell is immutable evidence (ADR-0013). check_cells.py
         # fails a cell a strict reader (swarm-routing/ns3-tools#146) would

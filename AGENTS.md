@@ -474,6 +474,7 @@ on what the row names.
 | Add a world, a mission or a core class | it needs its docs links: `python3 tools/checks/check-site-links.py` says what is missing (fetch `web/` first: `tools/checks/fetch-site-web.sh`) |
 | Summarize / export campaign sweep CSVs | `benchmark-results` skill (`python3 tools/ns3_tools.py run sweep_summary`; `--export-sweeps` feeds the paper drafts' plot data) |
 | Validate a scenario config or result plausibility | `benchmark-results` skill (`tools/bench/scenario_check.py`: `preflight`, then `results`) |
+| Re-choose a gate's seeds after an ns-3 release moved its field | `tools/bench/reanchor.py` (oracle survey + #1222's rule; never a floor); `docs/benchmarks/methodology.md` "Re-anchoring a gate's seeds" |
 | Pre-push invariant check on a diff | `anthocnet-review` skill (`.claude/skills/anthocnet-review/check_invariants.sh`) |
 | Understand why skills are script-first (and add a new analysis loop) | [ADR-0014](docs/adr/0014-agent-skills-are-script-first.md): raw data stays out of LLM context |
 | Work on satellite / ISL topologies | [ADR-0015](docs/adr/0015-satellite-substrate-lives-in-the-image.md) (one binary, no separate satellite build), [ADR-0022](docs/adr/0022-satellite-substrate-is-stock-ns3-leo.md) (stock ns-3.48 LEO) |

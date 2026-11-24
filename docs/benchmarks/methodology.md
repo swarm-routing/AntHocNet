@@ -1636,6 +1636,51 @@ enforced locally by
 [`tools/bench/scenario_check.py`](../../tools/bench/scenario_check.py)
 (#134), which reads `anchors.yml` rather than duplicating it.
 
+### Re-anchoring a gate's seeds when ns-3 moves the field ([#1222](https://github.com/swarm-routing/AntHocNet/issues/1222))
+
+The field a gate runs on is a function of the seed **and** of the ns-3
+release: routing-bench pins the position allocator right after the wifi
+devices, so a release whose devices take a different number of RNG streams
+draws another field from the same seed (ns-3.49's ad-hoc MAC takes 2 more per
+device, which partitioned the arm-delivery field's seed 1). When a release
+breaks a gate this way, the gate's floors, bounds and parameters stay; only
+its seed window is re-chosen, by a rule stated before the survey and read off
+the oracle alone, never off an arm:
+
+- **A gate that presupposes a protocol-independent property of its field**
+  (static, connected, multi-hop: `arm-delivery`, `mesh-hwmp-shortest`) runs on
+  **the first N consecutive seeds from 1 (N = the gate's `--runs`) in which
+  every flow is connected (oracle PDR ≥ 99) and multi-hop (oracle hopsMean ≥
+  2.0) on every release in the comparison** (the outgoing and the incoming
+  one).
+- **A gate that measures an arm's paper trend** (`fanet-gpsr3d-recovery`,
+  `vanet-gpcr-vs-gpsr`) takes no seed selection: fixed seeds from 1, more
+  seeds (20, the paired minimum) rather than other ones, and the gate goes to
+  the maintainer if the trend does not hold.
+- A gate whose property holds by construction (the single-hop and the
+  analytic FANET/VANET anchors) or rests on a literature floor (Broch) needs
+  no window.
+
+[`tools/bench/reanchor.py`](../../tools/bench/reanchor.py) applies the rule.
+It reads each gate's invocation from `check-anchors.sh` and
+`check-arm-delivery.sh`, runs the oracle alone on seeds 1..M with the gate's
+own arguments in each ns-3 tree, and prints the proposed window per gate and
+per release with the evidence table; it never edits a gate, a floor or a
+bound:
+
+```bash
+python3 tools/bench/reanchor.py gates                    # each gate, its kind, its seeds
+python3 tools/bench/reanchor.py commands --image ghcr.io/swarm-routing/ns3-dev:3.48-debug \
+    --image ghcr.io/swarm-routing/ns3-dev:3.49-debug     # the docker lines: build, survey 1-20
+python3 tools/bench/reanchor.py propose reanchor-3.48-debug.tsv reanchor-3.49-debug.tsv
+python3 tools/bench/reanchor.py run --ns3 /opt/ns-3      # or survey and propose in built trees
+```
+
+On #1222's releases it reproduces #1222's choices: `arm-delivery` seed 3,
+`mesh-hwmp-shortest` seeds 3-4. The proposal goes into the gate's
+`--firstRun` with the table in the PR, and the gate's comment records the
+releases it was checked on.
+
 ### Grid-arm regression floors — a third kind, and not an anchor
 ([#61](https://github.com/swarm-routing/AntHocNet/issues/61) / [#60](https://github.com/swarm-routing/AntHocNet/issues/60))
 
