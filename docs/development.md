@@ -139,12 +139,13 @@ results.
   `ns3-gate-version`. 3.46 is the floor: core/ follows the C++ standard of the ns-3 release we support (its CMAKE_CXX_STANDARD_MINIMUM),
   23 from ns-3.46, 20 for 3.41–3.45, 17 for 3.40; maintainer decision 2026-11-14,
   swarm-routing/ns3-swarm-core#14). The 3.36 leg was retired earlier with this
-  repo's frozen `ghcr.io/swarm-routing/ns3` package (#987). **Temporary exception (#843, option A):** ns-3.49's stock AODV
-  and the vendored AOMDV livelock, and nearly every gate, the package checks and the kits run
-  an AODV-family arm, so those run on `ns3-dev:3.48` (the `gate-version` leg) until a fixed
-  ns-3 release reaches `latest`; the `latest` leg keeps the build, unit tests and the
-  AntHocNet-only smokes. Revert the pin (`ci.yml`, `ci-ns3.yml`, `ci-web.yml` comments name
-  it) when #843 closes. Published numbers pin an ns3-dev digest and a
+  repo's frozen `ghcr.io/swarm-routing/ns3` package (#987). ns-3.49's stock AODV and the
+  vendored AOMDV livelock in a zero-time ICMP storm (#843, NS3-001), so every AODV-family
+  install (routing-bench's `aodv` arm, the `aomdv` arm, the `aodv` of `manet-baselines`,
+  `isl-grid` and `leo-walker`) runs behind routing-bench's `IcmpErrorGuardHelper`
+  (nsnam/ns-3-dev!3101's rules, swarm-routing/sim-tools#322), its streams assigned through
+  the node's `GetObject<…::RoutingProtocol>`; the gates, package checks and kits run on
+  `latest` with them. Published numbers pin an ns3-dev digest and a
   campaign-image digest, never a rolling tag (#866): `campaign-image.yml` builds
   one image per (commit, ns3-dev digest), every `benchmark-cell` pulls it by
   digest and records both in `##PROV##`; compare post-move numbers with
@@ -247,7 +248,7 @@ by ns3-tools' `ns3-campaign` (AGENTS.md "Where to look", the
 
 - **Dev container** ([`.devcontainer/`](../.devcontainer/)): open the
   repository in GitHub Codespaces or VS Code ("Dev Containers: Reopen in
-  Container"). It starts from `ghcr.io/swarm-routing/ns3-dev:3.48-debug`,
+  Container"). It starts from `ghcr.io/swarm-routing/ns3-dev:latest-debug`,
   pinned by digest, and `post-create.sh` installs and builds this checkout's
   modules on the image's warm ns-3 tree.
 - **`make shell`**: an interactive shell in the dev image with this checkout
@@ -319,8 +320,11 @@ release").
 ## Troubleshooting
 
 - **A gate or an AODV-family arm hangs on ns-3.49.** ns-3.49's stock AODV
-  and the vendored AOMDV livelock (#843): those jobs, and the dev container,
-  run on `ns3-dev:3.48` until a fixed ns-3 release reaches `latest`.
+  and the vendored AOMDV livelock (#843, NS3-001) unless they run behind
+  routing-bench's `IcmpErrorGuardHelper`: install a new AODV-family arm or
+  example through it, and assign its streams through the node's
+  `GetObject<…::RoutingProtocol>` (the helper's own `AssignStreams` casts
+  `GetRoutingProtocol()`, which is then the guard, and assigns nothing).
 - **An adapter change builds on one ns-3 release and not another.** The usual
   cause is API drift between releases; extend the `AHN_*`/`ANTHOCNET_NS3_*`
   version macros rather than forking the code (see "Validating adapter

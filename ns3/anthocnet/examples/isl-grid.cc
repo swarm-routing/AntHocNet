@@ -77,6 +77,8 @@
 #include "ns3/oracle-module.h"
 // #513: the OLSR source-refusal counter, shared with routing-compare.
 #include "ns3/source-refusal-counter.h"
+// NS3-001 (#843): AODV behind routing-bench's ICMP no-route guard.
+#include "ns3/icmp-error-guard-helper.h"
 #include "ns3/anthocnet-helper.h"
 #include "ns3/anthocnet-routing-protocol.h"
 #include "ns3/anthocnet-viz-trace.h"
@@ -164,6 +166,19 @@ int64_t AssignDsdvStreams(const NodeContainer& nodes, int64_t stream) {
             DynamicCast<dsdv::RoutingProtocol>(ipv4->GetRoutingProtocol());
         NS_ABORT_MSG_IF(!dsdv, "expected dsdv::RoutingProtocol on this node (#352)");
         used += dsdv->AssignStreams(stream + used);
+    }
+    return used;
+}
+
+// NS3-001 (#843): what AodvHelper::AssignStreams does, in the same node order
+// with the same numbering. It casts Ipv4::GetRoutingProtocol(), which is the
+// guard here, so reach AODV through the node it is aggregated to.
+int64_t AssignAodvStreams(const NodeContainer& nodes, int64_t stream) {
+    int64_t used = 0;
+    for (auto it = nodes.Begin(); it != nodes.End(); ++it) {
+        Ptr<aodv::RoutingProtocol> aodv = (*it)->GetObject<aodv::RoutingProtocol>();
+        NS_ABORT_MSG_IF(!aodv, "expected aodv::RoutingProtocol on this node (NS3-001 guard)");
+        used += aodv->AssignStreams(stream + used);
     }
     return used;
 }
@@ -510,7 +525,7 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed) {
     // on them after Install() — see the same block in anthocnet-compare.
     InternetStackHelper internet;
     AntHocNetHelper ahnHelper;
-    AodvHelper aodvHelper;
+    bench::IcmpErrorGuardHelper aodvHelper{AodvHelper()};  // NS3-001 (#843)
     OlsrHelper olsrHelper;
     // #513: OLSR behind a list router whose fallback counts refused sends.
     Ipv4ListRoutingHelper olsrList;
@@ -548,7 +563,7 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed) {
         TakeStreams(stream, streamBase, ahnHelper.AssignStreams(nodes, stream),
                     "anthocnet routing");
     } else if (proto == "aodv") {
-        TakeStreams(stream, streamBase, aodvHelper.AssignStreams(nodes, stream), "aodv routing");
+        TakeStreams(stream, streamBase, AssignAodvStreams(nodes, stream), "aodv routing");
     } else if (proto == "olsr") {
         TakeStreams(stream, streamBase, olsrHelper.AssignStreams(nodes, stream), "olsr routing");
     } else if (proto == "dsdv") {

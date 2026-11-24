@@ -11,18 +11,18 @@
 // devcontainer.json is JSONC: `//` comments are part of the format and are
 // accepted by the Dev Containers spec, Codespaces and the devcontainer CLI.
 {
-  "name": "AntHocNet (ns-3.48 debug)",
+  "name": "AntHocNet (ns-3.49 debug)",
 
-  // Image choice: ns3-dev:3.48-debug, pinned by digest.
+  // Image choice: ns3-dev:latest-debug (ns-3.49), pinned by digest.
   //
-  //   * ns-3 3.48, as CI's gate leg (ci.yml / ci-ns3.yml gate-version): ns-3.49's
-  //     stock AODV and the vendored AOMDV livelock (#843), and most comparisons
-  //     here run an AODV-family arm. When #843 closes and CI moves back to
-  //     `latest`, move this to `latest-debug` (its digest) with it.
+  //   * the release ns-3 supports, as CI's gate leg (ci.yml / ci-ns3.yml
+  //     gate-version). ns-3.49's AODV livelock (#843, NS3-001) does not hang
+  //     the AODV-family arms: they run behind routing-bench's ICMP no-route
+  //     guard.
   //   * debug profile: asserts and NS_LOG on, which is what development wants
   //     (CI's build legs use the plain `default` tag; numbers for publication
   //     come from the campaign images, never from here).
-  //   * pinned by digest, the tag in the comment: `3.48-debug` is a rolling tag
+  //   * pinned by digest, the tag in the comment: `latest-debug` is a rolling tag
   //     (ns3-containers rebuilds it on package refreshes), and a Codespace made
   //     a month apart from the same commit should get the same toolchain.
   //
@@ -30,8 +30,8 @@
   // (.github/dependabot.yml) and does not read devcontainer.json. Resolve a new
   // digest with `docker pull ghcr.io/swarm-routing/ns3-dev:<tag>` then
   // `docker inspect --format '{{index .RepoDigests 0}}' ghcr.io/swarm-routing/ns3-dev:<tag>`.
-  // ghcr.io/swarm-routing/ns3-dev:3.48-debug
-  "image": "ghcr.io/swarm-routing/ns3-dev@sha256:d81ec51cd842c1fcae85f82c55973615cdde4c7a477c831897d62a6fdb62c2c2",
+  // ghcr.io/swarm-routing/ns3-dev:latest-debug (ns-3.49, 2026-11-23)
+  "image": "ghcr.io/swarm-routing/ns3-dev@sha256:6a950639d9a8a7801cb7e7d609045050f0dd58d83bf4cfeb27d2903aaf953ace",
 
   // The image's ns-3 tree. Everything (the Makefile installer, the ns3 wrapper,
   // the docs) refers to it by path; exporting it means the commands in

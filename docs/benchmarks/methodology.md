@@ -146,8 +146,9 @@ published GHCR images (Actions → workflow → *Run workflow*):
 **Published numbers pin an ns3-dev digest and a campaign-image digest, never
 a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
 image once: `campaign-image.yml` builds the AntHocNet modules of one commit
-`FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized` (3.48
-while the ns-3.49 AODV livelock #843 is open), tests them and pushes
+`FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized`
+(`latest` by default; the AODV-family arms run behind routing-bench's ICMP
+no-route guard, so ns-3.49's AODV livelock #843 does not hang them), tests them and pushes
 `anthocnet-dev:<commit7>-<base7>-optimized` (`anthocnet-ns3-campaign` before
 #987); the campaign plan
 pins that digest and the commit (`image`, `source_sha`), and `ns3-campaign`

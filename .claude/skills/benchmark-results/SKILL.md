@@ -93,7 +93,7 @@ it was dispatched at, fails unless HEAD is that commit, and stamps it as
 
 A single run: `mcp__github__actions_run_trigger` on `benchmark-cell.yml` with
 those inputs. To build an image for a commit, dispatch `campaign-image.yml`
-with `commit=<40 hex>` (and `ns3-version`, 3.48 while #843 is open); its
+with `commit=<40 hex>` (and `ns3-version`, `latest` by default; 3.48 only to pair with a 3.48 campaign); its
 summary and `campaign-image` artifact give the digest. `open_pr=true` with
 `cell=<name>` opens a PR adding `results/cells/<name>.txt`.
 paper-benchmark / satellite-benchmark / scenario-matrix were removed in v2.5.0

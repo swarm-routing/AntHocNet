@@ -147,9 +147,9 @@ jobs:
   # them, run in the ns-3 image: every world's kit must deliver. Wi-Fi worlds
   # replay through routing-compare (#639) and the satellite kit is
   # leo-walker's moving shell (ns-3 >= 3.48); all of them run on the release
-  # ns-3 supports (ns3-dev:latest, org CONTRIBUTING invariant 7), except while
-  # ns-3.49's AODV livelock lasts (#843, option A): the kits' AODV-family arms
-  # hang there, so they run on 3.48 until a fixed release reaches `latest`.
+  # ns-3 supports (ns3-dev:latest, org CONTRIBUTING invariant 7). The kits'
+  # AODV-family arms run behind routing-bench's ICMP no-route guard there
+  # (ns-3.49's AODV livelock, #843, NS3-001).
   ns3-kits:
     name: ns-3 export kits run and deliver (#640)
     runs-on: ubuntu-24.04
@@ -164,7 +164,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - version: '3.48'  # 'latest' once #843 is fixed upstream
+          - version: 'latest'
             worlds: 'line manet town mesh fanet vanet satellite'
     timeout-minutes: 60
     # No Harden-Runner here (swarm-routing/.github#164): a job that runs entirely

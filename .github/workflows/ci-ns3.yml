@@ -20,10 +20,10 @@ name: CI / ns-3
 # Published numbers do not run here: they pin an ns3-dev digest and a campaign
 # image digest (campaign-image.yml), never a rolling tag.
 #
-# TEMPORARY EXCEPTION (#843, swarm-routing/ns3-containers#35, option A): on
-# ns-3.49 stock AODV and the vendored AOMDV livelock, and the gates, packages
-# and kits run them. Until a fixed release reaches `latest`, ci.yml passes
-# gate-version 3.48 and the packages job skips the 3.49 (`latest`) legs.
+# ns-3.49's AODV livelock (#843, NS3-001) no longer pins the gates to 3.48:
+# every AODV-family arm (routing-bench's aodv, the vendored aomdv, the
+# examples' aodv) runs behind routing-bench's ICMP no-route guard
+# (swarm-routing/sim-tools#322, nsnam/ns-3-dev!3101's rules).
 on:
   workflow_call:
     inputs:
@@ -34,7 +34,7 @@ on:
       gate-version:
         description: 'The leg that also runs the gates, the satellite smoke, the tarball install, ASan and the alone jobs'
         type: string
-        default: '3.48'  # 'latest' once ns-3.49's AODV livelock is fixed upstream (#843)
+        default: 'latest'
 
 permissions:
   contents: read
@@ -47,7 +47,7 @@ jobs:
     # Timeouts on this file's jobs (#840, #864): about twice the longest green
     # run on main and PRs (2026-11), at least 10 min (an image pull alone can
     # take minutes), so a hang fails fast instead of holding a runner for 6 h.
-    # Here: the 3.48 gate leg, 30 min at most while it also ran the gates
+    # Here: the gate leg (then on 3.48), 30 min at most while it also ran the gates
     # (they run in ns3-gates now, #875).
     timeout-minutes: 60
     # Build against a pre-built ns-3 image rather than compiling ns-3 from
@@ -703,12 +703,6 @@ jobs:
       matrix:
         version: ${{ fromJSON(inputs.versions) }}
         packages: ['routing-bench', 'routing-bench,adaptive']
-        # Every package check runs the stock aodv arm, which hangs on ns-3.49
-        # (#843): skip those legs; the gate leg (3.48) still checks every
-        # package. Remove these excludes with the gate-version pin.
-        exclude:
-          - version: 'latest'
-          - version: '3.49'
         include:
           - version: ${{ inputs.gate-version }}
             packages: 'routing-bench'

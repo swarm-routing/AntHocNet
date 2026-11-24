@@ -80,9 +80,10 @@ code. The heavier parameter sweeps are campaigns on `benchmark-cell`.
 
 > **Cross-image note ([#977](https://github.com/swarm-routing/AntHocNet/issues/977)).**
 > The table is measured in the campaign image of the stamped commit: ns-3
-> 3.48, release profile, gcc-13 ([#866](https://github.com/swarm-routing/AntHocNet/issues/866);
-> 3.48 while [#843](https://github.com/swarm-routing/AntHocNet/issues/843) is
-> open). Up to [`5462fb5`](https://github.com/swarm-routing/AntHocNet/commit/5462fb5)
+> 3.48, release profile, gcc-13 ([#866](https://github.com/swarm-routing/AntHocNet/issues/866)).
+> The next nightly run measures on `latest` (ns-3.49, its AODV behind the
+> [#843](https://github.com/swarm-routing/AntHocNet/issues/843) guard) and
+> stamps that release; a 3.49 table is not compared with a 3.48 one. Up to [`5462fb5`](https://github.com/swarm-routing/AntHocNet/commit/5462fb5)
 > it was measured on ns-3 3.42 (`ghcr.io/danieljoppi/ns3:3.42`, gcc-11,
 > default profile). Under the
 > [cross-image rule](benchmarks/methodology.md#reproducing-via-ci-manual-dispatch) (accepted 2026-11-11, #867)

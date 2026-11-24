@@ -79,6 +79,7 @@
 #include "ns3/aodv-module.h"
 #include "ns3/gpsr-helper.h"
 #include "ns3/gpsr-ptable.h"
+#include "ns3/icmp-error-guard-helper.h"
 #include "ns3/olsr-module.h"
 #include "ns3/oracle-module.h"
 #include "ns3/anthocnet-helper.h"
@@ -207,6 +208,20 @@ struct Attempt {
     int64_t seq;
 };
 std::vector<std::vector<Attempt>> g_attempts;
+
+// NS3-001 (#843): what AodvHelper::AssignStreams does, in the same node order
+// with the same numbering. It casts Ipv4::GetRoutingProtocol(), which is
+// routing-bench's ICMP no-route guard here, so reach AODV through the node it
+// is aggregated to.
+int64_t AssignAodvStreams(const NodeContainer& nodes, int64_t stream) {
+    int64_t used = 0;
+    for (auto it = nodes.Begin(); it != nodes.End(); ++it) {
+        Ptr<aodv::RoutingProtocol> aodv = (*it)->GetObject<aodv::RoutingProtocol>();
+        NS_ABORT_MSG_IF(!aodv, "expected aodv::RoutingProtocol on this node (NS3-001 guard)");
+        used += aodv->AssignStreams(stream + used);
+    }
+    return used;
+}
 
 void OnClientTx(uint32_t f, Ptr<UdpClient> c, Ptr<const Packet>) {
     const uint64_t before = c->GetTotalTx();
@@ -970,7 +985,7 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed,
     if (P.sagin) all.Add(w.air);
     InternetStackHelper internet;
     AntHocNetHelper ahn;
-    AodvHelper aodv;
+    bench::IcmpErrorGuardHelper aodv{AodvHelper()};  // NS3-001 (#843)
     OlsrHelper olsr;
     OracleHelper oracleHelper;
     GeoGreedyHelper geoHelper;
@@ -1019,7 +1034,7 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed,
     if (proto == "anthocnet")
         stream += ahn.AssignStreams(all, stream);
     else if (proto == "aodv")
-        stream += aodv.AssignStreams(all, stream);
+        stream += AssignAodvStreams(all, stream);
     else if (proto == "olsr")
         stream += olsr.AssignStreams(all, stream);
     else if (proto == "gpsr3d")
