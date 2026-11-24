@@ -60,6 +60,14 @@ them into a git-ignored `web/` when you need the browser checks (see
 - **ns-3**: your own tree (`make install-ns3 NS3DIR=...`), or the org's
   prebuilt `ghcr.io/swarm-routing/ns3-dev` images, which CI and the dev
   container use.
+- **The adapter's `main`**: the ns-3 CI here builds only on the release the
+  lock names, with no canary leg (swarm-routing/.github#411). The other way
+  round, swarm-routing/swarm-adapter-ns3's `consumers` job builds this
+  repository's `main` on every adapter change and runs `test.py -s anthocnet`
+  (report-only, swarm-routing/swarm-adapter-ns3#261), so a breaking adapter
+  change shows there. By hand: `SWARM_CORE_MODULE=/path/to/swarm-adapter-ns3
+  make install-ns3 NS3DIR=...` installs an adapter checkout instead of the
+  lock's release (with or without a `core/` of its own).
 - Neither lock is edited by hand: the `swarm-core / pin` check and org-bot
   move them, the vcpkg override and registry baseline with the lock
   (CONTRIBUTING "Dependencies", vcpkg mode).
