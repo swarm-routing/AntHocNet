@@ -10,7 +10,7 @@ if(NOT DEFINED VCPKG_MANIFEST_DIR AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/../vcpkg
 endif()
 # Keep VERSION in sync with the top-level VERSION file (the release workflow
 # checks the git tag against it).
-project(anthocnet_core VERSION 2.8.0 LANGUAGES CXX)
+project(anthocnet_core VERSION 2.9.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

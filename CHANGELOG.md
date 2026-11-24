@@ -8,6 +8,18 @@ Note: the **software release version** (below) is distinct from the **on-wire
 protocol version** (`kWireVersion`, see [docs/wire-format.md](docs/wire-format.md)),
 which gates packet compatibility independently.
 
+## v2.9.0 (2026-11-24)
+
+### Feat
+
+- **bench**: reanchor.py proposes a gate seed window by the #1222 rule (#1229)
+
+### Fix
+
+- **ns3**: run aodv-family arms on ns-3.49 behind the ns3-001 guard (#1219)
+- **ns3**: clear the module's strict-warnings errors and check them in quality (#1212)
+- **ns3**: name the SWARM_CORE_MODULE tree in the install line (#1213)
+
 ## v2.8.0 (2026-11-22)
 
 ### Feat
