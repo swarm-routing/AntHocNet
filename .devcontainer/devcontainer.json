@@ -2,7 +2,7 @@
 // in GitHub Codespaces or local VS Code ("Dev Containers: Reopen in Container").
 //
 // Nothing is built from scratch here: we start from the org's ns-3 image
-// (ghcr.io/swarm-routing/ns3-dev, built by swarm-routing/ns3-containers), which
+// (ghcr.io/swarm-routing/ns3-dev, built by swarm-routing/sim-containers), which
 // carries a configured, built stock ns-3 tree at /opt/ns-3. post-create.sh then
 // installs the AntHocNet modules *from this checkout* and builds them with the
 // image's own profile flags, so only the AntHocNet delta compiles (~80 Ninja
@@ -23,7 +23,7 @@
   //     (CI's build legs use the plain `default` tag; numbers for publication
   //     come from the campaign images, never from here).
   //   * pinned by digest, the tag in the comment: `latest-debug` is a rolling tag
-  //     (ns3-containers rebuilds it on package refreshes), and a Codespace made
+  //     (sim-containers rebuilds it on package refreshes), and a Codespace made
   //     a month apart from the same commit should get the same toolchain.
   //
   // Bumping is manual: Dependabot's docker ecosystem covers /docker only

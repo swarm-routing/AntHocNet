@@ -104,7 +104,7 @@ live/inert per network regime — is diagrammed in
 ### Run a simulation with zero setup (Codespaces / VS Code devcontainer)
 
 One click gives you a container with ns-3.48 already built ([`.devcontainer/`](.devcontainer/),
-on the org's [`ns3-dev`](https://github.com/swarm-routing/ns3-containers) `3.48-debug` image,
+on the org's [`ns3-dev`](https://github.com/swarm-routing/sim-containers) `3.48-debug` image,
 pinned by digest); it installs this checkout's AntHocNet module and builds it for you. Locally: clone, then VS Code → *Dev Containers: Reopen in Container*. When the
 setup log finishes:
 
@@ -185,7 +185,7 @@ Prefer not to install a simulator yourself? From the first release after
 #866 (v2.6.1 and earlier have only the older images below), each release publishes
 `ghcr.io/swarm-routing/anthocnet:<release>-optimized` and `-debug`: ns-3 with
 every module of the release built and tested, built `FROM` a pinned digest of the
-org's ns-3 image [`ghcr.io/swarm-routing/ns3-dev`](https://github.com/swarm-routing/ns3-containers)
+org's ns-3 image [`ghcr.io/swarm-routing/ns3-dev`](https://github.com/swarm-routing/sim-containers)
 (which is also the clean baseline: plain ns-3 with AODV/OLSR/DSDV/…). Tags never
 move.
 

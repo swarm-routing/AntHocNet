@@ -7,11 +7,11 @@ name: CI / ns-3
 # ns-3 maintains its latest release only (no maintenance branches, no
 # backports), so automatic CI (push, PR) runs on that release alone:
 # ghcr.io/swarm-routing/ns3-dev:latest, published and moved to each new ns-3
-# release by swarm-routing/ns3-containers (org CONTRIBUTING invariant 7). The
+# release by swarm-routing/sim-containers (org CONTRIBUTING invariant 7). The
 # gates, the satellite smoke and the release-tarball install run on the
 # `gate-version` leg. Older ns-3 releases run only on demand: ci.yml's manual
 # workflow_dispatch passes `versions` (e.g. ["3.42","3.46"]); their images are
-# ns3-dev:<ver>, which swarm-routing/ns3-containers builds for 3.40 to 3.49 (on
+# ns3-dev:<ver>, which swarm-routing/sim-containers builds for 3.40 to 3.49 (on
 # demand for the older ones). 3.46 is the floor: the core is C++23, the
 # standard of the ns-3 release we support (CMAKE_CXX_STANDARD_MINIMUM is 23
 # from ns-3.46, 20 for 3.41-3.45, 17 for 3.40; swarm-routing/ns3-swarm-core#14).
@@ -56,7 +56,7 @@ jobs:
     # (ns-3's `default` profile, Ubuntu 24.04 / gcc-13, `mesh` built in); the
     # plain configure below matches their flags, so no stock object is
     # recompiled (verified on 3.48 and 3.49: 0 stock objects,
-    # swarm-routing/ns3-containers#9).
+    # swarm-routing/sim-containers#9).
     container:
       image: ${{ format('ghcr.io/swarm-routing/ns3-dev:{0}', matrix.version) }}
       credentials:

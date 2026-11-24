@@ -149,7 +149,7 @@ results.
 - `ci-ns3.yml` (called by `ci.yml`) builds the **NS-3 module against the prebuilt GHCR image of the
   ns-3 release ns-3 supports** (e2e delivery smoke, and every gate):
   `ghcr.io/swarm-routing/ns3-dev:latest`, built by
-  [`swarm-routing/ns3-containers`](https://github.com/swarm-routing/ns3-containers) and moved to each new
+  [`swarm-routing/sim-containers`](https://github.com/swarm-routing/sim-containers) and moved to each new
   ns-3 release (ns-3 maintains only its latest; org CONTRIBUTING invariant 7). Older releases
   (3.46–3.48) run **on demand**: `ci.yml`
   `workflow_dispatch` with `ns3-versions` (e.g. `["3.42","3.46"]`) and optionally

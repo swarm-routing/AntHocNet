@@ -1444,7 +1444,7 @@ is always attributable to a profile after the fact.
   is *the* way to express "optimized without `-march=native`". ns3-dev's
   `optimized` tag (like the historical `-opt`) names "the campaign image", not
   the literal ns-3 profile: it is built with `-d release`
-  (swarm-routing/ns3-containers rule 11).
+  (swarm-routing/sim-containers rule 11).
 - **Never compare wall-clock across profiles as a protocol result.** Cost
   comparisons are only meaningful profile-to-profile on the same scenario; the
   sanctioned A/B speed measurement is its own ticket.

@@ -258,7 +258,7 @@ jobs:
           set -euo pipefail
           env_file=/opt/ns-3/.swarm-configure.env
           if [ -f "$env_file" ]; then
-            # An ns3-dev image (swarm-routing/ns3-containers) records the
+            # An ns3-dev image (swarm-routing/sim-containers) records the
             # configure flags it was built with.
             # shellcheck disable=SC1090
             . "$env_file"
