@@ -163,7 +163,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: swarm-routing/.github/.github/workflows/reusable-dev-image-cleanup.yml@6f23f222063660a88634fd17373fcfe7d442cf9d # main@2026-11-24
+    uses: swarm-routing/.github/.github/workflows/reusable-dev-image-cleanup.yml@734a61a853569711139d52f5f5c7aa2e8e5bd0e1 # main@2026-11-24
     with:
       packages: anthocnet-dev
 
