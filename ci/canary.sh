@@ -101,11 +101,15 @@ GATES=(
     "satellite|bash tools/checks/check-determinism.sh $NS3DIR isl-grid"
 )
 want=${CANARY_GATES:-arm-delivery misc fanet vanet seeds satellite}
+for w in $want; do
+    case " ${GATES[*]%%|*} " in *" $w "*) ;; *) echo "canary: no gate group '$w' (CANARY_GATES)" >&2; exit 2 ;; esac
+done
 
 # Each gate is one single-threaded simulation after another, and the tree is
 # built, so the gates run side by side, CANARY_JOBS at a time (default: the
 # CPU count); each gate's output is printed whole, in GATES order.
 par=${CANARY_JOBS:-$(nproc)}
+[[ "$par" =~ ^[1-9][0-9]*$ ]] || { echo "canary: CANARY_JOBS must be a positive integer, not '$par'" >&2; exit 2; }
 out=$(mktemp -d)
 n=0
 for g in "${GATES[@]}"; do
