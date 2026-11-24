@@ -21,7 +21,7 @@ jobs:
   headers:
     uses: swarm-routing/.github/.github/workflows/reusable-licence-check.yml@eb4464f60e7f9b2c5ef5f70c2d1c0f8119e0eddf # main@2026-11-24
     with:
-      dual-roots: core/ tools/ ns3/tools/ docs/tools/
+      dual-roots: core/ tools/ ns3/tools/ docs/tools/ ci/
       core-roots: core/
       gpl-only: docs/tools/mkdocs_hooks.py
       exclude: '^(\.claude|\.devcontainer)/'
