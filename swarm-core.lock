@@ -6,9 +6,9 @@
 # the bump PR when a newer release is out (swarm-routing/.github
 # tools/checks/check-swarm-core-pin.py --bump, which writes it with
 # tools/checks/release_lock.py), and the `swarm-core / pin` check verifies it.
-SWARM_CORE_REPO=swarm-routing/ns3-swarm-core
-SWARM_CORE_TAG=v1.0.0
-SWARM_CORE_COMMIT=ff097aeb1f6237fb9796ff4713e91524fb5b4d3f
-SWARM_CORE_VERSION=1.0.0
-SWARM_CORE_ASSET=swarm-core-1.0.0.tar.gz
-SWARM_CORE_SHA256=c7f11b1e1f7b1a666f424ea4a0bc96e27a4f7e5bc8d15edea5817be6932a60a7
+SWARM_CORE_REPO=swarm-routing/swarm-core
+SWARM_CORE_TAG=v2.0.0
+SWARM_CORE_COMMIT=5fb7c180ea3a88a71b99b7c3d11dc8e2eeccb7d4
+SWARM_CORE_VERSION=2.0.0
+SWARM_CORE_ASSET=swarm-core-2.0.0.tar.gz
+SWARM_CORE_SHA256=02d241f3ef02a5850ce8b38986001044bd030b7b7d9e13c1a2bf29094d4f3965
