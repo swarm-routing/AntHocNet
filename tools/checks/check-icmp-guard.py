@@ -13,7 +13,9 @@ up only as a 3.49 CI timeout, so this check reads ns3/'s C++ (comments and
 strings stripped) and fails on:
 
   1. `AodvHelper`, `AomdvHelper` or `GpsrHelper` anywhere but a declaration
-     of one variable (`AodvHelper a, b;` fails: one helper per statement)
+     of one variable (`AodvHelper a, b;` fails: one helper per statement; a
+     top-level comma in the initializer, `= make<A, B>()`, counts too, so
+     parenthesize it: `= (make<A, B>())`)
      or a temporary handed straight to `IcmpErrorGuardHelper(...)`/`{...}`;
   2. a variable of one of those types used other than wrapped in the guard,
      `.Set(...)`, or, for `GpsrHelper` only, `.Install(...)` (the position
@@ -185,7 +187,8 @@ def check_source(path: str, text: str) -> list[str]:
             if comma >= 0:
                 add(
                     comma,
-                    f"declare one {helper} per statement, so this check can follow each (NS3-001, #843)",
+                    f"declare one {helper} per statement, so this check can follow each; a comma in "
+                    "the initializer (`make<A, B>()`) counts: parenthesize it (NS3-001, #843)",
                 )
             continue
         if GUARD_OPEN.search(before) and TEMP_IN_GUARD.match(after):
@@ -297,6 +300,8 @@ void Run() {
     bench::IcmpErrorGuardHelper qualified{ns3::AodvHelper()};
     AomdvHelper first;
     AomdvHelper second{};
+    AodvHelper made = (make<A, B>());
+    bench::IcmpErrorGuardHelper wrapped(made);
     list.Add(bench::IcmpErrorGuardHelper(first), 10);
     list.Add(bench::IcmpErrorGuardHelper(second), 5);
 }
