@@ -280,8 +280,8 @@ from the cells above, and both are deliberate:
 
 The arm passes the per-PR delivery smoke ([#439](https://github.com/swarm-routing/AntHocNet/issues/439))
 and its own anchor, `mesh-hwmp-shortest`: on a static disk field it must
-converge to the oracle's shortest path (mean hops in [1.00, 1.10] × the
-oracle's). The 20-seed AntHocNet, OLSR, HWMP and oracle cell on 802.11a is
+converge to the oracle's shortest path (mean hops at most 0.5 above the
+oracle's and never below it, [#1222](https://github.com/swarm-routing/AntHocNet/issues/1222)). The 20-seed AntHocNet, OLSR, HWMP and oracle cell on 802.11a is
 measured in the v2.4.0 control campaign and published here with it.
 
 ## Threats to validity

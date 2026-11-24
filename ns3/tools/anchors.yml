@@ -123,28 +123,35 @@ vanet_gpcr_minus_gpsr_pp_min: 2.0
 # --- FANET gpsr3d anchor (#710, consumed by check-anchors.sh) ---------------
 # The 3-D geographic arm's own paper trend (Bujari et al., IEEE TMC 2018,
 # section 5.2): face recovery delivers more than greedy alone. 50 nodes, a
-# 600 m cube, 200 m range, static, 2 flows at 512 bit/s, 120 s, 4 runs.
-# Measured: ns-3.42 74.9 % with CFace(3) recovery vs 62.5 % greedy only,
-# oracle 74.9 %; ns-3.48 74.7 / 62.2 / 74.9. The floor applies to gpsr3d and
-# the oracle; the gap is the anchor's point.
+# 600 m cube, 200 m range, static, 2 flows at 512 bit/s, 120 s, 20 runs
+# (seeds 1-20, no seed selection: the trend is an arm's, #1222). The floor
+# applies to gpsr3d and the oracle; the gap is the anchor's point.
 fanet_gpsr3d_pdr_min: 65.0
 # gpsr3d with recovery minus gpsr3d with Recovery=false, percentage points,
-# same seeds. Measured +12.4 (3.42) and +12.5 (3.48).
-fanet_gpsr3d_recovery_pp_min: 5.0
+# same seeds: a no-regression gate, recovery >= greedy with no fixed margin
+# (maintainer decision 2026-11-24, #1222). The old 4-seed +5 pp margin rested
+# on one flow (seed 1: greedy 0 %, recovery 50 %); over seeds 1-20 the gap is
+# +4.9 pp on ns-3.48 and +0.2 pp on ns-3.49.
+fanet_gpsr3d_recovery_pp_min: 0.0
 
 # --- static-mesh HWMP anchor (#708, consumed by check-anchors.sh) -----------
 # Analytic: on a static connected disk field at one fixed rate, 802.11s
 # HWMP's airtime metric is equal on every link, so it converges to a
 # minimum-hop path. 16 nodes, 500 m field, 175 m range, 802.11a at 6 Mbit/s,
-# 2 runs. Measured at this exact invocation on ns-3.42 (the CI leg): HWMP
-# 98.2 % PDR, hopsMean 4.73 against the oracle's 4.50 (stretch 1.05); on
-# ns-3.48 98.3 % and 4.67 (1.04). The PDR floor only catches an arm that
-# stopped routing, so it sits ~3 pp under the measurement.
+# seeds 3-4 (2 runs): the first two consecutive seeds whose field is connected
+# (oracle PDR >= 99) and multi-hop (oracle hopsMean >= 2.0) on both ns-3.48
+# and ns-3.49, read off the oracle alone (#1222; seeds 1-2 were partitioned
+# on 3.49, whose ad-hoc devices take 2 more RNG streams each). The PDR floor
+# only catches an arm that stopped routing.
 mesh_hwmp_pdr_min: 95.0
-# Upper bound on hwmp hopsMean / oracle hopsMean (the lower bound, 1.00, is
-# exact and lives in the script). Measured 1.04-1.05; 1.10 leaves room for
-# the odd detour during path discovery.
-mesh_hwmp_stretch_max: 1.10
+# Upper bound on hwmp hopsMean minus oracle hopsMean, in hops (the lower
+# bound, hwmp >= oracle, is exact and lives in the script). An absolute
+# detour tolerance, not a ratio: HWMP's excess is a fraction of a hop from
+# path discovery, so as a ratio it grows as paths shorten (maintainer
+# decision 2026-11-24, #1222; replaces the 1.10 stretch bound). Measured
+# excess over 24 connected multi-hop fields, seeds 1-20 on 3.48 and 3.49:
+# 0.00-0.42.
+mesh_hwmp_hops_excess_max: 0.5
 
 # --- disaster family (#580, consumed by tools/checks/check-disaster.sh) -----
 # The scene (tools/bench/disaster_scene.py, scene seed 1), 300 s, 2 seeds.

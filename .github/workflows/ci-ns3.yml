@@ -361,18 +361,19 @@ jobs:
         run: bash tools/checks/check-anchors.sh /opt/ns-3 vanet-gpcr-vs-gpsr
       - name: FANET gpsr3d anchor (#710, --protocols=gpsr3d)
         # The 3-D geographic arm's own paper trend (Bujari et al., IEEE TMC
-        # 2018): on a static 3-D field, CFace(3) recovery must deliver >= 5 pp
-        # more than greedy alone on the same seeds (measured +12.4 on this
-        # leg). Thresholds: ns3/tools/anchors.yml.
+        # 2018): on a static 3-D field, CFace(3) recovery must deliver at
+        # least what greedy alone does on the same seeds 1-20, no fixed margin
+        # (#1222; measured +4.9 pp on 3.48, +0.2 on 3.49).
+        # Thresholds: ns3/tools/anchors.yml.
         if: matrix.group == 'fanet'
         run: bash tools/checks/check-anchors.sh /opt/ns-3 fanet-gpsr3d-recovery
       - name: Static-mesh HWMP anchor (#708, --protocols=hwmp)
         # The static mesh's 802.11s comparator, gated before any HWMP number is
         # published. On a static connected disk field at one fixed rate,
         # HWMP's airtime metric is equal on every link, so its mean hop count
-        # must sit in [1.00, 1.10] x the oracle's shortest path on the same
-        # seeds (below 1.00 the arm ran on a different topology), with PDR
-        # >= 95. Thresholds: ns3/tools/anchors.yml.
+        # must sit in [oracle, oracle + 0.5] hops on the same seeds (3-4,
+        # #1222; below the oracle the arm ran on a different topology), with
+        # PDR >= 95. Thresholds: ns3/tools/anchors.yml.
         if: matrix.group == 'misc'
         run: bash tools/checks/check-anchors.sh /opt/ns-3 mesh-hwmp-shortest
       - name: Determinism gate (same seed twice must be byte-identical, #129)

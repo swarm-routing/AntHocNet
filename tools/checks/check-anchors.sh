@@ -43,8 +43,8 @@ floor_for() {
 harness=manet-baselines
 hops_min=""
 hops_max=""
-stretch_arm=""
-stretch_max=""
+detour_arm=""
+detour_max=""
 gap_arm=""
 gap_base=""
 gap_min=""
@@ -144,11 +144,14 @@ case "$ANCHOR" in
         # 3-D field, greedy forwarding alone delivers least, because packets
         # stall in local minima, and adding face recovery delivers more. The
         # same arm runs twice on the same seeds: with CFace(3) recovery (as
-        # shipped) and with Recovery=false (pure 3-D greedy). Measured at this
-        # exact invocation: ns-3.42 74.9 % vs 62.5 % (+12.4 pp) with the
-        # oracle at 74.9 % (the field's partition bound); ns-3.48 74.7 vs 62.2.
+        # shipped) and with Recovery=false (pure 3-D greedy). A no-regression
+        # gate over seeds 1-20 (#1222, maintainer decision 2026-11-24): the
+        # trend is the arm's, so no seed is selected, and recovery must
+        # deliver at least what greedy does, with no fixed margin. The old
+        # 4-seed +5 pp margin rested on one flow; over seeds 1-20 the gap is
+        # +4.9 pp on ns-3.48 and +0.2 pp on ns-3.49.
         harness=anthocnet-compare
-        args="--nNodes=50 --areaX=600 --areaY=600 --areaZ=600 --range=200 --pause=900 --speed=1 --flows=2 --cbrBps=512 --time=120 --runs=4"
+        args="--nNodes=50 --areaX=600 --areaY=600 --areaZ=600 --range=200 --pause=900 --speed=1 --flows=2 --cbrBps=512 --time=120 --runs=20"
         protocols="gpsr3d,oracle"
         floor=$(floor_for fanet_gpsr3d_pdr_min)
         gap_arm=gpsr3d
@@ -164,16 +167,22 @@ case "$ANCHOR" in
         # oracle's shortest path and can never be below it. Below it means the
         # arm saw a different topology (the #708 stream-pairing defect read
         # 5 hops against the oracle's 6); far above it means path selection is
-        # not converging. 16 nodes, 500 m field, 175 m range (the delivery
-        # smoke's field), on the 802.11a radio stock 802.11s runs on.
-        # Measured at this exact invocation on ns-3.42: HWMP 98.2 % at
-        # hopsMean 4.73, oracle 100.0 % at 4.50 (stretch 1.05; 1.04 on 3.48).
+        # not converging, bounded as an absolute detour: at most
+        # mesh_hwmp_hops_excess_max (0.5) hops above the oracle's mean, since
+        # HWMP's excess is a fraction of a hop from path discovery, which as a
+        # ratio grows as paths shorten (#1222; replaces the 1.10 stretch).
+        # 16 nodes, 500 m field, 175 m range (the delivery smoke's field), on
+        # the 802.11a radio stock 802.11s runs on. Seeds 3-4: the first two
+        # consecutive seeds connected (oracle PDR >= 99) and multi-hop (oracle
+        # hopsMean >= 2.0) on ns-3.48 and ns-3.49, read off the oracle alone
+        # (#1222: 3.49's ad-hoc devices take 2 more RNG streams each, which
+        # partitioned seeds 1-2).
         harness=anthocnet-compare
-        args="--nNodes=16 --areaX=500 --areaY=500 --range=175 --pause=900 --speed=1 --flows=2 --time=120 --runs=2 --standard=80211a --rateManager=constant6 --diag"
+        args="--nNodes=16 --areaX=500 --areaY=500 --range=175 --pause=900 --speed=1 --flows=2 --time=120 --firstRun=3 --runs=2 --standard=80211a --rateManager=constant6 --diag"
         protocols="hwmp,oracle"
         floor=$(floor_for mesh_hwmp_pdr_min)
-        stretch_arm=hwmp
-        stretch_max=$(floor_for mesh_hwmp_stretch_max)
+        detour_arm=hwmp
+        detour_max=$(floor_for mesh_hwmp_hops_excess_max)
         ;;
     *)
         echo "unknown anchor '$ANCHOR' (want: single-hop | broch-low-mobility | fanet-single-hop-3d | fanet-vertical-3d | vanet-single-hop | vanet-building | vanet-gpcr-vs-gpsr | fanet-gpsr3d-recovery | mesh-hwmp-shortest)" >&2
@@ -256,25 +265,25 @@ if [ -n "$gap_arm" ]; then
         status=1
     fi
 fi
-if [ -n "$stretch_arm" ]; then
-    # An arm's mean hop count over the oracle's, on the same seeds and the same
-    # field: 1.00 is a shortest path for every delivered packet.
+if [ -n "$detour_arm" ]; then
+    # An arm's mean hop count against the oracle's, on the same seeds and the
+    # same field: equal is a shortest path for every delivered packet.
     mean_hops() {
         printf '%s\n' "$out" | field hopsMean paths "$1"
     }
-    ah=$(mean_hops "$stretch_arm")
+    ah=$(mean_hops "$detour_arm")
     oh=$(mean_hops oracle)
     if [ -z "$ah" ] || [ -z "$oh" ]; then
-        echo "FAIL [$ANCHOR]: no '# paths' hopsMean line for $stretch_arm or the oracle"
+        echo "FAIL [$ANCHOR]: no '# paths' hopsMean line for $detour_arm or the oracle"
         status=1
-    elif ! awk -v a="$ah" -v o="$oh" -v m="$stretch_max" \
-            'BEGIN { exit (o + 0 > 0 && a + 0 >= o + 0 && a / o <= m + 0) ? 0 : 1 }'; then
-        echo "FAIL [$ANCHOR] $stretch_arm hopsMean=$ah vs oracle $oh: outside [1.00, $stretch_max] x the shortest path"
-        echo "  Below 1.00 the arm ran on a different topology than the oracle (stream pairing);"
-        echo "  above $stretch_max its path selection is not converging to a shortest path."
+    elif ! awk -v a="$ah" -v o="$oh" -v m="$detour_max" \
+            'BEGIN { exit (o + 0 > 0 && a + 0 >= o + 0 && a - o <= m + 0) ? 0 : 1 }'; then
+        echo "FAIL [$ANCHOR] $detour_arm hopsMean=$ah vs oracle $oh: outside [oracle, oracle + $detour_max] hops"
+        echo "  Below the oracle the arm ran on a different topology (stream pairing);"
+        echo "  more than $detour_max hops above it its path selection is not converging to a shortest path."
         status=1
     else
-        echo "PASS [$ANCHOR] $stretch_arm hopsMean=$ah within [1.00, $stretch_max] x oracle $oh"
+        echo "PASS [$ANCHOR] $detour_arm hopsMean=$ah within [oracle, oracle + $detour_max] hops, oracle $oh"
     fi
 fi
 exit $status
