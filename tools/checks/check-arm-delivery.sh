@@ -70,10 +70,15 @@
 # at 1.5 hops). The seed is therefore chosen by a rule stated before the
 # survey and read off the oracle alone, never off an arm: the lowest seed
 # whose field is connected for every flow (oracle PDR >= 99) and multi-hop
-# (oracle hopsMean >= 2.0) on every release the gate runs on (3.48 on demand,
-# 3.49 = latest). Seeds 1-20 surveyed on both: seed 3 is the first (3.48:
-# 100.0 % at 2.35 hops; 3.49: 99.5 % at 2.66). Re-apply the rule, not a new
-# seed by hand, when a release moves the field again.
+# (oracle hopsMean >= 2.0) on the releases it was checked on: 3.48 and 3.49
+# (latest). Seeds 1-20 surveyed on both: seed 3 is the first (3.48: 100.0 %
+# at 2.35 hops; 3.49: 99.5 % at 2.66). Seed 3 is not checked on any other
+# release (an on-demand ns3-gate-version such as 3.46 or 3.47): there the
+# field may differ, and the oracle run below is what tells: its PDR floor and
+# hopsMean > 1 check fail ("the SCENARIO is broken") on a partitioned or
+# single-hop field, so an unchecked release cannot pass on one;
+# re-apply the rule on that release (not a new seed by hand) and record its
+# numbers here, as for any release that moves the field.
 #
 # The ns-3 tree must already be configured + built with routing-bench's
 # examples enabled (routing-compare builds as part of routing-bench's examples).
