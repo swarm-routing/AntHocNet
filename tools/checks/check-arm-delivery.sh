@@ -56,10 +56,29 @@
 # report alongside it rather than being conditioned on it.
 #
 # Cheap on purpose: 16 nodes, 60 simulated seconds, 1 seed, one invocation per
-# arm — a couple of minutes in total on the prebuilt image; fine per-PR. Seed 1
-# is fixed, and #129 (determinism) + #352 (seed independence) make the run
+# arm — a couple of minutes in total on the prebuilt image; fine per-PR. The
+# seed is fixed, and #129 (determinism) + #352 (seed independence) make the run
 # byte-reproducible, so this gate never flakes — it can only change verdict
-# when the code does.
+# when the code or the ns-3 release does.
+#
+# Which seed (#1222). The field is a function of the seed AND of the ns-3
+# release: the position allocator is pinned right after the wifi devices, so
+# a release whose devices take a different number of RNG streams draws a
+# different field from the same seed. ns-3.49's ad-hoc MAC takes 2 more per
+# device (IBSS beacon jitter and beacon Txop), which moved seed 1 from a
+# connected 5.3-hop field (3.48) to one with a partitioned flow (oracle 67.3 %
+# at 1.5 hops). The seed is therefore chosen by a rule stated before the
+# survey and read off the oracle alone, never off an arm: the lowest seed
+# whose field is connected for every flow (oracle PDR >= 99) and multi-hop
+# (oracle hopsMean >= 2.0) on the releases it was checked on: 3.48 and 3.49
+# (latest). Seeds 1-20 surveyed on both: seed 3 is the first (3.48: 100.0 %
+# at 2.35 hops; 3.49: 99.5 % at 2.66). Seed 3 is not checked on any other
+# release (an on-demand ns3-gate-version such as 3.46 or 3.47): there the
+# field may differ, and the oracle run below is what tells: its PDR floor and
+# hopsMean > 1 check fail ("the SCENARIO is broken") on a partitioned or
+# single-hop field, so an unchecked release cannot pass on one;
+# re-apply the rule on that release (not a new seed by hand) and record its
+# numbers here, as for any release that moves the field.
 #
 # The ns-3 tree must already be configured + built with routing-bench's
 # examples enabled (routing-compare builds as part of routing-bench's examples).
@@ -81,9 +100,10 @@ fi
 KNOWN_BROKEN=""
 
 # Static (pause 120 s > 60 s run: ns-3 RWP pauses first, so nodes never move),
-# multi-hop (500 m field, 175 m disk range), 3 CBR flows, 1 seed. --range>0 is
-# required for the oracle's exact adjacency, see header.
-ARGS="--nNodes=16 --area=500 --range=175 --pause=120 --flows=3 --time=60 --runs=1"
+# multi-hop (500 m field, 175 m disk range), 3 CBR flows, 1 seed (seed 3, the
+# header's rule). --range>0 is required for the oracle's exact adjacency, see
+# header.
+ARGS="--nNodes=16 --area=500 --range=175 --pause=120 --flows=3 --time=60 --firstRun=3 --runs=1"
 
 # Per-arm radio arguments, arm=args. The hwmp arm (#708) is stock ns-3
 # 802.11s, whose mesh interfaces are tuned to 5 GHz channel 100, so it runs

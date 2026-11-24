@@ -74,7 +74,9 @@ endif()
 # #24 control: STOCK baselines only (AODV/OLSR/DSDV) on the identical scenario,
 # deliberately NOT linking ${libanthocnet}/${libcore} so no AntHocNet code is in
 # the binary — isolates "is the scenario hard" from "does our module break the
-# stock protocols".
+# stock protocols". NS3-001 (#843): AODV runs behind routing-bench's ICMP
+# no-route guard, so it links routing-bench, which links only stock ns-3.
+if(EXISTS ${PROJECT_SOURCE_DIR}/contrib/routing-bench/CMakeLists.txt)
 build_lib_example(
   NAME manet-baselines
   SOURCE_FILES manet-baselines.cc
@@ -88,14 +90,20 @@ build_lib_example(
     ${libaodv}
     ${libolsr}
     ${libdsdv}
+    ${librouting-bench}
 )
+endif()
 
 # #192/#297: the time-varying LEO constellation. Its substrate is stock ns-3's
 # LeoCircularOrbitMobilityModel (the #193 decision), new in ns-3.48, so it is
 # built only where that header exists; on 3.36-3.47 the example is skipped.
 # #581: leo-walker links the vendored GPSR (the SAGIN air layer's gpsr3d
-# arm), so it needs the comparison modules, which are installed together.
-if(AHN_HAVE_BASELINES AND EXISTS ${PROJECT_SOURCE_DIR}/src/mobility/model/leo-circular-orbit-mobility-model.h)
+# arm), so it needs the comparison modules, which are installed together, and
+# routing-bench for the ICMP no-route guard its AODV arm runs behind (NS3-001,
+# #843).
+if(AHN_HAVE_BASELINES
+   AND EXISTS ${PROJECT_SOURCE_DIR}/contrib/routing-bench/CMakeLists.txt
+   AND EXISTS ${PROJECT_SOURCE_DIR}/src/mobility/model/leo-circular-orbit-mobility-model.h)
   build_lib_example(
     NAME leo-walker
     SOURCE_FILES leo-walker.cc
@@ -113,5 +121,6 @@ if(AHN_HAVE_BASELINES AND EXISTS ${PROJECT_SOURCE_DIR}/src/mobility/model/leo-ci
       ${libolsr}
       ${liboracle}
       ${libgpsr}
+      ${librouting-bench}
   )
 endif()

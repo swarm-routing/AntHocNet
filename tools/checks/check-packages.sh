@@ -100,7 +100,8 @@ if [ "$arms" != "$want" ]; then
 fi
 say "arms: $arms"
 
-ARGS="--nNodes=16 --area=500 --range=175 --pause=120 --flows=3 --time=60 --runs=1"
+# check-arm-delivery.sh's field, seed included (seed 3, its header's rule).
+ARGS="--nNodes=16 --area=500 --range=175 --pause=120 --flows=3 --time=60 --firstRun=3 --runs=1"
 for arm in ${arms//,/ }; do
     extra=""
     [ "$arm" = hwmp ] && extra="--standard=80211a --rateManager=constant6"

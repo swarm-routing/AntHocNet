@@ -40,9 +40,8 @@ jobs:
       contents: read
       packages: read       # pull the ns3-dev image from GHCR
       pull-requests: read  # Sonar's pull-request analysis
-    # The release ns-3 supports, debug profile (asserts on). The #843 3.48 pin
-    # does not apply: these suites are the unit tests ci-ns3.yml already runs
-    # on the `latest` leg; nothing here runs an AODV-family gate.
+    # The release ns-3 supports, debug profile (asserts on), as ci-ns3.yml's
+    # `latest` leg: these suites are the unit tests it already runs.
     container:
       image: ghcr.io/swarm-routing/ns3-dev:latest-debug
       credentials:

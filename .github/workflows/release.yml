@@ -804,9 +804,9 @@ jobs:
   # revision label is the tagged commit. A dry run pushes no tag: it builds and
   # tests both images from the dispatched commit and pushes nothing.
   #
-  # ns-3 3.48, not `latest`: the release ships the AODV-family arms (aomdv, the
-  # harness's stock aodv), which livelock on ns-3.49 (#843). Move to `latest`
-  # when #843 closes.
+  # ns-3 `latest`, the release ns-3 supports: the AODV-family arms it ships
+  # (aomdv, the harness's stock aodv) run behind routing-bench's ICMP no-route
+  # guard, so ns-3.49's AODV livelock (#843, NS3-001) does not hang them.
   #
   # A direct job dependency (workflow_call), not a tag `push` trigger: a tag
   # pushed with the release job's GITHUB_TOKEN starts no other workflow.
@@ -833,7 +833,7 @@ jobs:
         adaptive=.stage/contrib/adaptive anthocnet=.stage/contrib/anthocnet
       # The suites ci-ns3.yml runs (gpsr has none).
       test-suites: anthocnet oracle adaptive routing-bench
-      ns3-version: '3.48'
+      ns3-version: 'latest'
       profiles: '["optimized", "debug"]'
       image: anthocnet  # the release image is named after the repository (swarm-routing/.github#370)
       tag: ${{ needs.release.outputs.tag }}

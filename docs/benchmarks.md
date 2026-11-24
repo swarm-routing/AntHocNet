@@ -79,10 +79,12 @@ named scenarios across all baselines and renders
 code. The heavier parameter sweeps are campaigns on `benchmark-cell`.
 
 > **Cross-image note ([#977](https://github.com/swarm-routing/AntHocNet/issues/977)).**
-> The table is measured in the campaign image of the stamped commit: ns-3
-> 3.48, release profile, gcc-13 ([#866](https://github.com/swarm-routing/AntHocNet/issues/866);
-> 3.48 while [#843](https://github.com/swarm-routing/AntHocNet/issues/843) is
-> open). Up to [`5462fb5`](https://github.com/swarm-routing/AntHocNet/commit/5462fb5)
+> The table is measured in the campaign image of the stamped commit, release
+> profile ([#866](https://github.com/swarm-routing/AntHocNet/issues/866)), on
+> the ns-3 release its generated stamp names: read the release there, not
+> here. The nightly run measures on `latest` (the AODV family behind the
+> [#843](https://github.com/swarm-routing/AntHocNet/issues/843) guard), and a
+> table is not compared with one stamped with another ns-3 release. Up to [`5462fb5`](https://github.com/swarm-routing/AntHocNet/commit/5462fb5)
 > it was measured on ns-3 3.42 (`ghcr.io/danieljoppi/ns3:3.42`, gcc-11,
 > default profile). Under the
 > [cross-image rule](benchmarks/methodology.md#reproducing-via-ci-manual-dispatch) (accepted 2026-11-11, #867)

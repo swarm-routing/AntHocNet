@@ -106,9 +106,11 @@ jobs:
           fi
 
   # The table runs on the campaign image of this commit (#866): the modules
-  # built once FROM a pinned ns3-dev:3.48-optimized digest (3.48 while the
-  # ns-3.49 AODV livelock #843 is open; the taxonomy runs AODV), reused when
-  # it already exists. The job builds nothing, and the numbers are measured in
+  # built once FROM the digest ns3-dev:latest-optimized resolves to (the
+  # taxonomy's AODV runs behind routing-bench's ICMP no-route guard, so
+  # ns-3.49's livelock #843 does not hang it), reused when it already exists.
+  # A table from another ns-3 release than the last one is not compared with
+  # it (the cross-image rule, docs/benchmarks/methodology.md). The job builds nothing, and the numbers are measured in
   # ns-3's release profile, as every campaign's (bit-identical metrics, #124).
   # Moved from this repo's ns3:3.42 (gcc-11, default profile): before a table
   # measured here is compared with an older one, read the control campaign
@@ -123,7 +125,7 @@ jobs:
       attestations: write
     uses: ./.github/workflows/campaign-image.yml
     with:
-      ns3-version: '3.48'
+      ns3-version: 'latest'
 
   # The validation anchors gate everything after them (#59): if an anchor
   # regresses (cf. the #51 ~50% single-hop loss that silently depressed every

@@ -76,8 +76,11 @@ def lock():
 def assets(pin):
     """(asset name, sha256) for the two release assets this repo uses."""
     ver = pin["NS3_TOOLS_VERSION"]
+    # The distribution is swarm-sim-tools from v1.1.3 (swarm-routing/sim-tools#324),
+    # ns3-tools before; the package it installs stays ns3_tool.
+    dist = "swarm_sim_tools" if tuple(map(int, ver.split("."))) >= (1, 1, 3) else "ns3_tools"
     return [(f"routing-bench-{ver}.tar.gz", pin["ROUTING_BENCH_SHA256"]),
-            (f"ns3_tools-{ver}-py3-none-any.whl", pin["NS3_TOOL_WHEEL_SHA256"])]
+            (f"{dist}-{ver}-py3-none-any.whl", pin["NS3_TOOL_WHEEL_SHA256"])]
 
 
 def _download(pin, name, sha, dest):

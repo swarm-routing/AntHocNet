@@ -20,10 +20,10 @@ name: CI / ns-3
 # Published numbers do not run here: they pin an ns3-dev digest and a campaign
 # image digest (campaign-image.yml), never a rolling tag.
 #
-# TEMPORARY EXCEPTION (#843, swarm-routing/ns3-containers#35, option A): on
-# ns-3.49 stock AODV and the vendored AOMDV livelock, and the gates, packages
-# and kits run them. Until a fixed release reaches `latest`, ci.yml passes
-# gate-version 3.48 and the packages job skips the 3.49 (`latest`) legs.
+# ns-3.49's AODV livelock (#843, NS3-001) no longer pins the gates to 3.48:
+# every AODV- and GPSR-family arm (routing-bench's aodv, the vendored aomdv
+# and gpsr/gpcr/gpsr3d, the examples' aodv and gpsr3d) runs behind routing-bench's ICMP no-route guard
+# (swarm-routing/sim-tools#322, nsnam/ns-3-dev!3101's rules).
 on:
   workflow_call:
     inputs:
@@ -34,7 +34,7 @@ on:
       gate-version:
         description: 'The leg that also runs the gates, the satellite smoke, the tarball install, ASan and the alone jobs'
         type: string
-        default: '3.48'  # 'latest' once ns-3.49's AODV livelock is fixed upstream (#843)
+        default: 'latest'
 
 permissions:
   contents: read
@@ -47,7 +47,7 @@ jobs:
     # Timeouts on this file's jobs (#840, #864): about twice the longest green
     # run on main and PRs (2026-11), at least 10 min (an image pull alone can
     # take minutes), so a hang fails fast instead of holding a runner for 6 h.
-    # Here: the 3.48 gate leg, 30 min at most while it also ran the gates
+    # Here: the gate leg (then on 3.48), 30 min at most while it also ran the gates
     # (they run in ns3-gates now, #875).
     timeout-minutes: 60
     # Build against a pre-built ns-3 image rather than compiling ns-3 from
@@ -361,18 +361,19 @@ jobs:
         run: bash tools/checks/check-anchors.sh /opt/ns-3 vanet-gpcr-vs-gpsr
       - name: FANET gpsr3d anchor (#710, --protocols=gpsr3d)
         # The 3-D geographic arm's own paper trend (Bujari et al., IEEE TMC
-        # 2018): on a static 3-D field, CFace(3) recovery must deliver >= 5 pp
-        # more than greedy alone on the same seeds (measured +12.4 on this
-        # leg). Thresholds: ns3/tools/anchors.yml.
+        # 2018): on a static 3-D field, CFace(3) recovery must deliver at
+        # least what greedy alone does on the same seeds 1-20, no fixed margin
+        # (#1222; measured +4.9 pp on 3.48, +0.2 on 3.49).
+        # Thresholds: ns3/tools/anchors.yml.
         if: matrix.group == 'fanet'
         run: bash tools/checks/check-anchors.sh /opt/ns-3 fanet-gpsr3d-recovery
       - name: Static-mesh HWMP anchor (#708, --protocols=hwmp)
         # The static mesh's 802.11s comparator, gated before any HWMP number is
         # published. On a static connected disk field at one fixed rate,
         # HWMP's airtime metric is equal on every link, so its mean hop count
-        # must sit in [1.00, 1.10] x the oracle's shortest path on the same
-        # seeds (below 1.00 the arm ran on a different topology), with PDR
-        # >= 95. Thresholds: ns3/tools/anchors.yml.
+        # must sit in [oracle, oracle + 0.5] hops on the same seeds (3-4,
+        # #1222; below the oracle the arm ran on a different topology), with
+        # PDR >= 95. Thresholds: ns3/tools/anchors.yml.
         if: matrix.group == 'misc'
         run: bash tools/checks/check-anchors.sh /opt/ns-3 mesh-hwmp-shortest
       - name: Determinism gate (same seed twice must be byte-identical, #129)
@@ -703,12 +704,6 @@ jobs:
       matrix:
         version: ${{ fromJSON(inputs.versions) }}
         packages: ['routing-bench', 'routing-bench,adaptive']
-        # Every package check runs the stock aodv arm, which hangs on ns-3.49
-        # (#843): skip those legs; the gate leg (3.48) still checks every
-        # package. Remove these excludes with the gate-version pin.
-        exclude:
-          - version: 'latest'
-          - version: '3.49'
         include:
           - version: ${{ inputs.gate-version }}
             packages: 'routing-bench'

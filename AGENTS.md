@@ -69,9 +69,13 @@ the core half locally first. Three facts that hold for every change:
 - a published number pins an ns3-dev digest and a campaign-image digest, never
   a rolling tag (#866), and is compared across images only by the cross-image
   rule in `docs/benchmarks/methodology.md`;
-- until #843 closes, the gates, package checks and kits run on `ns3-dev:3.48`
-  (ns-3.49's AODV livelocks, NS3-001 in the org's
-  [ns-3 bug register](https://github.com/swarm-routing/ns3-tools/blob/main/docs/ns3-bugs.md)); the `latest` leg keeps the build and unit tests.
+- every AODV-family and GPSR-family install (routing-bench's `aodv`, the
+  vendored `aomdv` and `gpsr`/`gpcr`/`gpsr3d`, the examples' `aodv` and
+  `gpsr3d`) goes through routing-bench's `IcmpErrorGuardHelper`, with its
+  streams assigned through the node's `GetObject<…::RoutingProtocol>` (a
+  helper's `AssignStreams` that casts `GetRoutingProtocol()` finds nothing
+  behind the guard): ns-3.49 livelocks them without it (#843, NS3-001 in the org's
+  [ns-3 bug register](https://github.com/swarm-routing/ns3-tools/blob/main/docs/ns3-bugs.md)).
 
 Read [`docs/development.md`](docs/development.md) before:
 

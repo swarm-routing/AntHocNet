@@ -146,8 +146,9 @@ published GHCR images (Actions → workflow → *Run workflow*):
 **Published numbers pin an ns3-dev digest and a campaign-image digest, never
 a rolling tag** (#866, swarm-routing/.github#107). A campaign first builds its
 image once: `campaign-image.yml` builds the AntHocNet modules of one commit
-`FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized` (3.48
-while the ns-3.49 AODV livelock #843 is open), tests them and pushes
+`FROM` the digest of `ghcr.io/swarm-routing/ns3-dev:<ver>-optimized`
+(`latest` by default; the AODV-family arms run behind routing-bench's ICMP
+no-route guard, so ns-3.49's AODV livelock #843 does not hang them), tests them and pushes
 `anthocnet-dev:<commit7>-<base7>-optimized` (`anthocnet-ns3-campaign` before
 #987); the campaign plan
 pins that digest and the commit (`image`, `source_sha`), and `ns3-campaign`
@@ -1585,7 +1586,7 @@ rather than mistaken for a protocol property (see [#24](https://github.com/swarm
 | **Broch/Perkins field, low mobility** | 50 nodes, 1500×300 m, RWP, **pause = 900 s** (≈ static) | **AODV ≈ 90–100% PDR** (Broch et al., *MobiCom* 1998; Perkins, AODV) | the channel/PHY calibration target |
 | Broch pause-sweep | as above, pause 0 → 900 s | AODV PDR **rises** with pause; DSDV worst under high mobility | the trend/shape, not one point |
 | ns-3 `manet-routing-compare` | upstream example | community-calibrated AODV/OLSR/DSDV numbers | an in-simulator witness independent of this repo |
-| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, 2 runs | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[1.00, 1.10] × the oracle's** shortest path, PDR ≥ 95 (measured on ns-3.42: 98.2 %, 4.73 vs 4.50 hops) | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
+| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, seeds 3-4 (the first two connected, multi-hop seeds on ns-3.48 and 3.49, read off the oracle, [#1222](https://github.com/swarm-routing/AntHocNet/issues/1222)) | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[oracle, oracle + 0.5] hops**, an absolute detour bound that does not tighten as paths shorten ([#1222](https://github.com/swarm-routing/AntHocNet/issues/1222); was a 1.10 ratio), PDR ≥ 95 | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
 
 **Why this matters here.** The `paper-base` preset *is* the Broch/Perkins
 1500×300 m / 50-node field, where AODV is known to deliver ~90–100% at low

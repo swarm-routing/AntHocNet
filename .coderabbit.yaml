@@ -102,10 +102,10 @@ reviews:
         ANTHOCNET_NS3_* macros, not forked.
     - path: ".github/workflows/*.yml"
       instructions: >-
-        AntHocNet: permissions are least-privilege per job (#785). The ns-3 legs
-        pinned to 3.48 instead of latest are the labelled, temporary #843 exception
-        (ns-3.49's AODV livelock); do not flag those, but flag any new automatic
-        run on an older ns-3. A job that can hang carries timeout-minutes (#840).
+        AntHocNet: permissions are least-privilege per job (#785). Flag any
+        automatic run on an older ns-3 than latest; ns-3.49's AODV livelock (#843)
+        is handled by routing-bench's ICMP no-route guard, not by a version pin. A
+        job that can hang carries timeout-minutes (#840).
     - path: "tools/**"
       instructions: >-
         Golden rule 10: nothing shipped depends on .claude/; a script a workflow,

@@ -18,7 +18,7 @@ label `io.github.swarm-routing.ns3-dev.digest`, its commit in
 
 | Image | Tags | Built by | Use |
 |-------|------|----------|-----|
-| `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | ns3-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` / `3.48` |
+| `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | ns3-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` (older releases on demand) |
 | `ghcr.io/swarm-routing/anthocnet` | `<release>-optimized`, `<release>-debug` (e.g. `v2.7.0-optimized`) | `release.yml` | ns-3 with every module of a release built and tested; tags never move |
 | `ghcr.io/swarm-routing/anthocnet-dev` | `<commit7>-<base7>-optimized` | `campaign-image.yml` | one image per campaign; cells pull it by digest. Deleted after 2 days unless a committed file pins it (`ci.yml`'s `dev-images` job, #987); `anthocnet-ns3-campaign` holds the images before #987, frozen |
 
@@ -43,9 +43,10 @@ profile in `BUILD_PROFILE` and its configure flags in
 `/opt/ns-3/.swarm-configure.env`; `benchmark-cell.yml` reads them
 ([methodology: build profiles](../docs/benchmarks/methodology.md#build-profiles-default-for-ci-release-for-campaigns)).
 
-**Version.** ns-3.49 livelocks stock AODV and the vendored AOMDV (#843), so
-release and campaign images use ns3-dev `3.48` until a fixed ns-3 release
-reaches `latest`.
+**Version.** Release and campaign images use ns3-dev `latest`, the release
+ns-3 supports. ns-3.49 livelocks stock AODV and the vendored AOMDV (#843,
+NS3-001) unless they run behind routing-bench's ICMP no-route guard, which
+every AODV-family arm here does.
 
 **Campaigns.** `campaign-image.yml` builds the image of one commit on one
 ns3-dev digest, once (a second call with the same pair reuses it and pushes
