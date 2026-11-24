@@ -1,0 +1,261 @@
+# API and deprecation policy
+
+**v1.0.0 freezes swarm-core's API** (#83; released 2026-11-16,
+[release](https://github.com/swarm-routing/swarm-adapter-ns3/releases/tag/v1.0.0), Zenodo version DOI
+[10.5281/zenodo.24268942](https://doi.org/10.5281/zenodo.24268942)). This page is what swarm-core
+promises its consumers from then on, how that promise is versioned, and how
+an API is retired. It is the written policy the v1.0.0 row of the
+[roadmap](roadmap.md) asked for. The 0.x rules at the end are kept as the
+record of what held before.
+
+The consumers today are the protocol repositories that build on swarm-core
+(swarm-routing/ARA, swarm-routing/BeeAdHoc, swarm-routing/Termite,
+swarm-routing/HOPNET; swarm-routing/AntHocNet once #14 lands) and
+swarm-routing/ns3-tools' harness. Golden rule 12 of [AGENTS.md](../AGENTS.md)
+("downstream API stability") is the rule this page turns into versions.
+
+## What the API is
+
+The API is everything a consumer can name or observe without reading
+swarm-core's sources:
+
+| Part | What is covered |
+|---|---|
+| swarm-core's primitives | Since #231 not this module's own: swarm-routing/swarm-core's `core/` (namespace `swarm::core`, the testbench, the target `swarm::core` and the CMake package `swarm-core`) is that repository's API, under its own policy and record. This module builds on the release `swarm-core.lock` names and promises what it passes on: `swarm::core` linked `PUBLIC` to `libswarm-core` (its objects, include directory and `cxx_std_23` reach every module that links it), and each header in that release's `SWARM_CORE_HEADERS` exported as `ns3/<name>.h` and included by `ns3/swarm-core-module.h`. A lock bump to a swarm-core release that breaks its API is a breaking change here too. |
+| `model/` public classes | Every header the ns-3 module installs (`HEADER_FILES` in `CMakeLists.txt`): the public and **protected** members of each class (an adapter derives from `SwarmRoutingBase`, so its protected hooks and services are API), every `TypeId` name, every attribute (name, value type, default and what the default means) and every trace source (name and callback signature). |
+| `helper/` | `SwarmRoutingHelper`, `SwarmMonitorHelper`, `SwarmLifecycleHelper` and the structures they return (`SwarmRoutingStats`, ...). |
+| The module itself | The contrib module name `swarm-core`, the umbrella header `ns3/swarm-core-module.h`, `SwarmCoreSeed` and `kSwarmCoreApiVersion` (below). |
+| Default output | With every new option at its default, the same seed gives the same bytes (org invariant 5): a consumer's `##RUN##` lines do not move because swarm-core was updated, except by a bug fix, which follows the Patch rule below. |
+
+The comments in `model/swarm-routing-base.h` are the base's contract, as
+swarm-core's headers' comments are the primitives'. One rule there is easy to miss,
+because the CI smokes are too short to show it (#192): **control packets go
+one hop.** Every control socket the base opens sends with IP TTL 1
+(`NotifyInterfaceUp`), so `BroadcastControl`, `BroadcastControlOn`,
+`BroadcastBeacon` and `UnicastControl` reach one-hop neighbours only. A unicast
+control packet routed through a gateway is not relayed: the gateway drops it as
+TTL-exceeded if its routing forwards it, and the base's own `RouteInput`
+forwards no transit control packet. A protocol that needs a control packet
+relayed at the IP layer sends it on a socket of its own at the default TTL, as
+swarm-routing/AntHocNet#1083 does for its unicast ants. This is documented
+behaviour of v1.0.0, pinned by the glue test "control sockets send with TTL 1":
+raising the TTL would change consumers' default output, so it is a breaking
+change; a routed control send beside it would be a minor, added only once a
+second protocol needs one (golden rule 11; maintainer decision 2026-11-16 on
+#192).
+
+Not API, and free to change in any release: private members, log output
+(`NS_LOG`), the file layout beyond the headers listed above, `tools/`, CI
+workflows, timings and memory use (a performance change is never breaking,
+but one that changes default output on purpose is, as above). The promise
+is source compatibility: a consumer rebuilds against a new minor or patch
+release unchanged, with deprecation warnings not treated as errors
+("Deprecation" below). Binary
+(ABI) compatibility is not promised; every consumer compiles swarm-core from
+source.
+
+**v2.0.0 (proposed, #231) moves `core/` out.** The primitives come from
+swarm-routing/swarm-core's release instead of this repository's `core/`; their
+names, signatures and headers (`ns3/swarm-*.h` included) are unchanged at
+swarm-core v2.0.0, which was extracted from this `core/` with its history.
+What breaks is the layout a consumer may have relied on: `contrib/swarm-core/core/`
+is gone (a module takes swarm-core's include directory from linking
+`${libswarm-core}` instead), `core/` no longer builds from this repository's
+tree or release tarball, and this record drops its `core` lines (they are
+swarm-core's record now). Whether `kSwarmCoreApiVersion` moves with this
+major is the maintainer's decision at the release (below): the C++ API it
+names did not change.
+
+### The API record
+
+[`api-surface.txt`](api-surface.txt) lists the module's C++ and ns-3 items
+one per line: the public and protected members of the module's classes, with
+their signatures, default arguments, enumerator values and constant
+initialisers; every `TypeId`
+with its parent, every attribute with its flags, initial value and checker,
+and every trace source with its callback signature; the experimental pieces
+(below) carry an `experimental ` prefix. Until #231 it also listed every
+name in `swarm::core` and `swarm::core::testbench` (`core` lines); those are
+swarm-routing/swarm-core's record now. It is generated
+(`tools/checks/check-api-surface.py generate`, `make api-surface`) from clang's
+AST of the headers, on the swarm-core release the lock names, and from the
+`GetTypeId` registrations, never edited by hand. Behaviour, the CMake package and default output are API too but are not
+in the record: the tests and the consumer checks cover them.
+
+The `api-surface` check (`.github/workflows/api-surface.yml`) regenerates it
+on every PR: a PR that adds to the API commits the new record (a minor), and
+a PR that removes or changes a line of the base's record must be marked
+breaking, a `!` before the colon of its title (`feat!: ...`) or a
+`BREAKING CHANGE:` footer (a major after 1.0). A deprecation adds a
+`deprecated` or `*-support` line and changes none, so it reads as the minor
+it is. Until the v1.0.0 freeze the check was report-only (a warning); the
+freeze made it strict and a required check.
+
+## Experimental
+
+A few pieces ship in the module but are **outside the 1.0 SemVer promise**:
+no protocol uses them yet, so their shape is not proven by two users (golden
+rule 11), and whether a second protocol adopts them is decided in a release
+after 1.0.0 (maintainer decision 2026-11-15, #160). They were marked before
+v1.0.0, while nothing was frozen yet (0.x), and nothing was removed, so the
+marking broke no consumer; from v1.0.0 on, marking a frozen item experimental
+is a breaking change like any removal (below). From v1.0.0 any minor release may
+change or remove them, with a changelog entry and an issue in each consumer
+that uses one. A consumer that relies on one pins a release.
+
+| Piece | Why experimental |
+|---|---|
+| `FuzzyMetric`, `FuzzyMetricParams`, `FuzzyMemberships`, `fuzzyMemberships`, `FuzzyTerm`, `kFuzzyTerms` (swarm-core's `core/swarm-fuzzy-metric.h`, #3; its status is swarm-routing/swarm-core's since #231) | no protocol selects it; AntHocNet has no fuzzy metric to port; its A/B (#132) waits for one |
+| `IslLinkMonitor` (`model/swarm-isl-link-monitor.h`, #4), with its attributes and trace sources | no protocol uses it; AntHocNet's own ISL code, where it came from, may adopt it after its port |
+| `SwarmRoutingBase`'s `IslHelloSuppression` attribute, `OnLinkUp`, `BeaconSuppressed`, `IsLinkStateNeighbor` | the base API that only `IslLinkMonitor` drives |
+
+`LinkObservation::stability` is not experimental: it is a neutral field of
+the frozen observation (NaN, "no evidence", by default). `SwarmMonitorHelper`
+and `SwarmRoutingBase::Neighbors()` are frozen; that they install or read an
+`IslLinkMonitor` on point-to-point nodes is part of the experimental piece's
+behaviour.
+
+In [`api-surface.txt`](api-surface.txt) these items are recorded with an
+`experimental ` prefix and the `api-surface` check does not guard them (the
+list is `EXPERIMENTAL` in `tools/checks/check-api-surface.py`). Moving one
+into the frozen API, once a release decides its second user, is a minor;
+moving a frozen item out of it is a breaking change, and the check reports it
+so.
+
+## C++ standard
+
+swarm-core's `core/` targets the C++ standard of the ns-3 release swarm-core
+supports: ns-3's own `CMAKE_CXX_STANDARD_MINIMUM` (in its
+`build-support/macros-and-definitions.cmake`; C++17 for ns-3.40, C++20 for
+3.41–3.45, C++23 from 3.46), so **C++23 today** (maintainer decision
+2026-11-14, #141). Its `core/CMakeLists.txt` sets `CMAKE_CXX_STANDARD 23` and
+gives `swarm_core` the compile feature `cxx_std_23`, so every target that
+links `swarm::core`, `libswarm-core` and every module linking it included,
+compiles at C++23 or later. A consumer needs a compiler for that standard.
+
+When ns-3 raises its minimum, swarm-core follows in a **minor** release: the
+standard is not part of the source API above (no name or signature changes),
+but a consumer may need a newer compiler, so the PR opens an issue in each
+consumer listed above before it merges and the release notes say so. The
+`cxx-standard` job of `ci.yml` (`tools/checks/check-cxx-standard.py`) fails
+when the locked swarm-core release's `core/` is below the minimum of the
+`ns3-dev` image CI builds in, so the move is never missed.
+
+## Versions
+
+Releases follow [SemVer](https://semver.org), read against the API above:
+
+- **Major** (`X.0.0`): any breaking change. Removing or renaming anything in
+  the table; changing a signature, a type, an attribute's default or its
+  meaning, a trace source's signature, a wire layout; adding a pure virtual
+  function to a port or to `SwarmRoutingBase`; adding an overload that makes
+  an existing call ambiguous or changes which overload it selects; changing
+  default output on purpose.
+- **Minor** (`1.Y.0`): additive changes. A new header, class, function,
+  attribute or trace source; a new overload that leaves every existing call
+  resolving as before; a new virtual function with a default
+  body; a new option that is off by default and leaves default output
+  byte-identical; a deprecation (below).
+- **Patch** (`1.Y.Z`): fixes and documentation. A bug fix that changes
+  output is still a fix, but its PR says which output moves, its changelog
+  entry says so, and each consumer gets an issue before it merges.
+
+Commit titles drive the bump (Commitizen, `.cz.toml`): `feat:` is a minor,
+`fix:` a patch, and a breaking change is marked `feat!:` / `fix!:` or with a
+`BREAKING CHANGE:` footer.
+
+### `kSwarmCoreApiVersion`
+
+`ns3::kSwarmCoreApiVersion` (`model/swarm-core.h`) is an integer a consumer
+can test at compile time (`static_assert`) to fail early on an API it was not
+written for.
+
+- Before 1.0 it moved with each breaking change (1: the seed helper; 2: the
+  primitives and the glue).
+- The rule (maintainer decision 2026-11-15): it increases when the API
+  changes in a breaking way, and is kept otherwise. v1.0.0 kept it at **2**:
+  nothing broke since 2 (v0.3.0 and v0.4.0 were additive, and marking the
+  experimental pieces removed nothing), so no consumer's check moved; the
+  test in `test/swarm-core-test-suite.cc` asserts it.
+- After 1.0 it changes only in a major release, by one per major. Minor and
+  patch releases never change it: an additive feature is detected by the
+  release a consumer pins, not by this constant.
+- v2.0.0 (proposed, #231) keeps it at 2 until the maintainer decides at the
+  release: the major moves `core/` to swarm-routing/swarm-core's release and
+  changes no name or signature, so moving it to 3 would only fail every
+  consumer's `static_assert(... == 2)`; "by one per major" says to move it.
+
+## Deprecation
+
+An API is retired in two steps, never one:
+
+1. **Deprecate in a minor release.** The C++ name gets
+   `[[deprecated("use <replacement>; removed in <next major>")]]`; an
+   attribute or trace source is registered with ns-3's
+   `TypeId::SupportLevel::DEPRECATED` and the same message. The replacement
+   ships in the same release, so a consumer can move without waiting. The
+   changelog lists it under the release's notes as deprecated, and the PR
+   opens an issue in each consumer that uses it (found with `git grep` in
+   each repository listed above), linked from the PR.
+2. **Remove in a major release**, and no earlier than two minor releases
+   after the deprecation shipped. The deprecation warning is the notice: a
+   consumer moves within that window.
+
+A deprecation must not break a consumer's build. The consumers compile
+their own code with strict warnings as errors, so each keeps
+`-Wdeprecated-declarations` a warning (`-Wno-error=deprecated-declarations`
+next to its `-Werror`): the warning shows in every build, the build stays
+green. The org's protocol repositories add that flag before v1.0.0 (tracked
+on #83). And as with a breaking change, the PR that deprecates a name in use
+comes with the consumers' moves in the same round, so in practice no
+consumer carries the warning for long.
+
+A deprecated API keeps working unchanged until it is removed: deprecation
+never changes behaviour or default output.
+
+## How consumers are protected
+
+- **The lock.** Each protocol, and this module, builds on a swarm-core
+  release named by its `swarm-core.lock` (swarm-routing/.github CONTRIBUTING
+  "Dependencies"); a consumer that links `swarm::core` needs no edit for a
+  new source file (#100), only the lock bump.
+- **Fixes in the same round.** The ns-3 modules build against swarm-core
+  `main`, so a breaking change cannot wait for a release to reach them. It
+  merges only together with the consumer fixes: their PRs open and green
+  against the change's branch, merged right after it (golden rule 12). After
+  1.0 such a change also waits for the next major: it is held on a branch,
+  or behind a new name with the old one deprecated, until the maintainer
+  decides on that major.
+- **The record.** Every deprecation and every breaking change has an issue
+  in each consumer it touches, and the major's release notes link them.
+
+## Out of scope for 1.x
+
+The host contract, a protocol core on other simulators and on real
+computers, is **v2.0.0** (epic #82; swarm-routing/.github#253). Its parts
+(#71, a node-driver contract; #72, `NodeAddress` as an opaque node id; #73,
+link signals as one port with fallbacks) are breaking by design and are not
+part of 1.0: in 1.x, `NodeAddress` and the ports keep the form v1.0.0 ships.
+
+## Before 1.0 (0.x)
+
+Until v1.0.0, any minor release could break the API (SemVer's 0.x rule;
+[SECURITY.md](../SECURITY.md)). The protection is golden rule 12 alone: a
+breaking change lands with the downstream fixes or an issue in each
+consumer, and `kSwarmCoreApiVersion` moves with it.
+
+## Freezing (the v1.0.0 release)
+
+The freeze is done in the release, on the maintainer's word, not before:
+
+1. The freeze PR, merged right before the bump, freezes `kSwarmCoreApiVersion`
+   (at 2) and its test, sets `major_version_zero = false` in `.cz.toml`, makes
+   the `api-surface` check strict and proposes it as a required check
+   (`.github/org-sync.toml` `[settings]`, applied by swarm-routing/.github's
+   `repo-settings` in mode `apply`).
+2. swarm-routing/.github's `repo-settings` is dispatched in mode `apply` and
+   finishes, so `api-surface` is a required check before the release.
+3. `release.yml` is dispatched with `mode: bump` and `increment: MAJOR`
+   (swarm-routing/.github#211), which opens the `chore(release): bump
+   version 0.x.y to 1.0.0` PR; merging it releases.
+4. The v1.0.0 DOI is read from Zenodo and recorded in the roadmap.

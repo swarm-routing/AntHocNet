@@ -1,0 +1,19 @@
+swarm-core 2.0.0 (swarm-routing/swarm-adapter-ns3): the shared ns-3 contrib
+module every swarm-routing protocol links against, GPL-2.0-only
+(LICENSING.md). It builds on the swarm-routing/swarm-core release
+swarm-core.lock names (MIT OR GPL-2.0-only): the configure step downloads
+that release's tarball and checks its SHA256, so it needs network access
+once (-DSWARM_CORE_DIR=<swarm-core>/core uses a local copy instead).
+Needs ns-3.42 or later; swarm-core targets C++23, the standard of the ns-3
+release it supports (ns-3.46 and later).
+
+  tar -xzf swarm-core-2.0.0.tar.gz -C /path/to/ns-3/contrib
+  cd /path/to/ns-3
+  ./ns3 configure --enable-examples --enable-tests && ./ns3 build
+  ./test.py -s swarm-core
+
+A protocol module then links it (LIBRARIES_TO_LINK ${libswarm-core}) and
+includes "ns3/swarm-core-module.h"; swarm-core's include directory comes
+with the link. The primitives without ns-3: swarm-routing/swarm-core.
+
+Source: https://github.com/swarm-routing/swarm-adapter-ns3/tree/v2.0.0

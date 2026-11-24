@@ -1,0 +1,12 @@
+# The swarm-core release this ns-3 module builds on (#231; swarm-routing/.github
+# CONTRIBUTING "Dependencies"): CMakeLists.txt fetches its tarball by URL and
+# checks it against the SHA256 below, read from the release's SHA256SUMS, then
+# links its core/ (the target swarm::core) as a PUBLIC dependency. The `core`
+# check verifies the lock against the release. Never edit it by hand: write it
+# with swarm-routing/.github tools/checks/release_lock.py (render, bump).
+SWARM_CORE_REPO=swarm-routing/swarm-core
+SWARM_CORE_TAG=v2.0.0
+SWARM_CORE_COMMIT=5fb7c180ea3a88a71b99b7c3d11dc8e2eeccb7d4
+SWARM_CORE_VERSION=2.0.0
+SWARM_CORE_ASSET=swarm-core-2.0.0.tar.gz
+SWARM_CORE_SHA256=02d241f3ef02a5850ce8b38986001044bd030b7b7d9e13c1a2bf29094d4f3965
