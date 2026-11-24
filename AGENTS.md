@@ -76,6 +76,9 @@ the core half locally first. Three facts that hold for every change:
   helper's `AssignStreams` that casts `GetRoutingProtocol()` finds nothing
   behind the guard): ns-3.49 livelocks them without it (#843, NS3-001 in the org's
   [ns-3 bug register](https://github.com/swarm-routing/ns3-tools/blob/main/docs/ns3-bugs.md)).
+  `tools/checks/check-icmp-guard.py` (CI gate, `make check`) fails on a site
+  that bypasses it; a test of the livelock itself carries
+  `// icmp-guard: unguarded on purpose (<reason>)`.
 
 Read [`docs/development.md`](docs/development.md) before:
 

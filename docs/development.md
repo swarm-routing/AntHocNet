@@ -297,6 +297,7 @@ python3 docs/tools/check-links.py .     # relative links resolve
 python3 docs/tools/check-mermaid.py .   # mermaid blocks render on GitHub
 python3 docs/tools/check-headers.py .   # SPDX headers on every source file
 python3 tools/checks/check-wire-doc.py   # docs/wire-format.md names the codec's kWireVersion (#981)
+python3 tools/checks/check-icmp-guard.py # every AODV/AOMDV/GPSR install behind the ICMP guard (NS3-001, #843; CI gate)
 mkdocs build --strict                   # nav + anchors (needs web/shell: run tools/checks/fetch-site-web.sh first)
 tools/release/check-bundle.sh           # release package: no agent files, tools present
 # C++ formatting (.clang-format, clang-format-18; lint.yml fails on a diff, #35):
@@ -310,7 +311,7 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 
 | Workflow | Job (check name) | What it checks | Required |
 | --- | --- | --- | --- |
-| `ci.yml` (calls `ci-core.yml`, `ci-ns3.yml`, `ci-web.yml`) | `CI gate` | the one gate over `core`, `ns3` (build, unit tests, smokes, the 8 gate groups), `web` (parity, the docs and API build and its browser smoke) and the allowlists; docs-only PRs skip the simulator jobs | yes |
+| `ci.yml` (calls `ci-core.yml`, `ci-ns3.yml`, `ci-web.yml`) | `CI gate` | the one gate over `core`, `ns3` (build, unit tests, smokes, the 8 gate groups), `web` (parity, the docs and API build and its browser smoke) and the allowlists job (with `check-icmp-guard.py`, NS3-001); docs-only PRs skip the simulator jobs | yes |
 | `org-sync.yml` | `check / org-sync` | the org-managed files match the templates | yes |
 | `review-gate.yml` | `review / coderabbit` | CodeRabbit has reviewed the PR | yes |
 | `lint.yml` | | clang-format (fails on a diff), clang-tidy (warn-only), ruff, the release-package gate, the ns3-tools pin | no |

@@ -109,6 +109,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check allowlists against the tree
         run: bash tools/checks/check-allowlists.sh
+      - name: Every AODV/AOMDV/GPSR install is behind the ICMP guard (NS3-001, #843)
+        # ns-3.49 livelocks these protocols without routing-bench's
+        # IcmpErrorGuardHelper; a new arm or example that installs one
+        # directly, or assigns its streams through a GetRoutingProtocol()
+        # cast, would only show up as a 3.49 timeout. Stdlib-only, <1 s;
+        # here because this job runs on every PR and the CI gate needs it.
+        run: |
+          python3 -I tools/checks/check-icmp-guard.py --self-test
+          python3 -I tools/checks/check-icmp-guard.py
 
   # The three areas (#610), each a reusable workflow. A call job's result is
   # its jobs' combined result, so the gate below still sees every check.
