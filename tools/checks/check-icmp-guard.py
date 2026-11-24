@@ -59,9 +59,14 @@ METHODS = {
     "AomdvHelper": {"Set"},
     "GpsrHelper": {"Set", "Install", "AssignStreams"},
 }
-GUARD_OPEN = re.compile(r"IcmpErrorGuardHelper(\s+[A-Za-z_]\w*)?\s*[({]\s*$")
+# The guard's opening delimiter, then any qualifier of what it wraps
+# (`ns3::AodvHelper()`, `this->m_helper`).
+GUARD_OPEN = re.compile(
+    r"IcmpErrorGuardHelper(\s+[A-Za-z_]\w*)?\s*[({]\s*(?:[A-Za-z_]\w*\s*(?:::|->|\.)\s*)*$"
+)
 TYPE_RE = re.compile(r"\b(" + "|".join(HELPERS) + r")\b")
 DECL_RE = re.compile(r"\s*(?:[&*]+\s*|\s)\s*([A-Za-z_]\w*)\s*(?=[;,={()\[])")
+NEXT_DECL_RE = re.compile(r"\s*,\s*[&*]*\s*([A-Za-z_]\w*)\s*(?=[;,={()\[])")
 TEMP_IN_GUARD = re.compile(r"\s*(?:\(\s*\)|\{\s*\})\s*[)}]")
 CAST_RE = re.compile(
     r"\b(?:DynamicCast|StaticCast|dynamic_cast|static_cast)\s*<\s*(?:Ptr\s*<\s*)?(?:ns3\s*::\s*)?"
@@ -122,6 +127,25 @@ def strip_code(text: str) -> str:
     return "".join(out)
 
 
+def end_of_declarator(code: str, i: int) -> int:
+    """Offset of the `,` ending the declarator at i (its initializer skipped), or -1."""
+    depth = 0
+    while i < len(code):
+        c = code[i]
+        if c in "({[":
+            depth += 1
+        elif c in ")}]":
+            if depth == 0:
+                return -1
+            depth -= 1
+        elif c == ";" and depth == 0:
+            return -1
+        elif c == "," and depth == 0:
+            return i
+        i += 1
+    return -1
+
+
 def line_of(text: str, pos: int) -> int:
     return text.count("\n", 0, pos) + 1
 
@@ -133,15 +157,30 @@ def check_source(path: str, text: str) -> list[str]:
     def add(pos: int, msg: str) -> None:
         found.append((line_of(code, pos), msg))
 
-    names: dict[
-        str, tuple[str, int]
-    ] = {}  # variable -> (helper type, declaration offset)
+    # variable -> (allowed methods, declaration offsets); a name declared with
+    # more than one helper type keeps only the methods every type allows.
+    names: dict[str, tuple[set[str], set[int]]] = {}
+
+    def declare(name: str, helper: str, pos: int) -> None:
+        allowed, decls = names.setdefault(name, (set(METHODS[helper]), set()))
+        allowed &= METHODS[helper]
+        decls.add(pos)
+
     for m in TYPE_RE.finditer(code):
         helper, after = m.group(1), code[m.end() :]
         before = code[: m.start()]
         d = DECL_RE.match(after)
         if d and d.group(1) not in ("operator",):
-            names.setdefault(d.group(1), (helper, m.end() + d.start(1)))
+            pos = m.end() + d.start(1)
+            declare(d.group(1), helper, pos)
+            # `AodvHelper a, b{...}, c;`: every declarator, each initializer skipped
+            end = m.end() + d.end(1)
+            while (comma := end_of_declarator(code, end)) >= 0:
+                n = NEXT_DECL_RE.match(code, comma)
+                if not n:
+                    break
+                declare(n.group(1), helper, n.start(1))
+                end = n.end(1)
             continue
         if GUARD_OPEN.search(before) and TEMP_IN_GUARD.match(after):
             continue
@@ -150,12 +189,16 @@ def check_source(path: str, text: str) -> list[str]:
             f"{helper} used outside routing-bench's IcmpErrorGuardHelper (NS3-001, #843)",
         )
 
-    for name, (helper, decl) in names.items():
-        allowed = METHODS[helper]
-        for u in re.finditer(r"(?<![\w.:>])" + re.escape(name) + r"\b(?!\s*::)", code):
-            if u.start() == decl:
+    for name, (allowed, decls) in names.items():
+        for u in re.finditer(r"(?<![\w:])" + re.escape(name) + r"\b(?!\s*::)", code):
+            if u.start() in decls:
                 continue
             before, after = code[: u.start()], code[u.end() :]
+            # `x.name` / `x->name` is another object's member, except `this->name`
+            if re.search(r"(?:\.|->)\s*$", before) and not re.search(
+                r"(?:\bthis\s*->|\(\s*\*\s*this\s*\)\s*\.)\s*$", before
+            ):
+                continue
             if GUARD_OPEN.search(before) and re.match(r"\s*[)}]", after):
                 continue
             call = re.match(r"\s*\.\s*([A-Za-z_]\w*)\s*\(", after)
@@ -245,12 +288,39 @@ void Run() {
     internet.Install(all);
     gpsrHelper.Install(all);
     stream += gpsrHelper.AssignStreams(all, stream);
+    bench::IcmpErrorGuardHelper qualified{ns3::AodvHelper()};
+    AomdvHelper first, second{};
+    list.Add(bench::IcmpErrorGuardHelper(first), 10);
+    list.Add(bench::IcmpErrorGuardHelper(second), 5);
+}
+void f(int a, int b) {}
+struct Arm {
+    GpsrHelper m_helper;
+    void Install() { internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(this->m_helper)); }
+    void Other(Run& run) { run.m_helper = 1; }
+};
+void Elsewhere() {
+    GpsrHelper gpsrHelper;
+    internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(gpsrHelper));
 }
 """
 
 BAD = {
     "direct install": "AodvHelper aodv;\ninternet.SetRoutingHelper(aodv);\n",
     "direct temporary": "internet.SetRoutingHelper(AomdvHelper());\n",
+    "qualified temporary": "internet.SetRoutingHelper(ns3::AodvHelper());\n",
+    "second declarator": (
+        "AodvHelper guarded, unguarded;\nbench::IcmpErrorGuardHelper guard(guarded);\n"
+        "internet.SetRoutingHelper(unguarded);\n"
+    ),
+    "declarator after an initializer": (
+        "AodvHelper a{}, b;\ninternet.SetRoutingHelper(bench::IcmpErrorGuardHelper(a));\n"
+        "internet.SetRoutingHelper(b);\n"
+    ),
+    "this-> member": (
+        "struct A {\n  AodvHelper m_helper;\n"
+        "  void I() { internet.SetRoutingHelper(this->m_helper); }\n};\n"
+    ),
     "list routing": "Ipv4ListRoutingHelper l;\nGpsrHelper g;\nl.Add(g, 10);\n",
     "helper create": "AomdvHelper h;\nPtr<Ipv4RoutingProtocol> p = h.Create(node);\n",
     "AodvHelper::AssignStreams": (
