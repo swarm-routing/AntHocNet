@@ -156,9 +156,9 @@ def survey(ns3, names, seeds, out):
                 raise SystemExit(f"reanchor: {name} seed {s} did not run on ns-3 {release}")
             pdr = query(text, "oracle", "pdr", "run")
             hops = query(text, "oracle", "hopsMean", "paths")
-            row = (release, name, str(s), pdr[0] if pdr else "-", hops[0] if hops else "-")
-            rows.append(row)
-            out.write("\t".join(row) + "\n")
+            cells = (release, name, str(s), pdr[0] if pdr else "-", hops[0] if hops else "-")
+            out.write("\t".join(cells) + "\n")
+            rows += read_survey("\t".join(cells))  # typed as propose reads a file
             out.flush()
     return rows
 
@@ -196,6 +196,9 @@ def propose(rows, gates, names=None):
     by_gate = {}
     for release, gate, seed, pdr, hops in rows:
         by_gate.setdefault(gate, {}).setdefault(release, {})[seed] = (pdr, hops)
+    # The comparison is every release any survey covers: a gate missing
+    # from one of them gets no joint window.
+    every = sorted({r[0] for r in rows}, key=lambda r: [int(x) for x in re.findall(r"\d+", r)])
     for name in names or sorted(by_gate):
         g = gates.get(name)
         if g is None:
@@ -208,7 +211,11 @@ def propose(rows, gates, names=None):
         if not per:
             out.append(f"{name}: no survey rows")
             continue
-        releases = sorted(per, key=lambda r: [int(x) for x in re.findall(r"\d+", r)])
+        missing = [r for r in every if r not in per]
+        if missing:
+            out.append(f"{name}: PROPOSED: none: no survey on {', '.join(missing)} (every release in the comparison needs one)")
+            continue
+        releases = every
         n = g["runs"]
         seeds = min(max(per[r]) for r in releases)
         cur = f"{g['first']}-{g['first'] + n - 1}"
@@ -336,6 +343,12 @@ def self_test():
     # Seeds where only one release qualifies never make a window.
     only = read_survey("3.48\tarm-delivery\t1\t100\t3\n3.49\tarm-delivery\t1\t67\t1.5\n")
     check("no window", "PROPOSED: none" in "\n".join(propose(only, fake)), True)
+    # A gate surveyed on one release of the comparison only gets no window.
+    part = read_survey(_fixture_tsv("arm-delivery", FIXTURE_ARM) + _fixture_tsv("mesh-hwmp-shortest", {"3.48": FIXTURE_MESH["3.48"]}))
+    check("incomplete evidence", propose(part, fake, ["mesh-hwmp-shortest"]),
+          ["mesh-hwmp-shortest: PROPOSED: none: no survey on 3.49 (every release in the comparison needs one)"])
+    # survey's own rows are typed as read_survey's (run passes them to propose).
+    check("typed rows", read_survey("3.49\tarm-delivery\t3\t99.5\t2.66"), [("3.49", "arm-delivery", 3, 99.5, 2.66)])
     check("trend gate", propose(rows, fake, ["fanet-gpsr3d-recovery"]),
           ["fanet-gpsr3d-recovery: trend gate, no seed selection (seeds 1-20 as they are)"])
     check("first_window", (first_window({2, 3, 5, 6, 7}, 3, 10), first_window({1}, 2, 10)), (5, None))
