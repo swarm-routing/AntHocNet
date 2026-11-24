@@ -31,7 +31,7 @@ refs=$(grep -rIlE '\.claude/skills/[^/"'"'"' ]+/[^/"'"'"' ]+\.(py|sh)|"\.claude"
        --include='*.py' --include='*.sh' --include='*.cc' --include='*.h' \
        --include='CMakeLists.txt' --include='Makefile' --exclude-dir=release . 2>/dev/null | head -5)
 [ -n "$refs" ] && bad "shipped code references .claude/ (breaks in the package): $refs"
-for f in tools/bench/scenario_check.py tools/ns3_tools.py ns3-tools.lock swarm-core.lock tools/swarm_core.py \
+for f in tools/bench/scenario_check.py tools/ns3_tools.py ns3-tools.lock swarm-core.lock swarm-adapter-ns3.lock tools/swarm_core.py \
          ns3/tools/anchors.yml core/CMakeLists.txt Makefile \
          LICENSE LICENSE-MIT LICENSING.md core/LICENSE; do
   [ -e "$f" ] || bad "bundle is missing $f"

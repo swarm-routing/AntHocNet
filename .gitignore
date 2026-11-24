@@ -76,6 +76,7 @@ __pycache__/
 # swarm-routing/ns3-tools release ns3-tools.lock pins (ns3-tools#29):
 # tools/ns3_tools.py
 /.ns3-tools/
-# swarm-core's core/ at the release swarm-core.lock names:
-# tools/swarm_core.py, for make install-ns3 (swarm-routing/ns3-swarm-core#14)
+# swarm-core's core/ (swarm-core.lock) and the adapter module make install-ns3
+# installs (swarm-adapter-ns3.lock), unpacked by tools/swarm_core.py
+# (swarm-routing/ns3-swarm-core#14)
 /.swarm-core/

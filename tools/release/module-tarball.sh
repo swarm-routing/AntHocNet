@@ -46,7 +46,7 @@ AntHocNet $ver — drop-in ns-3 modules
 
 Contents: contrib/anthocnet (the module + harnesses; it carries the algorithm
 core/), contrib/swarm-core (the module it links, at the release
-swarm-core.lock names, $(python3 "$repo/tools/swarm_core.py" pin)) and the comparison
+swarm-adapter-ns3.lock names, $(python3 "$repo/tools/swarm_core.py" module-pin)) and the comparison
 modules contrib/aomdv, contrib/gpsr, contrib/oracle, contrib/adaptive and the harness
 module contrib/routing-bench ($(python3 "$repo/tools/ns3_tools.py" pin), from
 ns3-tools.lock). Delete those five to
