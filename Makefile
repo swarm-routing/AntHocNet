@@ -16,7 +16,7 @@
 #   make reproduce FIG=grid                     # re-render from committed data, diff the PNG
 #   make reproduce FIG=grid MODE=rerun NS3DIR=… # re-measure a cell, validate, render
 
-.PHONY: help build test lint check ci shell core-test bench-core format ns3-doctor install-ns3 uninstall-ns3 clean reproduce reproduce-list
+.PHONY: help build test lint check icmp-guard ci shell core-test bench-core format ns3-doctor install-ns3 uninstall-ns3 clean reproduce reproduce-list
 
 # The org's standard target names (swarm-routing/.github#11); `org-sync check`
 # verifies the names, the recipes are this repository's own.
@@ -51,7 +51,11 @@ lint: ## clang-format dry run over the project's own C++, as CI
 	git ls-files 'core/*.cpp' 'core/*.h' \
 	  'ns3/anthocnet/*.cc' 'ns3/anthocnet/*.h' | xargs $(CLANG_FORMAT) --dry-run -Werror
 
-check: lint test ## the local subset of what CI gates on
+icmp-guard: ## every AODV/AOMDV/GPSR install is behind the ICMP guard (NS3-001, #843), as CI
+	python3 -I tools/checks/check-icmp-guard.py --self-test
+	python3 -I tools/checks/check-icmp-guard.py
+
+check: lint test icmp-guard ## the local subset of what CI gates on
 
 ci: check ## alias of check (CI itself runs .github/workflows/ci.yml)
 
