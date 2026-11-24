@@ -40,6 +40,7 @@ web/     (not tracked) the browser adapter + learn site, fetched from swarm-rout
 tools/   shipped scripts: ns3_tools.py (fetches the ns3-tools pin; `run MODULE` runs a reader), swarm_core.py (the swarm-core release swarm-core.lock names: `module` for make install-ns3, `path` its core/), bench/ (scenario_check, campaigns, controls), checks/ (CI gates), release/
 docs/    architecture.md, porting-notes.md, adr/, benchmarks/ — full map in docs/README.md
 results/ raw benchmark data: cells/ (harness runs), campaign/ (classified CSVs)
+ci/      canary.sh: what sim-containers' downstream canary runs on a candidate ns3-dev image (install, suites, the release-sensitive ns3-gates steps)
 api/     Doxygen config for the API reference (/api/)
 paper/   JOSS-style paper source
 .claude/ agent skills (procedures only; never shipped in a release)

@@ -322,6 +322,19 @@ for f in core/src/*.cpp; do clang-tidy -p build-tidy/core --quiet "$f"; done
 | `charts.yml`, `links.yml`, `ns3-dev.yml`, `bake.yml` | | charts from committed data; weekly link check; nightly ns-3-dev build; the bake recipe (paused) | no |
 | `release.yml` | | the release (dispatched; the merged bump PR publishes) | no |
 
+Outside this repository, swarm-routing/sim-containers' downstream canary runs
+[`ci/canary.sh`](../ci/canary.sh) on every candidate `ns3-dev` image (Ubuntu
+`debug`) before its `latest-*` tags move: the install, the module suites, the
+example, and the `ns3-gates` steps whose verdict a release can move
+(arm-delivery, every `check-anchors.sh` anchor, the determinism gates, the
+satellite anchors and arm smoke; the header says which are left out for the
+consumer's 3600 s budget on the `-O0` image), so a release that moves a
+gate's field (#1222) holds `latest` back instead of turning this
+repository's CI red. A change to one of those steps in `ci-ns3.yml` goes into
+`GATES` there too. To run it
+locally, as the canary does: `test/downstream.sh <image>` in sim-containers
+with `DOWNSTREAM_LOCAL=AntHocNet=<this checkout>`.
+
 The required checks are the ones the `main` ruleset lists: `gh api
 repos/swarm-routing/AntHocNet/rules/branches/main`. `main` merges through a
 merge queue, so a pull request is merged by enabling auto-merge.
