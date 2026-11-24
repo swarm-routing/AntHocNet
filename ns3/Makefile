@@ -78,12 +78,14 @@ install: require-ns3dir
 	cp $(CORE)/src/*.cpp "$(DEST)/core/src/"
 	cp $(CORE)/LICENSE "$(DEST)/core/"   # MIT OR GPL-2.0-only (ADR-0028)
 	# swarm-core, the ns-3 module the adapter derives from (SwarmRoutingBase) and
-	# whose core/ the algorithm core's headers include, at the release
-	# swarm-core.lock names (swarm-routing/ns3-swarm-core#14, S10 of #1019):
-	# installed as contrib/swarm-core, which the anthocnet module links.
-	# tools/swarm_core.py fetches it; SWARM_CORE_DIR=<checkout>/core uses a local
-	# one, SWARM_CORE_MODULE=<adapter checkout> a local adapter tree (its main
-	# has no core/, swarm-routing/swarm-adapter-ns3#258). A contrib/swarm-core this installer did not put there (another
+	# whose swarm-core headers the algorithm core includes, at the
+	# swarm-routing/swarm-adapter-ns3 release swarm-adapter-ns3.lock names
+	# (swarm-routing/ns3-swarm-core#14, S10 of #1019): installed as
+	# contrib/swarm-core, which the anthocnet module links.
+	# tools/swarm_core.py fetches it; SWARM_CORE_MODULE=<adapter checkout> uses a
+	# local adapter tree (from v2.0.0 it has no core/,
+	# swarm-routing/swarm-adapter-ns3#258), SWARM_CORE_DIR=<checkout>/core one
+	# that still has. A contrib/swarm-core this installer did not put there (another
 	# protocol's) is kept: at the same version silently, at another with a
 	# warning, never overwritten.
 	@sc=$$(python3 $(ROOT)/tools/swarm_core.py module) && test -f "$$sc/model/swarm-routing-base.h" && \
@@ -91,9 +93,9 @@ install: require-ns3dir
 	  if [ -d "$(SWARMDEST)" ] && [ ! -f "$(SWARMDEST)/$(SWARMMARK)" ]; then \
 	    have=$$(cat "$(SWARMDEST)/VERSION" 2>/dev/null || echo unknown); \
 	    if [ "$$have" = "$$want" ]; then echo ">> contrib/swarm-core $$have is already installed: kept"; \
-	    else echo ">> WARNING: contrib/swarm-core is $$have, swarm-core.lock names $$want: kept, not overwritten (AntHocNet is built and tested with $$want)"; fi; \
+	    else echo ">> WARNING: contrib/swarm-core is $$have, AntHocNet installs $$want: kept, not overwritten (AntHocNet is built and tested with $$want)"; fi; \
 	  else \
-	    echo ">> Installing swarm-core $$want ($${SWARM_CORE_MODULE:-$$(python3 $(ROOT)/tools/swarm_core.py pin)}) into $(SWARMDEST)"; \
+	    echo ">> Installing swarm-core $$want ($${SWARM_CORE_MODULE:-$$(python3 $(ROOT)/tools/swarm_core.py module-pin)}) into $(SWARMDEST)"; \
 	    mkdir -p "$(SWARMDEST)" && cp -r "$$sc/." "$(SWARMDEST)/" && \
 	    echo "$$want" > "$(SWARMDEST)/$(SWARMMARK)"; \
 	  fi

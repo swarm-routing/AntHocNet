@@ -1,40 +1,44 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
-"""swarm-core at the release swarm-core.lock names.
+"""swarm-core and its ns-3 module at the releases the two locks name.
 
-core/ builds on swarm-routing/ns3-swarm-core's dual-licensed core/
-(swarm-routing/ns3-swarm-core#14), at the release swarm-core.lock locks
-(swarm-routing/ns3-swarm-core#134: tag, commit, the release tarball and its
-SHA256, every value read from the release by swarm-routing/.github
-tools/checks/release_lock.py). The core's own CMake build takes it from its
-vcpkg port (swarm-routing/.github#489), or, with SWARM_CORE_DIR, from the
-sources this script unpacks (`make test` without VCPKG_ROOT, and the coverage,
-fuzz and analysis jobs). The ns-3 builds get the same release from this
-script: it downloads the tarball, checks its SHA256 against the lock and
-unpacks it under .swarm-core/<tag>/swarm-core/ (git-ignored). That tree is the
-swarm-core ns-3 module (`make install-ns3` installs it as contrib/swarm-core,
-which the adapter links: SwarmRoutingBase, S10 of #1019), and its core/ is what
-the coverage job compiles core/'s sources against.
+Two releases, two locks, every value read from the release by
+swarm-routing/.github tools/checks/release_lock.py:
+
+- swarm-core.lock: swarm-core's dual-licensed core/, which core/ builds on
+  (swarm-routing/ns3-swarm-core#14, #134). The core's own CMake build takes it
+  from its vcpkg port (swarm-routing/.github#489), or, with SWARM_CORE_DIR,
+  from the sources this script unpacks (`make test` without VCPKG_ROOT, and
+  the coverage, fuzz and analysis jobs). Up to v1.0.0 that release was the
+  adapter's (its tarball carried core/); from swarm-core v2.0.0 it is
+  swarm-routing/swarm-core's own (swarm-routing/.github#691). Either tarball
+  holds a core/, which is all `path` needs.
+- swarm-adapter-ns3.lock: the swarm-core ns-3 module (SwarmRoutingBase, S10 of
+  #1019) that `make install-ns3` installs as contrib/swarm-core and the
+  adapter links. From adapter v2.0.0 on it has no core/ of its own: it
+  fetches swarm-core's release at configure time and passes its include
+  directory on through ${libswarm-core} (swarm-routing/swarm-adapter-ns3#258).
+
+Each release is downloaded, checked against its lock's SHA256 and unpacked
+under .swarm-core/<repository>-<tag>/ (git-ignored): both repositories tag
+v2.0.0, so the tag alone does not name a tree.
 
 Usage:
-    tools/swarm_core.py path      print swarm-core's core/ directory (fetches first)
-    tools/swarm_core.py module    print the swarm-core ns-3 module's directory
-                                  (the release tree, core/ inside it)
-    tools/swarm_core.py pin       print the locked repository, tag and commit
+    tools/swarm_core.py path        print swarm-core's core/ directory (fetches first)
+    tools/swarm_core.py module      print the swarm-core ns-3 module's directory
+    tools/swarm_core.py pin         print swarm-core.lock's repository, tag and commit
+    tools/swarm_core.py module-pin  print swarm-adapter-ns3.lock's repository, tag and commit
 
 Environment:
-    SWARM_CORE_DIR=<swarm-core checkout>/core  use that checkout instead
-                                               (offline, or an unreleased
-                                               change); `module` is its parent
-    SWARM_CORE_MODULE=<adapter checkout>       `module` prints that swarm-core
-                                               ns-3 module instead, with or
-                                               without a core/ of its own (its
-                                               main takes swarm-core from the
-                                               release it locks,
-                                               swarm-routing/swarm-adapter-ns3#258);
-                                               `path` ignores it and keeps the
-                                               release (or SWARM_CORE_DIR)
+    SWARM_CORE_DIR=<swarm-core checkout>/core  `path` prints that checkout's core/
+                                               (offline, or an unreleased change);
+                                               `module` its parent, when that is an
+                                               adapter tree with a core/ of its own
+    SWARM_CORE_MODULE=<adapter checkout>       `module` prints that swarm-core ns-3
+                                               module, with or without a core/
+                                               (swarm-routing/swarm-adapter-ns3#258);
+                                               `path` ignores it
     SWARM_CORE_CACHE=<dir>                     where to unpack (default
                                                <repo>/.swarm-core)
 
@@ -51,22 +55,24 @@ import tempfile
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOCK = os.path.join(ROOT, "swarm-core.lock")
+CORE_LOCK = (os.path.join(ROOT, "swarm-core.lock"), "SWARM_CORE")
+MODULE_LOCK = (os.path.join(ROOT, "swarm-adapter-ns3.lock"), "ADAPTER")
 URL = "https://github.com/{repo}/releases/download/{tag}/{asset}"
-KEY = re.compile(r"^(SWARM_CORE_[A-Z0-9_]+)=(.*)$")
 
 
-def lock():
+def lock(which):
+    path, prefix = which
+    key = re.compile(rf"^({prefix}_[A-Z0-9_]+)=(.*)$")
     vals = {}
-    with open(LOCK, encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
-            m = KEY.match(line.strip())
+            m = key.match(line.strip())
             if m:
                 vals[m.group(1)] = m.group(2)
     for k in ("REPO", "TAG", "COMMIT", "ASSET", "SHA256"):
-        if not vals.get("SWARM_CORE_" + k):
-            sys.exit(f"swarm_core: {LOCK} has no SWARM_CORE_{k}")
-    return {k[len("SWARM_CORE_") :]: v for k, v in vals.items()}
+        if not vals.get(f"{prefix}_{k}"):
+            sys.exit(f"swarm_core: {path} has no {prefix}_{k}")
+    return {k[len(prefix) + 1 :]: v for k, v in vals.items()}
 
 
 def is_core(d):
@@ -74,42 +80,22 @@ def is_core(d):
 
 
 def is_module(d):
-    return is_core(os.path.join(d, "core")) and os.path.isfile(
-        os.path.join(d, "model", "swarm-routing-base.h")
-    )
+    return os.path.isfile(os.path.join(d, "model", "swarm-routing-base.h"))
 
 
-def module():
-    """The swarm-core ns-3 module: SWARM_CORE_MODULE, else release_module()."""
-    adapter = os.environ.get("SWARM_CORE_MODULE")
-    if adapter:
-        adapter = os.path.abspath(adapter)
-        if not os.path.isfile(os.path.join(adapter, "model", "swarm-routing-base.h")):
-            sys.exit(f"swarm_core: SWARM_CORE_MODULE={adapter} is not the swarm-core ns-3 module")
-        return adapter
-    return release_module()
+def has_core(d):
+    return is_core(os.path.join(d, "core"))
 
 
-def release_module():
-    """The swarm-core ns-3 module with a core/: the release tree (or SWARM_CORE_DIR's parent)."""
-    local = os.environ.get("SWARM_CORE_DIR")
-    if local:
-        local = os.path.abspath(local)
-        if not is_core(local):
-            sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
-        root = os.path.dirname(local)
-        if not is_module(root):
-            sys.exit(
-                f"swarm_core: {root} (SWARM_CORE_DIR's parent) is not the swarm-core ns-3 module"
-            )
-        return root
-    lk = lock()
+def fetch(which, ok, what):
+    """The release tree `which` locks, unpacked once; `ok(tree)` must hold."""
+    lk = lock(which)
     cache = os.path.abspath(os.environ.get("SWARM_CORE_CACHE") or os.path.join(ROOT, ".swarm-core"))
-    dest = os.path.join(cache, lk["TAG"], "swarm-core")
-    if is_module(dest):
+    dest = os.path.join(cache, f"{lk['REPO'].split('/')[-1]}-{lk['TAG']}")
+    if ok(dest):
         return dest
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with tempfile.TemporaryDirectory(dir=os.path.dirname(dest)) as tmp:
+    os.makedirs(cache, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=cache) as tmp:
         arc = os.path.join(tmp, lk["ASSET"])
         url = URL.format(repo=lk["REPO"], tag=lk["TAG"], asset=lk["ASSET"])
         with urllib.request.urlopen(url, timeout=120) as r, open(arc, "wb") as f:
@@ -140,33 +126,58 @@ def release_module():
             tar.extractall(tmp, members=members, **safe)
             top = tops.pop()
         src = os.path.join(tmp, top)
-        if not is_module(src):
-            sys.exit(f"swarm_core: {lk['ASSET']} is not the swarm-core ns-3 module")
+        if not ok(src):
+            sys.exit(f"swarm_core: {lk['REPO']} {lk['TAG']} {lk['ASSET']} is not {what}")
+        shutil.rmtree(dest, ignore_errors=True)
         shutil.move(src, dest)
     return dest
 
 
+def module():
+    """The swarm-core ns-3 module: SWARM_CORE_MODULE, SWARM_CORE_DIR's parent, or the release."""
+    adapter = os.environ.get("SWARM_CORE_MODULE")
+    if adapter:
+        adapter = os.path.abspath(adapter)
+        if not is_module(adapter):
+            sys.exit(f"swarm_core: SWARM_CORE_MODULE={adapter} is not the swarm-core ns-3 module")
+        return adapter
+    local = os.environ.get("SWARM_CORE_DIR")
+    if local:
+        local = os.path.abspath(local)
+        if not is_core(local):
+            sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
+        root = os.path.dirname(local)
+        if not is_module(root):
+            sys.exit(
+                f"swarm_core: {root} (SWARM_CORE_DIR's parent) is not the swarm-core ns-3 module;"
+                " name an adapter checkout with SWARM_CORE_MODULE"
+            )
+        return root
+    return fetch(MODULE_LOCK, is_module, "the swarm-core ns-3 module")
+
+
 def path():
-    """swarm-core's core/ directory."""
+    """swarm-core's core/ directory: SWARM_CORE_DIR, or the release swarm-core.lock names."""
     local = os.environ.get("SWARM_CORE_DIR")
     if local:
         local = os.path.abspath(local)
         if not is_core(local):
             sys.exit(f"swarm_core: SWARM_CORE_DIR={local} is not swarm-core's core/ directory")
         return local
-    return os.path.join(release_module(), "core")
+    return os.path.join(fetch(CORE_LOCK, has_core, "a tree with swarm-core's core/"), "core")
 
 
 def main(argv):
-    if argv[1:] == ["pin"]:
-        lk = lock()
+    if argv[1:] in (["pin"], ["module-pin"]):
+        lk = lock(CORE_LOCK if argv[1] == "pin" else MODULE_LOCK)
         print(f"{lk['REPO']} {lk['TAG']} {lk['COMMIT']}")
     elif argv[1:] == ["path"]:
         print(path())
     elif argv[1:] == ["module"]:
         print(module())
     else:
-        print(__doc__.strip().split("\n\n")[1], file=sys.stderr)
+        usage = [p for p in __doc__.split("\n\n") if p.startswith("Usage:")]
+        print(usage[0], file=sys.stderr)
         return 2
     return 0
 
