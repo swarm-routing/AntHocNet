@@ -135,8 +135,9 @@ jobs:
     # Automatic runs: the ns-3 release ns-3 supports (ns3-dev:latest). Older
     # releases only through the manual inputs above (org CONTRIBUTING
     # invariant 7). The gates run there too: ns-3.49's AODV livelock (#843,
-    # NS3-001) no longer holds them on 3.48, because every AODV-family arm
-    # (routing-bench's aodv, the vendored aomdv, the examples' aodv) runs
+    # NS3-001) no longer holds them on 3.48, because every AODV- and GPSR-family
+    # arm (routing-bench's aodv, the vendored aomdv and gpsr modes, the
+    # examples' aodv and gpsr3d) runs
     # behind routing-bench's ICMP no-route guard (swarm-routing/sim-tools#322).
     with:
       versions: ${{ inputs.ns3-versions || '["latest"]' }}

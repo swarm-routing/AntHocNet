@@ -12,6 +12,7 @@
 #include "ns3/abort.h"
 #include "ns3/boolean.h"
 #include "ns3/gpsr-helper.h"
+#include "ns3/icmp-error-guard-helper.h"
 #include "ns3/routing-bench-arm.h"
 
 namespace ns3 {
@@ -40,7 +41,12 @@ public:
     void InstallRouting(InternetStackHelper& internet, bench::RunContext&) override {
         if (m_mode == Mode::Gpcr) m_helper.Set("Gpcr", BooleanValue(true));
         if (m_mode == Mode::ThreeD) m_helper.Set("ThreeD", BooleanValue(true));
-        internet.SetRoutingHelper(m_helper);
+        // NS3-001 (#843): on ns-3.49 GPSR's no-route failures raise the same
+        // zero-time ICMP storm as AODV's (gpcr stops at simulated 53.66 s), so
+        // it runs behind routing-bench's ICMP no-route guard. The guard copies
+        // the helper, so wrap it after the attributes are set; the streams go
+        // through the aggregated protocol (GpsrHelper::AssignStreams).
+        internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(m_helper));
     }
     // #296: GPSR's data packets carry a position header, injected by
     // re-pointing the UDP down target -- the helper wires that after the

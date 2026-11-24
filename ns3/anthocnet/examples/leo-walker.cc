@@ -1005,7 +1005,9 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed,
         // geographic arm (#710): the vendored GPSR's ThreeD mode, its hellos
         // on every link, positions Earth-centred (GpsrPosition).
         gpsrHelper.Set("ThreeD", BooleanValue(true));
-        internet.SetRoutingHelper(gpsrHelper);
+        // NS3-001 (#843): GPSR's no-route failures livelock ns-3.49 like
+        // AODV's; behind the guard, wrapped after Set (the guard copies it).
+        internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(gpsrHelper));
     } else if (proto == "opspf") {
         // #707: OPSPF-style link state on the predicted orbit schedule; the
         // oracle's machinery with predicted knowledge only (see FloodLsa).

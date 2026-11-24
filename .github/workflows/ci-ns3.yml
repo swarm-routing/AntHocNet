@@ -21,8 +21,8 @@ name: CI / ns-3
 # image digest (campaign-image.yml), never a rolling tag.
 #
 # ns-3.49's AODV livelock (#843, NS3-001) no longer pins the gates to 3.48:
-# every AODV-family arm (routing-bench's aodv, the vendored aomdv, the
-# examples' aodv) runs behind routing-bench's ICMP no-route guard
+# every AODV- and GPSR-family arm (routing-bench's aodv, the vendored aomdv
+# and gpsr/gpcr/gpsr3d, the examples' aodv and gpsr3d) runs behind routing-bench's ICMP no-route guard
 # (swarm-routing/sim-tools#322, nsnam/ns-3-dev!3101's rules).
 on:
   workflow_call:

@@ -86,15 +86,16 @@ GpsrHelper::Install (void) const
 int64_t
 GpsrHelper::AssignStreams (NodeContainer c, int64_t stream)
 {
-  // #352 (port addition): mirror AodvHelper::AssignStreams.
+  // #352 (port addition): mirror AodvHelper::AssignStreams, in the same node
+  // order. NS3-001 (#843): reach GPSR through the node it is aggregated to
+  // (Create aggregates it), not by casting Ipv4::GetRoutingProtocol(), which
+  // is routing-bench's ICMP no-route guard when GPSR runs behind it.
   int64_t currentStream = stream;
   for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
     {
       Ptr<Node> node = *i;
-      Ptr<Ipv4> ipv4 = node->GetObject<Ipv4> ();
-      NS_ASSERT_MSG (ipv4, "GpsrHelper::AssignStreams(): node has no Ipv4");
-      Ptr<gpsr::RoutingProtocol> gpsr =
-        DynamicCast<gpsr::RoutingProtocol> (ipv4->GetRoutingProtocol ());
+      NS_ASSERT_MSG (node->GetObject<Ipv4> (), "GpsrHelper::AssignStreams(): node has no Ipv4");
+      Ptr<gpsr::RoutingProtocol> gpsr = node->GetObject<gpsr::RoutingProtocol> ();
       if (gpsr)
         {
           currentStream += gpsr->AssignStreams (currentStream);
