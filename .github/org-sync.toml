@@ -5,6 +5,9 @@ kind = "protocol"
 title = "AntHocNet"
 dual = ["core/", "tools/", "ns3/tools/", "docs/tools/"]
 cxx = "23"
+# the org-managed backstop-tick.yml: hourly at :33, it asks swarm-routing/.github's
+# schedule backstop to run (swarm-routing/.github#748)
+backstop_tick = 33
 zenodo_concept = "20981979"
 docs_url = "https://swarm-routing.github.io/AntHocNet/docs/"
 licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"
