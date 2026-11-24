@@ -13,6 +13,7 @@ up only as a 3.49 CI timeout, so this check reads ns3/'s C++ (comments and
 strings stripped) and fails on:
 
   1. `AodvHelper`, `AomdvHelper` or `GpsrHelper` anywhere but a declaration
+     of one variable (`AodvHelper a, b;` fails: one helper per statement)
      or a temporary handed straight to `IcmpErrorGuardHelper(...)`/`{...}`;
   2. a variable of one of those types used other than wrapped in the guard,
      `.Set(...)`, or, for `GpsrHelper` only, `.Install(...)` (the position
@@ -67,7 +68,6 @@ GUARD_OPEN = re.compile(
 )
 TYPE_RE = re.compile(r"\b(" + "|".join(HELPERS) + r")\b")
 DECL_RE = re.compile(r"\s*(?:[&*]+\s*|\s)\s*([A-Za-z_]\w*)\s*(?=[;,={()\[])")
-NEXT_DECL_RE = re.compile(r"\s*,\s*[&*]*\s*([A-Za-z_]\w*)\s*(?=[;,={()\[])")
 TEMP_IN_GUARD = re.compile(r"\s*(?:\(\s*\)|\{\s*\})\s*[)}]")
 CAST_RE = re.compile(
     r"\b(?:DynamicCast|StaticCast|dynamic_cast|static_cast)\s*<\s*(?:Ptr\s*<\s*)?(?:ns3\s*::\s*)?"
@@ -128,29 +128,25 @@ def strip_code(text: str) -> str:
     return "".join(out)
 
 
-def end_of_declarator(code: str, i: int) -> int:
-    """Offset of the `,` ending the declarator at i (its initializer skipped), or -1.
+def ends_statement(code: str, i: int) -> int:
+    """Offset of the first top-level `,` before the `;` ending the statement at i, or -1.
 
-    A `<` right after a name opens a template argument list (`make<A, B>()`);
-    a `>` closes one unless it is the `->` operator.
+    -1 also when an unmatched `)` comes first: i is in a parameter list,
+    whose other parameters are declarations of their own.
     """
-    depth = angle = 0
+    depth, comma = 0, -1
     while i < len(code):
         c = code[i]
-        if c == "<" and re.search(r"\w\s*$", code[max(0, i - 64) : i]):
-            angle += 1
-        elif c == ">" and angle and code[i - 1] != "-":
-            angle -= 1
-        elif c in "({[":
+        if c in "({[":
             depth += 1
         elif c in ")}]":
             if depth == 0:
                 return -1
             depth -= 1
         elif c == ";" and depth == 0:
-            return -1
-        elif c == "," and depth == 0 and angle == 0:
-            return i
+            return comma
+        elif c == "," and depth == 0 and comma < 0:
+            comma = i
         i += 1
     return -1
 
@@ -182,14 +178,15 @@ def check_source(path: str, text: str) -> list[str]:
         if d and d.group(1) not in ("operator",):
             pos = m.end() + d.start(1)
             declare(d.group(1), helper, pos)
-            # `AodvHelper a, b{...}, c;`: every declarator, each initializer skipped
-            end = m.end() + d.end(1)
-            while (comma := end_of_declarator(code, end)) >= 0:
-                n = NEXT_DECL_RE.match(code, comma)
-                if not n:
-                    break
-                declare(n.group(1), helper, n.start(1))
-                end = n.end(1)
+            # `AodvHelper a, b;`: a second declarator could hide behind any
+            # initializer (`a = x < y ? f() : g(), b`), so the check asks for one
+            # helper per declaration instead of parsing C++.
+            comma = ends_statement(code, m.end() + d.end(1))
+            if comma >= 0:
+                add(
+                    comma,
+                    f"declare one {helper} per statement, so this check can follow each (NS3-001, #843)",
+                )
             continue
         if GUARD_OPEN.search(before) and TEMP_IN_GUARD.match(after):
             continue
@@ -298,11 +295,13 @@ void Run() {
     gpsrHelper.Install(all);
     stream += gpsrHelper.AssignStreams(all, stream);
     bench::IcmpErrorGuardHelper qualified{ns3::AodvHelper()};
-    AomdvHelper first, second{};
+    AomdvHelper first;
+    AomdvHelper second{};
     list.Add(bench::IcmpErrorGuardHelper(first), 10);
     list.Add(bench::IcmpErrorGuardHelper(second), 5);
 }
 void f(int a, int b) {}
+void g(const GpsrHelper& helper, int n) { helper.Install(nodes); }
 struct Arm {
     GpsrHelper m_helper;
     void Install() { internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(this->m_helper)); }
@@ -326,6 +325,10 @@ BAD = {
     "declarator after an initializer": (
         "AodvHelper a{}, b;\ninternet.SetRoutingHelper(bench::IcmpErrorGuardHelper(a));\n"
         "internet.SetRoutingHelper(b);\n"
+    ),
+    "comma in a comparison": (
+        "AodvHelper guarded = flag < 1 ? makeA() : makeB(), unguarded;\n"
+        "bench::IcmpErrorGuardHelper guard(guarded);\ninternet.SetRoutingHelper(unguarded);\n"
     ),
     "comma in a template argument": (
         "AodvHelper guarded = make<A, B>(), unguarded;\n"
