@@ -791,7 +791,7 @@ jobs:
           fi
           echo "### ${title}: ${url}" >> "$GITHUB_STEP_SUMMARY"
 
-  # Release images on ns3-containers (#866, swarm-routing/.github#107):
+  # Release images on sim-containers (#866, swarm-routing/.github#107):
   # ghcr.io/swarm-routing/anthocnet:<tag>-{optimized,debug}, each FROM the
   # digest of ns3-dev:<version>-<profile>, built with swarm-routing/.github's
   # reusable-ns3-image.yml (test.py suites on the built image, then push, cosign

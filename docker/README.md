@@ -3,7 +3,7 @@
 This repository builds no ns-3 images of its own (#866, org decision
 [swarm-routing/.github#107](https://github.com/swarm-routing/.github/issues/107)).
 Every image that carries AntHocNet is built `FROM` an image of
-[`swarm-routing/ns3-containers`](https://github.com/swarm-routing/ns3-containers)
+[`swarm-routing/sim-containers`](https://github.com/swarm-routing/sim-containers)
 (`ghcr.io/swarm-routing/ns3-dev`), pinned by digest, by the org's shared
 workflow `reusable-ns3-image.yml` in
 [`swarm-routing/.github`](https://github.com/swarm-routing/.github): it
@@ -18,7 +18,7 @@ label `io.github.swarm-routing.ns3-dev.digest`, its commit in
 
 | Image | Tags | Built by | Use |
 |-------|------|----------|-----|
-| `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | ns3-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` (older releases on demand) |
+| `ghcr.io/swarm-routing/ns3-dev` | `<ver>-{default,debug,sanitized,optimized}`, each with an immutable `-<sha7>` twin | sim-containers | plain ns-3 (the comparison protocols included); CI runs in `latest` (older releases on demand) |
 | `ghcr.io/swarm-routing/anthocnet` | `<release>-optimized`, `<release>-debug` (e.g. `v2.7.0-optimized`) | `release.yml` | ns-3 with every module of a release built and tested; tags never move |
 | `ghcr.io/swarm-routing/anthocnet-dev` | `<commit7>-<base7>-optimized` | `campaign-image.yml` | one image per campaign; cells pull it by digest. Deleted after 2 days unless a committed file pins it (`ci.yml`'s `dev-images` job, #987); `anthocnet-ns3-campaign` holds the images before #987, frozen |
 
@@ -78,7 +78,7 @@ What they published stays pullable and is never rebuilt:
   swarm-routing/.github#370):** no workflow pulls it any more (the on-demand
   3.36 leg of `ci-ns3.yml` is gone, and `benchmark-cell.yml`'s legacy path
   needs `legacy_image` by digest), and the maintainer deletes the package, so
-  that `ghcr.io/swarm-routing/ns3` becomes ns3-containers' official base.
+  that `ghcr.io/swarm-routing/ns3` becomes sim-containers' official base.
   `anthocnet-ns3` stays frozen.
 - NS-2 images (`ns2`, `anthocnet-ns2` at `2.34` / `2.35`), built through
   v1.9.0; see [docs/ns2-support.md](../docs/ns2-support.md).
@@ -89,7 +89,7 @@ Frozen means: never pushed again, never deleted, still pullable
 ([swarm-routing/.github#110](https://github.com/swarm-routing/.github/issues/110)).
 The one exception is `ghcr.io/swarm-routing/ns3`, retired and deleted by
 maintainer decision (#987): no published cell names its images, and its name
-goes to ns3-containers' official base. The digests below stay as the record.
+goes to sim-containers' official base. The digests below stay as the record.
 Digests read from the registry on 2026-11-11. The `##PROV##` line of a
 published cell names the image as `image=<repo>:<tag>` (cells before the
 control campaign) or by digest (the control campaign, #867).

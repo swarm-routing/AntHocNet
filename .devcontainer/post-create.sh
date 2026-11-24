@@ -3,7 +3,7 @@
 # checkout's AntHocNet module, then build it.
 #
 # The base image (ghcr.io/swarm-routing/ns3-dev:<ver>-debug, built by
-# swarm-routing/ns3-containers) has stock ns-3 configured and fully built at
+# swarm-routing/sim-containers) has stock ns-3 configured and fully built at
 # /opt/ns-3, and no AntHocNet in it. This script installs the modules from the
 # workspace and builds them. Since every stock object file is already in the
 # image's build cache, only the AntHocNet delta compiles, as long as the
@@ -30,7 +30,7 @@ make install-ns3 NS3DIR="$NS3DIR"
 # --- 2. Configure (ci-ns3.yml: "Configure (scope examples/tests to AntHocNet)") ---
 cd "$NS3DIR"
 
-# The image records its configure line in .swarm-configure.env (ns3-containers
+# The image records its configure line in .swarm-configure.env (sim-containers
 # golden rule 10): NS3_PROFILE_FLAGS is `-d debug` on a -debug image. Passing
 # it again keeps every stock object up to date; leaving it out would switch the
 # tree to ns-3's default profile and recompile all of ns-3 (~15 min). On an
