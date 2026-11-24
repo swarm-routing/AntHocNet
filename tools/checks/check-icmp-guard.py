@@ -62,7 +62,8 @@ METHODS = {
 # The guard's opening delimiter, then any qualifier of what it wraps
 # (`ns3::AodvHelper()`, `this->m_helper`).
 GUARD_OPEN = re.compile(
-    r"IcmpErrorGuardHelper(\s+[A-Za-z_]\w*)?\s*[({]\s*(?:[A-Za-z_]\w*\s*(?:::|->|\.)\s*)*$"
+    r"IcmpErrorGuardHelper(\s+[A-Za-z_]\w*)?\s*[({]\s*"
+    r"(?:(?:[A-Za-z_]\w*|\(\s*\*\s*this\s*\))\s*(?:::|->|\.)\s*)*$"
 )
 TYPE_RE = re.compile(r"\b(" + "|".join(HELPERS) + r")\b")
 DECL_RE = re.compile(r"\s*(?:[&*]+\s*|\s)\s*([A-Za-z_]\w*)\s*(?=[;,={()\[])")
@@ -128,11 +129,19 @@ def strip_code(text: str) -> str:
 
 
 def end_of_declarator(code: str, i: int) -> int:
-    """Offset of the `,` ending the declarator at i (its initializer skipped), or -1."""
-    depth = 0
+    """Offset of the `,` ending the declarator at i (its initializer skipped), or -1.
+
+    A `<` right after a name opens a template argument list (`make<A, B>()`);
+    a `>` closes one unless it is the `->` operator.
+    """
+    depth = angle = 0
     while i < len(code):
         c = code[i]
-        if c in "({[":
+        if c == "<" and re.search(r"\w\s*$", code[max(0, i - 64) : i]):
+            angle += 1
+        elif c == ">" and angle and code[i - 1] != "-":
+            angle -= 1
+        elif c in "({[":
             depth += 1
         elif c in ")}]":
             if depth == 0:
@@ -140,7 +149,7 @@ def end_of_declarator(code: str, i: int) -> int:
             depth -= 1
         elif c == ";" and depth == 0:
             return -1
-        elif c == "," and depth == 0:
+        elif c == "," and depth == 0 and angle == 0:
             return i
         i += 1
     return -1
@@ -297,6 +306,7 @@ void f(int a, int b) {}
 struct Arm {
     GpsrHelper m_helper;
     void Install() { internet.SetRoutingHelper(bench::IcmpErrorGuardHelper(this->m_helper)); }
+    void Wrap() { list.Add(bench::IcmpErrorGuardHelper((*this).m_helper), 1); }
     void Other(Run& run) { run.m_helper = 1; }
 };
 void Elsewhere() {
@@ -316,6 +326,10 @@ BAD = {
     "declarator after an initializer": (
         "AodvHelper a{}, b;\ninternet.SetRoutingHelper(bench::IcmpErrorGuardHelper(a));\n"
         "internet.SetRoutingHelper(b);\n"
+    ),
+    "comma in a template argument": (
+        "AodvHelper guarded = make<A, B>(), unguarded;\n"
+        "bench::IcmpErrorGuardHelper guard(guarded);\ninternet.SetRoutingHelper(unguarded);\n"
     ),
     "this-> member": (
         "struct A {\n  AodvHelper m_helper;\n"
