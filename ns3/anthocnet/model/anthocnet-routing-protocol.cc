@@ -1076,8 +1076,8 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
     // Pick a source address on an available interface.
     for (const auto& kv : m_ifaces) {
         Ipv4InterfaceAddress addr = kv.second.address;
-        if (!oif || m_ipv4->GetInterfaceForDevice(oif) ==
-                        (int)m_ipv4->GetInterfaceForAddress(addr.GetLocal())) {
+        if (!oif ||
+            m_ipv4->GetInterfaceForDevice(oif) == m_ipv4->GetInterfaceForAddress(addr.GetLocal())) {
             route->SetSource(addr.GetLocal());
             break;
         }
@@ -1089,7 +1089,7 @@ Ptr<Ipv4Route> RoutingProtocol::LoopbackRoute(const Ipv4Header& header, Ptr<NetD
     return route;
 }
 
-Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header& header,
+Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> /* p */, const Ipv4Header& header,
                                             Ptr<NetDevice> oif, Socket::SocketErrno& sockerr) {
     sockerr = Socket::ERROR_NOTERROR;
     // A node the base's lifecycle took down routes nothing (#974 adds the
@@ -1153,7 +1153,7 @@ bool IsDataDatagram(Ptr<const Packet> p, const Ipv4Header& header) {
 
 bool RoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header& header,
                                  Ptr<const NetDevice> idev, AHN_RI_CB(UnicastForwardCallback) ucb,
-                                 AHN_RI_CB(MulticastForwardCallback) mcb,
+                                 AHN_RI_CB(MulticastForwardCallback) /* mcb */,
                                  AHN_RI_CB(LocalDeliverCallback) lcb,
                                  AHN_RI_CB(ErrorCallback) ecb) {
     if (!m_logic || m_ifaces.empty() || IsDown()) return false;
