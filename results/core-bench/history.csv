@@ -293,3 +293,12 @@ date,commit,cpu,case,ns_per_op,min_ns,max_ns
 2026-11-22,7f398ab905e5,Intel(R) Xeon(R) 6975P-C,history_dedup,69.72,69.63,70.49
 2026-11-22,7f398ab905e5,Intel(R) Xeon(R) 6975P-C,evaporate_all,6666.85,6660.83,6678.59
 2026-11-22,7f398ab905e5,Intel(R) Xeon(R) 6975P-C,create_hello,4771.32,4764.04,4782.24
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,pheromone_update,63.74,63.71,63.84
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,select_next_hop_4,61.59,61.45,64.04
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,select_next_hop_16,239.04,238.76,240.30
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,select_next_hop_64,870.46,867.77,874.87
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,codec_encode_full_ant,124.42,124.34,124.60
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,codec_decode_full_ant,126.96,126.19,128.74
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,history_dedup,69.65,69.21,70.06
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,evaporate_all,6599.31,6585.12,6686.06
+2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,create_hello,4756.98,4742.64,4771.06
