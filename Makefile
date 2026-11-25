@@ -30,7 +30,7 @@ NS3_IMAGE ?= ghcr.io/swarm-routing/ns3-dev:latest-debug
 #   VCPKG_ROOT=<vcpkg checkout>      the vcpkg port, as CI's core job
 #   neither                          the lock's release, unpacked by tools/swarm_core.py
 #                                    (the same tarball the port builds; no vcpkg needed)
-SWARM_CORE_REF ?= v2.0.0
+SWARM_CORE_REF ?= v2.1.0
 VCPKG_ROOT ?=
 CORE_SWARM_CORE = $(if $(SWARM_CORE_DIR),-DSWARM_CORE_DIR=$(abspath $(SWARM_CORE_DIR)),$(if $(VCPKG_ROOT),-DCMAKE_TOOLCHAIN_FILE=$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake -DSWARM_CORE_DIR=,-DSWARM_CORE_DIR=$(shell python3 tools/swarm_core.py path)))
 CORE_CMAKE_ARGS = -DCMAKE_BUILD_TYPE=Release $(CORE_SWARM_CORE)

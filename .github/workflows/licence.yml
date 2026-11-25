@@ -19,10 +19,10 @@ permissions:
 
 jobs:
   headers:
-    uses: swarm-routing/.github/.github/workflows/reusable-licence-check.yml@b77ce0e5ec4db04f3defc146566af642fc5feba1 # main@2026-11-25
+    uses: swarm-routing/.github/.github/workflows/reusable-licence-check.yml@ef0827e0b16689747428b2a6025dbaaa81f655d9 # main@2026-11-25
     with:
       dual-roots: core/ tools/ ns3/tools/ docs/tools/ ci/
       core-roots: core/
       gpl-only: docs/tools/mkdocs_hooks.py
       exclude: '^(\.claude|\.devcontainer)/'
-      core-deps: swarm-routing/swarm-core@5fb7c180ea3a88a71b99b7c3d11dc8e2eeccb7d4:core
+      core-deps: swarm-routing/swarm-core@392e84d98cefd45db184d0788c264621f2e58192:core
