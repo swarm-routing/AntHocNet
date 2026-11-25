@@ -338,7 +338,15 @@ def self_test():
     check("evidence row", "| 3 < | **100.0 / 2.35** | **99.5 / 2.66** |" in text, True)
     check("partitioned row", "| 11 | 66.6 / 2.00 | 0.0 / 0.00 |" in text, True)
     check("missing row", "| 18 | 0.0 / - | **100.0 / 3.71** |" in text, True)
+    # sim-tools v1.1.4 (swarm-routing/sim-tools#331): 3.49 draws 3.48's field, so the
+    # survey is 3.48's on both and the rule gives the original seeds back.
+    same = {"3.48": FIXTURE_ARM["3.48"], "3.49": FIXTURE_ARM["3.48"]}
+    same_mesh = {"3.48": FIXTURE_MESH["3.48"], "3.49": FIXTURE_MESH["3.48"]}
     fake["arm-delivery"]["first"] = 3
+    fake["mesh-hwmp-shortest"]["first"] = 3
+    v114 = "\n".join(propose(read_survey(_fixture_tsv("arm-delivery", same) + _fixture_tsv("mesh-hwmp-shortest", same_mesh)), fake))
+    check("v1.1.4 arm-delivery", "PROPOSED: seeds 1-1 (--firstRun=1 --runs=1; was 3-3)" in v114, True)
+    check("v1.1.4 mesh", "PROPOSED: seeds 1-2 (--firstRun=1 --runs=2; was 3-4)" in v114, True)
     check("unchanged", "seeds 3-3 (--firstRun=3 --runs=1; unchanged)" in "\n".join(propose(rows, fake)), True)
     # Seeds where only one release qualifies never make a window.
     only = read_survey("3.48\tarm-delivery\t1\t100\t3\n3.49\tarm-delivery\t1\t67\t1.5\n")

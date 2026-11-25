@@ -172,13 +172,14 @@ case "$ANCHOR" in
         # HWMP's excess is a fraction of a hop from path discovery, which as a
         # ratio grows as paths shorten (#1222; replaces the 1.10 stretch).
         # 16 nodes, 500 m field, 175 m range (the delivery smoke's field), on
-        # the 802.11a radio stock 802.11s runs on. Seeds 3-4: the first two
+        # the 802.11a radio stock 802.11s runs on. Seeds 1-2: the first two
         # consecutive seeds connected (oracle PDR >= 99) and multi-hop (oracle
         # hopsMean >= 2.0) on ns-3.48 and ns-3.49, read off the oracle alone
-        # (#1222: 3.49's ad-hoc devices take 2 more RNG streams each, which
-        # partitioned seeds 1-2).
+        # (#1222's rule; seeds 3-4 while sim-tools v1.1.3 drew another field
+        # on 3.49, whose ad-hoc devices take 2 more RNG streams each; v1.1.4,
+        # swarm-routing/sim-tools#331, draws the same field on both).
         harness=anthocnet-compare
-        args="--nNodes=16 --areaX=500 --areaY=500 --range=175 --pause=900 --speed=1 --flows=2 --time=120 --firstRun=3 --runs=2 --standard=80211a --rateManager=constant6 --diag"
+        args="--nNodes=16 --areaX=500 --areaY=500 --range=175 --pause=900 --speed=1 --flows=2 --time=120 --firstRun=1 --runs=2 --standard=80211a --rateManager=constant6 --diag"
         protocols="hwmp,oracle"
         floor=$(floor_for mesh_hwmp_pdr_min)
         detour_arm=hwmp

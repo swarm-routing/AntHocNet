@@ -371,7 +371,7 @@ jobs:
         # The static mesh's 802.11s comparator, gated before any HWMP number is
         # published. On a static connected disk field at one fixed rate,
         # HWMP's airtime metric is equal on every link, so its mean hop count
-        # must sit in [oracle, oracle + 0.5] hops on the same seeds (3-4,
+        # must sit in [oracle, oracle + 0.5] hops on the same seeds (1-2,
         # #1222; below the oracle the arm ran on a different topology), with
         # PDR >= 95. Thresholds: ns3/tools/anchors.yml.
         if: matrix.group == 'misc'
