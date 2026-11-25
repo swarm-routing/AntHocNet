@@ -169,6 +169,7 @@ table is that record.
 | v2.6.1 | `10.5281/zenodo.24060921` | [record 24060921](https://zenodo.org/records/24060921) — core/ and the standalone tooling dual-licensed MIT OR GPL-2.0-only ([#783](https://github.com/swarm-routing/AntHocNet/issues/783), [ADR-0028](docs/adr/0028-core-is-dual-licensed.md)); Zenodo's GitHub integration missed it, so the org's `zenodo` workflow archived it on 2026-11-08 ([swarm-routing/.github#66](https://github.com/swarm-routing/.github/pull/66)) |
 | v2.7.0 | `10.5281/zenodo.24213888` | [record 24213888](https://zenodo.org/records/24213888) — the comparison harness and the `ns3_tool` readers taken from swarm-routing/ns3-tools at the release `ns3-tools.lock` pins (in-repo copies deleted, [#927](https://github.com/swarm-routing/AntHocNet/pull/927)); the SLSA provenance also published as `anthocnet-<ver>.intoto.jsonl` ([#788](https://github.com/swarm-routing/AntHocNet/issues/788)); the first release under the `main` ruleset ([#789](https://github.com/swarm-routing/AntHocNet/issues/789)); Zenodo's GitHub integration missed it, so the org's `zenodo` workflow archived it on 2026-11-14 ([run 43565167761](https://github.com/swarm-routing/.github/actions/runs/43565167761)) |
 | v2.8.0 | `10.5281/zenodo.24466958` | [record 24466958](https://zenodo.org/records/24466958) |
+| v2.9.0 | `10.5281/zenodo.24533504` | [record 24533504](https://zenodo.org/records/24533504) |
 
 **Adding a row is the whole per-release chore.** Append the new version DOI
 here; do **not** touch the README badge or `CITATION.cff`, which already point
