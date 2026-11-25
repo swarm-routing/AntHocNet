@@ -35,10 +35,13 @@
 #include "ns3/olsr-module.h"
 #include "ns3/dsdv-module.h"
 #include "ns3/icmp-error-guard-helper.h"
+#include "ns3/livelock-watch.h"
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -438,7 +441,22 @@ Result RunOne(const std::string& proto, const Params& P, uint32_t seed) {
     FlowMonitorHelper fmHelper;
     Ptr<FlowMonitor> monitor = fmHelper.InstallAll();
     Simulator::Stop(Seconds(P.simTime));
+    // NS3-001: fail fast, rather than at the job's timeout, if simulated time
+    // stops advancing (swarm-routing/sim-tools#334). Installed last, so it sees
+    // exactly the run's events; a run it does not stop is byte-identical
+    // (livelock-watch.h).
+    bench::WatchForLivelock(bench::kDefaultLivelockEvents);
     Simulator::Run();
+    if (const bench::LivelockReport lk = bench::LivelockStatus(); lk.fired) {
+        std::cerr << std::setprecision(9) << std::fixed << "manet-baselines: livelock: arm '"
+                  << proto << "' seed " << seed << ": simulated time stuck at "
+                  << lk.at.GetSeconds() << " s for " << lk.events << " events, "
+                  << Simulator::GetEventCount()
+                  << " events in the run; a zero-time event storm like NS3-001, see "
+                     "docs/ns3-bugs.md in swarm-routing/sim-tools"
+                  << std::endl;
+        std::exit(bench::kLivelockExit);
+    }
     monitor->CheckForLostPackets();
 
     Result r;

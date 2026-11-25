@@ -138,10 +138,11 @@ fanet_gpsr3d_recovery_pp_min: 0.0
 # Analytic: on a static connected disk field at one fixed rate, 802.11s
 # HWMP's airtime metric is equal on every link, so it converges to a
 # minimum-hop path. 16 nodes, 500 m field, 175 m range, 802.11a at 6 Mbit/s,
-# seeds 3-4 (2 runs): the first two consecutive seeds whose field is connected
+# seeds 1-2 (2 runs): the first two consecutive seeds whose field is connected
 # (oracle PDR >= 99) and multi-hop (oracle hopsMean >= 2.0) on both ns-3.48
-# and ns-3.49, read off the oracle alone (#1222; seeds 1-2 were partitioned
-# on 3.49, whose ad-hoc devices take 2 more RNG streams each). The PDR floor
+# and ns-3.49, read off the oracle alone (#1222's rule; seeds 3-4 while
+# sim-tools v1.1.3 partitioned seeds 1-2 on 3.49, whose ad-hoc devices take 2
+# more RNG streams each; v1.1.4 draws the same field on both). The PDR floor
 # only catches an arm that stopped routing.
 mesh_hwmp_pdr_min: 95.0
 # Upper bound on hwmp hopsMean minus oracle hopsMean, in hops (the lower

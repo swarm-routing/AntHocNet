@@ -1586,7 +1586,7 @@ rather than mistaken for a protocol property (see [#24](https://github.com/swarm
 | **Broch/Perkins field, low mobility** | 50 nodes, 1500×300 m, RWP, **pause = 900 s** (≈ static) | **AODV ≈ 90–100% PDR** (Broch et al., *MobiCom* 1998; Perkins, AODV) | the channel/PHY calibration target |
 | Broch pause-sweep | as above, pause 0 → 900 s | AODV PDR **rises** with pause; DSDV worst under high mobility | the trend/shape, not one point |
 | ns-3 `manet-routing-compare` | upstream example | community-calibrated AODV/OLSR/DSDV numbers | an in-simulator witness independent of this repo |
-| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, seeds 3-4 (the first two connected, multi-hop seeds on ns-3.48 and 3.49, read off the oracle, [#1222](https://github.com/swarm-routing/AntHocNet/issues/1222)) | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[oracle, oracle + 0.5] hops**, an absolute detour bound that does not tighten as paths shorten ([#1222](https://github.com/swarm-routing/AntHocNet/issues/1222); was a 1.10 ratio), PDR ≥ 95 | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
+| static-mesh HWMP (`mesh-hwmp-shortest`, [#708](https://github.com/swarm-routing/AntHocNet/issues/708)) | 16 nodes, 500 × 500 m, 175 m disk, static, 802.11a at 6 Mbit/s, `hwmp,oracle`, seeds 1-2 (the first two connected, multi-hop seeds on ns-3.48 and 3.49, read off the oracle, [#1222](https://github.com/swarm-routing/AntHocNet/issues/1222)) | analytic: at one fixed rate HWMP's airtime metric is equal on every link, so its mean hop count is in **[oracle, oracle + 0.5] hops**, an absolute detour bound that does not tighten as paths shorten ([#1222](https://github.com/swarm-routing/AntHocNet/issues/1222); was a 1.10 ratio), PDR ≥ 95 | the 802.11s arm converges to a shortest path on the same topology the oracle sees (below 1.00 is the #708 stream-pairing defect, which read 4.39) |
 
 **Why this matters here.** The `paper-base` preset *is* the Broch/Perkins
 1500×300 m / 50-node field, where AODV is known to deliver ~90–100% at low
@@ -1638,11 +1638,15 @@ enforced locally by
 
 ### Re-anchoring a gate's seeds when ns-3 moves the field ([#1222](https://github.com/swarm-routing/AntHocNet/issues/1222))
 
-The field a gate runs on is a function of the seed **and** of the ns-3
-release: routing-bench pins the position allocator right after the wifi
-devices, so a release whose devices take a different number of RNG streams
-draws another field from the same seed (ns-3.49's ad-hoc MAC takes 2 more per
-device, which partitioned the arm-delivery field's seed 1). When a release
+The field a gate runs on is a function of the seed and can be one of the
+ns-3 release: up to sim-tools v1.1.3, routing-bench pinned the position
+allocator right after the wifi devices, so a release whose devices take a
+different number of RNG streams drew another field from the same seed
+(ns-3.49's ad-hoc MAC takes 2 more per device, which partitioned the
+arm-delivery field's seed 1). sim-tools v1.1.4 ([swarm-routing/sim-tools#331](https://github.com/swarm-routing/sim-tools/issues/331)) draws the
+field from a fixed stream block, the same on 3.48 and 3.49, and the rule
+below put both gates back on their original seeds; it still applies to any
+release that moves a field another way. When a release
 breaks a gate this way, the gate's floors, bounds and parameters stay; only
 its seed window is re-chosen, by a rule stated before the survey and read off
 the oracle alone, never off an arm:
@@ -1676,8 +1680,14 @@ python3 tools/bench/reanchor.py propose reanchor-3.48-debug.tsv reanchor-3.49-de
 python3 tools/bench/reanchor.py run --ns3 /opt/ns-3      # or survey and propose in built trees
 ```
 
-On #1222's releases it reproduces #1222's choices: `arm-delivery` seed 3,
-`mesh-hwmp-shortest` seeds 3-4. The proposal goes into the gate's
+On #1222's evidence (sim-tools v1.1.3) it reproduces #1222's choices:
+`arm-delivery` seed 3, `mesh-hwmp-shortest` seeds 3-4. With the v1.1.4 lock
+the surveys on 3.48 and 3.49 are identical seed for seed (3.48's as before),
+and it proposes `arm-delivery` seed 1 and `mesh-hwmp-shortest` seeds 1-2, the
+gates' seeds again. The bounds #1222's maintainer decision set
+(`mesh-hwmp-shortest` at most 0.5 hops above the oracle;
+`fanet-gpsr3d-recovery` recovery ≥ greedy over seeds 1-20) stay: they rest on
+3.48 evidence too, not on the moved field. The proposal goes into the gate's
 `--firstRun` with the table in the PR, and the gate's comment records the
 releases it was checked on.
 
