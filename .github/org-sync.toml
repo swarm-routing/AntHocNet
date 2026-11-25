@@ -13,6 +13,10 @@ docs_url = "https://swarm-routing.github.io/AntHocNet/docs/"
 licence_badge = "GPL-2.0, core and tools MIT OR GPL-2.0"
 # bestpractices.dev project (OpenSSF Best Practices badge, #790)
 bestpractices_project = "16656"
+# the class documentation's Doxyfile (swarm-routing/.github#883): AntHocNet's own,
+# api/Doxyfile, which the site already builds at /AntHocNet/api/; the org-managed
+# api-docs.yml builds it on every PR, and no docs/api/Doxyfile is seeded
+doxyfile = "api/Doxyfile"
 # AntHocNet's golden rules 1-10 are the source of the org's (this repository is
 # the reference implementation, and other repositories cite "golden rule N" by
 # their numbers), so the org-rules section is not managed here; the other
