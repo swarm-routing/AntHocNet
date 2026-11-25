@@ -17,4 +17,4 @@ jobs:
   doxygen:
     uses: swarm-routing/.github/.github/workflows/reusable-doxygen.yml@a178f47d84bab60f932bde93a03fb1b031073d8b # main@2026-11-24
     with:
-      doxyfile: "docs/api/Doxyfile"
+      doxyfile: "api/Doxyfile"
