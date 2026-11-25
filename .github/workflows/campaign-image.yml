@@ -105,7 +105,7 @@ jobs:
       packages: write       # push the image
       id-token: write       # cosign keyless signature
       attestations: write   # build provenance and the SBOM
-    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@10d9057fc3bcd21f39be701885929db4c056e6f8 # main@2026-11-25
+    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@b77ce0e5ec4db04f3defc146566af642fc5feba1 # main@2026-11-25
     with:
       # The reusable workflow checks out the dispatched commit; the stage moves
       # to the requested one first (a public repo: an anonymous fetch), then
