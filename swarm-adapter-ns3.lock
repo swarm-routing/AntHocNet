@@ -8,8 +8,8 @@
 # (render, every value read from the release); org-bot's release-lock task
 # opens the bump PR when a newer adapter release is out.
 ADAPTER_REPO=swarm-routing/swarm-adapter-ns3
-ADAPTER_TAG=v2.1.1
-ADAPTER_COMMIT=a25d512a228eacca6d37ce45b0f765543fb32646
-ADAPTER_VERSION=2.1.1
-ADAPTER_ASSET=swarm-core-2.1.1.tar.gz
-ADAPTER_SHA256=b92311d31453ecd2762a142a15f798031914eea7d5a99847a72c62a51bcb8448
+ADAPTER_TAG=v2.2.0
+ADAPTER_COMMIT=6cb713f68a938c88138de1dbe1c2e4812be38967
+ADAPTER_VERSION=2.2.0
+ADAPTER_ASSET=swarm-core-2.2.0.tar.gz
+ADAPTER_SHA256=060fb49a88250554dc7fcf7f31c55fcef404c7fc9df91e9b1c9e1fcb93e282a1
