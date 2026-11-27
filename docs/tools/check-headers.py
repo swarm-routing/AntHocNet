@@ -33,7 +33,8 @@ hold, so this gate checks them:
 - a ``core/`` C++ file includes nothing from outside ``core/``. Angle includes
   must be C++ standard-library headers, and quote includes must resolve to a
   file under ``core/``, or name a header of swarm-core's dual-licensed
-  ``core/`` (``"swarm-<name>.h"``, a bare name; swarm-routing/ns3-swarm-core#14),
+  ``core/`` (``"swarm-<name>.h"``, a bare name; swarm-routing/ns3-swarm-core#14,
+  or ``"testbench/swarm-<name>.h"``, its testbench as swarm-core installs it; #1117),
   which the org licence gate (``licence.yml``) resolves against swarm-core at
   the pinned commit. A ``core/`` file that pulled in an ns-3, ``web/`` or
   vendored-baseline header would bind the whole core to GPL. Golden rule 1
@@ -67,8 +68,9 @@ CORE_INCLUDE_DIRS = ("core/include", "core/tests", "core/bench")
 # swarm-core's dual-licensed core/ headers, by bare name ("swarm-ports.h"): the
 # one dependency core/ may include from (swarm-routing/ns3-swarm-core#14). This
 # script has no copy to resolve them against; licence.yml's org check does, at
-# the commit core/CMakeLists.txt pins.
-SWARM_CORE_HEADER = re.compile(r"swarm-[a-z0-9-]+\.h")
+# the commit core/CMakeLists.txt pins. Its testbench headers (the protocol
+# contract suite, #1117) keep the testbench/ directory they install under.
+SWARM_CORE_HEADER = re.compile(r"(testbench/)?swarm-[a-z0-9-]+\.h")
 # The C++ standard library: the only angle includes core/ may use.
 STD_HEADERS = frozenset([
     "algorithm", "any", "array", "atomic", "bitset", "cassert", "cctype",
@@ -289,7 +291,7 @@ def self_test() -> int:
     core_ok = (
         "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n// Copyright (C) 2026 X\n\n"
         '#include "anthocnet/core/ports.h"\n#include "test_support.h"\n'
-        '#include "swarm-ports.h"\n'
+        '#include "swarm-ports.h"\n#include "testbench/swarm-contract-tests.h"\n'
         "#include <map>\n#include <cstdint>\n"
     )
     core_bad = {
@@ -309,6 +311,9 @@ def self_test() -> int:
             '#include "../../ns3/anthocnet/model/anthocnet-packet.h"\n',
         "swarm-core header by a path":
             "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n#include \"../swarm-ports.h\"\n",
+        "swarm-core testbench header by another path":
+            "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n"
+            '#include "../testbench/swarm-contract-tests.h"\n',
         "quote include that resolves nowhere":
             "// SPDX-License-Identifier: MIT OR GPL-2.0-only\n#include \"missing.h\"\n",
     }
