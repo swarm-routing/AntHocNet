@@ -627,7 +627,7 @@ jobs:
       # release; the site's weekly run is the backstop.
       - name: Org bot token (for the site dispatch)
         id: bot
-        uses: swarm-routing/.github/.github/actions/bot-token@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
+        uses: swarm-routing/.github/.github/actions/bot-token@4ca39e56878af1b23a028c602d554a6f696b2ac2 # main@2026-11-27
         continue-on-error: true
         timeout-minutes: 2
         with:
@@ -798,7 +798,7 @@ jobs:
       - name: Org bot token
         id: bot
         if: ${{ inputs.mode != 'dryrun' }}
-        uses: swarm-routing/.github/.github/actions/bot-token@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
+        uses: swarm-routing/.github/.github/actions/bot-token@4ca39e56878af1b23a028c602d554a6f696b2ac2 # main@2026-11-27
         timeout-minutes: 2
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
@@ -892,7 +892,7 @@ jobs:
       packages: write       # push (not used by a dry run)
       id-token: write       # cosign keyless signature
       attestations: write   # build provenance and the SBOM
-    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-ns3-image.yml@4ca39e56878af1b23a028c602d554a6f696b2ac2 # main@2026-11-27
     with:
       stage: >-
         ${{ inputs.mode != 'dryrun' && format('git fetch -q --depth 1 origin tag {0} && git checkout -q {0} &&', needs.release.outputs.tag) || '' }}

@@ -167,7 +167,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    uses: swarm-routing/.github/.github/workflows/reusable-benchmark-cell.yml@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-benchmark-cell.yml@4ca39e56878af1b23a028c602d554a6f696b2ac2 # main@2026-11-27
     with:
       image: ${{ inputs.image }}
       source_sha: ${{ inputs.source_sha }}
