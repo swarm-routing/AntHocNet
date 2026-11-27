@@ -21,4 +21,4 @@ jobs:
     # @main by contract (swarm-routing/.github AGENTS.md). Scorecard's
     # Pinned-Dependencies flags each such line; this repo accepts that warning
     # (#787, CONTRIBUTING.md "Automated: OpenSSF Scorecard").
-    uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@bbb81f90c92b52dcb3ef0cfcdfdd655bef968391 # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@3a6638192e29fce4418eb76a6187d5c5537891a3 # main@2026-11-27
