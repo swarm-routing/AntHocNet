@@ -1,5 +1,5 @@
+// Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 // SPDX-License-Identifier: MIT OR GPL-2.0-only
-// Copyright (C) 2026 Daniel Henrique Joppi
 
 /*
  * swarm-core's protocol contract suite (#1117, swarm-routing/swarm-core#8):
