@@ -278,7 +278,10 @@ use the PR's *Update branch*.
 **The release goes through a PR too** (#882): `mode: bump` opens the bump PR
 from `bot/release`, and merging it is the release. The tag is pushed after the
 merge, onto the merged commit; tags and the `ns3-module` branch are outside
-the ruleset, so nothing in the release needs a bypass actor.
+the ruleset, so nothing in the release needs a bypass actor. A merge-queue
+batch that puts other PRs above the bump still releases the bump commit
+(#1276); a merged bump that never released is released by dispatching
+`mode: publish` with `sha:` its full commit SHA.
 
 ### Automated: SonarQube Cloud and Codecov
 

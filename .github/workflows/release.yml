@@ -15,7 +15,16 @@ name: Release
 #    `release` job builds the lean install bundle from the merged commit,
 #    checksums, attests and verifies it, and the `publish` job tags that
 #    commit v<VERSION> and publishes the GitHub Release. Tags are outside the
-#    branch ruleset, so the workflow token pushes the tag.
+#    branch ruleset, so the workflow token pushes the tag. When the merge
+#    queue batches the bump PR below other PRs, the push's head is not the
+#    bump: the release commit is the push's commit whose message starts with
+#    `chore(release): bump version ` and that merged a bot/release PR,
+#    wherever it sits in the push (#1276, as swarm-routing/.github#944).
+#
+# mode=publish with `sha` (the merged bump commit's full SHA, an ancestor of
+# main) releases a bump that merged but never released: the same checks as a
+# push (the bump message, a merged bot/release PR), then build, tag and
+# publish that commit. Dispatch it on main.
 #
 # mode=dryrun bumps, builds, attests and verifies on the runner, then stops:
 # nothing is pushed, proposed or published (#614). mode=baseline releases
@@ -34,10 +43,14 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "bump = open the bump PR (merging it releases); baseline = release the current VERSION as-is (use once, for v0.1.0); dryrun = bump, build, attest and verify on the runner, then stop: nothing is pushed or published (#614)"
+        description: "bump = open the bump PR (merging it releases); baseline = release the current VERSION as-is (use once, for v0.1.0); dryrun = bump, build, attest and verify on the runner, then stop: nothing is pushed or published (#614); publish = release the merged bump commit `sha` that never released (#1276)"
         type: choice
-        options: [bump, baseline, dryrun]
+        options: [bump, baseline, dryrun, publish]
         default: bump
+      sha:
+        description: "publish only: the merged bump commit's full 40-hex SHA (on main)"
+        type: string
+        default: ''
       increment:
         description: "bump and dryrun: auto lets Commitizen pick the bump from the commits; PATCH, MINOR or MAJOR force it (cz bump --increment), when the version the ladder fixes differs (swarm-routing/.github#512)"
         type: choice
@@ -147,6 +160,7 @@ jobs:
       attestations: write  # store build provenance + SBOM attestations (#614)
     outputs:
       tag: ${{ steps.compute.outputs.tag }}
+      sha: ${{ steps.commit.outputs.sha }}   # the release commit (#1276)
       ver: ${{ steps.handover.outputs.ver }}
       sha256: ${{ steps.handover.outputs.sha256 }}
       mod_sha256: ${{ steps.handover.outputs.mod_sha256 }}
@@ -156,26 +170,81 @@ jobs:
         timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
         with:
           egress-policy: audit
-      # The title alone is not enough: any squash-merged PR that changes
+      # The release commit: the run's own (baseline, dryrun), or the merged
+      # bump. The title alone is not enough: any squash-merged PR that changes
       # VERSION could carry it. A pushed release must be the merge of the
       # Commitizen PR the propose job opened, from this repository's
-      # bot/release branch.
-      - name: The pushed commit is the merged bump PR (push only)
-        if: ${{ github.event_name == 'push' }}
+      # bot/release branch, wherever it sits in the push: a merge-queue batch
+      # puts other PRs' commits above it (#1276, as swarm-routing/.github#944).
+      # mode=publish names that commit by hand, for a bump that never released.
+      - name: The release commit is the merged bump PR (push, publish)
+        id: commit
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          MODE: ${{ inputs.mode }}
+          SHA_IN: ${{ inputs.sha }}
         run: |
-          from=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
-            --jq '[.[] | select(.merged_at != null) | "\(.head.repo.full_name):\(.head.ref)"] | .[0] // empty')
-          if [ "$from" != "${GITHUB_REPOSITORY}:bot/release" ]; then
-            echo "FAIL: ${GITHUB_SHA} is not the merge of a bot/release PR (came from '${from:-no PR}'); not releasing"
-            exit 1
+          set -euo pipefail
+          prefix='chore(release): bump version '
+          sha="$GITHUB_SHA"
+          if [ "$EVENT" = push ] || [ "$MODE" = publish ]; then
+            if [ "$MODE" = publish ]; then
+              if ! [[ "$SHA_IN" =~ ^[0-9a-f]{40}$ ]]; then
+                echo "FAIL: mode=publish needs sha, the merged bump commit's full 40-hex SHA (got '${SHA_IN}')"; exit 1
+              fi
+              if [ "$GITHUB_REF" != refs/heads/main ]; then
+                echo "FAIL: mode=publish runs on main; this run is on ${GITHUB_REF}"; exit 1
+              fi
+              msg1=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${SHA_IN}" --jq '.commit.message' | head -n 1)
+              if [[ "$msg1" != "$prefix"* ]]; then
+                echo "FAIL: ${SHA_IN}'s message '${msg1}' is not a release bump (${prefix}A to B)"; exit 1
+              fi
+              cands=("$SHA_IN")
+            else
+              # Every commit of the push whose message is a bump's, newest first.
+              mapfile -t cands < <(jq -r --arg p "$prefix" \
+                '[.commits[]? | select((.message // "") | startswith($p)) | .id] | reverse | .[]' "$GITHUB_EVENT_PATH")
+              if [ "${#cands[@]}" -eq 0 ]; then
+                echo "FAIL: no commit of this push starts with '${prefix}'; not releasing"; exit 1
+              fi
+            fi
+            sha=""; found=(); seen=()
+            for c in "${cands[@]}"; do
+              from=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${c}/pulls" | jq -r --arg sha "$c" \
+                '[.[] | select(.merged_at != null and .merge_commit_sha == $sha and .base.ref == "main")
+                      | "\(.head.repo.full_name):\(.head.ref)"] | .[0] // empty')
+              seen+=("${c} (came from '${from:-no PR}')")
+              if [ "$from" = "${GITHUB_REPOSITORY}:bot/release" ]; then
+                found+=("$c")
+                [ -n "$sha" ] || sha="$c"
+              fi
+            done
+            if [ -z "$sha" ]; then
+              echo "FAIL: $(IFS=';'; echo "${seen[*]}") is not the merge of a bot/release PR; not releasing"; exit 1
+            fi
+            if [ "${#found[@]}" -gt 1 ]; then
+              echo "::warning::this push merged ${#found[@]} bump PRs (${found[*]}): releasing the newest, ${sha}; release another with mode=publish and its sha"
+            fi
+            echo "Release commit ${sha} (from ${GITHUB_REPOSITORY}:bot/release; the run's: ${GITHUB_SHA})."
           fi
-          echo "Release commit from ${from}."
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_SHA=${sha}" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # full history + tags for cz to compute the bump
           persist-credentials: false
+      # Never a commit off the run's history: a batched push's bump is below
+      # the head, and a publish's sha must be on main.
+      - name: Check out the release commit
+        run: |
+          if [ "$RELEASE_SHA" != "$GITHUB_SHA" ]; then
+            if ! git merge-base --is-ancestor "$RELEASE_SHA" HEAD; then
+              echo "FAIL: the release commit ${RELEASE_SHA} is not an ancestor of ${GITHUB_SHA}"; exit 1
+            fi
+            git -c advice.detachedHead=false checkout -q --detach "$RELEASE_SHA"
+          fi
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -219,10 +288,10 @@ jobs:
             # A tag on this commit is a re-run after a failed publish: build again
             # and let publish resume. A tag elsewhere means the version is taken.
             if tagged=$(git rev-parse -q --verify "refs/tags/v${ver}^{commit}"); then
-              if [ "$tagged" != "$GITHUB_SHA" ]; then
-                echo "FAIL: v${ver} is already tagged on ${tagged}, not ${GITHUB_SHA}"; exit 1
+              if [ "$tagged" != "$RELEASE_SHA" ]; then
+                echo "FAIL: v${ver} is already tagged on ${tagged}, not ${RELEASE_SHA}"; exit 1
               fi
-              echo "v${ver} already tags ${GITHUB_SHA}: a re-run, publish resumes."
+              echo "v${ver} already tags ${RELEASE_SHA}: a re-run, publish resumes."
             fi
           fi
           echo "VER=${ver}" >> "$GITHUB_ENV"
@@ -367,8 +436,9 @@ jobs:
           retention-days: 1
 
   # Tags the release commit, updates the ns3-module branch and publishes the
-  # GitHub Release. It runs no code from the build: it checks out the commit
-  # this run is for (the merged bump, or main's head for a baseline) and
+  # GitHub Release. It runs no code from the build: it checks out the release
+  # commit (the merged bump, wherever it sat in the push, or main's head for a
+  # baseline) and
   # takes only the built files. Tags and ns3-module are outside main's
   # ruleset, so the workflow token pushes both; nothing here pushes to main.
   publish:
@@ -383,6 +453,7 @@ jobs:
       VER: ${{ needs.release.outputs.ver }}
       SHA256: ${{ needs.release.outputs.sha256 }}
       MOD_SHA256: ${{ needs.release.outputs.mod_sha256 }}
+      RELEASE_SHA: ${{ needs.release.outputs.sha }}   # the release commit (#1276)
     steps:
       - name: Harden the runner (audit egress)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -391,6 +462,7 @@ jobs:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.release.outputs.sha }}
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -406,15 +478,15 @@ jobs:
           # tag has only its own line.
           tagged=$(git ls-remote origin "refs/tags/${TAG}" "refs/tags/${TAG}^{}" | tail -n 1 | cut -f1)
           if [ -n "$tagged" ]; then
-            if [ "$tagged" != "$GITHUB_SHA" ]; then
-              echo "FAIL: ${TAG} already tags ${tagged}, not ${GITHUB_SHA}"; exit 1
+            if [ "$tagged" != "$RELEASE_SHA" ]; then
+              echo "FAIL: ${TAG} already tags ${tagged}, not ${RELEASE_SHA}"; exit 1
             fi
-            echo "${TAG} already tags ${GITHUB_SHA}; resuming."
+            echo "${TAG} already tags ${RELEASE_SHA}; resuming."
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${TAG}" -m "${TAG}" "$GITHUB_SHA"
+          git tag -a "${TAG}" -m "${TAG}" "$RELEASE_SHA"
           auth=$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)
           echo "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "refs/tags/${TAG}"
@@ -567,7 +639,7 @@ jobs:
         timeout-minutes: 2
         env:
           GH_TOKEN: ${{ steps.bot.outputs.token }}
-          COMMIT: ${{ github.sha }}
+          COMMIT: ${{ needs.release.outputs.sha }}
         run: |
           warn() {
             echo "::warning::org-release not sent to swarm-routing/swarm-routing.github.io: $1"
@@ -611,7 +683,7 @@ jobs:
         timeout-minutes: 2
         env:
           GH_TOKEN: ${{ steps.bot.outputs.token }}
-          COMMIT: ${{ github.sha }}
+          COMMIT: ${{ needs.release.outputs.sha }}
         run: |
           warn() {
             echo "::warning::org-release not sent to swarm-routing/.github: $1"
