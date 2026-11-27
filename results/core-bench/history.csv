@@ -302,3 +302,12 @@ date,commit,cpu,case,ns_per_op,min_ns,max_ns
 2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,history_dedup,69.65,69.21,70.06
 2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,evaporate_all,6599.31,6585.12,6686.06
 2026-11-24,fa6134396291,Intel(R) Xeon(R) 6975P-C,create_hello,4756.98,4742.64,4771.06
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,pheromone_update,60.16,60.11,61.99
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,select_next_hop_4,74.00,73.90,74.16
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,select_next_hop_16,253.47,252.78,254.92
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,select_next_hop_64,974.79,973.91,979.92
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,codec_encode_full_ant,150.10,149.72,150.39
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,codec_decode_full_ant,149.40,149.35,149.81
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,history_dedup,80.02,79.81,80.72
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,evaporate_all,9004.25,8973.74,9492.17
+2026-11-27,db6b8834b00f,AMD EPYC 9V74 80-Core Processor,create_hello,5815.97,5570.29,6088.88
