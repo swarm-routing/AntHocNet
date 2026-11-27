@@ -34,6 +34,7 @@ set(ANTHOCNET_TESTS
   test_link_lifetime
   test_quiet_mode
   test_adaptive_evaporation
+  test_swarm_contract
 )
 
 foreach(test ${ANTHOCNET_TESTS})
