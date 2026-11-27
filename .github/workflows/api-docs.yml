@@ -15,6 +15,6 @@ permissions:
 
 jobs:
   doxygen:
-    uses: swarm-routing/.github/.github/workflows/reusable-doxygen.yml@6cca00a3550b6d2a3232bb22d02d5419ff94eefa # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-doxygen.yml@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
     with:
       doxyfile: "api/Doxyfile"
