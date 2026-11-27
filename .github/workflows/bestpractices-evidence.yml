@@ -58,7 +58,7 @@ jobs:
         id: bot
         continue-on-error: true
         timeout-minutes: 2
-        uses: swarm-routing/.github/.github/actions/bot-token@8edfe584baaffbbb22c45366fb0399352488fa5c # main@2026-11-26
+        uses: swarm-routing/.github/.github/actions/bot-token@bbb81f90c92b52dcb3ef0cfcdfdd655bef968391 # main@2026-11-27
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
