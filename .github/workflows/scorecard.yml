@@ -27,4 +27,4 @@ jobs:
       id-token: write
       contents: read
       actions: read
-    uses: swarm-routing/.github/.github/workflows/reusable-scorecard.yml@8edfe584baaffbbb22c45366fb0399352488fa5c # main@2026-11-26
+    uses: swarm-routing/.github/.github/workflows/reusable-scorecard.yml@d59d29f9d136fa96587e7b3106af29f9c4e2c10e # main@2026-11-27
